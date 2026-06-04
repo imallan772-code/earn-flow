@@ -33,6 +33,7 @@ import { Route as AppEarnRouteImport } from './routes/_app/earn'
 import { Route as EarnGamesIndexRouteImport } from './routes/earn/games/index'
 import { Route as EarnGamesSlugRouteImport } from './routes/earn/games/$slug'
 import { Route as AppNoticeIdRouteImport } from './routes/_app/notice.$id'
+import { Route as AppGamesDiceRouteImport } from './routes/_app/games.dice'
 import { Route as AppGamesCrashRouteImport } from './routes/_app/games.crash'
 import { Route as AppExchangeSymbolRouteImport } from './routes/_app/exchange.$symbol'
 import { Route as AppEventIdRouteImport } from './routes/_app/event.$id'
@@ -156,6 +157,11 @@ const AppNoticeIdRoute = AppNoticeIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppNoticeRoute,
 } as any)
+const AppGamesDiceRoute = AppGamesDiceRouteImport.update({
+  id: '/games/dice',
+  path: '/games/dice',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppGamesCrashRoute = AppGamesCrashRouteImport.update({
   id: '/games/crash',
   path: '/games/crash',
@@ -196,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/event/$id': typeof AppEventIdRoute
   '/exchange/$symbol': typeof AppExchangeSymbolRoute
   '/games/crash': typeof AppGamesCrashRoute
+  '/games/dice': typeof AppGamesDiceRoute
   '/notice/$id': typeof AppNoticeIdRoute
   '/earn/games/$slug': typeof EarnGamesSlugRoute
   '/earn/games/': typeof EarnGamesIndexRoute
@@ -224,6 +231,7 @@ export interface FileRoutesByTo {
   '/event/$id': typeof AppEventIdRoute
   '/exchange/$symbol': typeof AppExchangeSymbolRoute
   '/games/crash': typeof AppGamesCrashRoute
+  '/games/dice': typeof AppGamesDiceRoute
   '/notice/$id': typeof AppNoticeIdRoute
   '/earn/games/$slug': typeof EarnGamesSlugRoute
   '/earn/games': typeof EarnGamesIndexRoute
@@ -254,6 +262,7 @@ export interface FileRoutesById {
   '/_app/event/$id': typeof AppEventIdRoute
   '/_app/exchange/$symbol': typeof AppExchangeSymbolRoute
   '/_app/games/crash': typeof AppGamesCrashRoute
+  '/_app/games/dice': typeof AppGamesDiceRoute
   '/_app/notice/$id': typeof AppNoticeIdRoute
   '/earn/games/$slug': typeof EarnGamesSlugRoute
   '/earn/games/': typeof EarnGamesIndexRoute
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
     | '/event/$id'
     | '/exchange/$symbol'
     | '/games/crash'
+    | '/games/dice'
     | '/notice/$id'
     | '/earn/games/$slug'
     | '/earn/games/'
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/event/$id'
     | '/exchange/$symbol'
     | '/games/crash'
+    | '/games/dice'
     | '/notice/$id'
     | '/earn/games/$slug'
     | '/earn/games'
@@ -341,6 +352,7 @@ export interface FileRouteTypes {
     | '/_app/event/$id'
     | '/_app/exchange/$symbol'
     | '/_app/games/crash'
+    | '/_app/games/dice'
     | '/_app/notice/$id'
     | '/earn/games/$slug'
     | '/earn/games/'
@@ -537,6 +549,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNoticeIdRouteImport
       parentRoute: typeof AppNoticeRoute
     }
+    '/_app/games/dice': {
+      id: '/_app/games/dice'
+      path: '/games/dice'
+      fullPath: '/games/dice'
+      preLoaderRoute: typeof AppGamesDiceRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/_app/games/crash': {
       id: '/_app/games/crash'
       path: '/games/crash'
@@ -593,6 +612,7 @@ interface AppRouteRouteChildren {
   AppNoticeRoute: typeof AppNoticeRouteWithChildren
   AppExchangeSymbolRoute: typeof AppExchangeSymbolRoute
   AppGamesCrashRoute: typeof AppGamesCrashRoute
+  AppGamesDiceRoute: typeof AppGamesDiceRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
@@ -603,6 +623,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppNoticeRoute: AppNoticeRouteWithChildren,
   AppExchangeSymbolRoute: AppExchangeSymbolRoute,
   AppGamesCrashRoute: AppGamesCrashRoute,
+  AppGamesDiceRoute: AppGamesDiceRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
