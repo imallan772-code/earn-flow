@@ -11,6 +11,8 @@ import { getPlinkoSFX } from "./PlinkoSFX";
 import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
 import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
+import { useBalance, wallet } from "@/shared/wallet/walletStore";
+import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { cn } from "@/lib/utils";
 import { Volume2, VolumeX } from "lucide-react";
 
@@ -42,7 +44,7 @@ interface LastOutcome {
 
 export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
   const [phase, setPhase] = useState<"idle" | "rolling" | "settled">("idle");
-  const [balance, setBalance] = useState(1000);
+  const balance = useBalance(mode);
   const [nonce, setNonce] = useState(0);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [rows, setRows] = useState<RowCount>(16);
@@ -142,8 +144,9 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
     (amount: number) => {
       if (placingRef.current) return;
       if (phase !== "idle") return;
-      if (amount <= 0 || amount > balance) return;
+      if (amount <= 0) return;
       if (!engineRef.current || !rendererRef.current) return;
+      if (!wallet.tryDebit(mode, amount)) return; // demo: opens OutOfDemoModal
       placingRef.current = true;
 
       // Unlock + play release SFX (user gesture path)
@@ -151,7 +154,6 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
       sfx.resume();
       sfx.ballRelease();
 
-      setBalance((b) => b - amount);
       setPendingAmount(amount);
       setPhase("rolling");
 
@@ -176,7 +178,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
         const profit = payout - amount;
         const won = payout >= amount;
 
-        if (payout > 0) setBalance((b) => b + payout);
+        if (payout > 0) wallet.credit(mode, payout, multiplier);
         setHistory((h) => [{ id: `n${nonce}-${slot}`, multiplier, slot }, ...h].slice(0, 30));
 
         const max = Math.max(...MULTIPLIERS[risk][rows]);
@@ -225,7 +227,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
         }, 800);
       });
     },
-    [phase, balance, nonce, rows, risk, mode, onOutcome],
+    [phase, nonce, rows, risk, mode, onOutcome],
   );
 
   const canPlace = phase === "idle";
