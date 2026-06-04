@@ -218,7 +218,7 @@ export function StakeBetPanel({
             >
               {STRATEGIES.map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {t(`strategy.${s}` as never)}
                 </option>
               ))}
             </select>
