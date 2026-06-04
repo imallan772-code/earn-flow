@@ -39,7 +39,7 @@ function rollOutcome(game: LiveGame, amount: number) {
   return {
     multiplier: mult,
     profit: +(amount * (mult - 1)).toFixed(2),
-    status: game === "crash" ? ("cashout" as const) : ("win" as const),
+    status: game === "crash" || game === "plinko" ? ("cashout" as const) : ("win" as const),
   };
 }
 
