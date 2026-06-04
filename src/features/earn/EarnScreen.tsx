@@ -89,29 +89,15 @@ export function EarnScreen() {
         <button className="rounded-xl bg-holographic px-4 py-2 text-xs font-bold text-[var(--color-bg-0)]">열기</button>
       </Premium3DCard>
 
-      {/* Game lobby preview */}
+      {/* Game lobby — 8 games */}
       <section>
         <div className="mb-2 flex items-center justify-between">
           <h2 className="inline-flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wider text-[var(--color-pink)]">
             <Gamepad2 size={14} /> 게임 로비
           </h2>
-          <Link to="/earn/games" className="inline-flex items-center text-[11px] text-[var(--color-muted)]">
-            전체 보기 <ChevronRight size={12} />
-          </Link>
+          <span className="text-[11px] text-[var(--color-muted)]">8게임 · Provably Fair</span>
         </div>
-        <div className="grid grid-cols-3 gap-2">
-          {MOCK_GAMES.slice(0, 3).map((g) => (
-            <Link
-              key={g.slug}
-              to="/earn/games/$slug"
-              params={{ slug: g.slug }}
-              className="glass-2 rounded-2xl p-3 text-center transition-transform active:scale-95"
-            >
-              <div className="text-xs font-semibold">{g.title}</div>
-              <div className="mt-0.5 text-[10px] text-[var(--color-muted)]">{g.liveCount.toLocaleString()}명</div>
-            </Link>
-          ))}
-        </div>
+        <GameLobby />
       </section>
     </div>
   );
