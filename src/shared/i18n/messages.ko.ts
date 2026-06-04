@@ -55,4 +55,22 @@ export const messages_ko = {
   "earn.tab.missions.sub": "무료 돈벌기",
   "earn.tab.games": "게임",
   "earn.tab.games.sub": "돈 더벌기",
+
+  // === 자동 베팅 전략 (한글) ===
+  "strategy.Flat": "정액 (항상 같은 금액)",
+  "strategy.Martingale": "마틴게일 (패배 시 2배)",
+  "strategy.AntiMartingale": "역마틴게일 (승리 시 2배)",
+  "strategy.Fibonacci": "피보나치 (수열 추격)",
+  "strategy.DAlembert": "달랑베르 (1단위 가감)",
+
+  // === 모드 (데모/리얼) ===
+  "mode.demo": "데모 모드",
+  "mode.real": "리얼 모드",
+  "mode.switchedToDemo": "🎮 데모 모드 활성화 — 마음껏 연습하세요",
+  "mode.switchedToReal": "리얼 모드 활성화. 신중한 베팅을 권장합니다.",
+
+  // === 라이브 베팅 ===
+  "live.title": "글로벌 라이브 베팅",
+  "live.online": "{count}명 접속 중",
+  "live.totalVolume": "누적 거래액 {amount} USDT",
 } as const;
