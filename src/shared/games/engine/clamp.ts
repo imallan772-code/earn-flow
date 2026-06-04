@@ -13,7 +13,8 @@ export function quantize6(v: number): number {
 /** Round-half-up to N decimals (for display only — never for comparison). */
 export function round(v: number, digits = 2): number {
   const k = Math.pow(10, digits);
-  return Math.round(v * k) / k;
+  // Pre-bias by EPSILON*v to absorb representation errors like 1.005 → 1.00499999...
+  return Math.round(v * k * (1 + Number.EPSILON)) / k;
 }
 
 /**

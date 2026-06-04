@@ -76,43 +76,40 @@ export function step(state: AutoBetState, input: StepInput): AutoBetState {
   const betsPlaced = state.betsPlaced + 1;
   const pnl = state.pnl + input.delta;
 
-  // Decide next bet by strategy.
+  // Stake semantics: when a percent modifier is set for this outcome,
+  // it OVERRIDES the strategy and compounds from currentBet. Otherwise the
+  // strategy decides next bet (pct=0 effectively = "reset to base" for Flat).
   let nextBet = state.currentBet;
   let nextFibIndex = state.fibIndex;
 
-  switch (config.strategy) {
-    case "Flat":
-      nextBet = config.baseBet;
-      break;
+  const pct =
+    input.outcome === "win" ? config.onWinIncreasePct : config.onLossIncreasePct;
 
-    case "Martingale":
-      if (input.outcome === "loss") nextBet = state.currentBet * 2;
-      else nextBet = config.baseBet;
-      break;
-
-    case "AntiMartingale":
-      if (input.outcome === "win") nextBet = state.currentBet * 2;
-      else nextBet = config.baseBet;
-      break;
-
-    case "Fibonacci":
-      if (input.outcome === "loss") nextFibIndex = state.fibIndex + 1;
-      else nextFibIndex = Math.max(0, state.fibIndex - 2);
-      nextBet = config.baseBet * fibAt(nextFibIndex);
-      break;
-
-    case "DAlembert":
-      if (input.outcome === "loss") nextBet = state.currentBet + config.baseBet;
-      else nextBet = Math.max(config.baseBet, state.currentBet - config.baseBet);
-      break;
-  }
-
-  // Apply on-win / on-loss percentage modifier (Stake "Increase by %").
-  // 0 = reset to base, anything else multiplies current strategy bet.
-  if (input.outcome === "win" && config.onWinIncreasePct !== 0) {
-    nextBet = nextBet * (1 + config.onWinIncreasePct / 100);
-  } else if (input.outcome === "loss" && config.onLossIncreasePct !== 0) {
-    nextBet = nextBet * (1 + config.onLossIncreasePct / 100);
+  if (pct !== 0) {
+    nextBet = state.currentBet * (1 + pct / 100);
+  } else {
+    switch (config.strategy) {
+      case "Flat":
+        nextBet = config.baseBet;
+        break;
+      case "Martingale":
+        nextBet = input.outcome === "loss" ? state.currentBet * 2 : config.baseBet;
+        break;
+      case "AntiMartingale":
+        nextBet = input.outcome === "win" ? state.currentBet * 2 : config.baseBet;
+        break;
+      case "Fibonacci":
+        nextFibIndex =
+          input.outcome === "loss" ? state.fibIndex + 1 : Math.max(0, state.fibIndex - 2);
+        nextBet = config.baseBet * fibAt(nextFibIndex);
+        break;
+      case "DAlembert":
+        nextBet =
+          input.outcome === "loss"
+            ? state.currentBet + config.baseBet
+            : Math.max(config.baseBet, state.currentBet - config.baseBet);
+        break;
+    }
   }
 
   // Stop conditions.
