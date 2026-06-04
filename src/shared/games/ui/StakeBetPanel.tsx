@@ -126,23 +126,25 @@ export function StakeBetPanel({
 
   return (
     <div className="glass-2 flex flex-col gap-3 rounded-2xl p-3">
-      {/* tabs */}
-      <div className="glass-1 grid grid-cols-2 rounded-xl p-1">
-        {(["manual", "auto"] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              "rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
-              tab === t
-                ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)]"
-                : "text-[var(--color-muted)]"
-            )}
-          >
-            {t === "manual" ? "수동" : "자동"}
-          </button>
-        ))}
-      </div>
+      {/* tabs (hidden in compact mode) */}
+      {!compact && (
+        <div className="glass-1 grid grid-cols-2 rounded-xl p-1">
+          {(["manual", "auto"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
+                tab === t
+                  ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)]"
+                  : "text-[var(--color-muted)]"
+              )}
+            >
+              {t === "manual" ? "수동" : "자동"}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* AUTO HUD */}
       {tab === "auto" && autoRunning && autoState && (
