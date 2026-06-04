@@ -1,7 +1,15 @@
 /**
- * PlinkoEngine — 지존급 Provably Fair + 고품질 물리 엔진 (완전판)
+ * PlinkoEngine — Provably Fair + 결정론적 물리 시뮬레이션 엔진
  *
- * 목표: Stake.com + Rollbit을 압도하는 수준의 결정론, 물리, 확장성
+ * 역할:
+ *  - dropPath: (seed, rows, risk) → 경로/finalSlot/multiplier 결정론적 산출
+ *  - simulatePhysics: 시각화용 균일 progress 샘플 emit (Renderer가 시간 기반 플레이백)
+ *
+ * 순수성 규약: React/DOM 의존 0. Web Worker / Edge Function 이식 가능.
+ *
+ * TODO: Real money 모드 — dropPath를 Supabase Edge Function으로 권위 이관.
+ *       서버가 server_seed + nonce로 결정, 클라이언트는 결과만 신뢰.
+ *       Multiplier 테이블도 서버에서 검증.
  */
 
 export type RiskLevel = "low" | "medium" | "high";
@@ -22,8 +30,26 @@ export interface PlinkoDropResult {
 
 const ALLOWED_ROWS = [8, 12, 16] as const;
 
+/**
+ * Stake.com 표준 배수 테이블. 좌우 대칭, length = rows + 1.
+ * Real money에서는 서버 측 값과 정확히 일치해야 함.
+ */
 export const MULTIPLIERS: Record<RiskLevel, Record<RowCount, number[]>> = {
-  /* ... 동일 */
+  low: {
+    8: [5.6, 2.1, 1.1, 1.0, 0.5, 1.0, 1.1, 2.1, 5.6],
+    12: [10, 3, 1.6, 1.4, 1.1, 1.0, 0.5, 1.0, 1.1, 1.4, 1.6, 3, 10],
+    16: [16, 9, 2, 1.4, 1.4, 1.2, 1.1, 1.0, 0.5, 1.0, 1.1, 1.2, 1.4, 1.4, 2, 9, 16],
+  },
+  medium: {
+    8: [13, 3, 1.3, 0.7, 0.4, 0.7, 1.3, 3, 13],
+    12: [33, 11, 4, 2, 1.1, 0.6, 0.3, 0.6, 1.1, 2, 4, 11, 33],
+    16: [110, 41, 10, 5, 3, 1.5, 1.0, 0.5, 0.3, 0.5, 1.0, 1.5, 3, 5, 10, 41, 110],
+  },
+  high: {
+    8: [29, 4, 1.5, 0.3, 0.2, 0.3, 1.5, 4, 29],
+    12: [76, 18, 5, 2, 0.7, 0.2, 0.2, 0.2, 0.7, 2, 5, 18, 76],
+    16: [1000, 130, 26, 9, 4, 2, 0.2, 0.2, 0.2, 0.2, 0.2, 2, 4, 9, 26, 130, 1000],
+  },
 };
 
 export const SLOT_COUNT: Record<RowCount, number> = { 8: 9, 12: 13, 16: 17 };
@@ -62,10 +88,9 @@ export class PlinkoEngine {
   }
 
   /**
-   * simulatePhysics
-   * - progress는 0.0 ~ 1.0 구간에서 단조 증가
-   * - 각 row 구간과 final fall 구간 내부에서는 균일 간격
-   * - Renderer가 시간 기반 플레이백 하기에 충분히 안정적
+   * simulatePhysics — 균일 progress 샘플 emit.
+   *  - progress: 0 → 1 단조 증가, 마지막 sample은 progress=1.0 도달 보장
+   *  - 각 row 구간 SUBSTEPS_PER_ROW + final fall FALL_SUBSTEPS+1 = (rows+1)*14 + 1 샘플
    */
   public simulatePhysics(
     result: PlinkoDropResult,
@@ -79,7 +104,7 @@ export class PlinkoEngine {
     let x = 0.5;
     let cumRight = 0;
 
-    // row-by-row
+    // row-by-row peg traversal
     for (let row = 0; row < rows; row++) {
       cumRight += path[row];
       const xStart = x;
@@ -103,7 +128,7 @@ export class PlinkoEngine {
       x = xEnd;
     }
 
-    // final fall
+    // final fall into slot
     const xStartFall = x;
     const xEndFall = (finalSlot + 0.5) / slotCount;
     const yStartFall = rows * yStep;
@@ -125,9 +150,24 @@ export class PlinkoEngine {
 }
 
 /* ------------------------------------------------------------------ */
+/* PRNG primitives — inlined for zero-import. Matches src/shared/games/engine/rng.ts. */
+
 function hashSeed(input: string): number {
-  /* ... */
+  let h = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
 }
+
 function mulberry32(seed: number): () => number {
-  /* ... */
+  let a = seed >>> 0;
+  return function next(): number {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
