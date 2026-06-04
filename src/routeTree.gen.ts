@@ -9,11 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TransferRouteImport } from './routes/transfer'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WithdrawalIndexRouteImport } from './routes/withdrawal/index'
+import { Route as DepositIndexRouteImport } from './routes/deposit/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as WithdrawalPhonRouteImport } from './routes/withdrawal/phon'
+import { Route as WithdrawalCryptoRouteImport } from './routes/withdrawal/crypto'
+import { Route as DepositGiftRouteImport } from './routes/deposit/gift'
+import { Route as DepositCryptoRouteImport } from './routes/deposit/crypto'
+import { Route as DepositBankRouteImport } from './routes/deposit/bank'
 import { Route as AppMyRouteImport } from './routes/_app/my'
 import { Route as AppFeedRouteImport } from './routes/_app/feed'
 import { Route as AppEarnRouteImport } from './routes/_app/earn'
@@ -21,6 +30,11 @@ import { Route as EarnGamesIndexRouteImport } from './routes/earn/games/index'
 import { Route as EarnGamesSlugRouteImport } from './routes/earn/games/$slug'
 import { Route as AppExchangeSymbolRouteImport } from './routes/_app/exchange.$symbol'
 
+const TransferRoute = TransferRouteImport.update({
+  id: '/transfer',
+  path: '/transfer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -43,6 +57,46 @@ const AppRouteRoute = AppRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WithdrawalIndexRoute = WithdrawalIndexRouteImport.update({
+  id: '/withdrawal/',
+  path: '/withdrawal/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DepositIndexRoute = DepositIndexRouteImport.update({
+  id: '/deposit/',
+  path: '/deposit/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WithdrawalPhonRoute = WithdrawalPhonRouteImport.update({
+  id: '/withdrawal/phon',
+  path: '/withdrawal/phon',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WithdrawalCryptoRoute = WithdrawalCryptoRouteImport.update({
+  id: '/withdrawal/crypto',
+  path: '/withdrawal/crypto',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DepositGiftRoute = DepositGiftRouteImport.update({
+  id: '/deposit/gift',
+  path: '/deposit/gift',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DepositCryptoRoute = DepositCryptoRouteImport.update({
+  id: '/deposit/crypto',
+  path: '/deposit/crypto',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DepositBankRoute = DepositBankRouteImport.update({
+  id: '/deposit/bank',
+  path: '/deposit/bank',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppMyRoute = AppMyRouteImport.update({
@@ -81,9 +135,18 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/signup': typeof SignupRoute
+  '/transfer': typeof TransferRoute
   '/earn': typeof AppEarnRoute
   '/feed': typeof AppFeedRoute
   '/my': typeof AppMyRoute
+  '/deposit/bank': typeof DepositBankRoute
+  '/deposit/crypto': typeof DepositCryptoRoute
+  '/deposit/gift': typeof DepositGiftRoute
+  '/withdrawal/crypto': typeof WithdrawalCryptoRoute
+  '/withdrawal/phon': typeof WithdrawalPhonRoute
+  '/admin/': typeof AdminIndexRoute
+  '/deposit/': typeof DepositIndexRoute
+  '/withdrawal/': typeof WithdrawalIndexRoute
   '/exchange/$symbol': typeof AppExchangeSymbolRoute
   '/earn/games/$slug': typeof EarnGamesSlugRoute
   '/earn/games/': typeof EarnGamesIndexRoute
@@ -93,9 +156,18 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/signup': typeof SignupRoute
+  '/transfer': typeof TransferRoute
   '/earn': typeof AppEarnRoute
   '/feed': typeof AppFeedRoute
   '/my': typeof AppMyRoute
+  '/deposit/bank': typeof DepositBankRoute
+  '/deposit/crypto': typeof DepositCryptoRoute
+  '/deposit/gift': typeof DepositGiftRoute
+  '/withdrawal/crypto': typeof WithdrawalCryptoRoute
+  '/withdrawal/phon': typeof WithdrawalPhonRoute
+  '/admin': typeof AdminIndexRoute
+  '/deposit': typeof DepositIndexRoute
+  '/withdrawal': typeof WithdrawalIndexRoute
   '/exchange/$symbol': typeof AppExchangeSymbolRoute
   '/earn/games/$slug': typeof EarnGamesSlugRoute
   '/earn/games': typeof EarnGamesIndexRoute
@@ -107,9 +179,18 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/signup': typeof SignupRoute
+  '/transfer': typeof TransferRoute
   '/_app/earn': typeof AppEarnRoute
   '/_app/feed': typeof AppFeedRoute
   '/_app/my': typeof AppMyRoute
+  '/deposit/bank': typeof DepositBankRoute
+  '/deposit/crypto': typeof DepositCryptoRoute
+  '/deposit/gift': typeof DepositGiftRoute
+  '/withdrawal/crypto': typeof WithdrawalCryptoRoute
+  '/withdrawal/phon': typeof WithdrawalPhonRoute
+  '/admin/': typeof AdminIndexRoute
+  '/deposit/': typeof DepositIndexRoute
+  '/withdrawal/': typeof WithdrawalIndexRoute
   '/_app/exchange/$symbol': typeof AppExchangeSymbolRoute
   '/earn/games/$slug': typeof EarnGamesSlugRoute
   '/earn/games/': typeof EarnGamesIndexRoute
@@ -121,9 +202,18 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/signup'
+    | '/transfer'
     | '/earn'
     | '/feed'
     | '/my'
+    | '/deposit/bank'
+    | '/deposit/crypto'
+    | '/deposit/gift'
+    | '/withdrawal/crypto'
+    | '/withdrawal/phon'
+    | '/admin/'
+    | '/deposit/'
+    | '/withdrawal/'
     | '/exchange/$symbol'
     | '/earn/games/$slug'
     | '/earn/games/'
@@ -133,9 +223,18 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/signup'
+    | '/transfer'
     | '/earn'
     | '/feed'
     | '/my'
+    | '/deposit/bank'
+    | '/deposit/crypto'
+    | '/deposit/gift'
+    | '/withdrawal/crypto'
+    | '/withdrawal/phon'
+    | '/admin'
+    | '/deposit'
+    | '/withdrawal'
     | '/exchange/$symbol'
     | '/earn/games/$slug'
     | '/earn/games'
@@ -146,9 +245,18 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/signup'
+    | '/transfer'
     | '/_app/earn'
     | '/_app/feed'
     | '/_app/my'
+    | '/deposit/bank'
+    | '/deposit/crypto'
+    | '/deposit/gift'
+    | '/withdrawal/crypto'
+    | '/withdrawal/phon'
+    | '/admin/'
+    | '/deposit/'
+    | '/withdrawal/'
     | '/_app/exchange/$symbol'
     | '/earn/games/$slug'
     | '/earn/games/'
@@ -160,12 +268,28 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   SignupRoute: typeof SignupRoute
+  TransferRoute: typeof TransferRoute
+  DepositBankRoute: typeof DepositBankRoute
+  DepositCryptoRoute: typeof DepositCryptoRoute
+  DepositGiftRoute: typeof DepositGiftRoute
+  WithdrawalCryptoRoute: typeof WithdrawalCryptoRoute
+  WithdrawalPhonRoute: typeof WithdrawalPhonRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  DepositIndexRoute: typeof DepositIndexRoute
+  WithdrawalIndexRoute: typeof WithdrawalIndexRoute
   EarnGamesSlugRoute: typeof EarnGamesSlugRoute
   EarnGamesIndexRoute: typeof EarnGamesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/transfer': {
+      id: '/transfer'
+      path: '/transfer'
+      fullPath: '/transfer'
+      preLoaderRoute: typeof TransferRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -199,6 +323,62 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/withdrawal/': {
+      id: '/withdrawal/'
+      path: '/withdrawal'
+      fullPath: '/withdrawal/'
+      preLoaderRoute: typeof WithdrawalIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deposit/': {
+      id: '/deposit/'
+      path: '/deposit'
+      fullPath: '/deposit/'
+      preLoaderRoute: typeof DepositIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/withdrawal/phon': {
+      id: '/withdrawal/phon'
+      path: '/withdrawal/phon'
+      fullPath: '/withdrawal/phon'
+      preLoaderRoute: typeof WithdrawalPhonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/withdrawal/crypto': {
+      id: '/withdrawal/crypto'
+      path: '/withdrawal/crypto'
+      fullPath: '/withdrawal/crypto'
+      preLoaderRoute: typeof WithdrawalCryptoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deposit/gift': {
+      id: '/deposit/gift'
+      path: '/deposit/gift'
+      fullPath: '/deposit/gift'
+      preLoaderRoute: typeof DepositGiftRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deposit/crypto': {
+      id: '/deposit/crypto'
+      path: '/deposit/crypto'
+      fullPath: '/deposit/crypto'
+      preLoaderRoute: typeof DepositCryptoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deposit/bank': {
+      id: '/deposit/bank'
+      path: '/deposit/bank'
+      fullPath: '/deposit/bank'
+      preLoaderRoute: typeof DepositBankRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/my': {
@@ -270,9 +450,28 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   SignupRoute: SignupRoute,
+  TransferRoute: TransferRoute,
+  DepositBankRoute: DepositBankRoute,
+  DepositCryptoRoute: DepositCryptoRoute,
+  DepositGiftRoute: DepositGiftRoute,
+  WithdrawalCryptoRoute: WithdrawalCryptoRoute,
+  WithdrawalPhonRoute: WithdrawalPhonRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  DepositIndexRoute: DepositIndexRoute,
+  WithdrawalIndexRoute: WithdrawalIndexRoute,
   EarnGamesSlugRoute: EarnGamesSlugRoute,
   EarnGamesIndexRoute: EarnGamesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
