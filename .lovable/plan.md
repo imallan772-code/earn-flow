@@ -1,123 +1,88 @@
-## Plinko 끝판왕 — Visual + Audio + Feedback Total Overhaul
+# 데모 = 체험판, 리얼 전환 유도 구조
 
-**원칙**: Engine(결과 산출)·Board(상태/회계) 비변경. 오직 **렌더러 + 신규 SFX 레이어 + 잭팟 오버레이**만 손댄다. 결정론적 결과·하우스엣지·더블탭 가드 그대로.
+## 컨셉
 
----
+데모는 "맛보기 크레딧"으로 한정. 다 쓰면 리필 안 되고 → **"리얼로 전환" CTA**가 뜸. Stake/Roobet도 실제론 데모 자체가 약하고 빠르게 실 베팅으로 보내는 구조.
 
-### 1. PlinkoRenderer.ts — 시각 폴리시 풀스택
+## 핵심 규칙
 
-**1-1. 보드 배경 (정적 레이어)**
-- 중앙 비네팅 라디얼 글로우 (배율 색에 따라 hue shift)
-- 미세 grid 텍스처 (1px stroke, opacity 0.04)
-- 보드 외곽 inner shadow → "유리 상자에 박힌" 느낌
+### 1. 데모 크레딧(체험판) — `DemoCredit`
+- **초기 지급: 1회 10,000원** (현재 1000 → 상향, 한 번에 충분히 체험 가능한 양)
+- **리필 없음**. 0원 도달 시 베팅 버튼 비활성화.
+- **세션 무관 1회성**: localStorage에 `phonara.demo.granted: true` 플래그. 새로고침/재방문해도 재지급 X.
+- 잔액은 게임 간 **공유**(Dice/Crash/Plinko 통합 지갑). 현재 게임별 분리된 balance를 통합 데모 지갑으로 마이그레이션.
 
-**1-2. 핀(peg) 업그레이드**
-- 단색 원 → **라디얼 그라데이션 (top-left 하이라이트 + 우하단 그림자)**
-- 1px 림 라이트 + 0.5px dark stroke → 유리구슬 입체감
-- 공이 근접한 핀(거리 < 24px)은 일시적으로 **밝아짐 + ring pulse** (heat trail)
+### 2. 잔액 소진 시 UX — "Out of Demo" 모달
+- 트리거: 베팅 시도 시 `balance < amount` 또는 잔액 0.
+- 모달 내용:
+  - "체험 크레딧을 모두 사용했어요"
+  - 지금까지 데모 통계 (총 베팅 N회, 최고 배율 Xx)
+  - **Primary CTA: "리얼 모드로 전환하기"** → 모드 토글 + 입금 화면으로
+  - Secondary: "데모 리셋" — **숨김 처리**(개발자 콘솔에서만, 일반 사용자 노출 X)
 
-**1-3. 공(ball) 업그레이드**
-- 메탈릭 라디얼 그라데이션 (silver → blue tint)
-- 8px 골드 글로우 halo (배율 따라 색 변화)
-- 모션 트레일: 기존 dot trail → **그라데이션 streak (속도 비례 길이)**
-- 핀 충돌 순간 squash (수직 0.85x · 수평 1.15x) — 2 프레임
+### 3. 리얼 전환 유도 마이크로 카피
+- 데모 잔액 ≤ 30% 도달 시 베팅 패널 하단에 작은 배너:
+  > "데모 크레딧 30% 남음 · 리얼로 전환 시 첫 입금 보너스 100%"
+- 큰 승리(10x↑) 후 토스트:
+  > "데모에서 X원 따셨네요! 리얼이었다면 진짜 출금 가능 →"
 
-**1-4. 슬롯 업그레이드**
-- 평면 사각형 → **3D 베벨 (top highlight 1px + bottom shadow 2px)**
-- 슬롯 내부 그라데이션 (위 어둡고 아래 슬롯 색)
-- 착지 시 슬롯 자체가 0.92x scale로 눌렸다 복원 (300ms cubic out)
-- 슬롯 하단에서 위로 올라오는 컬러 wave (배율 색)
+### 4. 모드 토글 동작 변경
+- 현재: 데모 ↔ 리얼 자유 전환.
+- 변경: 리얼 → 데모 전환 시 확인 모달("데모는 체험용입니다. 잔액은 한 번만 지급됩니다"). 리얼 모드 잔액은 별도 보존(0으로 시작, 입금 필요).
 
-**1-5. 핀 충돌 파티클 강화**
-- 기존 cyan dot 3-6개 → **mini sparks (별 모양 + 짧은 streak)** 8개
-- 큰 충돌(vy > 임계치)에서만 발화 → 시각적 노이즈 제어
+### 5. 결과 편향 — **전부 제거**
+- 이전 플랜의 `outcomeBias.ts` 폐기. Provably Fair 100% 유지.
+- 데모/리얼 모두 동일한 RTP **97%** 적용 (현재 demo 100% → 97%로 통일).
+- 이유: 데모가 잘 터지면 리얼 전환 후 "왜 안 터져?" 이탈. 동일 RTP라야 데모 체감이 리얼로 그대로 이어짐. Stake 방식.
 
-**1-6. 착지 임팩트**
-- 기존 48 파티클 → **3-layer 폭발**:
-  - L1: 큰 슬롯 색 파티클 24개 (느림, 큼)
-  - L2: 골드 스파크 16개 (빠름, 작음)
-  - L3: 흰색 코어 플래시 (1프레임, radial blur)
-- Canvas 자체에 **screen-space shake** (배율 ≥ 5x: 4px, ≥ 10x: 8px, 200ms decay)
+## 변경 파일
 
-**1-7. 잭팟 연출 (배율 ≥ MAX_MULT × 0.5)**
-- 화면 전체 0.4초 골드 플래시 (composite operation 'screen')
-- 보드 위 슬로우 골드 파티클 fountain (1.5초)
-- 슬롯 자체가 흰색으로 풀 페인트 + 강한 글로우 펄스 3회
+1. `src/shared/mode/ModeContext.tsx`
+   - `RTP.demo`: 1.00 → **0.97** (리얼과 동일)
+   - `rtpLabel`도 통일.
 
----
+2. `src/shared/wallet/demoWallet.ts` **(신규)**
+   - 통합 데모 지갑 store (현재 게임별 balance 대체).
+   - `INITIAL_GRANT = 10_000`, `getBalance()`, `debit(n)`, `credit(n)`, `hasBeenGranted()`, `resetForDev()`.
+   - localStorage 키: `phonara.demo.wallet.v1` (`{ balance, granted, totalBets, maxMultiplier }`).
+   - 리얼 지갑(`realWallet.ts`)도 같이 신설, 초기 0.
 
-### 2. 신규 파일: `src/shared/games/plinko/PlinkoSFX.ts`
+3. `src/shared/games/state/persistedGameState.ts`
+   - `DicePersisted` / `CrashPersisted`에서 `balance` 제거. nonce/history/UI 상태만 보존.
+   - balance는 항상 현재 모드의 wallet에서 읽음.
 
-**WebAudio API 기반 (외부 dep 0)** — ElevenLabs 호출 없음, 모든 음 합성.
+4. `src/shared/games/plinko/PlinkoBoard.tsx`, `src/features/games/dice/DiceScreen.tsx`, `src/features/games/crash/CrashScreen.tsx`
+   - balance read/write를 `useWallet(mode)` 훅으로 전환.
+   - 베팅 시 잔액 부족 → `OutOfDemoModal` 띄움.
 
-- `pegHit(velocity)` — 짧은 click (200Hz triangle + 1500Hz sine, 30ms decay)
-- `ballRelease()` — woosh (white noise + lowpass sweep, 200ms)
-- `landSound(multiplier)` — 배율 따라 톤 변화:
-  - 손실(<1x): low thud (80Hz, 150ms)
-  - 소형(1-2x): coin chime (E5 + G5, 250ms)
-  - 중형(2-5x): triple chime (C5-E5-G5 arpeggio)
-  - 대형(5x+): 잭팟 fanfare (5음 골드 글리산도 + bell)
-- `setMuted(bool)` — 전역 토글
-- AudioContext lazy init (첫 유저 제스처 후)
+5. `src/shared/wallet/OutOfDemoModal.tsx` **(신규)**
+   - 데모 통계 + 리얼 전환 CTA.
 
-`PlinkoBoard`에서 mute 버튼 1개 추가 (헤더 우측, 🔊/🔇 아이콘).
+6. `src/shared/wallet/DemoLowBanner.tsx` **(신규)**
+   - 잔액 ≤ 30%일 때 베팅 패널 하단에 표시.
 
----
+7. `src/shared/mode/ModeToggle.tsx`
+   - 리얼 → 데모 전환 시 confirm 모달.
+   - 데모 모드일 때 토글 옆에 잔액 표시("데모 ₩7,200 남음").
 
-### 3. PlinkoBoard.tsx — 잭팟 오버레이 & 햅틱
+8. `src/shared/games/rules/gameRules.ts`
+   - "데모 vs 리얼" 섹션 문구 갱신:
+     - 데모: "1회 체험 크레딧 ₩10,000. 모두 사용 시 추가 지급 없음. RTP 97% (리얼과 동일)."
+     - 리얼: "실제 입금/출금. RTP 97%. Provably Fair."
 
-- 배율 ≥ MAX × 0.5 시 **풀스크린 오버레이**:
-  - 중앙 거대 "{multiplier}x" 텍스트 (스프링 scale-in)
-  - 골드 파티클 컨페티 (1.5초 후 자동 fade)
-  - 사용자 클릭/탭하면 즉시 dismiss
-- `navigator.vibrate` 호출 — 착지 시 [30] / 잭팟 [50, 30, 80] (모바일만)
-- mute 상태 `localStorage` 영속화
+## 추가 결정사항
 
----
+- **데모 통계 노출**: 모달에서 보여줄 통계는 `totalBets`, `maxMultiplier`, `netResult` 3가지로 한정.
+- **첫 입금 보너스 카피**: 실제 보너스 기능은 이번 라운드에서 구현 X. 카피만 노출(전환 유도용 마케팅 문구).
+- **데모 리셋 백도어**: URL 쿼리 `?reset_demo=1` 로만 가능. UI에는 노출 안 함.
 
-### 4. 마이크로 인터랙션
+## 마이그레이션 처리
 
-- **위험도/행 전환**: 보드가 부드럽게 morph (300ms) — 기존 즉시 교체 대신
-- **잔액 변화**: count-up 애니메이션 (이전→신규 400ms)
-- **결과 카드**: 기존 작은 pill → 큰 배율 + "베팅 × 배율 = payout" 계산식 한 줄
-- **히스토리 칩**: 새 항목 추가 시 좌측에서 slide-in + 우측 페이드 아웃
+기존 사용자의 게임별 `balance` 값은 무시(데모 신규 지갑이 1회 지급으로 새로 시작). 깨끗한 컷오버, 호환 코드 없음.
 
----
+## 확인 필요
 
-### 5. 품질 시스템 확장 (선택적, 자동)
+- (A) 초기 데모 크레딧 금액: **10,000원** 으로 진행할까요, 아니면 다른 금액(예: 50,000)?
+- (B) 데모/리얼 잔액 게임 간 **공유**가 맞나요? (현재는 게임별 분리)
 
-`PlinkoRenderer.quality`에 자동 감지 추가:
-- `requestIdleCallback` + FPS 추적, 50fps 미만 30프레임 연속 → quality 1단계 낮춤
-- 모바일 (`window.innerWidth < 768`): 기본 "medium", 잭팟 효과는 유지
-
----
-
-### 6. 변경 파일 요약
-
-| 파일 | 변경 | 라인 |
-|---|---|---|
-| `PlinkoRenderer.ts` | 핀/공/슬롯/배경/파티클/잭팟/셰이크 전면 리워크 | ~600 → ~900 |
-| `PlinkoSFX.ts` | **신규** WebAudio 합성 사운드 | 신규 ~180 |
-| `PlinkoBoard.tsx` | mute 토글, 잭팟 오버레이, 햅틱, 계산식 결과 카드 | +~80 |
-| `PlinkoEngine.ts` | **변경 없음** | 0 |
-| `PlinkoScreen.tsx` | **변경 없음** | 0 |
-
-### 비변경 보장
-- `PlinkoEngine.dropPath` API 동일 → 결정론적 결과 그대로
-- `PlinkoRenderer` public API (setQuality/setRows/setRisk/resize/playDrop/stop/destroy) 동일
-- 회계 로직 (`amount × multiplier`, `rake 3%`) 그대로
-- 더블탭 가드 (`placingRef`) 그대로
-
-### Verification
-- 16행 high risk 좌/우 끝 슬롯(잭팟) 강제 시드 → 잭팟 오버레이 + 셰이크 + fanfare 사운드
-- 1.0x 슬롯 → 본전, 톤 다운된 thud, 오버레이 없음
-- mute on → 사운드 0, 시각 효과 유지
-- 자동베팅 30회 연속 → FPS drop 없음, 메모리 누수 없음
-- iPhone SE 노스크롤 유지
-
----
-
-### 한 번에 다 들어갑니다 (1 PR, ~600 line diff).
-사운드는 ElevenLabs 합성 SFX 옵션도 있지만 **레이턴시(매 충돌 fetch 불가)·비용** 때문에 WebAudio 절차적 합성이 정답. 잭팟 fanfare 1곡만 ElevenLabs로 미리 생성해서 캐싱하는 옵션은 원하시면 추가 가능 — 일단 100% 로컬 합성으로 진행합니다.
-
-진행해도 될까요?
+승인 시 (A) 10,000원, (B) 공유 지갑으로 진행합니다.
