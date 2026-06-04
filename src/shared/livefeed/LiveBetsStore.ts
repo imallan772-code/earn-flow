@@ -7,7 +7,7 @@
  */
 import { randomMaskedNick } from "./nicknames";
 
-export type LiveGame = "crash" | "dice" | "slots" | "mines" | "roulette";
+export type LiveGame = "crash" | "dice" | "plinko" | "slots" | "mines" | "roulette";
 export type LiveStatus = "pending" | "cashout" | "bust" | "win" | "loss";
 
 export interface LiveBet {
