@@ -2,7 +2,7 @@
  * PlinkoEngine — 지존급 Provably Fair + 고품질 물리 엔진
  *
  * 목표: Stake.com + Rollbit을 압도하는 수준의 결정론, 물리, 확장성
- * 특징: 완전 순수, Web Worker 이식 용이, 서버 권위 대비 구조 포함
+ * 특징: 완전 순수, Web Worker 이식 용이, 서버 권위 대비 구조
  */
 
 export type RiskLevel = "low" | "medium" | "high";
@@ -48,7 +48,7 @@ export class PlinkoEngine {
 
     const rand = mulberry32(hashSeed(seed));
     const path: number[] = [];
-    let finalSlot = 0;
+    let finalSlot = Math.floor(rows / 2); // 중앙에서 시작
 
     for (let i = 0; i < rows; i++) {
       const dir = rand() < 0.5 ? 0 : 1;
@@ -56,11 +56,11 @@ export class PlinkoEngine {
       finalSlot += dir;
     }
 
-    const multiplier = MULTIPLIERS[risk][rows][finalSlot] ?? 1.0;
+    const multiplier = MULTIPLIERS[risk][rows]?.[finalSlot] ?? 1.0;
 
     return {
       path,
-      finalSlot,
+      finalSlot: Math.max(0, Math.min(rows, finalSlot)),
       multiplier,
       totalRows: rows,
       risk,
@@ -85,11 +85,11 @@ export class PlinkoEngine {
     let progress = 0;
 
     for (let row = 0; row < path.length; row++) {
-      for (let subStep = 0; subStep < 12; subStep++) {
-        // 부드러운 보간
-        vy += 0.0011;
-        vy *= 0.982;
-        vx *= 0.978;
+      for (let sub = 0; sub < 14; sub++) {
+        // 더 부드러운 보간
+        vy += 0.00115;
+        vy *= 0.981;
+        vx *= 0.977;
 
         x += vx;
         y += vy;
@@ -97,23 +97,23 @@ export class PlinkoEngine {
         // Peg 충돌
         if (y >= (row + 1) * rowGap) {
           const dir = path[row];
-          vx += dir === 0 ? -0.018 : 0.018;
-          vy *= 0.52; // 강한 bounce
+          vx += dir === 0 ? -0.019 : 0.019;
+          vy *= 0.48; // 강한 bounce
           y = (row + 1) * rowGap;
         }
 
-        progress = (row + subStep / 12) / path.length;
-        onUpdate(x, y, vy, progress);
+        progress = (row + sub / 14) / path.length;
+        onUpdate(Math.max(0, Math.min(1, x)), y, vy, progress);
       }
     }
 
-    // 최종 슬롯에 정확히 도착
+    // 최종 슬롯 정확 도착
     onUpdate(result.finalSlot / totalRows, 1.0, 0, 1.0);
   }
 }
 
 /* ------------------------------------------------------------------ */
-/* Internal deterministic helpers */
+/* Internal deterministic helpers (zero imports) */
 /* ------------------------------------------------------------------ */
 
 function hashSeed(input: string): number {
