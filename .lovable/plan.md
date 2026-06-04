@@ -1,47 +1,74 @@
-# Plinko v5.1.1 — 진짜 버그만 핀포인트 수정
+# Round G Part 0 — Plinko 라우트 등록 + Dice 자동베팅 복원
 
-리뷰 3개 중 **1개만 실체 있는 버그**. 나머지는 변수명 변경/이중 cap이라 무시.
+두 작업 묶음. 둘 다 작고 독립적.
 
-## 검증 결과
+---
 
-| 리뷰 지적 | 판정 | 근거 |
-|---|---|---|
-| peg 좌표 불일치 | ❌ False | Renderer `(c+0.5)/(row+2)` ≡ Engine `(cumRight+0.5)/(row+2)`. 수식 동일, jitter 0 |
-| useEffect deps eslint-disable | ⚠️ 사소 | useRef + if-guard로 Strict Mode 안전. 주석만 보강 |
-| **MAX_MULT 하드코딩** | ✅ **True** | PlinkoBoard.tsx L279-287에 하드맵. 테이블 변경 시 BetSummary 거짓말 |
-| ResizeObserver 390px cap | ❌ False | 부모 wrapper에서 이미 cap. 이중 cap은 미래 태블릿 대응 발목 |
+## A. Plinko 라우트 등록 (3파일)
 
-## 수정 (3파일)
+PlinkoBoard 완성됐지만 어디서도 import 안 됨. 진입 경로 연결.
 
-### 1. `src/shared/games/plinko/PlinkoEngine.ts`
-파일 하단에 helper export 추가:
-```ts
-export function getMaxMultiplier(risk: RiskLevel, rows: RowCount): number {
-  return Math.max(...MULTIPLIERS[risk][rows]);
+### A-1. `src/features/games/plinko/PlinkoScreen.tsx` (신규)
+얇은 래퍼. `useMode()` → `PlinkoBoard`.
+```tsx
+import { useMode } from "@/shared/mode/ModeContext";
+import { PlinkoBoard } from "@/shared/games/plinko/PlinkoBoard";
+
+export function PlinkoScreen() {
+  const { mode } = useMode();
+  return <PlinkoBoard mode={mode} />;
 }
 ```
 
-### 2. `src/shared/games/plinko/PlinkoBoard.tsx`
-- `maxMultFor` 함수 전체 삭제 (L278-287)
-- import에 `getMaxMultiplier` 추가
-- L246: `targetMultiplier={getMaxMultiplier(risk, rows)}`로 교체
-- ResizeObserver useEffect 위에 deps 명시 주석 한 줄 추가 (eslint-disable 사유)
+### A-2. `src/routes/_app/games.plinko.tsx` (신규)
+games.dice.tsx 패턴:
+```tsx
+export const Route = createFileRoute("/_app/games/plinko")({
+  head: () => ({ meta: [
+    { title: "Plinko · PHONARA" },
+    { name: "description", content: "Provably Fair Plinko. 8/12/16줄 × 3리스크." },
+  ]}),
+  component: PlinkoScreen,
+});
+```
 
-### 3. `src/shared/games/plinko/PlinkoRenderer.ts`
-- L440-441의 혼란스러운 `// Wait —` 주석을 1줄로 정리:
-  `// peg x: matches engine's (cumRight + 0.5) / (row + 2) — same formula.`
+### A-3. `src/features/games/GameLobby.tsx` (수정)
+- `GameId` union에 `"plinko"` 추가
+- `GAMES` 배열에 `{ id: "plinko", name: "Plinko", rtp: "97%", liveBets: ..., Icon: CircleDot, open: true, accent: "violet" }` 추가
+- 카드 클릭 분기에 `if (card.id === "plinko") return <Link to="/games/plinko">...</Link>`
 
-## 비-수정 (의도적 거부)
+### A-4. PlinkoBoard 헤더에 백버튼 확인
+PlinkoBoard 헤더 (`PLINKO` 라벨 영역)에 Lobby로 돌아가는 `ArrowLeft` + `<Link to="/games">`가 없으면 DiceScreen 패턴(L148 근처) 따라 추가. 헤더 높이 h-9 유지.
 
-- **peg 변수명 `count` → `pegCount`**: 수식 동일, 가독성 미미, 변경량 대비 가치 없음
-- **ResizeObserver 390px 이중 cap**: 부모 컨테이너 책임, Renderer는 받은 size만 신뢰
-- **DPR 재구독 / iPhone SE / mode race**: v3 또는 PR-2 (이전 합의)
+---
+
+## B. Dice 자동베팅 복원 (1파일)
+
+**회귀 원인 확정**: `src/features/games/dice/DiceScreen.tsx` L213이 `variant="compact"`. StakeBetPanel L58에서 `compact ? "manual" : tab` 강제 → Auto 탭 자체가 숨겨짐.
+
+### B-1. `src/features/games/dice/DiceScreen.tsx` 수정
+- L213 `variant="compact"` 제거 (default "full" → Manual/Auto 탭 노출)
+- L214 `showAutoTarget={false}` **유지** (Dice는 즉시 결과라 auto-cashout 타겟 무의미; auto-bet의 base bet / on-loss / on-win 증감만 유효)
+- 그 외 props 변경 없음 — `lastOutcome`은 이미 전달 중이라 autoBet reducer가 정상 동작
+
+### B-2. Plinko는 의도적으로 compact 유지
+PlinkoBoard L253-254의 `variant="compact" showAutoTarget={false}`는 그대로. (Plinko는 매 라운드 입력 인터랙션이 본질이라 auto-bet UX 부적합)
+
+---
+
+## 강제 규칙
+- `routeTree.gen.ts` 수동 편집 금지 (Vite 플러그인 자동 생성)
+- `persistedGameState.ts` 수정 금지
+- `PlinkoBoard` 시그니처 변경 금지 — Screen은 순수 래퍼
+- `StakeBetPanel` 자체는 수정 금지 — props만 조정
 
 ## 검증
-
+- `/games/plinko` 진입 → 캔버스 렌더 + 베팅 정상
+- Lobby에서 Plinko 카드 보임 + 클릭 시 라우트 이동
+- `/games/dice` 진입 → BetPanel 상단에 Manual/Auto 탭 2개 보임
+- Auto 탭에서 횟수/on-loss/on-win 설정 → Start 시 자동 진행, Stop 동작
 - TS strict GREEN
-- low/medium/high × 8/12/16 = 9 조합에서 BetSummary `targetMultiplier`가 실제 최대 슬롯과 일치
-- MULTIPLIERS 테이블 한 줄 임의로 키워보면 BetSummary가 자동 반영되는지 확인
+- iPhone SE / 14 무스크롤 유지
 
-## 완료 보고 문구
-"v5.1.1 적용: maxMultFor 하드맵 제거 → PlinkoEngine.getMaxMultiplier 단일 소스. 테이블 변경 시 BetSummary 자동 동기화."
+## 완료 보고
+"Plinko가 /games/plinko 라우트로 등록되고 Lobby에 카드 추가됨. Dice 자동베팅(Manual/Auto 탭) 복원 완료."
