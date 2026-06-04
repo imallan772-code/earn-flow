@@ -587,7 +587,3 @@ export class PlinkoRenderer {
     }
   }
 }
-
-/* Attach onLand bridge: PlinkoRenderer stores caller's callback into a private slot.
-   Implemented as monkey-patched assignment in playDrop so types remain clean. */
-// (handled inline above via this.landedCallback in playDrop)
