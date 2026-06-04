@@ -316,12 +316,15 @@ export class PlinkoRenderer {
     }
   };
 
-  private interpolateSample(cursor: number): Sample {
-    const i0 = Math.floor(cursor);
-    const i1 = Math.min(this.samples.length - 1, i0 + 1);
-    const f = cursor - i0;
+  private interpolateSample(cursor: number): Sample | null {
+    const len = this.samples.length;
+    if (len === 0) return null;
+    const i0 = Math.max(0, Math.min(len - 1, Math.floor(cursor)));
+    const i1 = Math.min(len - 1, i0 + 1);
     const a = this.samples[i0];
     const b = this.samples[i1];
+    if (!a || !b) return null;
+    const f = cursor - i0;
     return {
       x: a.x + (b.x - a.x) * f,
       y: a.y + (b.y - a.y) * f,
