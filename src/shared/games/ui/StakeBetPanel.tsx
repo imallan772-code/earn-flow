@@ -49,8 +49,13 @@ export function StakeBetPanel({
   onPlace,
   onCashout,
   bettingProgress,
+  suppressCashoutButton,
+  variant = "full",
+  showAutoTarget = true,
 }: Props) {
+  const compact = variant === "compact";
   const [tab, setTab] = useState<"manual" | "auto">("manual");
+  const effectiveTab: "manual" | "auto" = compact ? "manual" : tab;
   const [amount, setAmount] = useState(10);
   const [target, setTarget] = useState(2.0);
 
