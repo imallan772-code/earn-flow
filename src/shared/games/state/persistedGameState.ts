@@ -104,12 +104,11 @@ function createStore<T extends object>(key: string, initial: T, version = 1): St
 }
 
 // ───────── DICE ─────────
-// Dice 게임 잔액/nonce/히스토리/마지막 결과/타깃·모드/대기 베팅 보존.
-// src/features/games/dice/DiceScreen.tsx에서 사용.
+// Dice 게임 nonce/히스토리/마지막 결과/타깃·모드/대기 베팅 보존.
+// balance는 src/shared/wallet/walletStore에서 모드별로 관리.
 export interface DiceRoll { id: string; roll: number; win: boolean }
 export interface DiceOutcome { outcome: "win" | "loss"; profit: number; nonce: number; roll: number }
 export interface DicePersisted {
-  balance: number;
   nonce: number;
   history: DiceRoll[];
   lastRoll: number | null;
@@ -118,10 +117,7 @@ export interface DicePersisted {
   diceMode: "over" | "under";
   pendingAmount: number;
 }
-// TODO: Real money 모드에서는 balance/history/nonce를 Supabase로 이관.
-// localStorage는 optimistic cache로만 사용하고, settle은 Edge Function RPC로 위임.
 export const diceStore = createStore<DicePersisted>("dice", {
-  balance: 1000,
   nonce: 0,
   history: [],
   lastRoll: null,
@@ -129,28 +125,25 @@ export const diceStore = createStore<DicePersisted>("dice", {
   target: 50,
   diceMode: "over",
   pendingAmount: 10,
-});
+}, 2);
 
 // ───────── CRASH ─────────
-// Crash 게임 잔액/nonce/히스토리/마지막 결과/대기 베팅/대기 자동캐쉬아웃 보존.
-// src/features/games/crash/CrashScreen.tsx에서 사용.
+// Crash 게임 nonce/히스토리/마지막 결과/대기 베팅/대기 자동캐쉬아웃 보존.
+// balance는 walletStore에서 관리.
 export interface CrashHistoryItem { id: string; multiplier: number }
 export interface CrashOutcome { outcome: "win" | "loss"; profit: number; nonce: number }
 export interface CrashPersisted {
-  balance: number;
   nonce: number;
   history: CrashHistoryItem[];
   lastOutcome: CrashOutcome | null;
   pendingAmount: number;
   pendingTarget: number;
 }
-// TODO: Real money 모드에서는 balance/history/nonce를 Supabase로 이관.
-// localStorage는 optimistic cache로만 사용하고, settle은 Edge Function RPC로 위임.
 export const crashStore = createStore<CrashPersisted>("crash", {
-  balance: 1000,
   nonce: 0,
   history: [],
   lastOutcome: null,
   pendingAmount: 10,
   pendingTarget: 2.0,
-});
+}, 2);
+
