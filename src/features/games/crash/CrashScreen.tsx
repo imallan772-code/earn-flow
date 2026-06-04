@@ -279,13 +279,13 @@ export function CrashScreen() {
       </div>
 
       {/* bet summary — LIVE during active round, STATIC otherwise */}
-      {hasActiveBet && bet ? (
+      {bet ? (
         <BetSummaryPanel
           variant="live"
           amount={bet.amount}
           targetMultiplier={bet.autoTarget}
           getCurrentMultiplier={getCurrentMultiplier}
-          busted={phase === "crashed"}
+          busted={false}
           cashedAt={bet.cashedAt}
           onCashout={bet.cashedAt === null ? handleCashout : undefined}
         />
