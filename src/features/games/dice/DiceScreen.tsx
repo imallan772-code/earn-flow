@@ -24,6 +24,8 @@ import {
 } from "@/shared/games/dice/DiceEngine";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
 import { diceStore } from "@/shared/games/state/persistedGameState";
+import { useBalance, wallet } from "@/shared/wallet/walletStore";
+import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { cn } from "@/lib/utils";
 import { appToast } from "@/shared/ui/toast";
 import { formatPHON } from "@/lib/format";
@@ -38,7 +40,7 @@ export function DiceScreen() {
   const [phase, setPhase] = useState<DicePhase>("idle");
 
   // Persisted state
-  const balance = diceStore.use((s) => s.balance);
+  const balance = useBalance(mode);
   const nonce = diceStore.use((s) => s.nonce);
   const history = diceStore.use((s) => s.history);
   const lastRoll = diceStore.use((s) => s.lastRoll);
@@ -71,9 +73,12 @@ export function DiceScreen() {
       const pm = payoutMultiplier(winChance(activeBet.target, activeBet.mode));
       const profit = won ? profitOf(activeBet.amount, pm, mode) : -activeBet.amount;
 
+      if (won) {
+        // gross payout = stake + profit (stake was already debited at place)
+        wallet.credit(mode, activeBet.amount + profit, pm);
+      }
       diceStore.set((s) => ({
         ...s,
-        balance: won ? s.balance + activeBet.amount + profit : s.balance,
         lastRoll: roll,
         history: [{ id: `n${activeBet.nonce}`, roll, win: won }, ...s.history].slice(0, 30),
         lastOutcome: { outcome: won ? "win" : "loss", profit, nonce: activeBet.nonce, roll },
@@ -109,8 +114,9 @@ export function DiceScreen() {
 
   const handlePlace = useCallback(
     (amount: number) => {
-      if (phase !== "idle" || activeBet || amount <= 0 || amount > balance) return;
-      diceStore.set((s) => ({ ...s, balance: s.balance - amount, pendingAmount: amount }));
+      if (phase !== "idle" || activeBet || amount <= 0) return;
+      if (!wallet.tryDebit(mode, amount)) return; // demo: opens modal automatically
+      diceStore.set((s) => ({ ...s, pendingAmount: amount }));
       const liveBetId = liveBetsStore.push({
         user: "나의_베팅",
         game: "dice",
@@ -125,7 +131,7 @@ export function DiceScreen() {
       appToast.game.bet({ amount: formatPHON(amount) });
       setPhase("rolling");
     },
-    [phase, activeBet, balance, target, diceMode, mode, nonce],
+    [phase, activeBet, target, diceMode, mode, nonce],
   );
 
   const setTarget = useCallback((t: number) => diceStore.set((s) => ({ ...s, target: t })), []);
