@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Zap, Gamepad2, TrendingUp, User, type LucideIcon } from "lucide-react";
+import { Zap, Gamepad2, TrendingUp, User, Bell, type LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { springSnappy } from "../motion/springs";
@@ -15,6 +15,7 @@ const ITEMS: NavItem[] = [
   { to: "/feed", label: "Pulse", Icon: Zap, match: (p) => p === "/feed" },
   { to: "/earn", label: "Earn", Icon: Gamepad2, match: (p) => p.startsWith("/earn") },
   { to: "/exchange/BTCUSDT", label: "Trade", Icon: TrendingUp, match: (p) => p.startsWith("/exchange") },
+  { to: "/notice", label: "Notice", Icon: Bell, match: (p) => p.startsWith("/notice") || p.startsWith("/event") },
   { to: "/my", label: "My", Icon: User, match: (p) => p === "/my" },
 ];
 
