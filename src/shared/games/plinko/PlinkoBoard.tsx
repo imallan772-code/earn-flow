@@ -275,13 +275,3 @@ function slotTint(mult: number): string {
   return "var(--color-rose)";
 }
 
-/** Max-mult lookup mirrors PlinkoRenderer's MAX_MULT (kept inline to avoid extra export). */
-function maxMultFor(risk: RiskLevel, rows: RowCount): number {
-  // simple hardcoded mirror — Renderer derives from MULTIPLIERS, here we use a small map.
-  const MAX: Record<RiskLevel, Record<RowCount, number>> = {
-    low: { 8: 5.6, 12: 10, 16: 16 },
-    medium: { 8: 13, 12: 33, 16: 110 },
-    high: { 8: 29, 12: 76, 16: 1000 },
-  };
-  return MAX[risk][rows];
-}
