@@ -1,13 +1,15 @@
 /**
  * StakeBetPanel — reusable Manual/Auto bet UI for all crash-style games.
  *
- * Hosts the Round-A autoBet reducer; the parent owns the actual bet placement
- * via onBet/onCashout. UI styled with token-only colors.
+ * Auto-bet integrates the Round-A reducer. The "next bet" is React state
+ * (not a ref) so the auto-fire effect always reads a fresh value, and a
+ * rising-edge guard on `canPlace` prevents double-firing within a round.
  */
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   type AutoBetConfig,
+  type AutoBetState,
   type Strategy,
   initAutoBet,
   step as autoStep,
@@ -19,12 +21,14 @@ export interface BetCallbacks {
 }
 
 interface Props extends BetCallbacks {
-  /** "betting" | "running" — controls which action is available */
+  /** "betting" — controls whether placing is allowed */
   canPlace: boolean;
   hasActiveBet: boolean;
   balance: number;
   /** Notify when a round finalizes — feeds the auto-bet reducer */
   lastOutcome?: { outcome: "win" | "loss"; profit: number; nonce: number } | null;
+  /** Optional 0-1 progress for the betting countdown (fills the place button). */
+  bettingProgress?: number;
 }
 
 const STRATEGIES: Strategy[] = ["Flat", "Martingale", "AntiMartingale", "Fibonacci", "DAlembert"];
@@ -36,6 +40,7 @@ export function StakeBetPanel({
   lastOutcome,
   onPlace,
   onCashout,
+  bettingProgress,
 }: Props) {
   const [tab, setTab] = useState<"manual" | "auto">("manual");
   const [amount, setAmount] = useState(10);
@@ -52,39 +57,59 @@ export function StakeBetPanel({
     stopOnLoss: 0,
   });
   const [autoRunning, setAutoRunning] = useState(false);
-  const autoStateRef = useRef(initAutoBet(cfg));
+  const [autoState, setAutoState] = useState<AutoBetState | null>(null);
   const lastNonceRef = useRef<number | null>(null);
+  const placedNonceRef = useRef<number | null>(null);
+  const prevCanPlaceRef = useRef(canPlace);
 
-  // when last outcome lands, advance auto state and place next bet
+  // when last outcome lands, advance auto state
   useEffect(() => {
-    if (!autoRunning || !lastOutcome) return;
+    if (!autoRunning || !lastOutcome || !autoState) return;
     if (lastOutcome.nonce === lastNonceRef.current) return;
     lastNonceRef.current = lastOutcome.nonce;
-    autoStateRef.current = autoStep(autoStateRef.current, {
+    const next = autoStep(autoState, {
       outcome: lastOutcome.outcome,
       delta: lastOutcome.profit,
     });
-    if (!autoStateRef.current.running) {
+    setAutoState(next);
+    if (!next.running) setAutoRunning(false);
+  }, [lastOutcome, autoRunning, autoState]);
+
+  // place next auto bet on rising edge of canPlace (once per betting phase)
+  useEffect(() => {
+    const prev = prevCanPlaceRef.current;
+    prevCanPlaceRef.current = canPlace;
+    if (!autoRunning || !autoState || !autoState.running) return;
+    if (hasActiveBet) return;
+    // fire when canPlace turns true (new betting phase) or on first start
+    const phaseKey = lastOutcome?.nonce ?? -1;
+    if (!canPlace) return;
+    const justOpened = !prev && canPlace;
+    const firstStart = placedNonceRef.current === null;
+    if (!justOpened && !firstStart) return;
+    if (placedNonceRef.current === phaseKey && !firstStart) return;
+    const bet = Math.min(autoState.currentBet, balance);
+    if (bet <= 0) {
       setAutoRunning(false);
       return;
     }
-  }, [lastOutcome, autoRunning]);
-
-  // place next auto bet when betting phase opens
-  useEffect(() => {
-    if (!autoRunning || !canPlace || hasActiveBet) return;
-    const bet = autoStateRef.current.currentBet;
+    placedNonceRef.current = phaseKey;
     onPlace(bet, target);
-  }, [autoRunning, canPlace, hasActiveBet, onPlace, target]);
+  }, [autoRunning, autoState, canPlace, hasActiveBet, balance, lastOutcome, onPlace, target]);
 
   function startAuto() {
-    autoStateRef.current = initAutoBet(cfg);
+    const s = initAutoBet({ ...cfg, baseBet: amount });
+    setAutoState(s);
     lastNonceRef.current = null;
+    placedNonceRef.current = null;
     setAutoRunning(true);
   }
   function stopAuto() {
     setAutoRunning(false);
+    placedNonceRef.current = null;
   }
+
+  const progressPct = Math.max(0, Math.min(1, bettingProgress ?? 0)) * 100;
 
   return (
     <div className="glass-2 flex flex-col gap-3 rounded-2xl p-3">
@@ -105,6 +130,27 @@ export function StakeBetPanel({
           </button>
         ))}
       </div>
+
+      {/* AUTO HUD */}
+      {tab === "auto" && autoRunning && autoState && (
+        <div className="glass-1 flex items-center justify-between rounded-xl px-3 py-2 text-[11px]">
+          <span className="font-bold uppercase tracking-wider text-[var(--color-cyan)]">
+            ● AUTO
+          </span>
+          <span className="text-[var(--color-muted)]">
+            라운드 <span className="font-numeric text-[var(--color-foreground)]">{autoState.betsPlaced}</span>
+            {cfg.numberOfBets > 0 ? ` / ${cfg.numberOfBets}` : " / ∞"}
+          </span>
+          <span
+            className={cn(
+              "font-numeric font-bold",
+              autoState.pnl >= 0 ? "text-[var(--color-emerald)]" : "text-[var(--color-rose)]",
+            )}
+          >
+            {autoState.pnl >= 0 ? "+" : ""}{autoState.pnl.toFixed(2)}
+          </span>
+        </div>
+      )}
 
       {/* amount */}
       <Field label="베팅액">
@@ -135,14 +181,28 @@ export function StakeBetPanel({
 
       {/* auto target */}
       <Field label="자동 캐쉬아웃 (배수)">
-        <input
-          type="number"
-          min={1.01}
-          step={0.01}
-          value={target}
-          onChange={(e) => setTarget(Math.max(1.01, Number(e.target.value) || 1.01))}
-          className="font-numeric w-full rounded-lg bg-[var(--color-bg-0)] px-2 py-1.5 text-sm outline-none"
-        />
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setTarget((t) => Math.max(1.01, +(t - 0.1).toFixed(2)))}
+            className="rounded-lg bg-[var(--color-surface-hi)] px-2 py-1.5 text-[11px] font-bold"
+          >
+            −
+          </button>
+          <input
+            type="number"
+            min={1.01}
+            step={0.01}
+            value={target}
+            onChange={(e) => setTarget(Math.max(1.01, Number(e.target.value) || 1.01))}
+            className="font-numeric flex-1 rounded-lg bg-[var(--color-bg-0)] px-2 py-1.5 text-sm outline-none"
+          />
+          <button
+            onClick={() => setTarget((t) => +(t + 0.1).toFixed(2))}
+            className="rounded-lg bg-[var(--color-surface-hi)] px-2 py-1.5 text-[11px] font-bold"
+          >
+            +
+          </button>
+        </div>
       </Field>
 
       {/* auto-only config */}
@@ -203,7 +263,7 @@ export function StakeBetPanel({
         hasActiveBet ? (
           <button
             onClick={onCashout}
-            className="rounded-xl bg-[var(--color-warning)] py-3 text-sm font-extrabold text-[var(--color-bg-0)] shadow-glow-purple active:scale-[0.98]"
+            className="rounded-xl bg-[var(--color-warning)] py-3 text-sm font-extrabold text-[var(--color-bg-0)] shadow-glow-gold active:scale-[0.98]"
           >
             캐쉬아웃
           </button>
@@ -212,13 +272,20 @@ export function StakeBetPanel({
             disabled={!canPlace || amount <= 0}
             onClick={() => onPlace(amount, target)}
             className={cn(
-              "rounded-xl py-3 text-sm font-extrabold transition active:scale-[0.98]",
+              "relative overflow-hidden rounded-xl py-3 text-sm font-extrabold transition active:scale-[0.98]",
               canPlace && amount > 0
-                ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)]"
+                ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)] shadow-glow-cyan"
                 : "bg-[var(--color-surface-hi)] text-[var(--color-muted-2)]"
             )}
           >
-            {canPlace ? "베팅" : "다음 라운드 대기"}
+            {bettingProgress != null && canPlace && (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-y-0 left-0 bg-[color-mix(in_oklab,var(--color-bg-0)_28%,transparent)] transition-[width] duration-100"
+                style={{ width: `${progressPct}%` }}
+              />
+            )}
+            <span className="relative">{canPlace ? "베팅 (다음 라운드)" : "라운드 진행 중"}</span>
           </button>
         )
       ) : autoRunning ? (
@@ -231,7 +298,7 @@ export function StakeBetPanel({
       ) : (
         <button
           onClick={startAuto}
-          className="rounded-xl bg-[var(--color-emerald)] py-3 text-sm font-extrabold text-[var(--color-bg-0)]"
+          className="rounded-xl bg-[var(--color-emerald)] py-3 text-sm font-extrabold text-[var(--color-bg-0)] shadow-glow-cyan"
         >
           자동 시작
         </button>

@@ -38,6 +38,7 @@ export function DiceScreen() {
   const [lastRoll, setLastRoll] = useState<number | null>(null);
   const [resultFlash, setResultFlash] = useState<"win" | "loss" | null>(null);
   const [busy, setBusy] = useState(false);
+  const [lastProfit, setLastProfit] = useState<number | null>(null);
   const [lastOutcome, setLastOutcome] = useState<
     { outcome: "win" | "loss"; profit: number; nonce: number } | null
   >(null);
@@ -63,17 +64,21 @@ export function DiceScreen() {
       const profit = win ? amount * (pm - 1) : -amount;
       if (win) setBalance((b) => b + amount * pm);
       setLastRoll(roll);
+      setLastProfit(profit);
       setResultFlash(win ? "win" : "loss");
       setHistory((h) => [{ id: `n${nonce}`, roll, win }, ...h].slice(0, 30));
       setLastOutcome({ outcome: win ? "win" : "loss", profit, nonce });
       if (win) appToast.game.win({ amount: formatPHON(profit) });
       else appToast.game.lose({ amount: formatPHON(amount) });
       setNonce((n) => n + 1);
-      window.setTimeout(() => setResultFlash(null), 600);
+      window.setTimeout(() => setResultFlash(null), 800);
       window.setTimeout(() => setBusy(false), 150);
     },
     [busy, balance, nonce, target, mode],
   );
+
+  const isWinFlash = resultFlash === "win";
+  const isLossFlash = resultFlash === "loss";
 
   return (
     <div className="flex flex-col gap-3">
@@ -85,13 +90,16 @@ export function DiceScreen() {
         >
           <ArrowLeft size={16} />
         </Link>
-        <div>
-          <h1 className="text-xl font-extrabold">Dice</h1>
-          <p className="text-[11px] text-[var(--color-muted)]">99% RTP · Provably Fair</p>
+        <div className="min-w-0">
+          <h1 className="text-xl font-extrabold leading-tight">Dice</h1>
+          <p className="text-[10px] text-[var(--color-muted)]">99% RTP · Provably Fair</p>
         </div>
+        <span className="glass-1 ml-auto rounded-full px-2.5 py-1 text-[10px] font-bold text-[var(--color-muted)] font-numeric">
+          #{nonce.toString().padStart(4, "0")}
+        </span>
         <button
           onClick={() => setShowFair(true)}
-          className="glass-1 ml-auto flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold"
+          className="glass-1 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold"
         >
           <ShieldCheck size={12} className="text-[var(--color-emerald)]" />
           공정성
@@ -99,12 +107,12 @@ export function DiceScreen() {
       </header>
 
       {/* history strip */}
-      <ul className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
+      <ul className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none">
         {history.map((h) => (
           <li
             key={h.id}
             className={cn(
-              "font-numeric shrink-0 rounded-full px-2 py-1 text-[11px] font-bold",
+              "font-numeric shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-extrabold",
               h.win
                 ? "bg-[color-mix(in_oklab,var(--color-emerald)_22%,transparent)] text-[var(--color-emerald)]"
                 : "bg-[color-mix(in_oklab,var(--color-rose)_22%,transparent)] text-[var(--color-rose)]",
@@ -121,40 +129,55 @@ export function DiceScreen() {
       {/* result display */}
       <div
         className={cn(
-          "glass-2 relative flex aspect-[4/3] items-center justify-center rounded-2xl transition-all",
-          resultFlash === "win" && "ring-2 ring-[var(--color-emerald)]",
-          resultFlash === "loss" && "animate-pulse ring-2 ring-[var(--color-rose)]",
+          "relative flex aspect-[5/4] items-center justify-center overflow-hidden rounded-2xl border border-[var(--color-border)] transition-all",
+          isWinFlash && "ring-2 ring-[var(--color-emerald)] shadow-glow-cyan",
+          isLossFlash && "animate-crash-shake ring-2 ring-[var(--color-rose)]",
         )}
-        style={{ background: "var(--color-bg-1)" }}
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 60% at 50% 50%, color-mix(in oklab, var(--color-purple) 14%, transparent), transparent 70%), var(--color-bg-1)",
+        }}
       >
         <div className="flex flex-col items-center gap-3">
           <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-muted)]">
             Roll Result
           </div>
           <div
-            className="font-numeric text-7xl font-black"
+            key={`${lastRoll}-${nonce}`}
+            className={cn(
+              "font-numeric text-7xl font-black tabular-nums",
+              resultFlash && "animate-result-pop",
+            )}
             style={{
-              color: resultFlash === "loss"
+              color: isLossFlash
                 ? "var(--color-rose)"
-                : resultFlash === "win"
+                : isWinFlash
                   ? "var(--color-emerald)"
                   : "var(--color-foreground)",
+              textShadow: isWinFlash
+                ? "0 0 28px color-mix(in oklab, var(--color-emerald) 60%, transparent)"
+                : isLossFlash
+                  ? "0 0 28px color-mix(in oklab, var(--color-rose) 60%, transparent)"
+                  : "none",
             }}
           >
             {lastRoll != null ? lastRoll.toFixed(2) : "—"}
           </div>
-          {resultFlash && (
+          {resultFlash && lastProfit != null && (
             <div
-              className="rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-wider"
+              className="animate-result-pop rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-wider"
               style={{
-                background: resultFlash === "win"
+                background: isWinFlash
                   ? "color-mix(in oklab, var(--color-emerald) 22%, transparent)"
                   : "color-mix(in oklab, var(--color-rose) 22%, transparent)",
-                color: resultFlash === "win" ? "var(--color-emerald)" : "var(--color-rose)",
+                color: isWinFlash ? "var(--color-emerald)" : "var(--color-rose)",
               }}
             >
-              {resultFlash}
+              {isWinFlash ? `WIN +${lastProfit.toFixed(2)}` : `LOSS ${lastProfit.toFixed(2)}`}
             </div>
+          )}
+          {!resultFlash && lastRoll == null && (
+            <div className="text-[11px] text-[var(--color-muted-2)]">베팅을 시작하세요</div>
           )}
         </div>
       </div>
@@ -170,7 +193,7 @@ export function DiceScreen() {
         />
       </div>
 
-      {/* bet panel — reuses Crash component */}
+      {/* bet panel — instant rounds, always allow place when not busy */}
       <StakeBetPanel
         canPlace={!busy}
         hasActiveBet={false}
