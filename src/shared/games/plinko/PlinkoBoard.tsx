@@ -1,35 +1,43 @@
 /**
- * PlinkoBoard — canvas + controls + bet panel. No header/back (Screen owns).
+ * PlinkoBoard — canvas + controls + bet panel + SFX + jackpot overlay.
  *
- * TODO: Round G Part 1 완료 후 GameShell + useGameRound + plinkoStore로 마이그레이션 예정.
- *       현재는 임시 useState 구조. persistedGameState.ts 는 수정하지 않는다.
- * TODO: Real money 모드 — handlePlace 안의 engine.dropPath 호출을 Supabase Edge
- *       Function RPC로 위임. 잔액/히스토리는 서버 응답으로만 동기화 (현재는 optimistic).
- *
- * mode 는 부모 라우트(useMode())에서 prop 으로 주입한다. 내부 useState 금지.
+ * Visual/audio/haptic upgrades wired through PlinkoSFX and renderer callbacks.
+ * Engine + payout accounting unchanged.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PlinkoEngine, getMaxMultiplier, type RiskLevel, type RowCount } from "./PlinkoEngine";
+import { PlinkoEngine, getMaxMultiplier, MULTIPLIERS, type RiskLevel, type RowCount } from "./PlinkoEngine";
 import { PlinkoRenderer, type QualityLevel } from "./PlinkoRenderer";
+import { getPlinkoSFX } from "./PlinkoSFX";
 import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
 import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { cn } from "@/lib/utils";
+import { Volume2, VolumeX } from "lucide-react";
 
 export interface PlinkoBoardProps {
   mode: "demo" | "real";
-  /** Optional callback so the parent screen can surface lastOutcome → for auto-bet / fairness modal. */
   onOutcome?: (o: { outcome: "win" | "loss"; profit: number; nonce: number }) => void;
 }
 
 const ROW_OPTIONS: RowCount[] = [8, 12, 16];
 const RISK_OPTIONS: RiskLevel[] = ["low", "medium", "high"];
 const RISK_LABEL: Record<RiskLevel, string> = { low: "낮음", medium: "보통", high: "높음" };
+const MUTE_KEY = "phonara.plinko.muted";
 
 interface HistoryEntry {
   id: string;
   multiplier: number;
   slot: number;
+}
+
+interface LastOutcome {
+  outcome: "win" | "loss";
+  profit: number;
+  multiplier: number;
+  bet: number;
+  payout: number;
+  nonce: number;
+  jackpot: boolean;
 }
 
 export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
@@ -40,21 +48,41 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
   const [rows, setRows] = useState<RowCount>(16);
   const [risk, setRisk] = useState<RiskLevel>("medium");
   const [pendingAmount, setPendingAmount] = useState(10);
-  const [lastOutcome, setLastOutcome] = useState<{
-    outcome: "win" | "loss";
-    profit: number;
-    nonce: number;
-  } | null>(null);
+  const [lastOutcome, setLastOutcome] = useState<LastOutcome | null>(null);
+  const [muted, setMuted] = useState(false);
+  const [jackpot, setJackpot] = useState<LastOutcome | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<PlinkoEngine | null>(null);
   const rendererRef = useRef<PlinkoRenderer | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** Synchronous double-tap lock — blocks rapid second clicks before React state updates. */
+  const jackpotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const placingRef = useRef(false);
 
   const quality: QualityLevel = useMemo(() => (mode === "real" ? "high" : "medium"), [mode]);
+  const maxMult = useMemo(() => getMaxMultiplier(risk, rows), [risk, rows]);
+
+  // Load mute pref
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem(MUTE_KEY);
+      if (v === "1") {
+        setMuted(true);
+        getPlinkoSFX().setMuted(true);
+      }
+    } catch { /* noop */ }
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    setMuted((m) => {
+      const next = !m;
+      getPlinkoSFX().setMuted(next);
+      try { localStorage.setItem(MUTE_KEY, next ? "1" : "0"); } catch { /* noop */ }
+      if (!next) getPlinkoSFX().resume();
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (!engineRef.current) engineRef.current = new PlinkoEngine();
@@ -64,11 +92,20 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     if (!engineRef.current) engineRef.current = new PlinkoEngine();
-    rendererRef.current = new PlinkoRenderer(canvas, { quality, rows, risk });
+    rendererRef.current = new PlinkoRenderer(canvas, {
+      quality,
+      rows,
+      risk,
+      onPegHit: (vel) => getPlinkoSFX().pegHit(vel),
+    });
     return () => {
       if (settleTimerRef.current) {
         clearTimeout(settleTimerRef.current);
         settleTimerRef.current = null;
+      }
+      if (jackpotTimerRef.current) {
+        clearTimeout(jackpotTimerRef.current);
+        jackpotTimerRef.current = null;
       }
       rendererRef.current?.destroy();
       rendererRef.current = null;
@@ -103,13 +140,16 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
 
   const handlePlace = useCallback(
     (amount: number) => {
-      // Synchronous double-tap guard FIRST — must precede the React-state guards
-      // because rapid taps in the same tick all see stale `phase === "idle"`.
       if (placingRef.current) return;
       if (phase !== "idle") return;
       if (amount <= 0 || amount > balance) return;
       if (!engineRef.current || !rendererRef.current) return;
       placingRef.current = true;
+
+      // Unlock + play release SFX (user gesture path)
+      const sfx = getPlinkoSFX();
+      sfx.resume();
+      sfx.ballRelease();
 
       setBalance((b) => b - amount);
       setPendingAmount(amount);
@@ -118,7 +158,6 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
       const seed = `phonara-plinko-${nonce}`;
       const result = engineRef.current.dropPath(seed, rows, risk);
 
-      // Push pending bet into live feed.
       const liveBetId = liveBetsStore.push({
         user: "나의_베팅",
         game: "plinko",
@@ -131,7 +170,6 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
       });
 
       rendererRef.current.playDrop(result, engineRef.current, (slot, multiplier) => {
-        // House edge applies to payout only — displayed multiplier always matches the slot label.
         const grossPayout = amount * multiplier;
         const rake = mode === "real" ? grossPayout * 0.03 : 0;
         const payout = grossPayout - rake;
@@ -140,9 +178,35 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
 
         if (payout > 0) setBalance((b) => b + payout);
         setHistory((h) => [{ id: `n${nonce}-${slot}`, multiplier, slot }, ...h].slice(0, 30));
-        const outcome = { outcome: won ? ("win" as const) : ("loss" as const), profit, nonce };
-        setLastOutcome(outcome);
-        onOutcome?.(outcome);
+
+        const max = Math.max(...MULTIPLIERS[risk][rows]);
+        const isJackpot = multiplier >= max * 0.5 && multiplier >= 5;
+        const outcomePayload: LastOutcome = {
+          outcome: won ? "win" : "loss",
+          profit,
+          multiplier,
+          bet: amount,
+          payout,
+          nonce,
+          jackpot: isJackpot,
+        };
+        setLastOutcome(outcomePayload);
+        onOutcome?.({ outcome: outcomePayload.outcome, profit, nonce });
+
+        // SFX + haptic
+        sfx.landSound(multiplier, max);
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          try {
+            navigator.vibrate(isJackpot ? [50, 30, 80] : won ? [30] : [12]);
+          } catch { /* noop */ }
+        }
+
+        // Jackpot overlay
+        if (isJackpot) {
+          setJackpot(outcomePayload);
+          if (jackpotTimerRef.current) clearTimeout(jackpotTimerRef.current);
+          jackpotTimerRef.current = setTimeout(() => setJackpot(null), 2200);
+        }
 
         liveBetsStore.update(liveBetId, {
           multiplier: won ? multiplier : null,
@@ -157,7 +221,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
           setPhase("idle");
           setNonce((n) => n + 1);
           settleTimerRef.current = null;
-          placingRef.current = false; // release lock for next round
+          placingRef.current = false;
         }, 800);
       });
     },
@@ -168,43 +232,90 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      {/* History strip */}
-      <ul className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none">
-        {history.length === 0 ? (
-          <li className="text-[11px] text-[var(--color-muted-2)]">아직 라운드 없음</li>
-        ) : (
-          history.slice(0, 12).map((h) => (
-            <li
-              key={h.id}
-              className="font-numeric shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-extrabold"
-              style={{
-                background: `color-mix(in oklab, ${slotTint(h.multiplier)} 18%, transparent)`,
-                color: slotTint(h.multiplier),
-              }}
-            >
-              {h.multiplier}x
-            </li>
-          ))
-        )}
-      </ul>
+      {/* History strip + mute */}
+      <div className="flex items-center gap-2">
+        <ul className="-mx-1 flex flex-1 gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none">
+          {history.length === 0 ? (
+            <li className="text-[11px] text-[var(--color-muted-2)]">아직 라운드 없음</li>
+          ) : (
+            history.slice(0, 12).map((h) => (
+              <li
+                key={h.id}
+                className="font-numeric shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-extrabold animate-fade-in"
+                style={{
+                  background: `color-mix(in oklab, ${slotTint(h.multiplier)} 18%, transparent)`,
+                  color: slotTint(h.multiplier),
+                }}
+              >
+                {h.multiplier}x
+              </li>
+            ))
+          )}
+        </ul>
+        <button
+          onClick={toggleMute}
+          className="grid size-8 shrink-0 place-items-center rounded-lg text-[var(--color-muted)] transition hover:text-[var(--color-foreground)]"
+          aria-label={muted ? "사운드 켜기" : "사운드 끄기"}
+          title={muted ? "사운드 켜기" : "사운드 끄기"}
+        >
+          {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+        </button>
+      </div>
 
-      {/* Canvas — fixed-ish height, page scrolls */}
+      {/* Canvas */}
       <div
         ref={wrapRef}
         className="relative h-[460px] w-full overflow-hidden rounded-2xl bg-[var(--color-bg-1,#0a0f1a)] ring-1 ring-[var(--color-border)]"
       >
         <canvas ref={canvasRef} className="block h-full w-full" />
-        {phase === "settled" && lastOutcome && (
+
+        {/* Jackpot overlay */}
+        {jackpot && (
+          <button
+            type="button"
+            onClick={() => setJackpot(null)}
+            className="absolute inset-0 grid place-items-center bg-gradient-to-b from-[rgba(251,191,36,0.18)] via-transparent to-[rgba(0,0,0,0.4)] animate-fade-in"
+            aria-label="잭팟"
+          >
+            <div className="flex flex-col items-center gap-2 text-center">
+              <div className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#fde68a]">JACKPOT</div>
+              <div
+                className="font-numeric text-6xl font-black text-[#fde68a] animate-scale-in"
+                style={{ textShadow: "0 0 28px rgba(251,191,36,0.9), 0 0 60px rgba(251,191,36,0.6)" }}
+              >
+                {jackpot.multiplier}x
+              </div>
+              <div className="font-numeric text-2xl font-extrabold text-[#fef3c7]">
+                +{jackpot.profit.toFixed(2)} USDT
+              </div>
+            </div>
+          </button>
+        )}
+
+        {/* Settled result card */}
+        {phase === "settled" && lastOutcome && !jackpot && (
           <div
             className={cn(
-              "pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 rounded-full px-3 py-1 text-[11px] font-extrabold backdrop-blur",
+              "pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 rounded-xl px-3 py-1.5 text-center backdrop-blur animate-fade-in",
               lastOutcome.outcome === "win"
-                ? "bg-[color-mix(in_oklab,var(--color-emerald)_22%,transparent)] text-[var(--color-emerald)]"
-                : "bg-[color-mix(in_oklab,var(--color-rose)_22%,transparent)] text-[var(--color-rose)]",
+                ? "bg-[color-mix(in_oklab,var(--color-emerald)_22%,transparent)]"
+                : "bg-[color-mix(in_oklab,var(--color-rose)_22%,transparent)]",
             )}
           >
-            {lastOutcome.outcome === "win" ? "+" : ""}
-            {lastOutcome.profit.toFixed(2)} USDT
+            <div
+              className={cn(
+                "font-numeric text-sm font-extrabold leading-tight",
+                lastOutcome.outcome === "win"
+                  ? "text-[var(--color-emerald)]"
+                  : "text-[var(--color-rose)]",
+              )}
+            >
+              {lastOutcome.outcome === "win" ? "+" : ""}
+              {lastOutcome.profit.toFixed(2)} USDT
+            </div>
+            <div className="font-numeric text-[10px] text-[var(--color-muted-2)]">
+              {lastOutcome.bet.toFixed(2)} × {lastOutcome.multiplier}x = {lastOutcome.payout.toFixed(2)}
+            </div>
           </div>
         )}
       </div>
@@ -250,17 +361,16 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
       <BetSummaryPanel
         variant="static"
         amount={pendingAmount}
-        targetMultiplier={getMaxMultiplier(risk, rows)}
+        targetMultiplier={maxMult}
         winChancePct={undefined}
       />
 
-      {/* Manual + Auto tabs. No auto-cashout target (Plinko resolves on landing). */}
       <StakeBetPanel
         showAutoTarget={false}
         canPlace={canPlace}
-        hasActiveBet={false /* Plinko has no cashable in-flight bet */}
+        hasActiveBet={false}
         balance={balance}
-        lastOutcome={lastOutcome}
+        lastOutcome={lastOutcome ? { outcome: lastOutcome.outcome, profit: lastOutcome.profit, nonce: lastOutcome.nonce } : null}
         onPlace={(amount) => handlePlace(amount)}
         onCashout={() => { /* Plinko has no cashout */ }}
       />
