@@ -5,11 +5,11 @@
  * Others: SOON — disabled badge
  */
 import { Link } from "@tanstack/react-router";
-import { Rocket, Dices, Cherry, CircleDot, Hand, Gift, Layers, Trophy } from "lucide-react";
+import { Rocket, Dices, Cherry, CircleDot, Hand, Gift, Layers, Trophy, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 
-type GameId = "crash" | "dice" | "slots" | "roulette" | "rps" | "luckybox" | "cardflip" | "keepy";
+type GameId = "crash" | "dice" | "plinko" | "slots" | "roulette" | "rps" | "luckybox" | "cardflip" | "keepy";
 
 interface GameCard {
   id: GameId;
@@ -24,6 +24,7 @@ interface GameCard {
 const GAMES: GameCard[] = [
   { id: "crash", name: "Crash", rtp: "99%", liveBets: 482, Icon: Rocket, open: true, accent: "cyan" },
   { id: "dice", name: "Dice", rtp: "99%", liveBets: 311, Icon: Dices, open: true, accent: "emerald" },
+  { id: "plinko", name: "Plinko", rtp: "97%", liveBets: 207, Icon: Coins, open: true, accent: "purple" },
   { id: "slots", name: "Slots", rtp: "96%", liveBets: 0, Icon: Cherry, open: false, accent: "pink" },
   { id: "roulette", name: "Roulette", rtp: "97.3%", liveBets: 0, Icon: CircleDot, open: false, accent: "warning" },
   { id: "rps", name: "RPS", rtp: "98%", liveBets: 0, Icon: Hand, open: false, accent: "purple" },
@@ -97,6 +98,12 @@ function GameTile({ card }: { card: GameCard }) {
   if (card.id === "dice")
     return (
       <Link to="/games/dice" className="block">
+        {inner}
+      </Link>
+    );
+  if (card.id === "plinko")
+    return (
+      <Link to="/games/plinko" className="block">
         {inner}
       </Link>
     );
