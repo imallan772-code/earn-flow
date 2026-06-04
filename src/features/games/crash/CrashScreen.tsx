@@ -1,12 +1,14 @@
 /**
  * CrashScreen — orchestrates rounds: betting → running → crashed → cooldown.
  *
- * Uses Round-A engine for crashpoint, multiplier curve, and auto-cashout.
- * Single RAF via sharedTickLoop in the canvas.
+ * Wires in: ModeBadge (demo/real), GameRulesCard, BetSummaryPanel
+ * (static pre-bet preview, live during active round), global LiveBetsFeed,
+ * and pushes the user's real bets into LiveBetsStore so they appear in the
+ * shared global ticker with an "ME" highlight.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ShieldCheck, Users, X } from "lucide-react";
+import { ArrowLeft, ShieldCheck, X } from "lucide-react";
 import { CrashCanvas } from "@/shared/games/crash/CrashCanvas";
 import {
   BETTING_MS,
@@ -16,7 +18,15 @@ import {
   multiplierAt6,
 } from "@/shared/games/crash/CrashEngine";
 import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
-import { CRASH_HISTORY, LIVE_BETS_SEED } from "@/mocks/crashHistory";
+import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
+import { GameRulesCard } from "@/shared/games/ui/GameRulesCard";
+import { CRASH_RULES } from "@/shared/games/rules/gameRules";
+import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
+import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
+import { ModeBadge } from "@/shared/mode/ModeToggle";
+import { useMode } from "@/shared/mode/ModeContext";
+import { profitOf } from "@/shared/games/engine/houseEdge";
+import { CRASH_HISTORY } from "@/mocks/crashHistory";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
 import { reachedTarget } from "@/shared/games/engine/clamp";
 import { cn } from "@/lib/utils";
@@ -32,9 +42,11 @@ interface ActiveBet {
   amount: number;
   autoTarget: number;
   cashedAt: number | null;
+  liveBetId: string;
 }
 
 export function CrashScreen() {
+  const { mode } = useMode();
   const [phase, setPhase] = useState<Phase>("betting");
   const [nonce, setNonce] = useState(0);
   const [crashPoint, setCrashPoint] = useState(1.0);
@@ -44,6 +56,8 @@ export function CrashScreen() {
   const tickHandle = useRef<number | null>(null);
 
   const [balance, setBalance] = useState(1000);
+  const [pendingAmount, setPendingAmount] = useState(10);
+  const [pendingTarget, setPendingTarget] = useState(2.0);
   const [bet, setBet] = useState<ActiveBet | null>(null);
   const [lastOutcome, setLastOutcome] = useState<
     { outcome: "win" | "loss"; profit: number; nonce: number } | null
@@ -53,6 +67,7 @@ export function CrashScreen() {
   const [showFair, setShowFair] = useState(false);
   const [commit, setCommit] = useState("");
   const [flashKey, setFlashKey] = useState(0);
+  const startedAtRef = useRef(0);
 
   // commit hash on mount
   useEffect(() => {
@@ -78,7 +93,9 @@ export function CrashScreen() {
       if (left <= 0) {
         window.clearInterval(id);
         setBettingMsLeft(0);
-        setStartedAt(performance.now());
+        const t = performance.now();
+        startedAtRef.current = t;
+        setStartedAt(t);
         setPhase("running");
       } else {
         setBettingMsLeft(left);
@@ -97,7 +114,12 @@ export function CrashScreen() {
     const id = window.setInterval(() => {
       const elapsed = performance.now() - startedAt;
       const m = multiplierAt6(elapsed);
-      if (bet && bet.cashedAt === null && reachedTarget(m, bet.autoTarget) && bet.autoTarget < crashPoint) {
+      if (
+        bet &&
+        bet.cashedAt === null &&
+        reachedTarget(m, bet.autoTarget) &&
+        bet.autoTarget < crashPoint
+      ) {
         setBet({ ...bet, cashedAt: bet.autoTarget });
       }
       if (m >= crashPoint) {
@@ -114,14 +136,24 @@ export function CrashScreen() {
     if (bet) {
       const cashed = bet.cashedAt;
       if (cashed !== null) {
-        const profit = bet.amount * (cashed - 1);
-        setBalance((b) => b + bet.amount * cashed);
+        const profit = profitOf(bet.amount, cashed, mode);
+        setBalance((b) => b + bet.amount + profit);
         setLastOutcome({ outcome: "win", profit, nonce });
         appToast.game.cashout({ mult: cashed.toFixed(2), amount: formatPHON(profit) });
+        liveBetsStore.update(bet.liveBetId, {
+          multiplier: cashed,
+          profit: +profit.toFixed(2),
+          status: "cashout",
+        });
       } else {
         setLastOutcome({ outcome: "loss", profit: -bet.amount, nonce });
         appToast.game.bust({ amount: formatPHON(bet.amount) });
         setFlashKey((k) => k + 1);
+        liveBetsStore.update(bet.liveBetId, {
+          multiplier: null,
+          profit: -bet.amount,
+          status: "bust",
+        });
       }
     }
     setHistory((h) => [{ id: `n${nonce}`, multiplier: crashPoint }, ...h].slice(0, 30));
@@ -136,16 +168,28 @@ export function CrashScreen() {
       }, COOLDOWN_MS - 1200);
     }, 1200);
     return () => window.clearTimeout(t);
-  }, [phase, bet, crashPoint, nonce]);
+  }, [phase, bet, crashPoint, nonce, mode]);
 
   const handlePlace = useCallback(
     (amount: number, autoTarget: number) => {
       if (phase !== "betting" || bet || amount <= 0 || amount > balance) return;
       setBalance((b) => b - amount);
-      setBet({ amount, autoTarget, cashedAt: null });
+      setPendingAmount(amount);
+      setPendingTarget(autoTarget);
+      const liveBetId = liveBetsStore.push({
+        user: "나의_베팅",
+        game: "crash",
+        amount,
+        multiplier: null,
+        profit: null,
+        status: "pending",
+        mode,
+        isMe: true,
+      });
+      setBet({ amount, autoTarget, cashedAt: null, liveBetId });
       appToast.game.bet({ amount: formatPHON(amount) });
     },
-    [phase, bet, balance],
+    [phase, bet, balance, mode],
   );
 
   const handleCashout = useCallback(() => {
@@ -154,18 +198,14 @@ export function CrashScreen() {
     setBet({ ...bet, cashedAt: m });
   }, [phase, bet, startedAt]);
 
-  // live multiplier for "potential payout" badge
-  const liveMult = useMemo(() => {
-    if (phase !== "running") return null;
-    return multiplierAt(performance.now() - startedAt);
-  }, [phase, startedAt]);
-
-  const liveTotal = useMemo(
-    () => LIVE_BETS_SEED.reduce((s, b) => s + b.bet, 0),
-    [],
-  );
+  // ref-stable current-multiplier getter for the live BetSummary panel
+  const getCurrentMultiplier = useCallback(() => {
+    if (phase !== "running") return bet?.cashedAt ?? 1.0;
+    return multiplierAt(performance.now() - startedAtRef.current);
+  }, [phase, bet?.cashedAt]);
 
   const bettingProgress = phase === "betting" ? 1 - bettingMsLeft / BETTING_MS : undefined;
+  const hasActiveBet = !!bet && phase === "running";
 
   return (
     <div className="flex flex-col gap-3">
@@ -180,7 +220,7 @@ export function CrashScreen() {
         </Link>
         <div className="min-w-0">
           <h1 className="text-xl font-extrabold leading-tight">Crash</h1>
-          <p className="text-[10px] text-[var(--color-muted)]">99% RTP · Provably Fair</p>
+          <ModeBadge className="mt-0.5" />
         </div>
         <span className="glass-1 ml-auto rounded-full px-2.5 py-1 text-[10px] font-bold text-[var(--color-muted)] font-numeric">
           #{nonce.toString().padStart(4, "0")}
@@ -193,6 +233,9 @@ export function CrashScreen() {
           공정성
         </button>
       </header>
+
+      {/* rules — collapsible */}
+      <GameRulesCard rules={CRASH_RULES} onVerify={() => setShowFair(true)} />
 
       {/* history strip */}
       <ul className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none">
@@ -233,30 +276,26 @@ export function CrashScreen() {
             aria-hidden
           />
         )}
-        {bet && (
-          <div className="glass-2 absolute left-3 top-3 rounded-xl px-3 py-1.5 text-[11px]">
-            <div className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
-              내 베팅
-            </div>
-            <div className="font-numeric font-bold">{bet.amount.toFixed(2)} USDT</div>
-            {bet.cashedAt !== null && (
-              <div className="font-numeric mt-0.5 text-[var(--color-emerald)]">
-                ✓ {bet.cashedAt.toFixed(2)}x
-              </div>
-            )}
-          </div>
-        )}
-        {bet && bet.cashedAt === null && phase === "running" && liveMult != null && (
-          <div className="glass-2 absolute right-3 top-3 rounded-xl px-3 py-1.5 text-right text-[11px] animate-result-pop">
-            <div className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
-              잠재 수익
-            </div>
-            <div className="font-numeric font-extrabold text-[var(--color-emerald)]">
-              +{(bet.amount * (liveMult - 1)).toFixed(2)}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* bet summary — LIVE during active round, STATIC otherwise */}
+      {hasActiveBet && bet ? (
+        <BetSummaryPanel
+          variant="live"
+          amount={bet.amount}
+          targetMultiplier={bet.autoTarget}
+          getCurrentMultiplier={getCurrentMultiplier}
+          busted={phase === "crashed"}
+          cashedAt={bet.cashedAt}
+          onCashout={bet.cashedAt === null ? handleCashout : undefined}
+        />
+      ) : (
+        <BetSummaryPanel
+          variant="static"
+          amount={pendingAmount}
+          targetMultiplier={pendingTarget}
+        />
+      )}
 
       {/* bet panel */}
       <StakeBetPanel
@@ -265,53 +304,16 @@ export function CrashScreen() {
         balance={balance}
         lastOutcome={lastOutcome}
         bettingProgress={bettingProgress}
-        onPlace={handlePlace}
+        onPlace={(amount, autoTarget) => {
+          setPendingAmount(amount);
+          setPendingTarget(autoTarget);
+          handlePlace(amount, autoTarget);
+        }}
         onCashout={handleCashout}
       />
 
-      {/* live bets */}
-      <section className="glass-1 rounded-2xl p-3">
-        <header className="mb-2 flex items-center justify-between">
-          <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
-            <Users size={12} /> 라이브 베팅
-          </h3>
-          <span className="text-[10px] text-[var(--color-muted-2)]">
-            <span className="font-numeric text-[var(--color-foreground)]">
-              {LIVE_BETS_SEED.length}
-            </span>
-            명 · <span className="font-numeric text-[var(--color-foreground)]">
-              {liveTotal.toFixed(2)}
-            </span>{" "}
-            USDT
-          </span>
-        </header>
-        <ul className="flex flex-col divide-y divide-[var(--color-border)]">
-          {LIVE_BETS_SEED.map((b) => (
-            <li key={b.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 py-1.5 text-xs">
-              <span className="truncate text-[var(--color-muted)]">{b.user}</span>
-              <span className="font-numeric w-16 text-right">{b.bet.toFixed(2)}</span>
-              <span
-                className={cn(
-                  "font-numeric w-14 text-right",
-                  b.cashout === null
-                    ? "text-[var(--color-muted-2)]"
-                    : "text-[var(--color-emerald)]",
-                )}
-              >
-                {b.cashout === null ? "—" : `${b.cashout.toFixed(2)}x`}
-              </span>
-              <span
-                className={cn(
-                  "font-numeric w-16 text-right font-bold",
-                  b.payout === null ? "text-[var(--color-rose)]" : "text-[var(--color-emerald)]",
-                )}
-              >
-                {b.payout === null ? "BUST" : `+${b.payout.toFixed(2)}`}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {/* global live bets — includes user's own bets */}
+      <LiveBetsFeed game="crash" limit={10} />
 
       {/* provably fair sheet */}
       {showFair && (
@@ -330,25 +332,27 @@ export function CrashScreen() {
               </button>
             </div>
             <dl className="flex flex-col gap-3 text-xs">
-              <Row k="다음 Server Seed (Hash)">
+              <Row k="다음 서버 시드 (해시)">
                 <code className="break-all text-[10px] text-[var(--color-cyan)]">
-                  {commit || "loading..."}
+                  {commit || "로딩 중..."}
                 </code>
               </Row>
-              <Row k="Client Seed">
+              <Row k="클라이언트 시드">
                 <code className="text-[var(--color-purple)]">{CLIENT_SEED}</code>
               </Row>
-              <Row k="다음 Nonce">
+              <Row k="다음 라운드 번호">
                 <code className="font-numeric">{nonce}</code>
               </Row>
               <Row k="현재 라운드 결과">
                 <code className="font-numeric text-[var(--color-gold)]">
-                  {phase === "crashed" || phase === "cooldown" ? `${crashPoint.toFixed(2)}x` : "진행중"}
+                  {phase === "crashed" || phase === "cooldown"
+                    ? `${crashPoint.toFixed(2)}x`
+                    : "진행 중"}
                 </code>
               </Row>
             </dl>
             <p className="mt-4 text-[10px] leading-relaxed text-[var(--color-muted)]">
-              라운드 종료 후 Server Seed가 공개되면 위 Hash를 직접 SHA-256으로 검증할 수 있습니다.
+              라운드 종료 후 서버 시드가 공개되면 위 해시를 직접 SHA-256으로 검증할 수 있습니다.
               모든 라운드는 HMAC-SHA256(serverSeed, &quot;clientSeed:nonce:0&quot;)으로 결정됩니다.
             </p>
           </div>
