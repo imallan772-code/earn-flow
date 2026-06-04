@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 import { LazyMotion, domAnimation } from "framer-motion";
 import { Toaster } from "sonner";
 import { ModeProvider } from "@/shared/mode/ModeContext";
+import { OutOfDemoModal } from "@/shared/wallet/OutOfDemoModal";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -111,6 +112,7 @@ function RootComponent() {
       <ModeProvider>
         <LazyMotion features={domAnimation} strict>
           <Outlet />
+          <OutOfDemoModal />
           <Toaster
             position="top-center"
             theme="dark"
