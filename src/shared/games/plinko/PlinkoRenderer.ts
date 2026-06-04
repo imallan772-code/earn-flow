@@ -480,8 +480,8 @@ export class PlinkoRenderer {
       ctx.stroke();
       // label
       ctx.fillStyle = color;
-      const fontSize = Math.max(8, Math.min(11, sw * 0.32));
-      ctx.font = `700 ${fontSize}px ui-monospace, "SF Mono", Menlo, monospace`;
+      const fontSize = Math.max(10, Math.min(15, sw * 0.42));
+      ctx.font = `800 ${fontSize}px ui-monospace, "SF Mono", Menlo, monospace`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       const label = mult >= 100 ? `${mult.toFixed(0)}x` : `${mult.toFixed(mult >= 10 ? 0 : mult >= 1 ? 1 : 1)}x`;
