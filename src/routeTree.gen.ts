@@ -23,6 +23,8 @@ import { Route as WithdrawalCryptoRouteImport } from './routes/withdrawal/crypto
 import { Route as DepositGiftRouteImport } from './routes/deposit/gift'
 import { Route as DepositCryptoRouteImport } from './routes/deposit/crypto'
 import { Route as DepositBankRouteImport } from './routes/deposit/bank'
+import { Route as AdminNoticeRouteImport } from './routes/admin/notice'
+import { Route as AdminEventRouteImport } from './routes/admin/event'
 import { Route as AppNoticeRouteImport } from './routes/_app/notice'
 import { Route as AppMyRouteImport } from './routes/_app/my'
 import { Route as AppFeedRouteImport } from './routes/_app/feed'
@@ -103,6 +105,16 @@ const DepositBankRoute = DepositBankRouteImport.update({
   path: '/deposit/bank',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminNoticeRoute = AdminNoticeRouteImport.update({
+  id: '/admin/notice',
+  path: '/admin/notice',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEventRoute = AdminEventRouteImport.update({
+  id: '/admin/event',
+  path: '/admin/event',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppNoticeRoute = AppNoticeRouteImport.update({
   id: '/notice',
   path: '/notice',
@@ -165,6 +177,8 @@ export interface FileRoutesByFullPath {
   '/feed': typeof AppFeedRoute
   '/my': typeof AppMyRoute
   '/notice': typeof AppNoticeRouteWithChildren
+  '/admin/event': typeof AdminEventRoute
+  '/admin/notice': typeof AdminNoticeRoute
   '/deposit/bank': typeof DepositBankRoute
   '/deposit/crypto': typeof DepositCryptoRoute
   '/deposit/gift': typeof DepositGiftRoute
@@ -190,6 +204,8 @@ export interface FileRoutesByTo {
   '/feed': typeof AppFeedRoute
   '/my': typeof AppMyRoute
   '/notice': typeof AppNoticeRouteWithChildren
+  '/admin/event': typeof AdminEventRoute
+  '/admin/notice': typeof AdminNoticeRoute
   '/deposit/bank': typeof DepositBankRoute
   '/deposit/crypto': typeof DepositCryptoRoute
   '/deposit/gift': typeof DepositGiftRoute
@@ -217,6 +233,8 @@ export interface FileRoutesById {
   '/_app/feed': typeof AppFeedRoute
   '/_app/my': typeof AppMyRoute
   '/_app/notice': typeof AppNoticeRouteWithChildren
+  '/admin/event': typeof AdminEventRoute
+  '/admin/notice': typeof AdminNoticeRoute
   '/deposit/bank': typeof DepositBankRoute
   '/deposit/crypto': typeof DepositCryptoRoute
   '/deposit/gift': typeof DepositGiftRoute
@@ -244,6 +262,8 @@ export interface FileRouteTypes {
     | '/feed'
     | '/my'
     | '/notice'
+    | '/admin/event'
+    | '/admin/notice'
     | '/deposit/bank'
     | '/deposit/crypto'
     | '/deposit/gift'
@@ -269,6 +289,8 @@ export interface FileRouteTypes {
     | '/feed'
     | '/my'
     | '/notice'
+    | '/admin/event'
+    | '/admin/notice'
     | '/deposit/bank'
     | '/deposit/crypto'
     | '/deposit/gift'
@@ -295,6 +317,8 @@ export interface FileRouteTypes {
     | '/_app/feed'
     | '/_app/my'
     | '/_app/notice'
+    | '/admin/event'
+    | '/admin/notice'
     | '/deposit/bank'
     | '/deposit/crypto'
     | '/deposit/gift'
@@ -317,6 +341,8 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   SignupRoute: typeof SignupRoute
   TransferRoute: typeof TransferRoute
+  AdminEventRoute: typeof AdminEventRoute
+  AdminNoticeRoute: typeof AdminNoticeRoute
   DepositBankRoute: typeof DepositBankRoute
   DepositCryptoRoute: typeof DepositCryptoRoute
   DepositGiftRoute: typeof DepositGiftRoute
@@ -427,6 +453,20 @@ declare module '@tanstack/react-router' {
       path: '/deposit/bank'
       fullPath: '/deposit/bank'
       preLoaderRoute: typeof DepositBankRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/notice': {
+      id: '/admin/notice'
+      path: '/admin/notice'
+      fullPath: '/admin/notice'
+      preLoaderRoute: typeof AdminNoticeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/event': {
+      id: '/admin/event'
+      path: '/admin/event'
+      fullPath: '/admin/event'
+      preLoaderRoute: typeof AdminEventRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/notice': {
@@ -555,6 +595,8 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   SignupRoute: SignupRoute,
   TransferRoute: TransferRoute,
+  AdminEventRoute: AdminEventRoute,
+  AdminNoticeRoute: AdminNoticeRoute,
   DepositBankRoute: DepositBankRoute,
   DepositCryptoRoute: DepositCryptoRoute,
   DepositGiftRoute: DepositGiftRoute,
@@ -569,3 +611,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
