@@ -1,11 +1,12 @@
 /**
  * ModeToggle — global Demo/Real switch shown at the top of Home.
  *
- * Demo = friendly tone (cyan/emerald, emoji allowed)
- * Real = serious tone (gold, no emoji on warning copy)
+ * - Real 전환: confirm 모달(실 잔액 사용 안내)
+ * - Demo 전환: confirm 모달(체험 크레딧 1회성 안내)
  */
 import { Gamepad2, Gem } from "lucide-react";
 import { useMode, type GameMode } from "./ModeContext";
+import { useBalance } from "@/shared/wallet/walletStore";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -15,12 +16,18 @@ interface Props {
 
 export function ModeToggle({ className, size = "md" }: Props) {
   const { mode, setMode } = useMode();
+  const demoBalance = useBalance("demo");
 
   function pick(m: GameMode) {
     if (m === mode) return;
     if (m === "real") {
       const ok = window.confirm(
         "리얼 모드로 전환합니다. 실제 잔액으로 베팅이 진행됩니다. 계속하시겠습니까?",
+      );
+      if (!ok) return;
+    } else {
+      const ok = window.confirm(
+        "데모는 체험용입니다. 체험 크레딧은 1회만 지급되며 추가 리필되지 않습니다. 계속하시겠습니까?",
       );
       if (!ok) return;
     }
@@ -52,10 +59,10 @@ export function ModeToggle({ className, size = "md" }: Props) {
         aria-pressed={mode === "demo"}
       >
         <Gamepad2 size={size === "sm" ? 14 : 16} />
-        <span>데모 모드</span>
+        <span>데모</span>
         {mode === "demo" && (
-          <span className="ml-1 rounded-full bg-[var(--color-bg-0)]/20 px-1.5 py-0.5 text-[9px] font-bold">
-            100% RTP
+          <span className="font-numeric ml-1 rounded-full bg-[var(--color-bg-0)]/20 px-1.5 py-0.5 text-[9px] font-bold">
+            ₩{demoBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </span>
         )}
       </button>
@@ -73,10 +80,10 @@ export function ModeToggle({ className, size = "md" }: Props) {
         aria-pressed={mode === "real"}
       >
         <Gem size={size === "sm" ? 14 : 16} />
-        <span>리얼 모드</span>
+        <span>리얼</span>
         {mode === "real" && (
           <span className="ml-1 rounded-full bg-[var(--color-bg-0)]/20 px-1.5 py-0.5 text-[9px] font-bold">
-            97% RTP
+            RTP 97%
           </span>
         )}
       </button>
