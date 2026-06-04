@@ -34,7 +34,7 @@ export function OutOfDemoModal() {
       onClick={closeOutOfDemoModal}
     >
       <div
-        className="glass-2 w-full max-w-md rounded-t-3xl p-5 pb-8 animate-slide-up"
+        className="glass-2 w-full max-w-md rounded-t-3xl p-5 pb-8 animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
