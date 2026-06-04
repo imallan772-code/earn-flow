@@ -1,55 +1,47 @@
-# persistedGameState.ts 정리 플랜
+# PlinkoEngine.ts 생성 계획
 
-## 수정 파일 (1개만)
-- `src/shared/games/state/persistedGameState.ts`
+## 목표
+`src/shared/games/plinko/PlinkoEngine.ts` 단 1개 파일을 생성한다. Provably Fair 결정론 + 순수 물리 시뮬레이션을 모두 포함하는 클래스 기반 엔진. 다른 파일은 일절 수정/생성하지 않는다.
 
-## 보존 (절대 변경 금지)
-- export 8개: `diceStore`, `crashStore`, `DiceRoll`, `DiceOutcome`, `DicePersisted`, `CrashHistoryItem`, `CrashOutcome`, `CrashPersisted` (이름/타입/위치 동일)
-- localStorage key: `phonara.gamestate.dice.v1`, `phonara.gamestate.crash.v1`
-- 초기값 shape 그대로
-- 머지 규칙 `{ ...initial, ...JSON.parse(raw) }`
-- 80ms debounce flush, listener 통지, SSR 가드
+## 핵심 설계
 
-## 변경 내용
+### 1) Provably Fair 결정론 (zero-import)
+- `hashSeed(input)` → FNV-1a 32bit (프로젝트 `hashStringToSeed`와 동일 알고리즘, 본 파일에 인라인)
+- Mulberry32 PRNG → rows번 draw, `< 0.5` ? left(0) : right(1)
+- 같은 (seed, rows, risk) → 항상 동일 결과
 
-### 1. 파일 헤더 보강
-역할(useSyncExternalStore + localStorage, no deps, SSR-safe), 결정 이유, Round G Part 1 마이그레이션 방향 명시.
+### 2) 좌/우 확률
+- low/medium/high 모두 50:50. **위험도는 배수 테이블이 결정** (Stake 방식, Pascal 분포)
 
-### 2. createStore 내부 헬퍼 분리 (동작 불변)
-- `hydrate<T extends object>(storageKey, initial)`: SSR-safe 초기 로드 (`window` 가드 + try/catch + `{ ...initial, ...parsed }`)
-- `createDebouncedFlusher<T>(storageKey, getState, delay = 80)`: 80ms debounce flush 스케줄러 반환 (`{ schedule() }`)
-- `set` / `subscribe` / `use`는 기존 로직 그대로
-- 타이머 변수 타입을 `ReturnType<typeof setTimeout> | null`로 명시 (브라우저/SSR 환경별 setTimeout 반환 타입 차이 흡수 — 짧은 주석으로 설명). `window.setTimeout` 호출 형태 유지.
+### 3) 배수 테이블 (Stake.com 1:1, 좌우 대칭, length = rows+1)
+- 8/12/16 rows × low/medium/high = 9개 상수
+- 16 rows high: 양끝 1000x, 중앙 0.2x
 
-### 3. createStore 위 TODO (정확히 삽입)
-```
-// TODO(Round G Part 1): 이 createStore를 src/shared/games/shell/createGameStore.ts
-// 팩토리로 추출. 본 파일은 diceStore/crashStore 두 export만 유지하고
-// factory import로 교체 예정. 외부 시그니처/localStorage key는 불변.
-```
+### 4) `dropPath(seed, rows, risk?='medium')`
+- rows ∉ {8,12,16} → throw
+- 반환: `{ path, finalSlot, multiplier, totalRows, risk, seed }`
+- finalSlot = path 내 1의 개수
 
-### 4. 섹션 구분 주석
-- DICE 블록 위: "Dice 게임 잔액/nonce/히스토리/마지막 결과/타깃·모드/대기 베팅 보존. `src/features/games/dice/DiceScreen.tsx`에서 사용."
-- CRASH 블록 위: "Crash 게임 잔액/nonce/히스토리/마지막 결과/대기 베팅/대기 자동캐쉬아웃 보존. `src/features/games/crash/CrashScreen.tsx`에서 사용."
+### 5) `simulatePhysics(result, onUpdate)`
+- 정규화 좌표 0..1, 순수 산술 루프 (setTimeout/rAF 금지)
+- gravity, bounce, friction, peg nudge 적용
+- 각 row 도달 시 `result.path[row]`에 따라 좌/우 보정 → 결과 보장
+- `onUpdate(x, y, vy)` 콜백으로 step 샘플 emit, 호출자가 rAF로 소비
+- MAX_STEPS 안전 가드
 
-### 5. Real money TODO (각 store 정의 위에)
-```
-// TODO: Real money 모드에서는 balance/history/nonce를 Supabase로 이관.
-// localStorage는 optimistic cache로만 사용하고, settle은 Edge Function RPC로 위임.
-```
+### 6) 파일 헤더
+- 역할 / 순수성 규약 / Web Worker 이식 가능
+- Real money TODO: dropPath → Supabase Edge Function 권위 이관, 서버 배수 테이블 검증, 감사 레코드
 
-## 하지 않을 것
-- 인터페이스 필드/이름/타입 변경
-- 초기값 변경
-- key·debounce·머지 동작 변경
-- export 추가/삭제
-- `createGameStore` 실제 추출 (Part 1 본작업)
-- 의존성 추가
+## 변경 범위
+- 신규: `src/shared/games/plinko/PlinkoEngine.ts` (1개)
+- 수정/삭제/의존성: 없음
 
 ## 검증
-- export diff: 8개 심볼 위치/이름/타입 동일
-- 빌드 GREEN, 기존 vitest GREEN
-- Dice/Crash 라우트 새로고침 → 기존 localStorage 데이터 정상 로드
+- TS strict 빌드 통과
+- 동일 입력 → 동일 출력 (결정론)
+- path.length === rows, finalSlot ∈ [0, rows], multiplier > 0
+- rows ∉ {8,12,16} → throw
 
 ## 완료 보고
-> "persistedGameState.ts 정리 작업이 완료되었습니다. 기존 동작은 100% 유지되었습니다."
+> "PlinkoEngine.ts 생성이 완료되었습니다. Provably Fair + 순수 물리 엔진 구현."
