@@ -211,6 +211,8 @@ export function DiceScreen() {
         winChancePct={winPct}
       />
 
+      <DemoLowBanner />
+
       <StakeBetPanel
         canPlace={phase === "idle" && !activeBet}
         hasActiveBet={false}
