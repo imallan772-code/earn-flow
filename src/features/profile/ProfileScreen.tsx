@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Copy, LogOut, Settings, Crown, Wallet, ChevronRight, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight } from "lucide-react";
-import { toast } from "sonner";
+import { appToast } from "@/shared/ui/toast";
 import { PremiumPageHeader } from "@/shared/ui/PremiumPageHeader";
 import { Premium3DCard } from "@/shared/ui/Premium3DCard";
 import { CountUp } from "@/shared/motion/CountUp";

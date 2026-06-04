@@ -38,7 +38,7 @@ export function DepositCrypto() {
           <div className="mt-1 flex w-full items-center justify-between gap-2 rounded-2xl border px-3 py-2.5"
             style={{ borderColor: "var(--color-border-hi)", background: "color-mix(in oklab, var(--color-surface) 60%, transparent)" }}>
             <span className="truncate font-numeric text-xs">{ADDR}</span>
-            <button onClick={() => { navigator.clipboard?.writeText(ADDR); toast.success("주소 복사됨"); }}
+            <button onClick={() => { navigator.clipboard?.writeText(ADDR); appToast.ui.copied(); }}
               className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white/8">
               <Copy size={14} />
             </button>
