@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
+import { appToast } from "@/shared/ui/toast";
 import { Sparkles, Copy, Flame } from "lucide-react";
 import { AuthPageShell } from "@/shared/layout/AuthPageShell";
 import { FloatingReward } from "@/shared/motion/FloatingReward";
@@ -102,7 +102,7 @@ export function Onboarding() {
               <button
                 onClick={() => {
                   navigator.clipboard?.writeText("PHO-K7Q2X9").catch(() => {});
-                  toast.success("📋 복사 완료! 친구에게 보내세요");
+                  appToast.referral.copied();
                   advance();
                 }}
                 className="mt-4 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-holographic px-6 font-bold text-[var(--color-bg-0)] shadow-glow-pink"

@@ -4,7 +4,7 @@ import { MobileShell } from "@/shared/layout/MobileShell";
 import { BottomNav } from "@/shared/layout/BottomNav";
 import { Premium3DCard } from "@/shared/ui/Premium3DCard";
 import { PremiumPageHeader } from "@/shared/ui/PremiumPageHeader";
-import { toast } from "sonner";
+import { appToast } from "@/shared/ui/toast";
 
 const ADDR = "TQ7nXf9aZk3Yp2Bm…mock";
 
