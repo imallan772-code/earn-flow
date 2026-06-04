@@ -74,6 +74,15 @@ export function StakeBetPanel({
   const lastNonceRef = useRef<number | null>(null);
   const placedNonceRef = useRef<number | null>(null);
   const prevCanPlaceRef = useRef(canPlace);
+  // Synchronous double-tap guard — React state (`canPlace`) updates async, so
+  // rapid taps within the same tick both see stale `true`. This ref blocks
+  // the second tap immediately and releases when canPlace next goes false→true.
+  const placingRef = useRef(false);
+
+  // Release placing lock when canPlace transitions from true→false (round started).
+  useEffect(() => {
+    if (!canPlace) placingRef.current = false;
+  }, [canPlace]);
 
   // when last outcome lands, advance auto state
   useEffect(() => {
