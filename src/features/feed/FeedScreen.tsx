@@ -4,6 +4,8 @@ import { FomoMarquee } from "@/shared/motion/FomoMarquee";
 import { LiveCashoutStrip } from "@/shared/layout/LiveCashoutStrip";
 import { PremiumPageHeader } from "@/shared/ui/PremiumPageHeader";
 import { Premium3DCard } from "@/shared/ui/Premium3DCard";
+import { NoticeBar } from "@/features/notice/NoticeBar";
+import { EventHero } from "@/features/event/EventHero";
 import { MOCK_FEED_HOT } from "@/mocks/missions";
 import { formatPHON } from "@/lib/format";
 
@@ -17,6 +19,8 @@ export function FeedScreen() {
         right={<OnlineCounterChip compact />}
       />
 
+      <NoticeBar />
+      <EventHero />
       <FomoMarquee />
       <LiveCashoutStrip />
 
