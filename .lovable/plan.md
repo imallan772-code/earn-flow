@@ -1,161 +1,155 @@
-# Earn 서브탭 + 토스트 톤 분리 + 하단탭 한글화
+# Round D — Crash / Dice 지존급 리디자인 + 오토베팅 수정
 
-## 1. Earn 내부 서브탭 (2개)
-
-```
-[ 🎯 미션  무료 돈벌기 │ 🎮 게임  돈 더벌기 ]
-```
-
-- **미션 탭 (default)**: 출석 스트릭 + 미션 리스트 + 미스터리 박스 (보너스성이라 미션에 흡수)
-- **게임 탭**: 8게임 GameLobby 그리드
-
-라벨은 2단(굵은 글자 + 보조 문구). 상단 헤더/온라인 카운터는 고정, 콘텐츠만 교체.
-
-### 파일
-- 신규 `src/shared/ui/SegmentedTabs.tsx` — 디자인 토큰만, holographic active indicator
-- 수정 `src/features/earn/EarnScreen.tsx` — `useState<"missions"|"games">` + 섹션 분기 (코드 이동만)
+## 목표
+- Crash·Dice 화면을 Stake/Roobet 톱티어 수준으로 격상 (시네마틱 캔버스, 명확한 정보 위계, 진중한 게임룸 톤)
+- StakeBetPanel 자동베팅이 다음 라운드에 자동 발사되지 않는 버그 수정
+- 토큰만 사용 — `oklch` 변수 외 raw 컬러 금지, 영문/한글 혼용 정리 (UI 라벨은 한글, 숫자/배수는 mono)
 
 ---
 
-## 2. 토스트 톤 분리 + i18n-ready 구조
+## 1. CrashScreen 리디자인
 
-### 톤 정책 (핵심)
-
-| 영역 | 톤 | 이모지 | 예시 |
-|------|----|----|------|
-| **트레이딩** | 진중·금융 단정 | ❌ 없음 | `BTCUSDT 매수 0.0125 체결 @ 67,820.50` / `주문 거절: 잔고 부족` |
-| **게임 (베팅/결과)** | 진중·간결 | ❌ 없음 (또는 ▲▼ 같은 중립 기호만) | `2.45배 익절 · +245,000 PHON` / `라운드 종료 · -50,000 PHON` / `베팅 접수 · 50,000 PHON` |
-| **미션·보상·복사·온보딩 등 그 외** | 한글 친화 귀여운 톤 | ✅ 적극 사용 | `🎉 가입 완료! 첫 보상 받으러 가요` / `📋 복사 완료!` / `🎁 미스터리 박스 오픈!` |
-
-**금지 사항**: 돈을 잃는 토스트(게임 패배/주문 거절/출금 실패 등)에 절대 귀여운 말투/이모지 사용 금지. 짧고 사실 기반으로만.
-
-### 신규 파일 구조
-
+### 레이아웃 (390×844 기준, 위→아래)
+```text
+┌────────────────────────────────────────┐
+│ ← Crash    [라운드 #1284]   [공정성 🛡]│  ← 슬림 헤더 (h-12)
+├────────────────────────────────────────┤
+│ 1.24x 2.10x ▌7.42x ▌1.01x ...          │  ← 히스토리 chip rail (가로 스크롤, 더 큰 폰트)
+├────────────────────────────────────────┤
+│                                        │
+│            ✦  12.47x  ✦                │  ← 캔버스 (aspect 5/4)
+│         ━━━━━━━━━━━━━━━━━              │     • 곡선 + glow trail
+│       ━━━                              │     • 좌상단: 베팅 칩 (글래스)
+│   ━━━                                  │     • 우상단: 잠재수익 라이브 (배수×베팅)
+│ ━━                                     │     • 베팅 단계: 거대 카운트다운 링
+│                                        │     • 크래시: 풀 스크린 빨간 플래시 + shake
+├────────────────────────────────────────┤
+│ [수동][자동]            잔액 1,000 USDT │
+│ ┌────────────────────────────────────┐ │
+│ │ 베팅액  [10.00]  ½  2x  MAX        │ │
+│ │ 자동캐쉬아웃 [2.00x]  +0.10 -0.10  │ │
+│ │ ────────────────────────────────── │ │
+│ │    [   베팅하기 (다음 라운드)   ]   │ │  ← 진행바 wrap (5s 카운트다운 시각화)
+│ └────────────────────────────────────┘ │
+├────────────────────────────────────────┤
+│ 라이브 베팅 (24명 · 12,430 USDT)       │  ← 헤더 + 합계
+│ avatar 유저  ▌베팅  ▌배수  ▌수익      │  ← 행 hover, win pulse 애니메이션
+└────────────────────────────────────────┘
 ```
-src/shared/i18n/
-├── locale.ts        # "ko" | "en", localStorage 영속
-├── messages.ko.ts   # 한국어 카탈로그 (default)
-├── messages.en.ts   # 영어 카탈로그 (스켈레톤)
-├── types.ts         # MessageKey 유니온
-└── index.ts         # t(key, params?) 함수
 
-src/shared/ui/toast.ts  # 도메인별 토스트 헬퍼
+### 캔버스 업그레이드 (`CrashCanvas.tsx`)
+- 다층 그라데이션 fill (시안 → 투명, 크래시는 로즈)
+- 곡선 위 별 파티클 4~6개 (배수 증가에 따라 위로 흐름)
+- 12개 가로 grid + 6개 세로 grid, 라벨링 (1x, 2x, 5x, 10x …)
+- 베팅 단계: 중앙에 SVG 카운트다운 링 + 거대 숫자
+- 크래시 시: 0.6s ease-out scale + opacity flash, "BUSTED @ X.XXx" 큰 stamp
+- DPR 캐싱 그대로, sharedTickLoop 한 줄 RAF 규칙 준수
+
+### 카드 / 칩 디테일
+- 히스토리 칩: w-12 h-7, 색상 3단계 (≤2x rose / ≤10x gold / >10x emerald), bg 22% mix
+- 라운드 번호 chip 헤더에 추가 (`#${nonce.toString().padStart(4,"0")}`)
+- 라이브베팅 행: avatar (initial+gradient), 캐쉬아웃 시 행 emerald glow 0.8s
+
+### 베팅 단계 진행바
+- "베팅하기" 버튼 내부에 `bettingMsLeft / BETTING_MS` 가로 진행바 fill (cyan→투명)
+- 0이 되면 버튼 비활성 + "다음 라운드 대기"
+
+---
+
+## 2. DiceScreen 리디자인
+
+### 레이아웃
+```text
+┌────────────────────────────────────────┐
+│ ← Dice    [#412]    [공정성 🛡]        │
+├────────────────────────────────────────┤
+│  72.41    72.41    33.10    91.22 ...  │  ← 더 큰 히스토리 칩
+├────────────────────────────────────────┤
+│                                        │
+│            72.41                       │  ← 결과 디스플레이 (aspect 5/4)
+│        ━━━━━━━━━━━━━━━                 │     • 거대 숫자 + 윈/루즈 컬러
+│         🎲 WIN +24.50                  │     • 결과 아래 결과 칩
+├────────────────────────────────────────┤
+│  Under ━━━━━━╿━━━━━━━━ Over            │  ← 슬라이더 (12px 트랙, glow thumb)
+│       0           50.00          99.99 │
+│  [멀티 2.00x] [목표 50.00] [확률 49.5%]│  ← 3-칸 stat carde, 큰 numeric
+├────────────────────────────────────────┤
+│ [수동][자동]            잔액 1,000     │
+│ … (StakeBetPanel)                      │
+└────────────────────────────────────────┘
 ```
 
-### 카탈로그 예시 (`messages.ko.ts`)
+### 슬라이더 업그레이드 (`DiceSlider.tsx`)
+- 트랙 h-3 → h-4, 라운드 풀, 좌우 라벨 (0/50/99.99)
+- thumb 28×28, 시안 outer ring + glow_purple 그림자, drag 시 scale 1.1
+- 마지막 roll marker: 7px 너비 + 8px glow + 0.4s pop-in
+- 슬라이더 양쪽 끝 1·99 클릭 가능한 +/- 미세조정 버튼
+
+### 결과 디스플레이
+- WIN: emerald glow + 위에서 떠오르는 +XX.XX text (RewardBurst 재사용)
+- LOSS: rose ring + 좌우 shake 0.4s
+- 결과 칩: 라운드 사이엔 비활성 표시 ("준비 중")
+
+---
+
+## 3. StakeBetPanel — 자동베팅 타이밍 수정
+
+### 현재 버그
+다음 effect가 매 렌더마다 실행 시도하지만, `autoStateRef.current.currentBet` 업데이트가 ref라서 React가 리렌더를 트리거하지 않음 → cooldown→betting 전환 시 `canPlace` flip 한 번만 의존성 fire → 그 시점에 stale currentBet 사용 가능.
 
 ```ts
-// === 트레이딩 (진중) ===
-"trade.filled":   "{side} {sym} {qty} 체결 @ {price}",
-"trade.partial":  "{side} {sym} {filled}/{qty} 부분 체결",
-"trade.canceled": "주문 취소됨",
-"trade.rejected": "주문 거절: {reason}",
-"order.placed":   "{side} 주문 접수 · {qty} @ {price}",
-
-// === 게임 (진중·간결) ===
-"game.bet":       "베팅 접수 · {amount} PHON",
-"game.cashout":   "{mult}배 익절 · +{amount} PHON",
-"game.bust":      "라운드 종료 · -{amount} PHON",
-"game.win":       "정산 · +{amount} PHON",
-"game.lose":      "정산 · -{amount} PHON",
-
-// === 그 외 (귀여운 톤, 이모지 OK) ===
-"auth.signupDone":     "🎉 가입 완료! 첫 보상 받으러 가요",
-"auth.welcomeBack":    "👋 다시 오셨네요!",
-"mission.claimed":     "✨ +{amount} PHON 받았어요!",
-"box.opened":          "🎁 미스터리 박스 오픈! +{amount} PHON",
-"referral.copied":     "📋 추천코드 복사 완료! 친구에게 보내세요",
-"ui.copied":           "📋 복사되었습니다",
-"ui.comingSoon":       "🚧 곧 출시됩니다",
-"deposit.giftPending": "🎁 상품권 확인 중이에요",
-"transfer.done":       "✅ 전환 완료",
-
-// === 손실/실패 (귀엽지 않게) ===
-"withdrawal.submitted": "출금 신청이 접수되었습니다",
-"withdrawal.failed":    "출금 실패: {reason}",
-"deposit.failed":       "입금 처리 실패: {reason}",
+useEffect(() => {
+  if (!autoRunning || !canPlace || hasActiveBet) return;
+  onPlace(autoStateRef.current.currentBet, target);
+}, [autoRunning, canPlace, hasActiveBet, onPlace, target]);
 ```
 
-### 헬퍼 API (`shared/ui/toast.ts`)
+또한 `onPlace`가 매 렌더 새 함수면 effect가 매번 fire되어 중복 베팅 가능.
 
-```ts
-export const appToast = {
-  // 트레이딩 — sonner 기본 스타일, 이모지/아이콘 없음
-  trade: {
-    filled:   (p) => sonner(t("trade.filled", p),   { duration: 2500 }),
-    rejected: (p) => sonner.error(t("trade.rejected", p)),
-    canceled: ()  => sonner(t("trade.canceled")),
-  },
-  // 게임 — 익절은 success(녹), 손실은 기본(중립). 이모지 없음.
-  game: {
-    bet:     (p) => sonner(t("game.bet", p),     { duration: 1500 }),
-    cashout: (p) => sonner.success(t("game.cashout", p)),
-    bust:    (p) => sonner(t("game.bust", p)),          // ❌ error 톤 회피 — 사실 통보
-    win:     (p) => sonner.success(t("game.win", p)),
-    lose:    (p) => sonner(t("game.lose", p)),
-  },
-  // 그 외 — 귀여운 톤, 이모지는 카탈로그에 이미 포함
-  ui: {
-    copied:    () => sonner.success(t("ui.copied")),
-    comingSoon:() => sonner(t("ui.comingSoon")),
-  },
-  mission: { claimed: (p) => sonner.success(t("mission.claimed", p)) },
-  box:     { opened:  (p) => sonner.success(t("box.opened", p)) },
-  auth:    { signupDone: () => sonner.success(t("auth.signupDone")), welcomeBack: () => sonner(t("auth.welcomeBack")) },
-  
-  // 손실/실패는 별도 — 귀엽지 않게
-  withdrawal: {
-    submitted: () => sonner(t("withdrawal.submitted")),
-    failed:    (p) => sonner.error(t("withdrawal.failed", p)),
-  },
-};
-```
+### 수정
+- `currentBet`을 ref가 아닌 state로 승격 (`[currentBet, setCurrentBet]`)
+- 자동 시작/스텝 시 setCurrentBet 호출 → React 렌더 동기화
+- 베팅 발사 effect를 `canPlace` rising-edge로 가드 (직전 값 ref로 추적)
+- 중복 발사 방지: 한 라운드당 1회 플래그 (`placedNonceRef`)
+- 부모의 `onPlace`/`onCashout`는 useCallback으로 안정화 권장 (`CrashScreen`, `DiceScreen` 이미 useCallback 사용 — 확인만)
+- 자동 정지 시 ref·state 모두 reset
 
-### 글로벌 확장 포인트
-- `{placeholder}` 보간 → 어순 다른 언어 자연 대응
-- 로케일 추가 = 카탈로그 파일 1개 + `locale.ts` 유니온 1줄. 컴포넌트 변경 0
-- `MessageKey` 유니온으로 오타 컴파일 에러
-- 게임/트레이딩은 영어로 가도 톤이 유지되도록 영어 카탈로그도 동일 정책 (`"game.cashout": "Cashout {mult}x · +{amount} PHON"` 처럼 군더더기 없음)
-
-### 마이그레이션 대상 (기존 7곳)
-- `WithdrawalForm` → `appToast.withdrawal.submitted()`
-- `ProfileScreen` 추천코드 → `appToast.ui.copied()` 또는 `referral.copied`
-- `TransferBridge` → `appToast.ui.copied()` 계열 (`transfer.done`)
-- `DepositGift` → `deposit.giftPending` (귀여운 톤 유지)
-- `DepositCrypto` 주소복사 → `appToast.ui.copied()`
-- `AuthShell` → `appToast.auth.signupDone()` / `welcomeBack()`
-- `Onboarding` 복사 → `appToast.ui.copied()`
-
-게임 화면(Crash, Dice)의 cashout/bust도 `appToast.game.cashout()` / `bust()`로 통일 — 현재 자유 문자열 제거.
+### 추가 UX
+- 자동 모드일 때 패널 상단에 "AUTO · 남은 베팅: ∞ / 누적 손익: +12.50" 미니 HUD
+- "자동 시작" 누르면 다음 betting phase 시작 시점에 첫 베팅 자동 실행 (현재도 의도지만 안정화)
 
 ---
 
-## 3. 하단 5탭 한글 최적화
+## 4. 토큰 / 모션 가드
 
-| # | 영문(현재) | 한글(변경) | 라우트 |
-|---|----------|-----------|-------|
-| 1 | Pulse | **피드** | `/feed` |
-| 2 | Earn | **돈벌기** | `/earn` |
-| 3 | Trade | **트레이드** | `/exchange/BTCUSDT` |
-| 4 | Notice | **알림** | `/notice` |
-| 5 | My | **마이** | `/my` |
-
-- "돈벌기"가 가장 길지만 3자 → 390px 5등분(약 70px/슬롯)에서 `text-xs`로 한 줄 안전
-- 라벨은 `t("nav.feed")` 등 i18n 키 경유 → 추후 영문 fallback 즉시 가능
-- 아이콘 그대로 (Zap/Gamepad2/TrendingUp/Bell/User)
+- 모든 색상은 `var(--color-*)` 또는 `color-mix(in oklab, ...)` 만 사용
+- 새 애니메이션: `tailwind.config`엔 손대지 않고 styles.css `@layer utilities`에 keyframe 3개 추가
+  - `crash-shake` (0.4s), `crash-flash` (0.6s), `result-pop` (0.3s scale-in)
+- `framer-motion` 가능 시 사용; canvas 내부 애니는 기존 sharedTickLoop만
 
 ---
 
-## 변경 범위
-- 신규 7개: `SegmentedTabs.tsx`, `shared/i18n/` 5개, `shared/ui/toast.ts`
-- 수정: `EarnScreen.tsx`, `BottomNav.tsx`, 기존 토스트 호출 7곳 + 게임 화면 토스트
-- **삭제 없음, 중복 없음**
+## 5. 영향 파일 (변경/생성)
 
-## 검증
-- `tsc` clean / 33개 vitest GREEN
-- 390×844에서 Earn 첫 진입 시 미션 탭 above-the-fold, 게임 탭 클릭 시 그리드 스크롤 없이 노출
-- 하단 5탭 한 줄 정렬 확인
-- 토스트 샘플 발사: 게임 익절(이모지 없음, 진중) vs 미션 보상(이모지 ✨ 포함) 톤 차이 검증
-- 손실 토스트(`game.bust`, `withdrawal.failed`)에 이모지/귀여운 단어 0건 확인
+수정:
+- `src/features/games/crash/CrashScreen.tsx` — 레이아웃·헤더·라이브베팅 카드 재구성
+- `src/features/games/dice/DiceScreen.tsx` — 결과 디스플레이 + 헤더 재구성
+- `src/shared/games/crash/CrashCanvas.tsx` — 그래디언트·파티클·카운트다운 링
+- `src/shared/games/dice/DiceSlider.tsx` — 트랙·thumb·라벨·marker
+- `src/shared/games/ui/StakeBetPanel.tsx` — currentBet state 화 + edge-trigger + AUTO HUD
+- `src/styles.css` — keyframes 3개 추가
 
-승인하시면 위 순서대로 구현 후 라운드 D(Slots)로 진행합니다.
+생성:
+- 없음 (기존 컴포넌트 강화 우선, 중복 금지 원칙)
+
+삭제:
+- 없음
+
+## 6. 검증
+- 33/33 vitest GREEN 유지 (엔진은 미변경)
+- `tsc` clean
+- 390×844 시각 검증: 헤더+캔버스+패널이 첫 스크롤 없이 노출되는지
+- 자동베팅: 30초간 3라운드 연속 발사 확인 (수동 콘솔로그)
+- 토큰 사용: `rg "text-white|bg-black|#[0-9a-f]{6}"` 0건
+
+승인 시 진행하겠습니다. 아니면 캔버스/결과 디스플레이만 design directions로 3개 시안 먼저 뽑는 것도 가능 — 어느 쪽으로 갈까요?
