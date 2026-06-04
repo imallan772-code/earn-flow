@@ -278,7 +278,7 @@ export class PlinkoRenderer {
       const elapsed = now - this.playStart;
       const t = Math.min(1, elapsed / DROP_DURATION_MS);
       const targetIdx = t * (this.samples.length - 1);
-      this.cursor = Math.min(this.samples.length - 1, targetIdx);
+      this.cursor = Math.min(this.samples.length - 1, Math.max(0, targetIdx));
       ballSample = this.interpolateSample(this.cursor);
 
       // peg-hit FX
