@@ -367,6 +367,8 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
         winChancePct={undefined}
       />
 
+      <DemoLowBanner />
+
       <StakeBetPanel
         showAutoTarget={false}
         canPlace={canPlace}
