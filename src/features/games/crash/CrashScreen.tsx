@@ -1,10 +1,7 @@
 /**
- * CrashScreen — orchestrates rounds: betting → running → crashed → cooldown.
- *
- * Wires in: ModeBadge (demo/real), GameRulesCard, BetSummaryPanel
- * (static pre-bet preview, live during active round), global LiveBetsFeed,
- * and pushes the user's real bets into LiveBetsStore so they appear in the
- * shared global ticker with an "ME" highlight.
+ * CrashScreen — persisted balance/history/lastOutcome via crashStore.
+ * Cashout button unified to the BetSummaryPanel (top); StakeBetPanel
+ * shows a disabled placeholder during active rounds.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -26,9 +23,9 @@ import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { useMode } from "@/shared/mode/ModeContext";
 import { profitOf } from "@/shared/games/engine/houseEdge";
-import { CRASH_HISTORY } from "@/mocks/crashHistory";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
 import { reachedTarget } from "@/shared/games/engine/clamp";
+import { crashStore } from "@/shared/games/state/persistedGameState";
 import { cn } from "@/lib/utils";
 import { appToast } from "@/shared/ui/toast";
 import { formatPHON } from "@/lib/format";
@@ -47,42 +44,49 @@ interface ActiveBet {
 
 export function CrashScreen() {
   const { mode } = useMode();
+
+  // Persisted
+  const balance = crashStore.use((s) => s.balance);
+  const nonce = crashStore.use((s) => s.nonce);
+  const history = crashStore.use((s) => s.history);
+  const lastOutcome = crashStore.use((s) => s.lastOutcome);
+  const pendingAmount = crashStore.use((s) => s.pendingAmount);
+  const pendingTarget = crashStore.use((s) => s.pendingTarget);
+
   const [phase, setPhase] = useState<Phase>("betting");
-  const [nonce, setNonce] = useState(0);
   const [crashPoint, setCrashPoint] = useState(1.0);
   const [startedAt, setStartedAt] = useState(0);
   const [bettingMsLeft, setBettingMsLeft] = useState(BETTING_MS);
   const [, force] = useState(0);
   const tickHandle = useRef<number | null>(null);
-
-  const [balance, setBalance] = useState(1000);
-  const [pendingAmount, setPendingAmount] = useState(10);
-  const [pendingTarget, setPendingTarget] = useState(2.0);
   const [bet, setBet] = useState<ActiveBet | null>(null);
-  const [lastOutcome, setLastOutcome] = useState<
-    { outcome: "win" | "loss"; profit: number; nonce: number } | null
-  >(null);
-
-  const [history, setHistory] = useState(CRASH_HISTORY);
   const [showFair, setShowFair] = useState(false);
   const [commit, setCommit] = useState("");
   const [flashKey, setFlashKey] = useState(0);
   const startedAtRef = useRef(0);
+  const betRef = useRef<ActiveBet | null>(null);
+  betRef.current = bet;
 
-  // commit hash on mount
+  // commit hash
   useEffect(() => {
     commitServerSeed(SERVER_SEED).then(setCommit);
   }, []);
 
-  // Initialize each round
+  // Refund unsettled bet on unmount (user left mid-round)
+  useEffect(() => {
+    return () => {
+      const b = betRef.current;
+      if (b && b.cashedAt === null) {
+        crashStore.set((s) => ({ ...s, balance: s.balance + b.amount }));
+      }
+    };
+  }, []);
+
+  // Round init
   useEffect(() => {
     if (phase !== "betting") return;
     let alive = true;
-    computeCrashPoint({
-      serverSeed: SERVER_SEED,
-      clientSeed: CLIENT_SEED,
-      nonce,
-    }).then((cp) => {
+    computeCrashPoint({ serverSeed: SERVER_SEED, clientSeed: CLIENT_SEED, nonce }).then((cp) => {
       if (!alive) return;
       setCrashPoint(cp);
     });
@@ -108,7 +112,7 @@ export function CrashScreen() {
     };
   }, [phase, nonce]);
 
-  // Running phase
+  // Running
   useEffect(() => {
     if (phase !== "running") return;
     const id = window.setInterval(() => {
@@ -122,23 +126,24 @@ export function CrashScreen() {
       ) {
         setBet({ ...bet, cashedAt: bet.autoTarget });
       }
-      if (m >= crashPoint) {
-        setPhase("crashed");
-      }
+      if (m >= crashPoint) setPhase("crashed");
       force((x) => x + 1);
     }, 50);
     return () => window.clearInterval(id);
   }, [phase, startedAt, crashPoint, bet]);
 
-  // Crashed → settle → cooldown → next round.
+  // Crashed → settle
   useEffect(() => {
     if (phase !== "crashed") return;
     if (bet) {
       const cashed = bet.cashedAt;
       if (cashed !== null) {
         const profit = profitOf(bet.amount, cashed, mode);
-        setBalance((b) => b + bet.amount + profit);
-        setLastOutcome({ outcome: "win", profit, nonce });
+        crashStore.set((s) => ({
+          ...s,
+          balance: s.balance + bet.amount + profit,
+          lastOutcome: { outcome: "win", profit, nonce },
+        }));
         appToast.game.cashout({ mult: cashed.toFixed(2), amount: formatPHON(profit) });
         liveBetsStore.update(bet.liveBetId, {
           multiplier: cashed,
@@ -146,7 +151,10 @@ export function CrashScreen() {
           status: "cashout",
         });
       } else {
-        setLastOutcome({ outcome: "loss", profit: -bet.amount, nonce });
+        crashStore.set((s) => ({
+          ...s,
+          lastOutcome: { outcome: "loss", profit: -bet.amount, nonce },
+        }));
         appToast.game.bust({ amount: formatPHON(bet.amount) });
         setFlashKey((k) => k + 1);
         liveBetsStore.update(bet.liveBetId, {
@@ -156,13 +164,16 @@ export function CrashScreen() {
         });
       }
     }
-    setHistory((h) => [{ id: `n${nonce}`, multiplier: crashPoint }, ...h].slice(0, 30));
+    crashStore.set((s) => ({
+      ...s,
+      history: [{ id: `n${nonce}`, multiplier: crashPoint }, ...s.history].slice(0, 30),
+    }));
     setBet(null);
 
     const t = window.setTimeout(() => {
       setPhase("cooldown");
       window.setTimeout(() => {
-        setNonce((n) => n + 1);
+        crashStore.set((s) => ({ ...s, nonce: s.nonce + 1 }));
         setBettingMsLeft(BETTING_MS);
         setPhase("betting");
       }, COOLDOWN_MS - 1200);
@@ -173,9 +184,12 @@ export function CrashScreen() {
   const handlePlace = useCallback(
     (amount: number, autoTarget: number) => {
       if (phase !== "betting" || bet || amount <= 0 || amount > balance) return;
-      setBalance((b) => b - amount);
-      setPendingAmount(amount);
-      setPendingTarget(autoTarget);
+      crashStore.set((s) => ({
+        ...s,
+        balance: s.balance - amount,
+        pendingAmount: amount,
+        pendingTarget: autoTarget,
+      }));
       const liveBetId = liveBetsStore.push({
         user: "나의_베팅",
         game: "crash",
@@ -198,7 +212,6 @@ export function CrashScreen() {
     setBet({ ...bet, cashedAt: m });
   }, [phase, bet, startedAt]);
 
-  // ref-stable current-multiplier getter for the live BetSummary panel
   const getCurrentMultiplier = useCallback(() => {
     if (phase !== "running") return bet?.cashedAt ?? 1.0;
     return multiplierAt(performance.now() - startedAtRef.current);
@@ -208,13 +221,8 @@ export function CrashScreen() {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* header */}
       <header className="flex items-center gap-2">
-        <Link
-          to="/earn"
-          className="glass-1 grid h-9 w-9 place-items-center rounded-full"
-          aria-label="뒤로"
-        >
+        <Link to="/earn" className="glass-1 grid h-9 w-9 place-items-center rounded-full" aria-label="뒤로">
           <ArrowLeft size={16} />
         </Link>
         <div className="min-w-0">
@@ -233,10 +241,8 @@ export function CrashScreen() {
         </button>
       </header>
 
-      {/* rules — collapsible */}
       <GameRulesCard rules={CRASH_RULES} onVerify={() => setShowFair(true)} />
 
-      {/* history strip */}
       <ul className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none">
         {history.map((h) => (
           <li
@@ -255,7 +261,6 @@ export function CrashScreen() {
         ))}
       </ul>
 
-      {/* canvas */}
       <div
         className={cn(
           "relative aspect-[5/4] w-full overflow-hidden rounded-2xl border border-[var(--color-border)]",
@@ -277,7 +282,6 @@ export function CrashScreen() {
         )}
       </div>
 
-      {/* bet summary — LIVE during active round, STATIC otherwise */}
       {bet ? (
         <BetSummaryPanel
           variant="live"
@@ -296,34 +300,32 @@ export function CrashScreen() {
         />
       )}
 
-      {/* bet panel */}
       <StakeBetPanel
         canPlace={phase === "betting"}
         hasActiveBet={!!bet && bet.cashedAt === null && phase === "running"}
         balance={balance}
         lastOutcome={lastOutcome}
         bettingProgress={bettingProgress}
+        suppressCashoutButton
         onPlace={(amount, autoTarget) => {
-          setPendingAmount(amount);
-          setPendingTarget(autoTarget);
+          crashStore.set((s) => ({
+            ...s,
+            pendingAmount: amount,
+            pendingTarget: autoTarget,
+          }));
           handlePlace(amount, autoTarget);
         }}
         onCashout={handleCashout}
       />
 
-      {/* global live bets — includes user's own bets */}
       <LiveBetsFeed game="crash" limit={10} />
 
-      {/* provably fair sheet */}
       {showFair && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
           onClick={() => setShowFair(false)}
         >
-          <div
-            className="glass-2 w-full max-w-md rounded-t-3xl p-5"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="glass-2 w-full max-w-md rounded-t-3xl p-5" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-extrabold">공정성 검증</h2>
               <button onClick={() => setShowFair(false)}>
