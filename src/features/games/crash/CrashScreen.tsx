@@ -19,6 +19,8 @@ import { CRASH_HISTORY, LIVE_BETS_SEED } from "@/mocks/crashHistory";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
 import { reachedTarget } from "@/shared/games/engine/clamp";
 import { cn } from "@/lib/utils";
+import { appToast } from "@/shared/ui/toast";
+import { formatPHON } from "@/lib/format";
 
 const SERVER_SEED = "phonara-crash-demo-server-seed-v1";
 const CLIENT_SEED = "phonara-player-001";
@@ -117,8 +119,10 @@ export function CrashScreen() {
         const profit = bet.amount * (cashed - 1);
         setBalance((b) => b + bet.amount * cashed);
         setLastOutcome({ outcome: "win", profit, nonce });
+        appToast.game.cashout({ mult: cashed.toFixed(2), amount: formatPHON(profit) });
       } else {
         setLastOutcome({ outcome: "loss", profit: -bet.amount, nonce });
+        appToast.game.bust({ amount: formatPHON(bet.amount) });
       }
     }
     setHistory((h) => [{ id: `n${nonce}`, multiplier: crashPoint }, ...h].slice(0, 30));
@@ -140,6 +144,7 @@ export function CrashScreen() {
       if (phase !== "betting" || bet || amount <= 0 || amount > balance) return;
       setBalance((b) => b - amount);
       setBet({ amount, autoTarget, cashedAt: null });
+      appToast.game.bet({ amount: formatPHON(amount) });
     },
     [phase, bet, balance],
   );
