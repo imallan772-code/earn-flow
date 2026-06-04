@@ -26,6 +26,8 @@ import { profitOf } from "@/shared/games/engine/houseEdge";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
 import { reachedTarget } from "@/shared/games/engine/clamp";
 import { crashStore } from "@/shared/games/state/persistedGameState";
+import { useBalance, wallet } from "@/shared/wallet/walletStore";
+import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { cn } from "@/lib/utils";
 import { appToast } from "@/shared/ui/toast";
 import { formatPHON } from "@/lib/format";
@@ -46,7 +48,7 @@ export function CrashScreen() {
   const { mode } = useMode();
 
   // Persisted
-  const balance = crashStore.use((s) => s.balance);
+  const balance = useBalance(mode);
   const nonce = crashStore.use((s) => s.nonce);
   const history = crashStore.use((s) => s.history);
   const lastOutcome = crashStore.use((s) => s.lastOutcome);
@@ -73,11 +75,13 @@ export function CrashScreen() {
   }, []);
 
   // Refund unsettled bet on unmount (user left mid-round)
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
   useEffect(() => {
     return () => {
       const b = betRef.current;
       if (b && b.cashedAt === null) {
-        crashStore.set((s) => ({ ...s, balance: s.balance + b.amount }));
+        wallet.refund(modeRef.current, b.amount);
       }
     };
   }, []);
@@ -139,9 +143,9 @@ export function CrashScreen() {
       const cashed = bet.cashedAt;
       if (cashed !== null) {
         const profit = profitOf(bet.amount, cashed, mode);
+        wallet.credit(mode, bet.amount + profit, cashed);
         crashStore.set((s) => ({
           ...s,
-          balance: s.balance + bet.amount + profit,
           lastOutcome: { outcome: "win", profit, nonce },
         }));
         appToast.game.cashout({ mult: cashed.toFixed(2), amount: formatPHON(profit) });
@@ -183,10 +187,10 @@ export function CrashScreen() {
 
   const handlePlace = useCallback(
     (amount: number, autoTarget: number) => {
-      if (phase !== "betting" || bet || amount <= 0 || amount > balance) return;
+      if (phase !== "betting" || bet || amount <= 0) return;
+      if (!wallet.tryDebit(mode, amount)) return;
       crashStore.set((s) => ({
         ...s,
-        balance: s.balance - amount,
         pendingAmount: amount,
         pendingTarget: autoTarget,
       }));
@@ -203,7 +207,7 @@ export function CrashScreen() {
       setBet({ amount, autoTarget, cashedAt: null, liveBetId });
       appToast.game.bet({ amount: formatPHON(amount) });
     },
-    [phase, bet, balance, mode],
+    [phase, bet, mode],
   );
 
   const handleCashout = useCallback(() => {
