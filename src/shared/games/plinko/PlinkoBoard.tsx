@@ -243,7 +243,7 @@ export function PlinkoBoard({ mode }: PlinkoBoardProps) {
         <BetSummaryPanel
           variant="static"
           amount={pendingAmount}
-          targetMultiplier={maxMultFor(risk, rows)}
+          targetMultiplier={getMaxMultiplier(risk, rows)}
           winChancePct={undefined}
         />
       </div>
