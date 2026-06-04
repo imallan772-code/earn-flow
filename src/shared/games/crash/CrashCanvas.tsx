@@ -1,25 +1,29 @@
 /**
- * CrashCanvas — Stake.com style curve graph.
+ * CrashCanvas — Stake-grade curve graph with cosmic gradient, particles,
+ * grid labels, and a betting-phase countdown ring.
  *
- * Subscribes to the shared tick loop. Single RAF rule:
- * never call requestAnimationFrame here directly.
+ * Single RAF rule: subscribe to the shared tick loop, never call rAF directly.
  */
 import { useEffect, useRef } from "react";
 import { sharedTickLoop } from "@/shared/games/engine/tickLoop";
-import { multiplierAt, type Phase } from "./CrashEngine";
+import { multiplierAt, type Phase, BETTING_MS } from "./CrashEngine";
 
 interface Props {
   phase: Phase;
   startedAt: number;
   crashPoint: number;
-  /** ms remaining in betting phase, only used when phase === "betting". */
   bettingMsLeft?: number;
 }
 
+const GRID_X_LABELS = [1, 1.5, 2, 3, 5, 10];
+
 export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stateRef = useRef({ phase, startedAt, crashPoint });
-  stateRef.current = { phase, startedAt, crashPoint };
+  const stateRef = useRef({ phase, startedAt, crashPoint, bettingMsLeft });
+  stateRef.current = { phase, startedAt, crashPoint, bettingMsLeft };
+
+  // particle trail — positions relative to curve head, drifting up
+  const particlesRef = useRef<Array<{ t0: number; ox: number; oy: number }>>([]);
 
   useEffect(() => {
     const loop = sharedTickLoop();
@@ -43,8 +47,24 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, cssW, cssH);
 
+    const { phase: ph, startedAt: sa, crashPoint: cp, bettingMsLeft: bml } = stateRef.current;
+    const elapsed = ph === "running" || ph === "crashed" ? performance.now() - sa : 0;
+    const liveM = ph === "crashed" ? cp : multiplierAt(elapsed);
+
+    // background radial wash
+    const wash = ctx.createRadialGradient(cssW / 2, cssH * 0.85, 0, cssW / 2, cssH * 0.85, cssH);
+    if (ph === "crashed") {
+      wash.addColorStop(0, "oklch(0.68 0.22 25 / 0.18)");
+      wash.addColorStop(1, "oklch(0.18 0.05 282 / 0)");
+    } else {
+      wash.addColorStop(0, "oklch(0.85 0.18 200 / 0.14)");
+      wash.addColorStop(1, "oklch(0.18 0.05 282 / 0)");
+    }
+    ctx.fillStyle = wash;
+    ctx.fillRect(0, 0, cssW, cssH);
+
     // grid
-    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    ctx.strokeStyle = "oklch(1 0 0 / 0.06)";
     ctx.lineWidth = 1;
     for (let i = 1; i < 6; i++) {
       const y = (cssH / 6) * i;
@@ -61,36 +81,49 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
       ctx.stroke();
     }
 
-    const { phase: ph, startedAt: sa, crashPoint: cp } = stateRef.current;
-    const elapsed = ph === "running" || ph === "crashed" ? performance.now() - sa : 0;
-    const liveM = ph === "crashed" ? cp : multiplierAt(elapsed);
-
-    // map elapsed (0 .. max(elapsed, 8000)) to x; multiplier (1 .. max(liveM, 2)) to y
+    // map elapsed → x, multiplier → y
     const xMax = Math.max(elapsed, 8000);
     const yMax = Math.max(liveM, 2);
     const toX = (t: number) => (t / xMax) * cssW * 0.92 + cssW * 0.04;
     const toY = (m: number) =>
       cssH - ((m - 1) / (yMax - 1)) * cssH * 0.82 - cssH * 0.06;
 
-    // curve
-    const accent =
-      ph === "crashed"
-        ? "oklch(0.68 0.22 25)"
-        : "oklch(0.85 0.18 200)";
+    // y-axis multiplier labels (1x .. yMax)
+    ctx.font = "600 9px JetBrains Mono, monospace";
+    ctx.fillStyle = "oklch(0.50 0.04 282)";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    for (const m of GRID_X_LABELS) {
+      if (m > yMax) break;
+      const y = toY(m);
+      if (y < 8 || y > cssH - 8) continue;
+      ctx.fillText(`${m}x`, 4, y - 6);
+      ctx.strokeStyle = "oklch(1 0 0 / 0.04)";
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(cssW, y);
+      ctx.stroke();
+    }
 
-    // fill under curve
-    const grad = ctx.createLinearGradient(0, 0, 0, cssH);
-    grad.addColorStop(0, "oklch(0.85 0.18 200 / 0.30)");
-    grad.addColorStop(1, "oklch(0.85 0.18 200 / 0)");
-    ctx.fillStyle =
-      ph === "crashed"
-        ? "oklch(0.68 0.22 25 / 0.18)"
-        : (grad as unknown as CanvasGradient);
+    const isLive = ph === "running" || ph === "crashed";
+    const accent = ph === "crashed" ? "oklch(0.68 0.22 25)" : "oklch(0.85 0.18 200)";
 
-    if (ph === "running" || ph === "crashed") {
+    if (isLive) {
+      // filled area
+      const grad = ctx.createLinearGradient(0, 0, 0, cssH);
+      if (ph === "crashed") {
+        grad.addColorStop(0, "oklch(0.68 0.22 25 / 0.28)");
+        grad.addColorStop(1, "oklch(0.68 0.22 25 / 0)");
+      } else {
+        grad.addColorStop(0, "oklch(0.85 0.18 200 / 0.34)");
+        grad.addColorStop(0.6, "oklch(0.70 0.24 300 / 0.18)");
+        grad.addColorStop(1, "oklch(0.85 0.18 200 / 0)");
+      }
+      ctx.fillStyle = grad;
+
+      const steps = 72;
       ctx.beginPath();
       ctx.moveTo(toX(0), toY(1));
-      const steps = 64;
       for (let i = 0; i <= steps; i++) {
         const t = (elapsed * i) / steps;
         ctx.lineTo(toX(t), toY(Math.min(multiplierAt(t), cp)));
@@ -104,7 +137,7 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
       ctx.strokeStyle = accent;
       ctx.lineWidth = 3;
       ctx.shadowColor = accent;
-      ctx.shadowBlur = 14;
+      ctx.shadowBlur = 18;
       ctx.beginPath();
       ctx.moveTo(toX(0), toY(1));
       for (let i = 0; i <= steps; i++) {
@@ -114,33 +147,89 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
       ctx.stroke();
       ctx.shadowBlur = 0;
 
-      // head dot
+      // head dot with halo
+      const hx = toX(elapsed);
+      const hy = toY(liveM);
       ctx.fillStyle = accent;
+      ctx.shadowColor = accent;
+      ctx.shadowBlur = 24;
       ctx.beginPath();
-      ctx.arc(toX(elapsed), toY(liveM), 5, 0, Math.PI * 2);
+      ctx.arc(hx, hy, 6, 0, Math.PI * 2);
       ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // particles — spawn while running
+      const now = performance.now();
+      if (ph === "running" && particlesRef.current.length < 14 && Math.random() < 0.35) {
+        particlesRef.current.push({
+          t0: now,
+          ox: hx + (Math.random() - 0.5) * 16,
+          oy: hy + (Math.random() - 0.5) * 6,
+        });
+      }
+      particlesRef.current = particlesRef.current.filter((p) => now - p.t0 < 1200);
+      for (const p of particlesRef.current) {
+        const age = (now - p.t0) / 1200;
+        const a = 1 - age;
+        ctx.fillStyle = `oklch(0.85 0.18 200 / ${(a * 0.7).toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(p.ox, p.oy - age * 30, 2 + a * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
-    // multiplier text
+    // text overlays
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     if (ph === "betting") {
-      const ms = bettingMsLeft ?? 0;
-      const s = Math.max(0, Math.ceil(ms / 1000));
+      // countdown ring
+      const ms = bml ?? 0;
+      const left = Math.max(0, ms);
+      const pct = 1 - left / BETTING_MS;
+      const cx = cssW / 2;
+      const cy = cssH / 2;
+      const r = Math.min(cssW, cssH) * 0.22;
+
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = "oklch(1 0 0 / 0.08)";
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = "oklch(0.85 0.18 200)";
+      ctx.shadowColor = "oklch(0.85 0.18 200)";
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
       ctx.fillStyle = "oklch(0.68 0.03 282)";
-      ctx.font = "600 14px Pretendard, system-ui";
-      ctx.fillText("다음 라운드", cssW / 2, cssH / 2 - 28);
+      ctx.font = "600 11px Pretendard, system-ui";
+      ctx.fillText("다음 라운드", cx, cy - 20);
       ctx.fillStyle = "oklch(0.98 0.01 280)";
-      ctx.font = "800 56px JetBrains Mono, monospace";
-      ctx.fillText(`${s}s`, cssW / 2, cssH / 2 + 10);
+      ctx.font = "800 44px JetBrains Mono, monospace";
+      ctx.fillText(`${Math.ceil(left / 1000)}`, cx, cy + 14);
+      ctx.fillStyle = "oklch(0.68 0.03 282)";
+      ctx.font = "600 10px Pretendard, system-ui";
+      ctx.fillText("sec", cx, cy + 40);
     } else if (ph === "cooldown") {
       ctx.fillStyle = "oklch(0.68 0.22 25)";
-      ctx.font = "800 44px JetBrains Mono, monospace";
-      ctx.fillText(`CRASHED @ ${cp.toFixed(2)}x`, cssW / 2, cssH / 2);
-    } else {
-      ctx.fillStyle = ph === "crashed" ? "oklch(0.68 0.22 25)" : "oklch(0.98 0.01 280)";
-      ctx.font = "800 64px JetBrains Mono, monospace";
+      ctx.font = "800 28px JetBrains Mono, monospace";
+      ctx.fillText("BUSTED", cssW / 2, cssH / 2 - 16);
+      ctx.font = "800 42px JetBrains Mono, monospace";
+      ctx.fillText(`${cp.toFixed(2)}x`, cssW / 2, cssH / 2 + 22);
+    } else if (ph === "crashed") {
+      ctx.fillStyle = "oklch(0.68 0.22 25)";
+      ctx.font = "800 56px JetBrains Mono, monospace";
       ctx.fillText(`${liveM.toFixed(2)}x`, cssW / 2, cssH / 2);
+    } else {
+      ctx.fillStyle = "oklch(0.98 0.01 280)";
+      ctx.font = "800 64px JetBrains Mono, monospace";
+      ctx.shadowColor = "oklch(0.85 0.18 200 / 0.5)";
+      ctx.shadowBlur = 18;
+      ctx.fillText(`${liveM.toFixed(2)}x`, cssW / 2, cssH / 2);
+      ctx.shadowBlur = 0;
     }
   }
 

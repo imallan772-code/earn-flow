@@ -182,7 +182,40 @@
   .animate-marquee { animation: phon-marquee 32s linear infinite; }
   .animate-marquee-rev { animation: phon-marquee 38s linear infinite reverse; }
 
+  @keyframes crash-shake {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    20% { transform: translate3d(-6px, 2px, 0); }
+    40% { transform: translate3d(5px, -2px, 0); }
+    60% { transform: translate3d(-4px, 1px, 0); }
+    80% { transform: translate3d(3px, -1px, 0); }
+  }
+  .animate-crash-shake { animation: crash-shake 0.45s cubic-bezier(.36,.07,.19,.97) both; }
+
+  @keyframes crash-flash {
+    0% { opacity: 0; }
+    20% { opacity: 0.55; }
+    100% { opacity: 0; }
+  }
+  .animate-crash-flash { animation: crash-flash 0.7s ease-out forwards; }
+
+  @keyframes result-pop {
+    0% { transform: scale(0.6); opacity: 0; }
+    60% { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .animate-result-pop { animation: result-pop 0.38s cubic-bezier(.34,1.56,.64,1) both; }
+
+  @keyframes float-up {
+    0% { transform: translate3d(0, 8px, 0); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: translate3d(0, -32px, 0); opacity: 0; }
+  }
+  .animate-float-up { animation: float-up 1.2s ease-out forwards; }
+
   @media (prefers-reduced-motion: reduce) {
-    .animate-marquee, .animate-marquee-rev, .animate-phon-pulse { animation: none; }
+    .animate-marquee, .animate-marquee-rev, .animate-phon-pulse,
+    .animate-crash-shake, .animate-crash-flash, .animate-result-pop,
+    .animate-float-up { animation: none; }
   }
 }
+

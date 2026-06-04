@@ -20,7 +20,6 @@ export function DiceSlider({ target, mode, onTargetChange, onModeChange, lastRol
   const pm = payoutMultiplier(wc);
   const winPct = (target / MAX_ROLL) * 100;
 
-  // bar gradient: Under → win zone is left (emerald), Over → win zone is right (emerald)
   const winColor = "var(--color-emerald)";
   const loseColor = "var(--color-rose)";
   const bg =
@@ -31,7 +30,7 @@ export function DiceSlider({ target, mode, onTargetChange, onModeChange, lastRol
   const lastPct = lastRoll != null ? Math.min(100, Math.max(0, (lastRoll / MAX_ROLL) * 100)) : null;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       {/* mode toggle */}
       <div className="glass-1 grid grid-cols-2 rounded-xl p-1">
         {(["under", "over"] as const).map((m) => (
@@ -41,7 +40,7 @@ export function DiceSlider({ target, mode, onTargetChange, onModeChange, lastRol
             className={cn(
               "rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
               mode === m
-                ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)]"
+                ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)] shadow-glow-cyan"
                 : "text-[var(--color-muted)]",
             )}
           >
@@ -50,49 +49,65 @@ export function DiceSlider({ target, mode, onTargetChange, onModeChange, lastRol
         ))}
       </div>
 
-      {/* bar */}
-      <div className="relative h-3 w-full overflow-hidden rounded-full" style={{ background: bg, opacity: 0.85 }}>
-        {/* tick labels */}
-        {lastPct != null && (
-          <div
-            className="absolute top-1/2 h-5 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--color-foreground)] shadow-[0_0_8px_var(--color-foreground)]"
-            style={{ left: `${lastPct}%` }}
-            aria-hidden
-          />
-        )}
+      {/* bar + slider stacked */}
+      <div className="relative">
+        <div
+          className="relative h-4 w-full overflow-visible rounded-full"
+          style={{ background: bg, opacity: 0.92 }}
+        >
+          {/* axis ticks (0, 25, 50, 75, 99.99) */}
+          {[0, 25, 50, 75, 100].map((p) => (
+            <span
+              key={p}
+              className="absolute top-full mt-2 -translate-x-1/2 text-[9px] font-bold text-[var(--color-muted-2)] font-numeric"
+              style={{ left: `${p}%` }}
+            >
+              {p === 100 ? "99.99" : (p * MAX_ROLL / 100).toFixed(0)}
+            </span>
+          ))}
+          {lastPct != null && (
+            <div
+              key={lastPct}
+              className="animate-result-pop absolute top-1/2 h-7 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--color-foreground)] shadow-[0_0_10px_var(--color-foreground)]"
+              style={{ left: `${lastPct}%` }}
+              aria-hidden
+            />
+          )}
+        </div>
+
+        <input
+          type="range"
+          min={1}
+          max={Math.floor(MAX_ROLL) - 1}
+          step={1}
+          value={Math.round(target)}
+          onChange={(e) => onTargetChange(Number(e.target.value))}
+          className="-mt-4 h-4 w-full cursor-pointer appearance-none bg-transparent
+                     [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-7
+                     [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:rounded-full
+                     [&::-webkit-slider-thumb]:bg-[var(--color-foreground)]
+                     [&::-webkit-slider-thumb]:shadow-glow-cyan
+                     [&::-webkit-slider-thumb]:border-2
+                     [&::-webkit-slider-thumb]:border-[var(--color-cyan)]
+                     [&::-webkit-slider-thumb]:transition-transform
+                     active:[&::-webkit-slider-thumb]:scale-110
+                     [&::-moz-range-thumb]:h-7 [&::-moz-range-thumb]:w-7
+                     [&::-moz-range-thumb]:rounded-full
+                     [&::-moz-range-thumb]:bg-[var(--color-foreground)]
+                     [&::-moz-range-thumb]:border-2
+                     [&::-moz-range-thumb]:border-[var(--color-cyan)]"
+        />
       </div>
 
-      {/* slider input — overlays the bar */}
-      <input
-        type="range"
-        min={1}
-        max={Math.floor(MAX_ROLL) - 1}
-        step={1}
-        value={Math.round(target)}
-        onChange={(e) => onTargetChange(Number(e.target.value))}
-        className="-mt-3 h-3 w-full cursor-pointer appearance-none bg-transparent
-                   [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-6
-                   [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:rounded-full
-                   [&::-webkit-slider-thumb]:bg-[var(--color-foreground)]
-                   [&::-webkit-slider-thumb]:shadow-glow-purple
-                   [&::-webkit-slider-thumb]:border-2
-                   [&::-webkit-slider-thumb]:border-[var(--color-cyan)]
-                   [&::-moz-range-thumb]:h-6 [&::-moz-range-thumb]:w-6
-                   [&::-moz-range-thumb]:rounded-full
-                   [&::-moz-range-thumb]:bg-[var(--color-foreground)]
-                   [&::-moz-range-thumb]:border-2
-                   [&::-moz-range-thumb]:border-[var(--color-cyan)]"
-      />
-
       {/* stats */}
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <Stat label="Multiplier" value={`${pm.toFixed(4)}x`} accent="cyan" />
+      <div className="grid grid-cols-3 gap-2 text-center pt-3">
+        <Stat label="배수" value={`${pm.toFixed(2)}x`} accent="cyan" />
         <Stat
-          label={mode === "under" ? "Roll Under" : "Roll Over"}
+          label={mode === "under" ? "목표 (Under)" : "목표 (Over)"}
           value={target.toFixed(2)}
           accent="gold"
         />
-        <Stat label="Win Chance" value={`${wc.toFixed(2)}%`} accent="emerald" />
+        <Stat label="승률" value={`${wc.toFixed(2)}%`} accent="emerald" />
       </div>
     </div>
   );
@@ -113,7 +128,7 @@ function Stat({
         {label}
       </div>
       <div
-        className="font-numeric text-sm font-extrabold"
+        className="font-numeric text-base font-extrabold"
         style={{ color: `var(--color-${accent})` }}
       >
         {value}

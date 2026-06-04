@@ -4,14 +4,15 @@
  * Uses Round-A engine for crashpoint, multiplier curve, and auto-cashout.
  * Single RAF via sharedTickLoop in the canvas.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ShieldCheck, X } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Users, X } from "lucide-react";
 import { CrashCanvas } from "@/shared/games/crash/CrashCanvas";
 import {
   BETTING_MS,
   COOLDOWN_MS,
   computeCrashPoint,
+  multiplierAt,
   multiplierAt6,
 } from "@/shared/games/crash/CrashEngine";
 import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
@@ -51,13 +52,14 @@ export function CrashScreen() {
   const [history, setHistory] = useState(CRASH_HISTORY);
   const [showFair, setShowFair] = useState(false);
   const [commit, setCommit] = useState("");
+  const [flashKey, setFlashKey] = useState(0);
 
   // commit hash on mount
   useEffect(() => {
     commitServerSeed(SERVER_SEED).then(setCommit);
   }, []);
 
-  // Initialize each round: compute crashPoint, start betting countdown.
+  // Initialize each round
   useEffect(() => {
     if (phase !== "betting") return;
     let alive = true;
@@ -89,19 +91,15 @@ export function CrashScreen() {
     };
   }, [phase, nonce]);
 
-  // Running phase: poll multiplier for auto-cashout + bust detection.
+  // Running phase
   useEffect(() => {
     if (phase !== "running") return;
     const id = window.setInterval(() => {
       const elapsed = performance.now() - startedAt;
       const m = multiplierAt6(elapsed);
-
-      // auto cashout
       if (bet && bet.cashedAt === null && reachedTarget(m, bet.autoTarget) && bet.autoTarget < crashPoint) {
         setBet({ ...bet, cashedAt: bet.autoTarget });
       }
-
-      // bust
       if (m >= crashPoint) {
         setPhase("crashed");
       }
@@ -110,7 +108,7 @@ export function CrashScreen() {
     return () => window.clearInterval(id);
   }, [phase, startedAt, crashPoint, bet]);
 
-  // Crashed → settle bet → cooldown → next round.
+  // Crashed → settle → cooldown → next round.
   useEffect(() => {
     if (phase !== "crashed") return;
     if (bet) {
@@ -123,6 +121,7 @@ export function CrashScreen() {
       } else {
         setLastOutcome({ outcome: "loss", profit: -bet.amount, nonce });
         appToast.game.bust({ amount: formatPHON(bet.amount) });
+        setFlashKey((k) => k + 1);
       }
     }
     setHistory((h) => [{ id: `n${nonce}`, multiplier: crashPoint }, ...h].slice(0, 30));
@@ -155,8 +154,22 @@ export function CrashScreen() {
     setBet({ ...bet, cashedAt: m });
   }, [phase, bet, startedAt]);
 
+  // live multiplier for "potential payout" badge
+  const liveMult = useMemo(() => {
+    if (phase !== "running") return null;
+    return multiplierAt(performance.now() - startedAt);
+  }, [phase, startedAt]);
+
+  const liveTotal = useMemo(
+    () => LIVE_BETS_SEED.reduce((s, b) => s + b.bet, 0),
+    [],
+  );
+
+  const bettingProgress = phase === "betting" ? 1 - bettingMsLeft / BETTING_MS : undefined;
+
   return (
     <div className="flex flex-col gap-3">
+      {/* header */}
       <header className="flex items-center gap-2">
         <Link
           to="/earn"
@@ -165,13 +178,16 @@ export function CrashScreen() {
         >
           <ArrowLeft size={16} />
         </Link>
-        <div>
-          <h1 className="text-xl font-extrabold">Crash</h1>
-          <p className="text-[11px] text-[var(--color-muted)]">99% RTP · Provably Fair</p>
+        <div className="min-w-0">
+          <h1 className="text-xl font-extrabold leading-tight">Crash</h1>
+          <p className="text-[10px] text-[var(--color-muted)]">99% RTP · Provably Fair</p>
         </div>
+        <span className="glass-1 ml-auto rounded-full px-2.5 py-1 text-[10px] font-bold text-[var(--color-muted)] font-numeric">
+          #{nonce.toString().padStart(4, "0")}
+        </span>
         <button
           onClick={() => setShowFair(true)}
-          className="glass-1 ml-auto flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold"
+          className="glass-1 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold"
         >
           <ShieldCheck size={12} className="text-[var(--color-emerald)]" />
           공정성
@@ -179,12 +195,12 @@ export function CrashScreen() {
       </header>
 
       {/* history strip */}
-      <ul className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
+      <ul className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none">
         {history.map((h) => (
           <li
             key={h.id}
             className={cn(
-              "font-numeric shrink-0 rounded-full px-2 py-1 text-[11px] font-bold",
+              "font-numeric shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-extrabold",
               h.multiplier < 2
                 ? "bg-[color-mix(in_oklab,var(--color-rose)_22%,transparent)] text-[var(--color-rose)]"
                 : h.multiplier < 10
@@ -198,22 +214,46 @@ export function CrashScreen() {
       </ul>
 
       {/* canvas */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl">
+      <div
+        className={cn(
+          "relative aspect-[5/4] w-full overflow-hidden rounded-2xl border border-[var(--color-border)]",
+          phase === "crashed" && "animate-crash-shake",
+        )}
+      >
         <CrashCanvas
           phase={phase}
           startedAt={startedAt}
           crashPoint={crashPoint}
           bettingMsLeft={bettingMsLeft}
         />
+        {phase === "crashed" && (
+          <div
+            key={flashKey}
+            className="animate-crash-flash pointer-events-none absolute inset-0 bg-[var(--color-rose)]"
+            aria-hidden
+          />
+        )}
         {bet && (
           <div className="glass-2 absolute left-3 top-3 rounded-xl px-3 py-1.5 text-[11px]">
-            <span className="text-[var(--color-muted)]">내 베팅 </span>
-            <span className="font-numeric font-bold">{bet.amount.toFixed(2)}</span>
+            <div className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+              내 베팅
+            </div>
+            <div className="font-numeric font-bold">{bet.amount.toFixed(2)} USDT</div>
             {bet.cashedAt !== null && (
-              <span className="font-numeric ml-2 text-[var(--color-emerald)]">
+              <div className="font-numeric mt-0.5 text-[var(--color-emerald)]">
                 ✓ {bet.cashedAt.toFixed(2)}x
-              </span>
+              </div>
             )}
+          </div>
+        )}
+        {bet && bet.cashedAt === null && phase === "running" && liveMult != null && (
+          <div className="glass-2 absolute right-3 top-3 rounded-xl px-3 py-1.5 text-right text-[11px] animate-result-pop">
+            <div className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+              잠재 수익
+            </div>
+            <div className="font-numeric font-extrabold text-[var(--color-emerald)]">
+              +{(bet.amount * (liveMult - 1)).toFixed(2)}
+            </div>
           </div>
         )}
       </div>
@@ -224,30 +264,49 @@ export function CrashScreen() {
         hasActiveBet={!!bet && bet.cashedAt === null && phase === "running"}
         balance={balance}
         lastOutcome={lastOutcome}
+        bettingProgress={bettingProgress}
         onPlace={handlePlace}
         onCashout={handleCashout}
       />
 
       {/* live bets */}
       <section className="glass-1 rounded-2xl p-3">
-        <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
-          라이브 베팅
-        </h3>
+        <header className="mb-2 flex items-center justify-between">
+          <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+            <Users size={12} /> 라이브 베팅
+          </h3>
+          <span className="text-[10px] text-[var(--color-muted-2)]">
+            <span className="font-numeric text-[var(--color-foreground)]">
+              {LIVE_BETS_SEED.length}
+            </span>
+            명 · <span className="font-numeric text-[var(--color-foreground)]">
+              {liveTotal.toFixed(2)}
+            </span>{" "}
+            USDT
+          </span>
+        </header>
         <ul className="flex flex-col divide-y divide-[var(--color-border)]">
           {LIVE_BETS_SEED.map((b) => (
-            <li key={b.id} className="flex items-center justify-between py-1.5 text-xs">
-              <span className="text-[var(--color-muted)]">{b.user}</span>
-              <span className="font-numeric">{b.bet.toFixed(2)}</span>
+            <li key={b.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 py-1.5 text-xs">
+              <span className="truncate text-[var(--color-muted)]">{b.user}</span>
+              <span className="font-numeric w-16 text-right">{b.bet.toFixed(2)}</span>
               <span
                 className={cn(
-                  "font-numeric w-16 text-right",
-                  b.cashout === null ? "text-[var(--color-muted-2)]" : "text-[var(--color-emerald)]",
+                  "font-numeric w-14 text-right",
+                  b.cashout === null
+                    ? "text-[var(--color-muted-2)]"
+                    : "text-[var(--color-emerald)]",
                 )}
               >
                 {b.cashout === null ? "—" : `${b.cashout.toFixed(2)}x`}
               </span>
-              <span className="font-numeric w-20 text-right">
-                {b.payout === null ? "—" : b.payout.toFixed(2)}
+              <span
+                className={cn(
+                  "font-numeric w-16 text-right font-bold",
+                  b.payout === null ? "text-[var(--color-rose)]" : "text-[var(--color-emerald)]",
+                )}
+              >
+                {b.payout === null ? "BUST" : `+${b.payout.toFixed(2)}`}
               </span>
             </li>
           ))}
