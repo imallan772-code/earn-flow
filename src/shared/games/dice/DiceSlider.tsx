@@ -44,7 +44,7 @@ export function DiceSlider({ target, mode, onTargetChange, onModeChange, lastRol
                 : "text-[var(--color-muted)]",
             )}
           >
-            Roll {m === "under" ? "Under" : "Over"}
+            {m === "under" ? "낮게 (Under)" : "높게 (Over)"}
           </button>
         ))}
       </div>

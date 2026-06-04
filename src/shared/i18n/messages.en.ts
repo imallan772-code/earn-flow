@@ -53,4 +53,22 @@ export const messages_en: Record<keyof typeof messages_ko, string> = {
   "earn.tab.missions.sub": "Earn free",
   "earn.tab.games": "Games",
   "earn.tab.games.sub": "Earn more",
+
+  // Auto-bet strategies
+  "strategy.Flat": "Flat (constant)",
+  "strategy.Martingale": "Martingale (×2 on loss)",
+  "strategy.AntiMartingale": "Anti-Martingale (×2 on win)",
+  "strategy.Fibonacci": "Fibonacci",
+  "strategy.DAlembert": "D'Alembert (±1 unit)",
+
+  // Mode (Demo/Real)
+  "mode.demo": "Demo Mode",
+  "mode.real": "Real Mode",
+  "mode.switchedToDemo": "🎮 Demo mode active — practice freely",
+  "mode.switchedToReal": "Real mode active. Bet responsibly.",
+
+  // Live bets
+  "live.title": "Global Live Bets",
+  "live.online": "{count} online",
+  "live.totalVolume": "Volume {amount} USDT",
 };

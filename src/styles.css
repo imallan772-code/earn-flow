@@ -212,6 +212,19 @@
   }
   .animate-float-up { animation: float-up 1.2s ease-out forwards; }
 
+  @keyframes dice-roll {
+    0%   { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1); }
+    25%  { transform: rotateX(360deg) rotateY(180deg) rotateZ(90deg) scale(1.08); filter: blur(1px); }
+    50%  { transform: rotateX(720deg) rotateY(540deg) rotateZ(180deg) scale(1.12); filter: blur(1.5px); }
+    75%  { transform: rotateX(1080deg) rotateY(720deg) rotateZ(270deg) scale(1.06); filter: blur(0.8px); }
+    100% { transform: rotateX(1440deg) rotateY(900deg) rotateZ(360deg) scale(1); }
+  }
+
+  @keyframes dice-spin-slow {
+    from { transform: rotateX(0deg) rotateY(0deg); }
+    to   { transform: rotateX(360deg) rotateY(360deg); }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .animate-marquee, .animate-marquee-rev, .animate-phon-pulse,
     .animate-crash-shake, .animate-crash-flash, .animate-result-pop,

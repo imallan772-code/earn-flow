@@ -8,6 +8,8 @@ import { NoticeBar } from "@/features/notice/NoticeBar";
 import { EventHero } from "@/features/event/EventHero";
 import { MOCK_FEED_HOT } from "@/mocks/missions";
 import { formatPHON } from "@/lib/format";
+import { ModeToggle } from "@/shared/mode/ModeToggle";
+import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
 
 export function FeedScreen() {
   return (
@@ -19,10 +21,13 @@ export function FeedScreen() {
         right={<OnlineCounterChip compact />}
       />
 
+      <ModeToggle />
+
       <NoticeBar />
       <EventHero />
       <FomoMarquee />
       <LiveCashoutStrip />
+      <LiveBetsFeed limit={10} />
 
       {/* Hot strip */}
       <section>
