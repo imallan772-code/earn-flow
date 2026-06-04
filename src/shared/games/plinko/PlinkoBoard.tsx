@@ -1,5 +1,5 @@
 /**
- * PlinkoBoard — Plinko game screen (temporary inline structure).
+ * PlinkoBoard — canvas + controls + bet panel. No header/back (Screen owns).
  *
  * TODO: Round G Part 1 완료 후 GameShell + useGameRound + plinkoStore로 마이그레이션 예정.
  *       현재는 임시 useState 구조. persistedGameState.ts 는 수정하지 않는다.
@@ -8,17 +8,18 @@
  *
  * mode 는 부모 라우트(useMode())에서 prop 으로 주입한다. 내부 useState 금지.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PlinkoEngine, getMaxMultiplier, type RiskLevel, type RowCount } from "./PlinkoEngine";
 import { PlinkoRenderer, type QualityLevel } from "./PlinkoRenderer";
 import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
 import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
+import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { cn } from "@/lib/utils";
 
 export interface PlinkoBoardProps {
   mode: "demo" | "real";
+  /** Optional callback so the parent screen can surface lastOutcome → for auto-bet / fairness modal. */
+  onOutcome?: (o: { outcome: "win" | "loss"; profit: number; nonce: number }) => void;
 }
 
 const ROW_OPTIONS: RowCount[] = [8, 12, 16];
@@ -31,7 +32,7 @@ interface HistoryEntry {
   slot: number;
 }
 
-export function PlinkoBoard({ mode }: PlinkoBoardProps) {
+export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
   const [phase, setPhase] = useState<"idle" | "rolling" | "settled">("idle");
   const [balance, setBalance] = useState(1000);
   const [nonce, setNonce] = useState(0);
@@ -50,17 +51,15 @@ export function PlinkoBoard({ mode }: PlinkoBoardProps) {
   const engineRef = useRef<PlinkoEngine | null>(null);
   const rendererRef = useRef<PlinkoRenderer | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Synchronous double-tap lock — blocks rapid second clicks before React state updates. */
+  const placingRef = useRef(false);
 
-  // Quality derives from mode. Real money → max polish.
   const quality: QualityLevel = useMemo(() => (mode === "real" ? "high" : "medium"), [mode]);
 
-  // Engine lazy init — React 19 strict mode safe (effect runs twice but guard prevents dup).
   useEffect(() => {
     if (!engineRef.current) engineRef.current = new PlinkoEngine();
   }, []);
 
-  // CRITICAL: deps 는 []. quality/rows/risk 를 절대 추가하지 말 것.
-  // 변경 반영은 아래 동기화 useEffect 3개의 set* 호출로만 처리한다.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -77,20 +76,10 @@ export function PlinkoBoard({ mode }: PlinkoBoardProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // mode 변경 시 즉시 renderer.setQuality 호출. 진행 중이면 Renderer 내부에서 pendingQuality 로 defer.
-  useEffect(() => {
-    rendererRef.current?.setQuality(quality);
-  }, [quality]);
-  // rows 변경 시 static layer 재빌드 (slot/peg 좌표 재계산).
-  useEffect(() => {
-    rendererRef.current?.setRows(rows);
-  }, [rows]);
-  // risk 변경 시 슬롯 색상 정규화 재계산.
-  useEffect(() => {
-    rendererRef.current?.setRisk(risk);
-  }, [risk]);
+  useEffect(() => { rendererRef.current?.setQuality(quality); }, [quality]);
+  useEffect(() => { rendererRef.current?.setRows(rows); }, [rows]);
+  useEffect(() => { rendererRef.current?.setRisk(risk); }, [risk]);
 
-  // ResizeObserver — rAF coalesce + 0×0 가드. DPR 변화는 ResizeObserver 가 사실상 잡아냄.
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
@@ -112,88 +101,95 @@ export function PlinkoBoard({ mode }: PlinkoBoardProps) {
     };
   }, []);
 
-  const handlePlace = (amount: number) => {
-    if (phase !== "idle") return;
-    if (amount <= 0 || amount > balance) return;
-    if (!engineRef.current || !rendererRef.current) return;
+  const handlePlace = useCallback(
+    (amount: number) => {
+      // Synchronous double-tap guard FIRST — must precede the React-state guards
+      // because rapid taps in the same tick all see stale `phase === "idle"`.
+      if (placingRef.current) return;
+      if (phase !== "idle") return;
+      if (amount <= 0 || amount > balance) return;
+      if (!engineRef.current || !rendererRef.current) return;
+      placingRef.current = true;
 
-    setBalance((b) => b - amount);
-    setPendingAmount(amount);
-    setPhase("rolling");
+      setBalance((b) => b - amount);
+      setPendingAmount(amount);
+      setPhase("rolling");
 
-    const seed = `phonara-plinko-${nonce}`;
-    // TODO: Real money — Supabase Edge Function RPC 로 위임.
-    const result = engineRef.current.dropPath(seed, rows, risk);
+      const seed = `phonara-plinko-${nonce}`;
+      const result = engineRef.current.dropPath(seed, rows, risk);
 
-    rendererRef.current.playDrop(result, engineRef.current, (slot, multiplier) => {
-      // mode === "real" 일 때만 RTP 97% 적용 (BetSummaryPanel/houseEdge 일관성).
-      const effectiveMult = mode === "real" ? multiplier * 0.97 : multiplier;
-      const payout = amount * effectiveMult;
-      const profit = payout - amount;
-      const won = payout >= amount;
+      // Push pending bet into live feed.
+      const liveBetId = liveBetsStore.push({
+        user: "나의_베팅",
+        game: "plinko",
+        amount,
+        multiplier: null,
+        profit: null,
+        status: "pending",
+        mode,
+        isMe: true,
+      });
 
-      if (payout > 0) setBalance((b) => b + payout);
-      setHistory((h) => [{ id: `n${nonce}-${slot}`, multiplier, slot }, ...h].slice(0, 30));
-      setLastOutcome({ outcome: won ? "win" : "loss", profit, nonce });
-      setPhase("settled");
+      rendererRef.current.playDrop(result, engineRef.current, (slot, multiplier) => {
+        const effectiveMult = mode === "real" ? multiplier * 0.97 : multiplier;
+        const payout = amount * effectiveMult;
+        const profit = payout - amount;
+        const won = payout >= amount;
 
-      if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
-      settleTimerRef.current = setTimeout(() => {
-        setPhase("idle");
-        setNonce((n) => n + 1);
-        settleTimerRef.current = null;
-      }, 800);
-    });
-  };
+        if (payout > 0) setBalance((b) => b + payout);
+        setHistory((h) => [{ id: `n${nonce}-${slot}`, multiplier, slot }, ...h].slice(0, 30));
+        const outcome = { outcome: won ? ("win" as const) : ("loss" as const), profit, nonce };
+        setLastOutcome(outcome);
+        onOutcome?.(outcome);
+
+        liveBetsStore.update(liveBetId, {
+          multiplier: won ? effectiveMult : null,
+          profit: +profit.toFixed(2),
+          status: won ? "win" : "loss",
+        });
+
+        setPhase("settled");
+
+        if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
+        settleTimerRef.current = setTimeout(() => {
+          setPhase("idle");
+          setNonce((n) => n + 1);
+          settleTimerRef.current = null;
+          placingRef.current = false; // release lock for next round
+        }, 800);
+      });
+    },
+    [phase, balance, nonce, rows, risk, mode, onOutcome],
+  );
 
   const canPlace = phase === "idle";
 
   return (
-    <div className="flex h-[100dvh] w-full flex-col bg-[var(--color-bg-0)] pb-[env(safe-area-inset-bottom)] text-[var(--color-foreground)]">
-      {/* Header */}
-      <div className="flex h-9 items-center justify-between px-3 text-xs">
-        <div className="flex items-center gap-2">
-          <Link
-            to="/games"
-            className="grid h-7 w-7 place-items-center rounded-lg text-[var(--color-muted)] hover:text-[var(--color-foreground)]"
-            aria-label="로비로"
-          >
-            <ArrowLeft size={16} />
-          </Link>
-          <span className="font-bold uppercase tracking-wider text-[var(--color-cyan)]">
-            PLINKO
-          </span>
-        </div>
-        <span className="font-numeric text-[var(--color-muted)]">
-          잔액 <span className="text-[var(--color-foreground)]">{balance.toFixed(2)}</span> USDT
-        </span>
-      </div>
-
+    <div className="flex flex-col gap-2">
       {/* History strip */}
-      <div className="flex h-7 items-center gap-1 overflow-x-auto px-3">
+      <ul className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none">
         {history.length === 0 ? (
-          <span className="text-[10px] text-[var(--color-muted-2)]">최근 결과 없음</span>
+          <li className="text-[11px] text-[var(--color-muted-2)]">아직 라운드 없음</li>
         ) : (
           history.slice(0, 12).map((h) => (
-            <span
+            <li
               key={h.id}
-              className="font-numeric rounded px-1.5 py-0.5 text-[10px] font-bold"
+              className="font-numeric shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-extrabold"
               style={{
                 background: `color-mix(in oklab, ${slotTint(h.multiplier)} 18%, transparent)`,
                 color: slotTint(h.multiplier),
               }}
             >
               {h.multiplier}x
-            </span>
+            </li>
           ))
         )}
-      </div>
+      </ul>
 
-      {/* Canvas — flex-1, capped so 100dvh-260 floor still leaves room for controls on SE */}
+      {/* Canvas — fixed-ish height, page scrolls */}
       <div
         ref={wrapRef}
-        className="relative mx-3 my-1 flex-1 overflow-hidden rounded-2xl bg-[var(--color-bg-1,#0a0f1a)] ring-1 ring-[var(--color-border)]"
-        style={{ minHeight: 0, maxHeight: "min(420px, calc(100dvh - 260px))" }}
+        className="relative h-[460px] w-full overflow-hidden rounded-2xl bg-[var(--color-bg-1,#0a0f1a)] ring-1 ring-[var(--color-border)]"
       >
         <canvas ref={canvasRef} className="block h-full w-full" />
         {phase === "settled" && lastOutcome && (
@@ -211,8 +207,8 @@ export function PlinkoBoard({ mode }: PlinkoBoardProps) {
         )}
       </div>
 
-      {/* Risk + Rows controls (single row, 44px) */}
-      <div className="mx-3 mb-1 grid h-11 grid-cols-2 gap-2">
+      {/* Risk + Rows controls */}
+      <div className="grid h-11 grid-cols-2 gap-2">
         <div className="glass-1 flex items-center gap-1 rounded-xl p-1">
           {RISK_OPTIONS.map((r) => (
             <button
@@ -249,40 +245,35 @@ export function PlinkoBoard({ mode }: PlinkoBoardProps) {
         </div>
       </div>
 
-      {/* Bet summary */}
-      <div className="mx-3 mb-1">
-        <BetSummaryPanel
-          variant="static"
-          amount={pendingAmount}
-          targetMultiplier={getMaxMultiplier(risk, rows)}
-          winChancePct={undefined}
-        />
-      </div>
+      <BetSummaryPanel
+        variant="static"
+        amount={pendingAmount}
+        targetMultiplier={getMaxMultiplier(risk, rows)}
+        winChancePct={undefined}
+      />
 
-      {/* Stake bet panel (compact, manual only — no auto-cashout for Plinko) */}
-      <div className="mx-3 mb-2">
-        <StakeBetPanel
-          variant="compact"
-          showAutoTarget={false}
-          canPlace={canPlace}
-          hasActiveBet={phase !== "idle"}
-          balance={balance}
-          lastOutcome={lastOutcome}
-          onPlace={(amount) => handlePlace(amount)}
-          onCashout={() => {
-            /* Plinko has no cashout — settled at landing */
-          }}
-        />
+      {/* Manual + Auto tabs. No auto-cashout target (Plinko resolves on landing). */}
+      <StakeBetPanel
+        showAutoTarget={false}
+        canPlace={canPlace}
+        hasActiveBet={false /* Plinko has no cashable in-flight bet */}
+        balance={balance}
+        lastOutcome={lastOutcome}
+        onPlace={(amount) => handlePlace(amount)}
+        onCashout={() => { /* Plinko has no cashout */ }}
+      />
+
+      <div className="text-center text-[11px] text-[var(--color-muted-2)] font-numeric">
+        잔액 <span className="text-[var(--color-foreground)]">{balance.toFixed(2)}</span> USDT
+        {" · "}#{nonce.toString().padStart(4, "0")}
       </div>
     </div>
   );
 }
 
-/** Quick tint for history chips. Matches Renderer.slotColor heuristic. */
 function slotTint(mult: number): string {
   if (mult >= 10) return "var(--color-gold)";
   if (mult >= 2) return "var(--color-cyan)";
   if (mult >= 1) return "var(--color-muted)";
   return "var(--color-rose)";
 }
-

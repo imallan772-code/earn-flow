@@ -105,7 +105,7 @@ export class PlinkoRenderer {
   private ballRadius = 6;
   private padX = 12;
   private padTop = 16;
-  private slotH = 32;
+  private slotH = 40;
 
   constructor(canvas: HTMLCanvasElement, opts: PlinkoRendererOptions = {}) {
     this.canvas = canvas;
@@ -174,18 +174,26 @@ export class PlinkoRenderer {
     engine: PlinkoEngine,
     onLand?: (slot: number, multiplier: number) => void,
   ): void {
+    // Atomic reset: cancel any in-flight frame BEFORE mutating samples to
+    // prevent a queued frame from racing on partially-rebuilt data.
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
     this.samples.length = 0;
+    this.cursor = 0;
+    this.landedFor = -1;
+    this.pop.active = false;
+    for (const p of this.particles) p.alive = false;
+
     engine.simulatePhysics(result, (x, y, vy, progress) => {
       const pegRow = this.derivePegRow(progress, result.totalRows);
       this.samples.push({ x, y, vy, progress, pegRow });
     });
     if (this.samples.length === 0) return;
 
-    this.cursor = 0;
     this.playStart = performance.now();
     this.onLand = onLand;
-    this.landedFor = -1;
-    this.pop.active = false;
 
     // store result data on pop for slot/mult emit
     this.pop.slot = result.finalSlot;
@@ -270,7 +278,7 @@ export class PlinkoRenderer {
       const elapsed = now - this.playStart;
       const t = Math.min(1, elapsed / DROP_DURATION_MS);
       const targetIdx = t * (this.samples.length - 1);
-      this.cursor = Math.min(this.samples.length - 1, targetIdx);
+      this.cursor = Math.min(this.samples.length - 1, Math.max(0, targetIdx));
       ballSample = this.interpolateSample(this.cursor);
 
       // peg-hit FX
@@ -308,12 +316,15 @@ export class PlinkoRenderer {
     }
   };
 
-  private interpolateSample(cursor: number): Sample {
-    const i0 = Math.floor(cursor);
-    const i1 = Math.min(this.samples.length - 1, i0 + 1);
-    const f = cursor - i0;
+  private interpolateSample(cursor: number): Sample | null {
+    const len = this.samples.length;
+    if (len === 0) return null;
+    const i0 = Math.max(0, Math.min(len - 1, Math.floor(cursor)));
+    const i1 = Math.min(len - 1, i0 + 1);
     const a = this.samples[i0];
     const b = this.samples[i1];
+    if (!a || !b) return null;
+    const f = cursor - i0;
     return {
       x: a.x + (b.x - a.x) * f,
       y: a.y + (b.y - a.y) * f,
@@ -469,8 +480,8 @@ export class PlinkoRenderer {
       ctx.stroke();
       // label
       ctx.fillStyle = color;
-      const fontSize = Math.max(8, Math.min(11, sw * 0.32));
-      ctx.font = `700 ${fontSize}px ui-monospace, "SF Mono", Menlo, monospace`;
+      const fontSize = Math.max(10, Math.min(15, sw * 0.42));
+      ctx.font = `800 ${fontSize}px ui-monospace, "SF Mono", Menlo, monospace`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       const label = mult >= 100 ? `${mult.toFixed(0)}x` : `${mult.toFixed(mult >= 10 ? 0 : mult >= 1 ? 1 : 1)}x`;
@@ -513,6 +524,7 @@ export class PlinkoRenderer {
         const c = startCursor + i;
         if (c < 0 || c >= this.samples.length) continue;
         const s = this.interpolateSample(c);
+        if (!s) continue;
         const { px, py } = this.toPx(s.x, s.y);
         const alpha = (i / trailCount) * 0.35;
         ctx.fillStyle = `rgba(103, 232, 249, ${alpha})`;
