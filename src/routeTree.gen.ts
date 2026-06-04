@@ -30,8 +30,6 @@ import { Route as AppMyRouteImport } from './routes/_app/my'
 import { Route as AppFeedRouteImport } from './routes/_app/feed'
 import { Route as AppEventRouteImport } from './routes/_app/event'
 import { Route as AppEarnRouteImport } from './routes/_app/earn'
-import { Route as EarnGamesIndexRouteImport } from './routes/earn/games/index'
-import { Route as EarnGamesSlugRouteImport } from './routes/earn/games/$slug'
 import { Route as AppNoticeIdRouteImport } from './routes/_app/notice.$id'
 import { Route as AppGamesDiceRouteImport } from './routes/_app/games.dice'
 import { Route as AppGamesCrashRouteImport } from './routes/_app/games.crash'
@@ -142,16 +140,6 @@ const AppEarnRoute = AppEarnRouteImport.update({
   path: '/earn',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const EarnGamesIndexRoute = EarnGamesIndexRouteImport.update({
-  id: '/earn/games/',
-  path: '/earn/games/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EarnGamesSlugRoute = EarnGamesSlugRouteImport.update({
-  id: '/earn/games/$slug',
-  path: '/earn/games/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppNoticeIdRoute = AppNoticeIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -204,8 +192,6 @@ export interface FileRoutesByFullPath {
   '/games/crash': typeof AppGamesCrashRoute
   '/games/dice': typeof AppGamesDiceRoute
   '/notice/$id': typeof AppNoticeIdRoute
-  '/earn/games/$slug': typeof EarnGamesSlugRoute
-  '/earn/games/': typeof EarnGamesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -233,8 +219,6 @@ export interface FileRoutesByTo {
   '/games/crash': typeof AppGamesCrashRoute
   '/games/dice': typeof AppGamesDiceRoute
   '/notice/$id': typeof AppNoticeIdRoute
-  '/earn/games/$slug': typeof EarnGamesSlugRoute
-  '/earn/games': typeof EarnGamesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -264,8 +248,6 @@ export interface FileRoutesById {
   '/_app/games/crash': typeof AppGamesCrashRoute
   '/_app/games/dice': typeof AppGamesDiceRoute
   '/_app/notice/$id': typeof AppNoticeIdRoute
-  '/earn/games/$slug': typeof EarnGamesSlugRoute
-  '/earn/games/': typeof EarnGamesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -295,8 +277,6 @@ export interface FileRouteTypes {
     | '/games/crash'
     | '/games/dice'
     | '/notice/$id'
-    | '/earn/games/$slug'
-    | '/earn/games/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -324,8 +304,6 @@ export interface FileRouteTypes {
     | '/games/crash'
     | '/games/dice'
     | '/notice/$id'
-    | '/earn/games/$slug'
-    | '/earn/games'
   id:
     | '__root__'
     | '/'
@@ -354,8 +332,6 @@ export interface FileRouteTypes {
     | '/_app/games/crash'
     | '/_app/games/dice'
     | '/_app/notice/$id'
-    | '/earn/games/$slug'
-    | '/earn/games/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -375,8 +351,6 @@ export interface RootRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   DepositIndexRoute: typeof DepositIndexRoute
   WithdrawalIndexRoute: typeof WithdrawalIndexRoute
-  EarnGamesSlugRoute: typeof EarnGamesSlugRoute
-  EarnGamesIndexRoute: typeof EarnGamesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -528,20 +502,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEarnRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/earn/games/': {
-      id: '/earn/games/'
-      path: '/earn/games'
-      fullPath: '/earn/games/'
-      preLoaderRoute: typeof EarnGamesIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/earn/games/$slug': {
-      id: '/earn/games/$slug'
-      path: '/earn/games/$slug'
-      fullPath: '/earn/games/$slug'
-      preLoaderRoute: typeof EarnGamesSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_app/notice/$id': {
       id: '/_app/notice/$id'
       path: '/$id'
@@ -647,8 +607,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   DepositIndexRoute: DepositIndexRoute,
   WithdrawalIndexRoute: WithdrawalIndexRoute,
-  EarnGamesSlugRoute: EarnGamesSlugRoute,
-  EarnGamesIndexRoute: EarnGamesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
