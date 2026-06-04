@@ -12,7 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppMyRouteImport } from './routes/_app/my'
+import { Route as AppFeedRouteImport } from './routes/_app/feed'
+import { Route as AppEarnRouteImport } from './routes/_app/earn'
+import { Route as AppExchangeSymbolRouteImport } from './routes/_app/exchange.$symbol'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -29,10 +34,34 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRouteRoute = AppRouteRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppMyRoute = AppMyRouteImport.update({
+  id: '/my',
+  path: '/my',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppFeedRoute = AppFeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppEarnRoute = AppEarnRouteImport.update({
+  id: '/earn',
+  path: '/earn',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppExchangeSymbolRoute = AppExchangeSymbolRouteImport.update({
+  id: '/exchange/$symbol',
+  path: '/exchange/$symbol',
+  getParentRoute: () => AppRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -40,30 +69,70 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/signup': typeof SignupRoute
+  '/earn': typeof AppEarnRoute
+  '/feed': typeof AppFeedRoute
+  '/my': typeof AppMyRoute
+  '/exchange/$symbol': typeof AppExchangeSymbolRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/signup': typeof SignupRoute
+  '/earn': typeof AppEarnRoute
+  '/feed': typeof AppFeedRoute
+  '/my': typeof AppMyRoute
+  '/exchange/$symbol': typeof AppExchangeSymbolRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/signup': typeof SignupRoute
+  '/_app/earn': typeof AppEarnRoute
+  '/_app/feed': typeof AppFeedRoute
+  '/_app/my': typeof AppMyRoute
+  '/_app/exchange/$symbol': typeof AppExchangeSymbolRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/onboarding' | '/signup'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/onboarding'
+    | '/signup'
+    | '/earn'
+    | '/feed'
+    | '/my'
+    | '/exchange/$symbol'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/onboarding' | '/signup'
-  id: '__root__' | '/' | '/login' | '/onboarding' | '/signup'
+  to:
+    | '/'
+    | '/login'
+    | '/onboarding'
+    | '/signup'
+    | '/earn'
+    | '/feed'
+    | '/my'
+    | '/exchange/$symbol'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/onboarding'
+    | '/signup'
+    | '/_app/earn'
+    | '/_app/feed'
+    | '/_app/my'
+    | '/_app/exchange/$symbol'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRouteRoute: typeof AppRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   SignupRoute: typeof SignupRoute
@@ -92,6 +161,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -99,11 +175,58 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/my': {
+      id: '/_app/my'
+      path: '/my'
+      fullPath: '/my'
+      preLoaderRoute: typeof AppMyRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/feed': {
+      id: '/_app/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof AppFeedRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/earn': {
+      id: '/_app/earn'
+      path: '/earn'
+      fullPath: '/earn'
+      preLoaderRoute: typeof AppEarnRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/exchange/$symbol': {
+      id: '/_app/exchange/$symbol'
+      path: '/exchange/$symbol'
+      fullPath: '/exchange/$symbol'
+      preLoaderRoute: typeof AppExchangeSymbolRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
   }
 }
 
+interface AppRouteRouteChildren {
+  AppEarnRoute: typeof AppEarnRoute
+  AppFeedRoute: typeof AppFeedRoute
+  AppMyRoute: typeof AppMyRoute
+  AppExchangeSymbolRoute: typeof AppExchangeSymbolRoute
+}
+
+const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppEarnRoute: AppEarnRoute,
+  AppFeedRoute: AppFeedRoute,
+  AppMyRoute: AppMyRoute,
+  AppExchangeSymbolRoute: AppExchangeSymbolRoute,
+}
+
+const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
+  AppRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRouteRoute: AppRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   SignupRoute: SignupRoute,
