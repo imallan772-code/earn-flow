@@ -174,18 +174,26 @@ export class PlinkoRenderer {
     engine: PlinkoEngine,
     onLand?: (slot: number, multiplier: number) => void,
   ): void {
+    // Atomic reset: cancel any in-flight frame BEFORE mutating samples to
+    // prevent a queued frame from racing on partially-rebuilt data.
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
     this.samples.length = 0;
+    this.cursor = 0;
+    this.landedFor = -1;
+    this.pop.active = false;
+    for (const p of this.particles) p.alive = false;
+
     engine.simulatePhysics(result, (x, y, vy, progress) => {
       const pegRow = this.derivePegRow(progress, result.totalRows);
       this.samples.push({ x, y, vy, progress, pegRow });
     });
     if (this.samples.length === 0) return;
 
-    this.cursor = 0;
     this.playStart = performance.now();
     this.onLand = onLand;
-    this.landedFor = -1;
-    this.pop.active = false;
 
     // store result data on pop for slot/mult emit
     this.pop.slot = result.finalSlot;
