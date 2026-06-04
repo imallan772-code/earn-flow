@@ -83,7 +83,40 @@ export const DICE_RULES: GameRules = {
   ],
 };
 
+export const PLINKO_RULES: GameRules = {
+  id: "plinko",
+  name: "Plinko",
+  sections: [
+    {
+      title: "기본 규칙",
+      body:
+        "공을 위에서 떨어뜨리면 핀에 부딪히며 좌우로 튕기다 하단 슬롯에 안착합니다. 슬롯마다 배율이 다르고, 가장자리로 갈수록 배율이 커집니다(대신 들어갈 확률은 낮음).",
+    },
+    {
+      title: "줄 수 & 리스크",
+      body:
+        "• 줄 수(8/12/16): 많을수록 슬롯이 늘어나고 분포가 정규분포에 가까워집니다.\n• 리스크(낮음/보통/높음): 같은 줄 수에서도 양 끝 배율과 중앙 배율의 차이가 달라집니다. 높을수록 한방 노림수, 낮을수록 잦은 소액 회수.",
+    },
+    {
+      title: "배당 계산",
+      body:
+        "수익 = 베팅액 × 슬롯 배율 − 베팅액. 예: 10 USDT × 5.0x → 순수익 +40 USDT. 리얼 모드는 모든 배율에 RTP 97%가 적용됩니다(데모 100%).",
+    },
+    {
+      title: "데모 vs 리얼",
+      body:
+        "• 데모: 100% RTP, 가상 잔액 (마음껏 연습)\n• 리얼: 97% RTP, 실제 잔액 (3% 하우스 엣지)",
+    },
+    {
+      title: "공정성 (Provably Fair)",
+      body:
+        "서버 시드 + 라운드 번호로 HMAC-SHA256 해시를 만들고, 각 줄에서의 좌/우 튕김 방향을 비트 단위로 결정합니다. 결과 슬롯은 사전에 고정되어 있어 조작 불가능합니다.",
+    },
+  ],
+};
+
 export const RULES_BY_GAME: Record<string, GameRules> = {
   crash: CRASH_RULES,
   dice: DICE_RULES,
+  plinko: PLINKO_RULES,
 };
