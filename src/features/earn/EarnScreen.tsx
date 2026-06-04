@@ -1,13 +1,12 @@
-import { Link } from "@tanstack/react-router";
-import { Gift, ChevronRight, Sparkles, Gamepad2 } from "lucide-react";
+import { Gift, Sparkles, Gamepad2 } from "lucide-react";
 import { PremiumPageHeader } from "@/shared/ui/PremiumPageHeader";
 import { Premium3DCard } from "@/shared/ui/Premium3DCard";
 import { UrgencyBadge } from "@/shared/ui/UrgencyBadge";
 import { StreakFlame } from "@/shared/motion/StreakFlame";
 import { OnlineCounterChip } from "@/shared/layout/OnlineCounterChip";
+import { GameLobby } from "@/features/games/GameLobby";
 import { MOCK_MISSIONS } from "@/mocks/missions";
 import { MOCK_BALANCE } from "@/mocks/balance";
-import { MOCK_GAMES } from "@/mocks/games";
 import { formatPHON } from "@/lib/format";
 
 export function EarnScreen() {
