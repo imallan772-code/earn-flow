@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppMyRouteImport } from './routes/_app/my'
 import { Route as AppFeedRouteImport } from './routes/_app/feed'
 import { Route as AppEarnRouteImport } from './routes/_app/earn'
+import { Route as EarnGamesIndexRouteImport } from './routes/earn/games/index'
 import { Route as AppExchangeSymbolRouteImport } from './routes/_app/exchange.$symbol'
 
 const SignupRoute = SignupRouteImport.update({
@@ -58,6 +59,11 @@ const AppEarnRoute = AppEarnRouteImport.update({
   path: '/earn',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const EarnGamesIndexRoute = EarnGamesIndexRouteImport.update({
+  id: '/earn/games/',
+  path: '/earn/games/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppExchangeSymbolRoute = AppExchangeSymbolRouteImport.update({
   id: '/exchange/$symbol',
   path: '/exchange/$symbol',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/feed': typeof AppFeedRoute
   '/my': typeof AppMyRoute
   '/exchange/$symbol': typeof AppExchangeSymbolRoute
+  '/earn/games/': typeof EarnGamesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/feed': typeof AppFeedRoute
   '/my': typeof AppMyRoute
   '/exchange/$symbol': typeof AppExchangeSymbolRoute
+  '/earn/games': typeof EarnGamesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/_app/feed': typeof AppFeedRoute
   '/_app/my': typeof AppMyRoute
   '/_app/exchange/$symbol': typeof AppExchangeSymbolRoute
+  '/earn/games/': typeof EarnGamesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/my'
     | '/exchange/$symbol'
+    | '/earn/games/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/my'
     | '/exchange/$symbol'
+    | '/earn/games'
   id:
     | '__root__'
     | '/'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/_app/feed'
     | '/_app/my'
     | '/_app/exchange/$symbol'
+    | '/earn/games/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -136,6 +148,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   SignupRoute: typeof SignupRoute
+  EarnGamesIndexRoute: typeof EarnGamesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -196,6 +209,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEarnRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/earn/games/': {
+      id: '/earn/games/'
+      path: '/earn/games'
+      fullPath: '/earn/games/'
+      preLoaderRoute: typeof EarnGamesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/exchange/$symbol': {
       id: '/_app/exchange/$symbol'
       path: '/exchange/$symbol'
@@ -230,7 +250,18 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   SignupRoute: SignupRoute,
+  EarnGamesIndexRoute: EarnGamesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
