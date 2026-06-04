@@ -33,6 +33,7 @@ import { Route as AppEarnRouteImport } from './routes/_app/earn'
 import { Route as EarnGamesIndexRouteImport } from './routes/earn/games/index'
 import { Route as EarnGamesSlugRouteImport } from './routes/earn/games/$slug'
 import { Route as AppNoticeIdRouteImport } from './routes/_app/notice.$id'
+import { Route as AppGamesCrashRouteImport } from './routes/_app/games.crash'
 import { Route as AppExchangeSymbolRouteImport } from './routes/_app/exchange.$symbol'
 import { Route as AppEventIdRouteImport } from './routes/_app/event.$id'
 
@@ -155,6 +156,11 @@ const AppNoticeIdRoute = AppNoticeIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppNoticeRoute,
 } as any)
+const AppGamesCrashRoute = AppGamesCrashRouteImport.update({
+  id: '/games/crash',
+  path: '/games/crash',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppExchangeSymbolRoute = AppExchangeSymbolRouteImport.update({
   id: '/exchange/$symbol',
   path: '/exchange/$symbol',
@@ -189,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/withdrawal/': typeof WithdrawalIndexRoute
   '/event/$id': typeof AppEventIdRoute
   '/exchange/$symbol': typeof AppExchangeSymbolRoute
+  '/games/crash': typeof AppGamesCrashRoute
   '/notice/$id': typeof AppNoticeIdRoute
   '/earn/games/$slug': typeof EarnGamesSlugRoute
   '/earn/games/': typeof EarnGamesIndexRoute
@@ -216,6 +223,7 @@ export interface FileRoutesByTo {
   '/withdrawal': typeof WithdrawalIndexRoute
   '/event/$id': typeof AppEventIdRoute
   '/exchange/$symbol': typeof AppExchangeSymbolRoute
+  '/games/crash': typeof AppGamesCrashRoute
   '/notice/$id': typeof AppNoticeIdRoute
   '/earn/games/$slug': typeof EarnGamesSlugRoute
   '/earn/games': typeof EarnGamesIndexRoute
@@ -245,6 +253,7 @@ export interface FileRoutesById {
   '/withdrawal/': typeof WithdrawalIndexRoute
   '/_app/event/$id': typeof AppEventIdRoute
   '/_app/exchange/$symbol': typeof AppExchangeSymbolRoute
+  '/_app/games/crash': typeof AppGamesCrashRoute
   '/_app/notice/$id': typeof AppNoticeIdRoute
   '/earn/games/$slug': typeof EarnGamesSlugRoute
   '/earn/games/': typeof EarnGamesIndexRoute
@@ -274,6 +283,7 @@ export interface FileRouteTypes {
     | '/withdrawal/'
     | '/event/$id'
     | '/exchange/$symbol'
+    | '/games/crash'
     | '/notice/$id'
     | '/earn/games/$slug'
     | '/earn/games/'
@@ -301,6 +311,7 @@ export interface FileRouteTypes {
     | '/withdrawal'
     | '/event/$id'
     | '/exchange/$symbol'
+    | '/games/crash'
     | '/notice/$id'
     | '/earn/games/$slug'
     | '/earn/games'
@@ -329,6 +340,7 @@ export interface FileRouteTypes {
     | '/withdrawal/'
     | '/_app/event/$id'
     | '/_app/exchange/$symbol'
+    | '/_app/games/crash'
     | '/_app/notice/$id'
     | '/earn/games/$slug'
     | '/earn/games/'
@@ -525,6 +537,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNoticeIdRouteImport
       parentRoute: typeof AppNoticeRoute
     }
+    '/_app/games/crash': {
+      id: '/_app/games/crash'
+      path: '/games/crash'
+      fullPath: '/games/crash'
+      preLoaderRoute: typeof AppGamesCrashRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/_app/exchange/$symbol': {
       id: '/_app/exchange/$symbol'
       path: '/exchange/$symbol'
@@ -573,6 +592,7 @@ interface AppRouteRouteChildren {
   AppMyRoute: typeof AppMyRoute
   AppNoticeRoute: typeof AppNoticeRouteWithChildren
   AppExchangeSymbolRoute: typeof AppExchangeSymbolRoute
+  AppGamesCrashRoute: typeof AppGamesCrashRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
@@ -582,6 +602,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppMyRoute: AppMyRoute,
   AppNoticeRoute: AppNoticeRouteWithChildren,
   AppExchangeSymbolRoute: AppExchangeSymbolRoute,
+  AppGamesCrashRoute: AppGamesCrashRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
