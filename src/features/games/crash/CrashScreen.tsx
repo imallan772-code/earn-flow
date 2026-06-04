@@ -304,6 +304,8 @@ export function CrashScreen() {
         />
       )}
 
+      <DemoLowBanner />
+
       <StakeBetPanel
         canPlace={phase === "betting"}
         hasActiveBet={!!bet && bet.cashedAt === null && phase === "running"}
