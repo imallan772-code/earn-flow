@@ -8,7 +8,9 @@ import { RouletteVisualShell } from "@/features/games/roulette/RouletteVisualShe
 import { CardFlipVisualShell } from "@/features/games/card-flip/CardFlipVisualShell";
 import { MOCK_GAMES, type GameSlug } from "@/mocks/games";
 
-const SHELLS: Record<GameSlug, () => JSX.Element> = {
+import type { ComponentType } from "react";
+
+const SHELLS: Record<GameSlug, ComponentType> = {
   crash: CrashVisualShell,
   rps: RpsVisualShell,
   slots: SlotsVisualShell,
