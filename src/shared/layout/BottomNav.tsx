@@ -51,7 +51,7 @@ export function BottomNav() {
               >
                 <it.Icon size={22} strokeWidth={active ? 2.4 : 2} />
               </motion.span>
-              <span className="relative z-10 font-medium">{it.label}</span>
+              <span className="relative z-10 font-medium">{t(it.labelKey)}</span>
             </Link>
           );
         })}
