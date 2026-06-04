@@ -7,6 +7,7 @@
 import { Link } from "@tanstack/react-router";
 import { Rocket, Dices, Cherry, CircleDot, Hand, Gift, Layers, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ModeBadge } from "@/shared/mode/ModeToggle";
 
 type GameId = "crash" | "dice" | "slots" | "roulette" | "rps" | "luckybox" | "cardflip" | "keepy";
 
@@ -33,10 +34,18 @@ const GAMES: GameCard[] = [
 
 export function GameLobby() {
   return (
-    <div className="grid grid-cols-2 gap-2.5">
-      {GAMES.map((g) => (
-        <GameTile key={g.id} card={g} />
-      ))}
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+          현재 모드
+        </span>
+        <ModeBadge />
+      </div>
+      <div className="grid grid-cols-2 gap-2.5">
+        {GAMES.map((g) => (
+          <GameTile key={g.id} card={g} />
+        ))}
+      </div>
     </div>
   );
 }
