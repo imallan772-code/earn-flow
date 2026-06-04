@@ -329,36 +329,22 @@ export class PlinkoRenderer {
     this.pop.active = true;
     this.pop.start = now;
     if (POOL_SIZE[this.quality] > 0) this.emitPopBurst();
-    if (this.onLand) {
+    const cb = this.onLand;
+    if (cb) {
+      this.onLand = undefined;
       const slot = this.pop.slot;
       const mult = this.pop.multiplier;
-      this.onLand = undefined;
-      // defer to next tick to avoid setState during rAF
+      // defer to microtask: setState during rAF callback is fine in React 18+,
+      // but microtask keeps React's batching predictable across versions.
       queueMicrotask(() => {
         try {
-          // safe: caller-provided
-          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-          slot;
-        } catch {}
+          cb(slot, mult);
+        } catch {
+          /* swallow — renderer must not crash from caller errors */
+        }
       });
-      // direct call is fine; React batches setState fine in modern React
-      this.onLandSafe(slot, mult);
-    }
-    if (now - this.pop.start > POP_DURATION_MS) this.pop.active = false;
-  }
-
-  private onLandSafe(slot: number, mult: number): void {
-    // hook for future instrumentation; currently no-op wrapper
-    // (kept separate so we don't reference removed callback above)
-    try {
-      this.landedCallback?.(slot, mult);
-    } catch {
-      /* swallow */
     }
   }
-
-  /** Re-entrant safe land callback storage. */
-  private landedCallback: ((slot: number, mult: number) => void) | undefined;
 
   private emitPegHit(sample: Sample): void {
     if (POOL_SIZE[this.quality] === 0) return;
