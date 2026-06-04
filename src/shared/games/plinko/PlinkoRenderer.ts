@@ -524,6 +524,7 @@ export class PlinkoRenderer {
         const c = startCursor + i;
         if (c < 0 || c >= this.samples.length) continue;
         const s = this.interpolateSample(c);
+        if (!s) continue;
         const { px, py } = this.toPx(s.x, s.y);
         const alpha = (i / trailCount) * 0.35;
         ctx.fillStyle = `rgba(103, 232, 249, ${alpha})`;
