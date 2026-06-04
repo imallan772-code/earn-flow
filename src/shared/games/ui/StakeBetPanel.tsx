@@ -60,7 +60,10 @@ export function StakeBetPanel({
     if (!autoRunning || !lastOutcome) return;
     if (lastOutcome.nonce === lastNonceRef.current) return;
     lastNonceRef.current = lastOutcome.nonce;
-    autoStateRef.current = autoStep(autoStateRef.current, lastOutcome.outcome, lastOutcome.profit);
+    autoStateRef.current = autoStep(autoStateRef.current, {
+      outcome: lastOutcome.outcome,
+      delta: lastOutcome.profit,
+    });
     if (!autoStateRef.current.running) {
       setAutoRunning(false);
       return;
