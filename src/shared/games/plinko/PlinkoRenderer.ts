@@ -105,7 +105,7 @@ export class PlinkoRenderer {
   private ballRadius = 6;
   private padX = 12;
   private padTop = 16;
-  private slotH = 32;
+  private slotH = 40;
 
   constructor(canvas: HTMLCanvasElement, opts: PlinkoRendererOptions = {}) {
     this.canvas = canvas;
