@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { LazyMotion, domAnimation } from "framer-motion";
 import { Toaster } from "sonner";
+import { ModeProvider } from "@/shared/mode/ModeContext";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -107,21 +108,23 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <LazyMotion features={domAnimation} strict>
-        <Outlet />
-        <Toaster
-          position="top-center"
-          theme="dark"
-          toastOptions={{
-            style: {
-              background: "color-mix(in oklab, oklch(0.24 0.05 282) 90%, transparent)",
-              border: "1px solid oklch(1 0 0 / 0.12)",
-              color: "oklch(0.98 0.01 280)",
-              backdropFilter: "blur(14px)",
-            },
-          }}
-        />
-      </LazyMotion>
+      <ModeProvider>
+        <LazyMotion features={domAnimation} strict>
+          <Outlet />
+          <Toaster
+            position="top-center"
+            theme="dark"
+            toastOptions={{
+              style: {
+                background: "color-mix(in oklab, oklch(0.24 0.05 282) 90%, transparent)",
+                border: "1px solid oklch(1 0 0 / 0.12)",
+                color: "oklch(0.98 0.01 280)",
+                backdropFilter: "blur(14px)",
+              },
+            }}
+          />
+        </LazyMotion>
+      </ModeProvider>
     </QueryClientProvider>
   );
 }
