@@ -15,6 +15,7 @@ import { RollingCountUp } from "@/shared/motion/RollingCountUp";
 const GAME_LABEL: Record<LiveBet["game"], string> = {
   crash: "Crash",
   dice: "Dice",
+  plinko: "Plinko",
   slots: "Slots",
   mines: "Mines",
   roulette: "Roulette",
@@ -23,6 +24,7 @@ const GAME_LABEL: Record<LiveBet["game"], string> = {
 const GAME_ACCENT: Record<LiveBet["game"], string> = {
   crash: "var(--color-cyan)",
   dice: "var(--color-emerald)",
+  plinko: "var(--color-gold)",
   slots: "var(--color-pink)",
   mines: "var(--color-warning)",
   roulette: "var(--color-purple)",
