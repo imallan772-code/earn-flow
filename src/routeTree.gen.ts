@@ -23,12 +23,18 @@ import { Route as WithdrawalCryptoRouteImport } from './routes/withdrawal/crypto
 import { Route as DepositGiftRouteImport } from './routes/deposit/gift'
 import { Route as DepositCryptoRouteImport } from './routes/deposit/crypto'
 import { Route as DepositBankRouteImport } from './routes/deposit/bank'
+import { Route as AdminNoticeRouteImport } from './routes/admin/notice'
+import { Route as AdminEventRouteImport } from './routes/admin/event'
+import { Route as AppNoticeRouteImport } from './routes/_app/notice'
 import { Route as AppMyRouteImport } from './routes/_app/my'
 import { Route as AppFeedRouteImport } from './routes/_app/feed'
+import { Route as AppEventRouteImport } from './routes/_app/event'
 import { Route as AppEarnRouteImport } from './routes/_app/earn'
 import { Route as EarnGamesIndexRouteImport } from './routes/earn/games/index'
 import { Route as EarnGamesSlugRouteImport } from './routes/earn/games/$slug'
+import { Route as AppNoticeIdRouteImport } from './routes/_app/notice.$id'
 import { Route as AppExchangeSymbolRouteImport } from './routes/_app/exchange.$symbol'
+import { Route as AppEventIdRouteImport } from './routes/_app/event.$id'
 
 const TransferRoute = TransferRouteImport.update({
   id: '/transfer',
@@ -99,6 +105,21 @@ const DepositBankRoute = DepositBankRouteImport.update({
   path: '/deposit/bank',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminNoticeRoute = AdminNoticeRouteImport.update({
+  id: '/admin/notice',
+  path: '/admin/notice',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminEventRoute = AdminEventRouteImport.update({
+  id: '/admin/event',
+  path: '/admin/event',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppNoticeRoute = AppNoticeRouteImport.update({
+  id: '/notice',
+  path: '/notice',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppMyRoute = AppMyRouteImport.update({
   id: '/my',
   path: '/my',
@@ -107,6 +128,11 @@ const AppMyRoute = AppMyRouteImport.update({
 const AppFeedRoute = AppFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppEventRoute = AppEventRouteImport.update({
+  id: '/event',
+  path: '/event',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppEarnRoute = AppEarnRouteImport.update({
@@ -124,10 +150,20 @@ const EarnGamesSlugRoute = EarnGamesSlugRouteImport.update({
   path: '/earn/games/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppNoticeIdRoute = AppNoticeIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppNoticeRoute,
+} as any)
 const AppExchangeSymbolRoute = AppExchangeSymbolRouteImport.update({
   id: '/exchange/$symbol',
   path: '/exchange/$symbol',
   getParentRoute: () => AppRouteRoute,
+} as any)
+const AppEventIdRoute = AppEventIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppEventRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -137,8 +173,12 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/transfer': typeof TransferRoute
   '/earn': typeof AppEarnRoute
+  '/event': typeof AppEventRouteWithChildren
   '/feed': typeof AppFeedRoute
   '/my': typeof AppMyRoute
+  '/notice': typeof AppNoticeRouteWithChildren
+  '/admin/event': typeof AdminEventRoute
+  '/admin/notice': typeof AdminNoticeRoute
   '/deposit/bank': typeof DepositBankRoute
   '/deposit/crypto': typeof DepositCryptoRoute
   '/deposit/gift': typeof DepositGiftRoute
@@ -147,7 +187,9 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/deposit/': typeof DepositIndexRoute
   '/withdrawal/': typeof WithdrawalIndexRoute
+  '/event/$id': typeof AppEventIdRoute
   '/exchange/$symbol': typeof AppExchangeSymbolRoute
+  '/notice/$id': typeof AppNoticeIdRoute
   '/earn/games/$slug': typeof EarnGamesSlugRoute
   '/earn/games/': typeof EarnGamesIndexRoute
 }
@@ -158,8 +200,12 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/transfer': typeof TransferRoute
   '/earn': typeof AppEarnRoute
+  '/event': typeof AppEventRouteWithChildren
   '/feed': typeof AppFeedRoute
   '/my': typeof AppMyRoute
+  '/notice': typeof AppNoticeRouteWithChildren
+  '/admin/event': typeof AdminEventRoute
+  '/admin/notice': typeof AdminNoticeRoute
   '/deposit/bank': typeof DepositBankRoute
   '/deposit/crypto': typeof DepositCryptoRoute
   '/deposit/gift': typeof DepositGiftRoute
@@ -168,7 +214,9 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/deposit': typeof DepositIndexRoute
   '/withdrawal': typeof WithdrawalIndexRoute
+  '/event/$id': typeof AppEventIdRoute
   '/exchange/$symbol': typeof AppExchangeSymbolRoute
+  '/notice/$id': typeof AppNoticeIdRoute
   '/earn/games/$slug': typeof EarnGamesSlugRoute
   '/earn/games': typeof EarnGamesIndexRoute
 }
@@ -181,8 +229,12 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/transfer': typeof TransferRoute
   '/_app/earn': typeof AppEarnRoute
+  '/_app/event': typeof AppEventRouteWithChildren
   '/_app/feed': typeof AppFeedRoute
   '/_app/my': typeof AppMyRoute
+  '/_app/notice': typeof AppNoticeRouteWithChildren
+  '/admin/event': typeof AdminEventRoute
+  '/admin/notice': typeof AdminNoticeRoute
   '/deposit/bank': typeof DepositBankRoute
   '/deposit/crypto': typeof DepositCryptoRoute
   '/deposit/gift': typeof DepositGiftRoute
@@ -191,7 +243,9 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/deposit/': typeof DepositIndexRoute
   '/withdrawal/': typeof WithdrawalIndexRoute
+  '/_app/event/$id': typeof AppEventIdRoute
   '/_app/exchange/$symbol': typeof AppExchangeSymbolRoute
+  '/_app/notice/$id': typeof AppNoticeIdRoute
   '/earn/games/$slug': typeof EarnGamesSlugRoute
   '/earn/games/': typeof EarnGamesIndexRoute
 }
@@ -204,8 +258,12 @@ export interface FileRouteTypes {
     | '/signup'
     | '/transfer'
     | '/earn'
+    | '/event'
     | '/feed'
     | '/my'
+    | '/notice'
+    | '/admin/event'
+    | '/admin/notice'
     | '/deposit/bank'
     | '/deposit/crypto'
     | '/deposit/gift'
@@ -214,7 +272,9 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/deposit/'
     | '/withdrawal/'
+    | '/event/$id'
     | '/exchange/$symbol'
+    | '/notice/$id'
     | '/earn/games/$slug'
     | '/earn/games/'
   fileRoutesByTo: FileRoutesByTo
@@ -225,8 +285,12 @@ export interface FileRouteTypes {
     | '/signup'
     | '/transfer'
     | '/earn'
+    | '/event'
     | '/feed'
     | '/my'
+    | '/notice'
+    | '/admin/event'
+    | '/admin/notice'
     | '/deposit/bank'
     | '/deposit/crypto'
     | '/deposit/gift'
@@ -235,7 +299,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/deposit'
     | '/withdrawal'
+    | '/event/$id'
     | '/exchange/$symbol'
+    | '/notice/$id'
     | '/earn/games/$slug'
     | '/earn/games'
   id:
@@ -247,8 +313,12 @@ export interface FileRouteTypes {
     | '/signup'
     | '/transfer'
     | '/_app/earn'
+    | '/_app/event'
     | '/_app/feed'
     | '/_app/my'
+    | '/_app/notice'
+    | '/admin/event'
+    | '/admin/notice'
     | '/deposit/bank'
     | '/deposit/crypto'
     | '/deposit/gift'
@@ -257,7 +327,9 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/deposit/'
     | '/withdrawal/'
+    | '/_app/event/$id'
     | '/_app/exchange/$symbol'
+    | '/_app/notice/$id'
     | '/earn/games/$slug'
     | '/earn/games/'
   fileRoutesById: FileRoutesById
@@ -269,6 +341,8 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   SignupRoute: typeof SignupRoute
   TransferRoute: typeof TransferRoute
+  AdminEventRoute: typeof AdminEventRoute
+  AdminNoticeRoute: typeof AdminNoticeRoute
   DepositBankRoute: typeof DepositBankRoute
   DepositCryptoRoute: typeof DepositCryptoRoute
   DepositGiftRoute: typeof DepositGiftRoute
@@ -381,6 +455,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DepositBankRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/notice': {
+      id: '/admin/notice'
+      path: '/admin/notice'
+      fullPath: '/admin/notice'
+      preLoaderRoute: typeof AdminNoticeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/event': {
+      id: '/admin/event'
+      path: '/admin/event'
+      fullPath: '/admin/event'
+      preLoaderRoute: typeof AdminEventRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/notice': {
+      id: '/_app/notice'
+      path: '/notice'
+      fullPath: '/notice'
+      preLoaderRoute: typeof AppNoticeRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/_app/my': {
       id: '/_app/my'
       path: '/my'
@@ -393,6 +488,13 @@ declare module '@tanstack/react-router' {
       path: '/feed'
       fullPath: '/feed'
       preLoaderRoute: typeof AppFeedRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/event': {
+      id: '/_app/event'
+      path: '/event'
+      fullPath: '/event'
+      preLoaderRoute: typeof AppEventRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_app/earn': {
@@ -416,6 +518,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EarnGamesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/notice/$id': {
+      id: '/_app/notice/$id'
+      path: '/$id'
+      fullPath: '/notice/$id'
+      preLoaderRoute: typeof AppNoticeIdRouteImport
+      parentRoute: typeof AppNoticeRoute
+    }
     '/_app/exchange/$symbol': {
       id: '/_app/exchange/$symbol'
       path: '/exchange/$symbol'
@@ -423,20 +532,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppExchangeSymbolRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_app/event/$id': {
+      id: '/_app/event/$id'
+      path: '/$id'
+      fullPath: '/event/$id'
+      preLoaderRoute: typeof AppEventIdRouteImport
+      parentRoute: typeof AppEventRoute
+    }
   }
 }
 
+interface AppEventRouteChildren {
+  AppEventIdRoute: typeof AppEventIdRoute
+}
+
+const AppEventRouteChildren: AppEventRouteChildren = {
+  AppEventIdRoute: AppEventIdRoute,
+}
+
+const AppEventRouteWithChildren = AppEventRoute._addFileChildren(
+  AppEventRouteChildren,
+)
+
+interface AppNoticeRouteChildren {
+  AppNoticeIdRoute: typeof AppNoticeIdRoute
+}
+
+const AppNoticeRouteChildren: AppNoticeRouteChildren = {
+  AppNoticeIdRoute: AppNoticeIdRoute,
+}
+
+const AppNoticeRouteWithChildren = AppNoticeRoute._addFileChildren(
+  AppNoticeRouteChildren,
+)
+
 interface AppRouteRouteChildren {
   AppEarnRoute: typeof AppEarnRoute
+  AppEventRoute: typeof AppEventRouteWithChildren
   AppFeedRoute: typeof AppFeedRoute
   AppMyRoute: typeof AppMyRoute
+  AppNoticeRoute: typeof AppNoticeRouteWithChildren
   AppExchangeSymbolRoute: typeof AppExchangeSymbolRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppEarnRoute: AppEarnRoute,
+  AppEventRoute: AppEventRouteWithChildren,
   AppFeedRoute: AppFeedRoute,
   AppMyRoute: AppMyRoute,
+  AppNoticeRoute: AppNoticeRouteWithChildren,
   AppExchangeSymbolRoute: AppExchangeSymbolRoute,
 }
 
@@ -451,6 +595,8 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   SignupRoute: SignupRoute,
   TransferRoute: TransferRoute,
+  AdminEventRoute: AdminEventRoute,
+  AdminNoticeRoute: AdminNoticeRoute,
   DepositBankRoute: DepositBankRoute,
   DepositCryptoRoute: DepositCryptoRoute,
   DepositGiftRoute: DepositGiftRoute,
