@@ -66,7 +66,7 @@ export function ProfileScreen() {
           <button
             onClick={() => {
               navigator.clipboard?.writeText(MOCK_BALANCE.referralCode).catch(() => {});
-              toast.success("📋 추천코드 복사됨!");
+              appToast.referral.copied();
             }}
             className="glass-1 inline-flex h-9 w-9 items-center justify-center rounded-xl"
           >
