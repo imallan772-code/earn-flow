@@ -1,17 +1,3 @@
-
-# Step 1 단일 작업 — 플랜 문서 파일 1개만 생성
-
-승인 즉시 아래 **단 하나의 파일**만 생성하고 즉시 중단합니다. 코드 파일은 손대지 않습니다.
-
-## 생성 파일 (1개)
-- `src/shared/games/shell/ROUND_G_PART1_PLAN.md`
-
-## 수정/삭제 파일
-- 없음
-
-## 파일 내용 (그대로 기록)
-
-```markdown
 # 라운드 G-Part1 — 게임 공통 셸 추출
 
 ## 1. 목적
@@ -45,13 +31,3 @@
 - Dice·Crash 라우트 진입 후 잔액·히스토리·라운드 동작 회귀 0
 - localStorage 기존 key 그대로 로드(스키마 호환)
 - 390×844 무스크롤 검증은 다음 라운드(Mines 실사용) 시 시각 확인
-```
-
-## 보고 메시지
-파일 생성 후 정확히 다음 문장으로 보고하고 즉시 중단합니다:
-
-> "플랜 문서 작성이 완료되었습니다. 코드 구현은 아직 시작하지 않았습니다."
-
-## Step 2 (별도 승인 후 진행, 이번 라운드에는 미포함)
-- `createGameStore.ts`, `useGameRound.ts`, `GameShell.tsx`, `__tests__/useGameRound.spec.ts` 신규
-- `persistedGameState.ts` 내부 교체 (export 시그니처 불변)
