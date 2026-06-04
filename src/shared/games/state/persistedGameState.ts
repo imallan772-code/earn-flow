@@ -58,7 +58,7 @@ function createDebouncedFlusher<T>(
   return {
     schedule() {
       if (typeof window === "undefined" || handle != null) return;
-      handle = window.setTimeout(() => {
+      handle = setTimeout(() => {
         handle = null;
         try {
           window.localStorage.setItem(storageKey, JSON.stringify(getState()));
