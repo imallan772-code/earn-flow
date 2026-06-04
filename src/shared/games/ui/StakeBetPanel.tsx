@@ -31,6 +31,12 @@ interface Props extends BetCallbacks {
   lastOutcome?: { outcome: "win" | "loss"; profit: number; nonce: number } | null;
   /** Optional 0-1 progress for the betting countdown (fills the place button). */
   bettingProgress?: number;
+  /** If true, render a disabled placeholder instead of the cashout button when hasActiveBet. */
+  suppressCashoutButton?: boolean;
+  /** "full" (default) shows manual/auto tabs. "compact" hides auto entirely (manual only). */
+  variant?: "full" | "compact";
+  /** Show the auto-cashout target input (default true). Disable for games like Dice. */
+  showAutoTarget?: boolean;
 }
 
 const STRATEGIES: Strategy[] = ["Flat", "Martingale", "AntiMartingale", "Fibonacci", "DAlembert"];

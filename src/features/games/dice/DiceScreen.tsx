@@ -1,16 +1,12 @@
 /**
- * DiceScreen — Stake-style Dice with cinematic 3D cube, countdown timer,
- * roll animation, BetSummaryPanel, GameRulesCard, mode-aware payouts.
- *
- * Phases:
- *  betting (1.5s) → rolling (0.8s) → settled (1.4s) → betting ...
+ * DiceScreen — Stake/Roobet-style: no timer, instant roll, persisted state.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ShieldCheck, X } from "lucide-react";
 import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
 import { DiceSlider } from "@/shared/games/dice/DiceSlider";
-import { Dice3D, type DicePhase } from "@/shared/games/dice/Dice3D";
+import { DiceResultDisplay, type DicePhase } from "@/shared/games/dice/DiceResultDisplay";
 import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
 import { GameRulesCard } from "@/shared/games/ui/GameRulesCard";
 import { DICE_RULES } from "@/shared/games/rules/gameRules";
@@ -27,87 +23,62 @@ import {
   winChance,
 } from "@/shared/games/dice/DiceEngine";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
+import { diceStore } from "@/shared/games/state/persistedGameState";
 import { cn } from "@/lib/utils";
 import { appToast } from "@/shared/ui/toast";
 import { formatPHON } from "@/lib/format";
 
 const SERVER_SEED = "phonara-dice-demo-server-seed-v1";
 const CLIENT_SEED = "phonara-player-001";
-const BETTING_MS = 1500;
 const ROLLING_MS = 800;
-const SETTLED_MS = 1400;
-
-interface Roll {
-  id: string;
-  roll: number;
-  win: boolean;
-}
+const SETTLED_MS = 800;
 
 export function DiceScreen() {
   const { mode } = useMode();
-  const [phase, setPhase] = useState<DicePhase>("betting");
-  const [bettingMsLeft, setBettingMsLeft] = useState(BETTING_MS);
-  const [nonce, setNonce] = useState(0);
-  const [target, setTarget] = useState(50);
-  const [diceMode, setDiceMode] = useState<DiceMode>("over");
-  const [balance, setBalance] = useState(1000);
-  const [history, setHistory] = useState<Roll[]>([]);
-  const [lastRoll, setLastRoll] = useState<number | null>(null);
-  const [lastOutcome, setLastOutcome] = useState<
-    { outcome: "win" | "loss"; profit: number; nonce: number } | null
-  >(null);
-  const [pendingAmount, setPendingAmount] = useState(10);
+  const [phase, setPhase] = useState<DicePhase>("idle");
+
+  // Persisted state
+  const balance = diceStore.use((s) => s.balance);
+  const nonce = diceStore.use((s) => s.nonce);
+  const history = diceStore.use((s) => s.history);
+  const lastRoll = diceStore.use((s) => s.lastRoll);
+  const lastOutcome = diceStore.use((s) => s.lastOutcome);
+  const target = diceStore.use((s) => s.target);
+  const diceMode = diceStore.use((s) => s.diceMode);
+  const pendingAmount = diceStore.use((s) => s.pendingAmount);
+
+  const [activeBet, setActiveBet] = useState<{
+    amount: number;
+    target: number;
+    mode: DiceMode;
+    liveBetId: string;
+    nonce: number;
+  } | null>(null);
   const [commit, setCommit] = useState("");
   const [showFair, setShowFair] = useState(false);
-  const [activeBet, setActiveBet] = useState<{ amount: number; target: number; mode: DiceMode; liveBetId: string } | null>(null);
-
-  const phaseRef = useRef(phase);
-  phaseRef.current = phase;
 
   useEffect(() => {
     commitServerSeed(SERVER_SEED).then(setCommit);
   }, []);
 
-  // Betting countdown
-  useEffect(() => {
-    if (phase !== "betting") return;
-    const startTs = performance.now();
-    const id = window.setInterval(() => {
-      const left = BETTING_MS - (performance.now() - startTs);
-      if (left <= 0) {
-        window.clearInterval(id);
-        setBettingMsLeft(0);
-        // if no bet was placed, simply restart betting phase
-        if (!activeBet) {
-          setBettingMsLeft(BETTING_MS);
-        } else {
-          setPhase("rolling");
-        }
-      } else {
-        setBettingMsLeft(left);
-      }
-    }, 80);
-    return () => window.clearInterval(id);
-  }, [phase, activeBet]);
-
-  // Rolling: compute result, advance to settled
+  // Rolling → compute & settle
   useEffect(() => {
     if (phase !== "rolling" || !activeBet) return;
     let alive = true;
-    computeRoll({ serverSeed: SERVER_SEED, clientSeed: CLIENT_SEED, nonce }).then((roll) => {
+    computeRoll({ serverSeed: SERVER_SEED, clientSeed: CLIENT_SEED, nonce: activeBet.nonce }).then((roll) => {
       if (!alive) return;
       const won = isWin(roll, activeBet.target, activeBet.mode);
       const pm = payoutMultiplier(winChance(activeBet.target, activeBet.mode));
       const profit = won ? profitOf(activeBet.amount, pm, mode) : -activeBet.amount;
 
-      // settle balance
-      if (won) setBalance((b) => b + activeBet.amount + profit);
+      diceStore.set((s) => ({
+        ...s,
+        balance: won ? s.balance + activeBet.amount + profit : s.balance,
+        lastRoll: roll,
+        history: [{ id: `n${activeBet.nonce}`, roll, win: won }, ...s.history].slice(0, 30),
+        lastOutcome: { outcome: won ? "win" : "loss", profit, nonce: activeBet.nonce, roll },
+      }));
 
-      setLastRoll(roll);
-      setHistory((h) => [{ id: `n${nonce}`, roll, win: won }, ...h].slice(0, 30));
-      setLastOutcome({ outcome: won ? "win" : "loss", profit, nonce });
-
-      // push to live feed
       liveBetsStore.update(activeBet.liveBetId, {
         multiplier: won ? pm : null,
         profit: won ? +profit.toFixed(2) : -activeBet.amount,
@@ -117,34 +88,29 @@ export function DiceScreen() {
       if (won) appToast.game.win({ amount: formatPHON(profit) });
       else appToast.game.lose({ amount: formatPHON(activeBet.amount) });
 
-      // wait the rolling animation to finish, then settle
       window.setTimeout(() => {
         if (!alive) return;
         setPhase("settled");
       }, ROLLING_MS);
     });
-    return () => {
-      alive = false;
-    };
-  }, [phase, activeBet, nonce, mode]);
+    return () => { alive = false; };
+  }, [phase, activeBet, mode]);
 
-  // Settled → next betting phase
+  // Settled → idle (ready for next bet)
   useEffect(() => {
     if (phase !== "settled") return;
     const id = window.setTimeout(() => {
       setActiveBet(null);
-      setNonce((n) => n + 1);
-      setBettingMsLeft(BETTING_MS);
-      setPhase("betting");
+      diceStore.set((s) => ({ ...s, nonce: s.nonce + 1 }));
+      setPhase("idle");
     }, SETTLED_MS);
     return () => window.clearTimeout(id);
   }, [phase]);
 
   const handlePlace = useCallback(
     (amount: number) => {
-      if (phase !== "betting" || activeBet || amount <= 0 || amount > balance) return;
-      setBalance((b) => b - amount);
-      setPendingAmount(amount);
+      if (phase !== "idle" || activeBet || amount <= 0 || amount > balance) return;
+      diceStore.set((s) => ({ ...s, balance: s.balance - amount, pendingAmount: amount }));
       const liveBetId = liveBetsStore.push({
         user: "나의_베팅",
         game: "dice",
@@ -155,28 +121,24 @@ export function DiceScreen() {
         mode,
         isMe: true,
       });
-      setActiveBet({ amount, target, mode: diceMode, liveBetId });
+      setActiveBet({ amount, target, mode: diceMode, liveBetId, nonce });
       appToast.game.bet({ amount: formatPHON(amount) });
-      // immediately advance to rolling so the round runs even if betting window is still open
       setPhase("rolling");
     },
-    [phase, activeBet, balance, target, diceMode, mode],
+    [phase, activeBet, balance, target, diceMode, mode, nonce],
   );
+
+  const setTarget = useCallback((t: number) => diceStore.set((s) => ({ ...s, target: t })), []);
+  const setDiceMode = useCallback((m: DiceMode) => diceStore.set((s) => ({ ...s, diceMode: m })), []);
 
   const winPct = winChance(target, diceMode);
   const targetMult = payoutMultiplier(winPct);
-  const bettingProgress = phase === "betting" ? 1 - bettingMsLeft / BETTING_MS : undefined;
-  const outcome =
-    phase === "settled" && lastOutcome ? (lastOutcome.outcome === "win" ? "win" : "loss") : null;
+  const outcome = phase === "settled" && lastOutcome ? lastOutcome.outcome : null;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       <header className="flex items-center gap-2">
-        <Link
-          to="/earn"
-          className="glass-1 grid h-9 w-9 place-items-center rounded-full"
-          aria-label="뒤로"
-        >
+        <Link to="/earn" className="glass-1 grid h-9 w-9 place-items-center rounded-full" aria-label="뒤로">
           <ArrowLeft size={16} />
         </Link>
         <div className="min-w-0">
@@ -195,10 +157,8 @@ export function DiceScreen() {
         </button>
       </header>
 
-      {/* rules */}
       <GameRulesCard rules={DICE_RULES} onVerify={() => setShowFair(true)} />
 
-      {/* history strip */}
       <ul className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none">
         {history.map((h) => (
           <li
@@ -218,25 +178,17 @@ export function DiceScreen() {
         )}
       </ul>
 
-      {/* 3D dice */}
-      <Dice3D
+      <DiceResultDisplay
         phase={phase}
         rollValue={lastRoll}
         outcome={outcome}
-        bettingProgress={bettingProgress}
-        secondsLeft={bettingMsLeft / 1000}
-      />
-
-      {/* bet summary */}
-      <BetSummaryPanel
-        variant="static"
-        amount={pendingAmount}
-        targetMultiplier={targetMult}
+        target={target}
+        diceMode={diceMode}
+        payoutMultiplier={targetMult}
         winChancePct={winPct}
       />
 
-      {/* slider */}
-      <div className="glass-2 rounded-2xl p-4">
+      <div className="glass-2 rounded-2xl p-3">
         <DiceSlider
           target={target}
           mode={diceMode}
@@ -246,33 +198,35 @@ export function DiceScreen() {
         />
       </div>
 
-      {/* bet panel */}
+      <BetSummaryPanel
+        variant="static"
+        amount={pendingAmount}
+        targetMultiplier={targetMult}
+        winChancePct={winPct}
+      />
+
       <StakeBetPanel
-        canPlace={phase === "betting" && !activeBet}
+        canPlace={phase === "idle" && !activeBet}
         hasActiveBet={false}
         balance={balance}
         lastOutcome={lastOutcome}
-        bettingProgress={bettingProgress}
+        variant="compact"
+        showAutoTarget={false}
         onPlace={(amount) => {
-          setPendingAmount(amount);
+          diceStore.set((s) => ({ ...s, pendingAmount: amount }));
           handlePlace(amount);
         }}
         onCashout={() => {}}
       />
 
-      {/* live feed (dice only) */}
       <LiveBetsFeed game="dice" limit={10} />
 
-      {/* provably fair */}
       {showFair && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
           onClick={() => setShowFair(false)}
         >
-          <div
-            className="glass-2 w-full max-w-md rounded-t-3xl p-5"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="glass-2 w-full max-w-md rounded-t-3xl p-5" onClick={(e) => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-extrabold">공정성 검증</h2>
               <button onClick={() => setShowFair(false)}>
