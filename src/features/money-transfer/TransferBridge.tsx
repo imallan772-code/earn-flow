@@ -5,7 +5,7 @@ import { MobileShell } from "@/shared/layout/MobileShell";
 import { BottomNav } from "@/shared/layout/BottomNav";
 import { Premium3DCard } from "@/shared/ui/Premium3DCard";
 import { PremiumPageHeader } from "@/shared/ui/PremiumPageHeader";
-import { toast } from "sonner";
+import { appToast } from "@/shared/ui/toast";
 
 const RATE = 1340; // 1 USDT = 1340 PHON (mock)
 
@@ -30,7 +30,7 @@ export function TransferBridge() {
           </button>
           <Side label="To" sym={to} amount={converted} />
           <div className="text-[11px] text-[var(--color-muted)]">기준환율 1 USDT = {RATE.toLocaleString()} PHON</div>
-          <button onClick={() => toast.success("전환 완료 (mock)")}
+          <button onClick={() => appToast.transfer.done()}
             className="h-14 w-full rounded-2xl bg-holographic font-extrabold text-[var(--color-bg-0)]">
             전환하기
           </button>

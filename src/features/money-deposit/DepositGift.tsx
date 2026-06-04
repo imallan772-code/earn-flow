@@ -5,7 +5,7 @@ import { MobileShell } from "@/shared/layout/MobileShell";
 import { BottomNav } from "@/shared/layout/BottomNav";
 import { Premium3DCard } from "@/shared/ui/Premium3DCard";
 import { PremiumPageHeader } from "@/shared/ui/PremiumPageHeader";
-import { toast } from "sonner";
+import { appToast } from "@/shared/ui/toast";
 
 export function DepositGift() {
   const [code, setCode] = useState("");
@@ -29,7 +29,7 @@ export function DepositGift() {
             style={{ borderColor: "var(--color-border-hi)" }}
           />
           <button
-            onClick={() => toast.success("상품권 확인 중… (mock)")}
+            onClick={() => appToast.deposit.giftPending()}
             className="mt-3 h-12 w-full rounded-2xl bg-holographic font-bold text-[var(--color-bg-0)]"
           >
             등록하기

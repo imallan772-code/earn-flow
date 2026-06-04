@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Smartphone, Mail, KeyRound, ArrowLeft } from "lucide-react";
 import { AuthPageShell } from "@/shared/layout/AuthPageShell";
-import { toast } from "sonner";
+import { appToast } from "@/shared/ui/toast";
 import { OnlineCounterChip } from "@/shared/layout/OnlineCounterChip";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -32,7 +32,8 @@ export function AuthShell({ mode }: Props) {
   const isSignup = mode === "signup";
 
   function mockSignIn() {
-    toast.success(isSignup ? "🎉 가입 완료! 첫 보상 받으러 가요" : "👋 다시 오셨네요!");
+    if (isSignup) appToast.auth.signupDone();
+    else appToast.auth.welcomeBack();
     // MERGE: replace with useAuth().signInWithX from phonara-world-main
     navigate({ to: isSignup ? "/onboarding" : "/feed" });
   }

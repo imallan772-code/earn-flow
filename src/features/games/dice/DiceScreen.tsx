@@ -17,6 +17,8 @@ import {
 } from "@/shared/games/dice/DiceEngine";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
 import { cn } from "@/lib/utils";
+import { appToast } from "@/shared/ui/toast";
+import { formatPHON } from "@/lib/format";
 
 const SERVER_SEED = "phonara-dice-demo-server-seed-v1";
 const CLIENT_SEED = "phonara-player-001";
@@ -64,6 +66,8 @@ export function DiceScreen() {
       setResultFlash(win ? "win" : "loss");
       setHistory((h) => [{ id: `n${nonce}`, roll, win }, ...h].slice(0, 30));
       setLastOutcome({ outcome: win ? "win" : "loss", profit, nonce });
+      if (win) appToast.game.win({ amount: formatPHON(profit) });
+      else appToast.game.lose({ amount: formatPHON(amount) });
       setNonce((n) => n + 1);
       window.setTimeout(() => setResultFlash(null), 600);
       window.setTimeout(() => setBusy(false), 150);

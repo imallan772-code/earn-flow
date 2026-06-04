@@ -7,7 +7,7 @@ import { Premium3DCard } from "@/shared/ui/Premium3DCard";
 import { PremiumPageHeader } from "@/shared/ui/PremiumPageHeader";
 import { MOCK_BALANCE } from "@/mocks/balance";
 import { formatPHON, formatKRW } from "@/lib/format";
-import { toast } from "sonner";
+import { appToast } from "@/shared/ui/toast";
 
 interface Props { kind: "phon" | "crypto" }
 
@@ -48,7 +48,7 @@ export function WithdrawalForm({ kind }: Props) {
             </div>
           </div>
           <button
-            onClick={() => toast.success("출금 신청 접수됨 (mock)")}
+            onClick={() => appToast.withdrawal.submitted()}
             className="h-14 w-full rounded-2xl bg-holographic font-extrabold text-[var(--color-bg-0)] shadow-glow-purple"
           >
             출금 신청

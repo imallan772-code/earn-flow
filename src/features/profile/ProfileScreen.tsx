@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Copy, LogOut, Settings, Crown, Wallet, ChevronRight, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight } from "lucide-react";
-import { toast } from "sonner";
+import { appToast } from "@/shared/ui/toast";
 import { PremiumPageHeader } from "@/shared/ui/PremiumPageHeader";
 import { Premium3DCard } from "@/shared/ui/Premium3DCard";
 import { CountUp } from "@/shared/motion/CountUp";
@@ -66,7 +66,7 @@ export function ProfileScreen() {
           <button
             onClick={() => {
               navigator.clipboard?.writeText(MOCK_BALANCE.referralCode).catch(() => {});
-              toast.success("📋 추천코드 복사됨!");
+              appToast.referral.copied();
             }}
             className="glass-1 inline-flex h-9 w-9 items-center justify-center rounded-xl"
           >

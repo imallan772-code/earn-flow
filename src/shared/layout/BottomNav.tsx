@@ -3,20 +3,21 @@ import { Zap, Gamepad2, TrendingUp, User, Bell, type LucideIcon } from "lucide-r
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { springSnappy } from "../motion/springs";
+import { t, type MessageKey } from "@/shared/i18n";
 
 interface NavItem {
   to: string;
-  label: string;
+  labelKey: MessageKey;
   Icon: LucideIcon;
   match: (p: string) => boolean;
 }
 
 const ITEMS: NavItem[] = [
-  { to: "/feed", label: "Pulse", Icon: Zap, match: (p) => p === "/feed" },
-  { to: "/earn", label: "Earn", Icon: Gamepad2, match: (p) => p.startsWith("/earn") },
-  { to: "/exchange/BTCUSDT", label: "Trade", Icon: TrendingUp, match: (p) => p.startsWith("/exchange") },
-  { to: "/notice", label: "Notice", Icon: Bell, match: (p) => p.startsWith("/notice") || p.startsWith("/event") },
-  { to: "/my", label: "My", Icon: User, match: (p) => p === "/my" },
+  { to: "/feed", labelKey: "nav.feed", Icon: Zap, match: (p) => p === "/feed" },
+  { to: "/earn", labelKey: "nav.earn", Icon: Gamepad2, match: (p) => p.startsWith("/earn") },
+  { to: "/exchange/BTCUSDT", labelKey: "nav.trade", Icon: TrendingUp, match: (p) => p.startsWith("/exchange") },
+  { to: "/notice", labelKey: "nav.notice", Icon: Bell, match: (p) => p.startsWith("/notice") || p.startsWith("/event") },
+  { to: "/my", labelKey: "nav.my", Icon: User, match: (p) => p === "/my" },
 ];
 
 export function BottomNav() {
@@ -50,7 +51,7 @@ export function BottomNav() {
               >
                 <it.Icon size={22} strokeWidth={active ? 2.4 : 2} />
               </motion.span>
-              <span className="relative z-10 font-medium">{it.label}</span>
+              <span className="relative z-10 font-medium">{t(it.labelKey)}</span>
             </Link>
           );
         })}
