@@ -31,6 +31,12 @@ interface Props extends BetCallbacks {
   lastOutcome?: { outcome: "win" | "loss"; profit: number; nonce: number } | null;
   /** Optional 0-1 progress for the betting countdown (fills the place button). */
   bettingProgress?: number;
+  /** If true, render a disabled placeholder instead of the cashout button when hasActiveBet. */
+  suppressCashoutButton?: boolean;
+  /** "full" (default) shows manual/auto tabs. "compact" hides auto entirely (manual only). */
+  variant?: "full" | "compact";
+  /** Show the auto-cashout target input (default true). Disable for games like Dice. */
+  showAutoTarget?: boolean;
 }
 
 const STRATEGIES: Strategy[] = ["Flat", "Martingale", "AntiMartingale", "Fibonacci", "DAlembert"];
@@ -43,8 +49,13 @@ export function StakeBetPanel({
   onPlace,
   onCashout,
   bettingProgress,
+  suppressCashoutButton,
+  variant = "full",
+  showAutoTarget = true,
 }: Props) {
+  const compact = variant === "compact";
   const [tab, setTab] = useState<"manual" | "auto">("manual");
+  const effectiveTab: "manual" | "auto" = compact ? "manual" : tab;
   const [amount, setAmount] = useState(10);
   const [target, setTarget] = useState(2.0);
 
@@ -115,26 +126,28 @@ export function StakeBetPanel({
 
   return (
     <div className="glass-2 flex flex-col gap-3 rounded-2xl p-3">
-      {/* tabs */}
-      <div className="glass-1 grid grid-cols-2 rounded-xl p-1">
-        {(["manual", "auto"] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              "rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
-              tab === t
-                ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)]"
-                : "text-[var(--color-muted)]"
-            )}
-          >
-            {t === "manual" ? "수동" : "자동"}
-          </button>
-        ))}
-      </div>
+      {/* tabs (hidden in compact mode) */}
+      {!compact && (
+        <div className="glass-1 grid grid-cols-2 rounded-xl p-1">
+          {(["manual", "auto"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
+                tab === t
+                  ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)]"
+                  : "text-[var(--color-muted)]"
+              )}
+            >
+              {t === "manual" ? "수동" : "자동"}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* AUTO HUD */}
-      {tab === "auto" && autoRunning && autoState && (
+      {effectiveTab === "auto" && autoRunning && autoState && (
         <div className="glass-1 flex items-center justify-between rounded-xl px-3 py-2 text-[11px]">
           <span className="font-bold uppercase tracking-wider text-[var(--color-cyan)]">
             ● AUTO
@@ -182,33 +195,35 @@ export function StakeBetPanel({
       </Field>
 
       {/* auto target */}
-      <Field label="자동 캐쉬아웃 (배수)">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setTarget((t) => Math.max(1.01, +(t - 0.1).toFixed(2)))}
-            className="rounded-lg bg-[var(--color-surface-hi)] px-2 py-1.5 text-[11px] font-bold"
-          >
-            −
-          </button>
-          <input
-            type="number"
-            min={1.01}
-            step={0.01}
-            value={target}
-            onChange={(e) => setTarget(Math.max(1.01, Number(e.target.value) || 1.01))}
-            className="font-numeric flex-1 rounded-lg bg-[var(--color-bg-0)] px-2 py-1.5 text-sm outline-none"
-          />
-          <button
-            onClick={() => setTarget((t) => +(t + 0.1).toFixed(2))}
-            className="rounded-lg bg-[var(--color-surface-hi)] px-2 py-1.5 text-[11px] font-bold"
-          >
-            +
-          </button>
-        </div>
-      </Field>
+      {showAutoTarget && (
+        <Field label="자동 캐쉬아웃 (배수)">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setTarget((t) => Math.max(1.01, +(t - 0.1).toFixed(2)))}
+              className="rounded-lg bg-[var(--color-surface-hi)] px-2 py-1.5 text-[11px] font-bold"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              min={1.01}
+              step={0.01}
+              value={target}
+              onChange={(e) => setTarget(Math.max(1.01, Number(e.target.value) || 1.01))}
+              className="font-numeric flex-1 rounded-lg bg-[var(--color-bg-0)] px-2 py-1.5 text-sm outline-none"
+            />
+            <button
+              onClick={() => setTarget((t) => +(t + 0.1).toFixed(2))}
+              className="rounded-lg bg-[var(--color-surface-hi)] px-2 py-1.5 text-[11px] font-bold"
+            >
+              +
+            </button>
+          </div>
+        </Field>
+      )}
 
       {/* auto-only config */}
-      {tab === "auto" && (
+      {!compact && tab === "auto" && (
         <div className="flex flex-col gap-2 border-t border-[var(--color-border)] pt-2">
           <Field label="전략">
             <select
@@ -261,14 +276,23 @@ export function StakeBetPanel({
       )}
 
       {/* action */}
-      {tab === "manual" ? (
+      {effectiveTab === "manual" ? (
         hasActiveBet ? (
-          <button
-            onClick={onCashout}
-            className="rounded-xl bg-[var(--color-warning)] py-3 text-sm font-extrabold text-[var(--color-bg-0)] shadow-glow-gold active:scale-[0.98]"
-          >
-            캐쉬아웃
-          </button>
+          suppressCashoutButton ? (
+            <button
+              disabled
+              className="rounded-xl bg-[var(--color-surface-hi)] py-3 text-sm font-bold text-[var(--color-muted-2)]"
+            >
+              라운드 진행 중 — 위에서 캐쉬아웃
+            </button>
+          ) : (
+            <button
+              onClick={onCashout}
+              className="rounded-xl bg-[var(--color-warning)] py-3 text-sm font-extrabold text-[var(--color-bg-0)] shadow-glow-gold active:scale-[0.98]"
+            >
+              캐쉬아웃
+            </button>
+          )
         ) : (
           <button
             disabled={!canPlace || amount <= 0}
@@ -287,7 +311,7 @@ export function StakeBetPanel({
                 style={{ width: `${progressPct}%` }}
               />
             )}
-            <span className="relative">{canPlace ? "베팅 (다음 라운드)" : "라운드 진행 중"}</span>
+            <span className="relative">{canPlace ? "베팅" : "라운드 진행 중"}</span>
           </button>
         )
       ) : autoRunning ? (
