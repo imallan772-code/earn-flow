@@ -147,7 +147,7 @@ export function StakeBetPanel({
       )}
 
       {/* AUTO HUD */}
-      {tab === "auto" && autoRunning && autoState && (
+      {effectiveTab === "auto" && autoRunning && autoState && (
         <div className="glass-1 flex items-center justify-between rounded-xl px-3 py-2 text-[11px]">
           <span className="font-bold uppercase tracking-wider text-[var(--color-cyan)]">
             ● AUTO
