@@ -9,7 +9,7 @@
  * mode 는 부모 라우트(useMode())에서 prop 으로 주입한다. 내부 useState 금지.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { PlinkoEngine, type RiskLevel, type RowCount } from "./PlinkoEngine";
+import { PlinkoEngine, getMaxMultiplier, type RiskLevel, type RowCount } from "./PlinkoEngine";
 import { PlinkoRenderer, type QualityLevel } from "./PlinkoRenderer";
 import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
 import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
