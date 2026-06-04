@@ -210,7 +210,6 @@ export function DiceScreen() {
         hasActiveBet={false}
         balance={balance}
         lastOutcome={lastOutcome}
-        variant="compact"
         showAutoTarget={false}
         onPlace={(amount) => {
           diceStore.set((s) => ({ ...s, pendingAmount: amount }));

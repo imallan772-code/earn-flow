@@ -9,6 +9,8 @@
  * mode 는 부모 라우트(useMode())에서 prop 으로 주입한다. 내부 useState 금지.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import { PlinkoEngine, getMaxMultiplier, type RiskLevel, type RowCount } from "./PlinkoEngine";
 import { PlinkoRenderer, type QualityLevel } from "./PlinkoRenderer";
 import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
@@ -150,9 +152,18 @@ export function PlinkoBoard({ mode }: PlinkoBoardProps) {
     <div className="flex h-[100dvh] w-full flex-col bg-[var(--color-bg-0)] pb-[env(safe-area-inset-bottom)] text-[var(--color-foreground)]">
       {/* Header */}
       <div className="flex h-9 items-center justify-between px-3 text-xs">
-        <span className="font-bold uppercase tracking-wider text-[var(--color-cyan)]">
-          PLINKO
-        </span>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/games"
+            className="grid h-7 w-7 place-items-center rounded-lg text-[var(--color-muted)] hover:text-[var(--color-foreground)]"
+            aria-label="로비로"
+          >
+            <ArrowLeft size={16} />
+          </Link>
+          <span className="font-bold uppercase tracking-wider text-[var(--color-cyan)]">
+            PLINKO
+          </span>
+        </div>
         <span className="font-numeric text-[var(--color-muted)]">
           잔액 <span className="text-[var(--color-foreground)]">{balance.toFixed(2)}</span> USDT
         </span>
