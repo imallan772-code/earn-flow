@@ -1,111 +1,78 @@
-# 진짜 마지막 끝판왕 플랜 (Final Boss Edition v2)
+# 다음 작업 — 잘게 나눈 파트 진행 로드맵
 
-## 스택 (확정)
-TanStack Start v1 · React 19 · TS strict · Tailwind v4 · Framer Motion · @tradingview/lightweight-charts · Canvas 2D + Web Workers · Vite PWA · Supabase(RLS/RPC/Realtime/Edge) · pnpm monorepo(apps/web + apps/admin)
-
-**역할 분담**
-- **Lovable**: UI 100% · 게임 결정론 엔진 · 어댑터 인터페이스 · PWA shell · 라우팅 · 디자인 시스템 · 어드민 UI · 공지/이벤트
-- **Cursor**: Supabase 실연결 · monorepo 분할 · OAuth/KYC/USDT HD 지갑 · FCM
+견고함이 필요한 영역(결정론 엔진, Stake 1:1 게임, 트레이딩 터미널)은 **작은 PR 단위**로 끊어 들어갑니다. 이번 라운드는 **A 파트만** 실행. B/C/D는 각각 별도 라운드에서 확인 후 진행.
 
 ---
 
-## Part 1 — 네이밍 (글로벌 전환)
-폴더 `kebab-case` · 컴포넌트 `PascalCase` · 훅 `useCamelCase` · 어댑터 `<domain>Adapter` · RPC `snake_case` · 라우트 flat dot · 토큰 `--color-<role>` · 이벤트 `<domain>_<action>` · i18n `<area>.<element>.<state>` · 통화 ISO 4217
+## 라운드 A — 결정론 엔진 코어 (이번 라운드)
 
-## Part 2 — 디자인 시스템
-- 폰트: Urbanist / Epilogue / JetBrains Mono
-- Tailwind v4 `@theme` — glass-1/2/3 · bg-cosmic · bg-holographic · ring-aurora-live
-- View Transitions API · Light/Dark/System + 5 액센트 + 색맹 모드
-- 모든 색 oklch · 컴포넌트 직접 색상 금지
+게임 전체의 기반. 게임을 만들기 전에 엔진부터 박는다.
 
-## Part 3 — Shell & Routing
-- Mobile: `max-w-md` + 5탭 BottomNav (Pulse / Earn / Trade / Notice / My)
-- Tablet 64px sidebar · Desktop 240px sidebar + RightRail
-- Trade: `/exchange/$symbol` · Notice: `/notice` · Event: `/event`
+### A1. RNG & Provably Fair 유틸 (단독 PR)
+산출: `src/shared/games/engine/rng.ts`
+- `mulberry32(seed: number)` — 32-bit 결정론 PRNG
+- `xorshift32(seed: number)` — 검증용 보조 PRNG
+- `hashStringToSeed(s: string)` — FNV-1a 32-bit
+- `sha256Hex(input: string)` — Web Crypto async wrapper
+- 모든 함수 순수 · 부수효과 0
 
-## Part 4 — 트레이딩 (Binance/Bybit 1:1)
-- **Spot**: TradingChart · OrderBook 20단계 · TradesTape 100rows · OrderTicket(Iceberg/Scaled/Bracket) · MarketsList
-- **Futures**: 125× · Cross/Isolated · Hedge/One-way · WASM 청산가 · Multi-Asset/Portfolio Margin/Sub-accounts
-- **고급**: DepthChart · Heatmap · LiquidationsStream · LongShortRatio · OpenInterest · WhaleAlert
-- **Earn 8종** + **Bots**(Grid/DCA)
+### A2. Provably Fair (단독 PR)
+산출: `src/shared/games/engine/provablyFair.ts`
+- Stake.com 방식: `serverSeed` + `clientSeed` + `nonce` + `cursor`
+- `commitServerSeed(serverSeed)` → SHA256 hash 사전 공개
+- `revealServerSeed(serverSeed)` → 라운드 후 검증
+- `bytesGenerator(serverSeed, clientSeed, nonce, cursor)` — HMAC-SHA256 스트림
+- `floatFromBytes(bytes)` — 4바이트 → [0,1) 균등분포
 
-## Part 5 — 입출금 (PG 미사용)
-USDT TRC20/ERC20 자동매칭 · KRW 무통장(30분 카운트다운 + deposit_code) · 상품권 OCR mock · 일일한도 · KYC 게이트 · 채널비교카드
+### A3. 정확도 유틸 + 단위테스트 (단독 PR)
+산출: `src/shared/games/engine/clamp.ts` + `__tests__/clamp.spec.ts`
+- `quantize6(v: number)` — `Math.floor(v * 1e6) / 1e6`
+- `reachedTarget(actual: number, target: number)` — `actual >= target - 1e-9`
+- `formatMultiplier(v: number, digits = 2)` — 표시용
+- 테스트: 2.000000 target에 대해 `[1.999999..., 2.0, 2.000001]` 케이스 3종 검증
 
-## Part 6 — 게임 8종 (Stake.com 1:1, 0프레임 오차)
-공통 `<StakeBetPanel>` + 결정론 엔진:
-```
-mulberry32(seed) → Math.floor(v*1e6)/1e6 → actual >= target - 1e-9
-```
-- **Crash** 자동 캐쉬아웃 `2.000000` 정확
-- **Dice** 0.00~99.99 · 1% 엣지 · SHA256 provably fair
-- **Slots / Roulette / RPS / LuckyBox / CardFlip**
-- **Keepy-Uppy (틱톡 공차기)** 30Hz worker 물리 + 60fps main · 콤보 ×2/×5/×10 · 리더보드
-- Canvas 2D + 단일 RAF
+### A4. 자동베팅 상태기계 (단독 PR)
+산출: `src/shared/games/engine/autoBet.ts` + `__tests__/autoBet.spec.ts`
+- 전략: `Martingale` · `AntiMartingale` · `Fibonacci` · `DAlembert` · `Flat`
+- 옵션: `baseBet` · `numberOfBets`(0=무한) · `onWin{ reset|increase% }` · `onLoss{ reset|increase% }` · `stopOnProfit` · `stopOnLoss`
+- 순수 reducer: `step(state, outcome) => nextState`
+- 테스트: Martingale 5연패 시 베팅 정확히 32배 검증
 
-## Part 7 — 한국 앱테크 (1위 무기)
-출석 7일 streak · 28일 시즌 · 만보기(1000/5000/100000 잭팟) · 잠금화면 광고 · 럭키쿠키 · 럭키룰렛 · 카카오톡/SNS 공유 · 친구초대 다단계 · 시청 미션 · CashShop · 캐시백 · 만원 송금 마일스톤 · VIP · 타임어택 · 콤보
-*(보상형 비디오/설문/영수증/리뷰 — 제외)*
+### A5. 단일 RAF 마스터 루프 + 프레임 가드 (단독 PR)
+산출: `src/shared/games/engine/tickLoop.ts`
+- `createTickLoop({ onTick(dtMs) })` — 단일 RAF · 자동 시작/정지
+- `subscribe(fn)` — 여러 게임이 동일 루프 공유 (Canvas 한 화면에 1개 RAF 보장)
+- 16ms+ 프레임 감지 → dev 환경 `console.warn` (prod 무음)
 
-## Part 8 — 공지/이벤트 탭 (신규)
-- `/notice` — 카테고리(공지/업데이트/점검/보안) · 핀고정 · 읽음표시 · 검색 · 페이지네이션
-- `/notice/$id` — 상세(MDX 렌더 mock) · 첨부 · 공유
-- `/event` — 진행중/예정/종료 탭 · 카드그리드 · 카운트다운 · 참여버튼 · 보상미리보기 · 진행률바
-- `/event/$id` — 상세 · 약관 · 진행률 · 리더보드 mock
-- 홈 Pulse 상단에 NoticeBar(슬라이드) + EventHero 캐러셀
-- 어드민에서 CRUD + 예약발행 + 푸시연동 mock
-
-## Part 9 — FOMO 극강
-RollingCountUp `1,012만+` · 2-row GPU marquee · LiveCashoutStrip · BigWinTicker · 한글 이모지 타일 · "300% 보너스 · 오늘만 · TOP 0.01%" · 내부 디바이스명 노출 금지
-
-## Part 10 — 어드민 (1인 운영 99%)
-14페이지: Dashboard(KPI 8) · 입금큐 · 출금큐 · 유저 · STR · 위험탐지 · 콘텐츠 · 피처플래그 · 수수료/한도 · 미션 · 게임운영 · 알림 · **공지** · **이벤트**
-
-## Part 11 — 어댑터 이식 게이트
-`src/adapters/*.ts` 22개 — Cursor에서 import path 1줄 교체로 실 Supabase 연결
-`authAdapter · walletAdapter · tradeAdapter · gameAdapter · missionAdapter · realtimeAdapter · kycAdapter · notifyAdapter · noticeAdapter · eventAdapter ...`
-
-## Part 12 — 금지사항
-Lovable 단계 실 Supabase/실 OAuth/실 매칭/Sentry/PostHog 금지. 16ms+ 프레임 = 빌드 실패. 자동 트리거 16ms+ 오차 = 빌드 실패.
+### 라운드 A 게이트
+- 모든 유닛테스트 PASS
+- 엔진 코드는 React/DOM 의존 0 (pure TS)
+- 다음 라운드(B)부터 엔진을 import해서 Crash 구현
 
 ---
 
-## 실행 순서 (36단계)
-1. 디자인 토큰 + Tailwind v4 `@theme`
-2. 어댑터 인터페이스 22개 골격 + mock
-3. TanStack 라우트 셸 + 5탭 BottomNav/Sidebar/RightRail
-4. PWA manifest + 가드 SW
-5. Pulse 홈 (FOMO 풀세트 + NoticeBar + EventHero)
-6. MarketsList + 가격 worker
-7. Spot 터미널
-8. Futures 터미널 + WASM 청산가
-9. DepthChart/Heatmap/Liquidations/WhaleAlert
-10. Earn 8종
-11. Bots
-12. 결정론 엔진(0프레임 게이트)
-13. Crash (2.000000 검증)
-14. Dice (SHA256)
-15. Slots
-16. Roulette
-17. RPS
-18. LuckyBox
-19. CardFlip
-20. Keepy-Uppy (worker 물리)
-21. `<StakeBetPanel>` 자동베팅
-22. 입금 USDT+KRW+상품권
-23. 출금 + KYC 게이트
-24. 출석/만보기/잠금화면/럭키쿠키/룰렛
-25. 친구초대 다단계 + 카카오톡 공유
-26. CashShop + VIP + 캐시백 + 만원송금
-27. **공지 리스트 + 상세**
-28. **이벤트 리스트 + 상세 + 카운트다운**
-29. 마이페이지 + 거래내역 + 자산
-30. 알림센터 + Realtime mock
-31. 어드민 셸 + Dashboard
-32. 어드민 입금/출금/유저/STR/위험
-33. 어드민 콘텐츠/피처/수수료/미션/게임
-34. **어드민 공지/이벤트 CRUD + 예약발행**
-35. 60fps + INP<100ms 전역 게이트
-36. PWA Lighthouse ≥90 + 어댑터 export QA + Cursor 인계 문서 자동생성
+## 다음 라운드 예고 (확인 후 진행)
 
-각 단계 종료 시 `browser--performance_profile` 통과 → 다음. step 단위로 끊어 보고.
+### 라운드 B — Crash 게임
+- B1. `CrashEngine.ts` (성장식 + bust point 결정론)
+- B2. `<StakeBetPanel>` 공용 컴포넌트
+- B3. `CrashCanvas.tsx` (Canvas 2D 단일 RAF)
+- B4. `CrashScreen.tsx` + 라우트
+- B5. `2.000000` 자동캐쉬아웃 1000회 시드검증 테스트
+
+### 라운드 C — Dice 게임
+- C1. `DiceEngine.ts` (1% 엣지)
+- C2. `DiceScreen.tsx` 슬라이더 + Over/Under
+- C3. Provably fair 영수증 다운로드
+- C4. 라우트 + 게임 로비 카드
+
+### 라운드 D — 나머지 6게임 (각 게임 별도 라운드)
+Slots / Roulette / RPS / LuckyBox / CardFlip / Keepy-Uppy
+
+### 라운드 E — 트레이딩 터미널 (Spot / Futures 각 별도)
+### 라운드 F — 입출금 (USDT / KRW / 상품권 각 별도)
+### 라운드 G — 어드민 나머지 페이지 (입금큐 / 출금큐 / 유저 / STR...)
+
+---
+
+**이번 라운드는 A1~A5만 실행** — 약 5개 파일 + 2개 테스트. 견고한 기반 먼저.
