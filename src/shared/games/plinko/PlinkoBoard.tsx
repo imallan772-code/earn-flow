@@ -9,7 +9,7 @@
  * mode 는 부모 라우트(useMode())에서 prop 으로 주입한다. 내부 useState 금지.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { PlinkoEngine, type RiskLevel, type RowCount } from "./PlinkoEngine";
+import { PlinkoEngine, getMaxMultiplier, type RiskLevel, type RowCount } from "./PlinkoEngine";
 import { PlinkoRenderer, type QualityLevel } from "./PlinkoRenderer";
 import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
 import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
@@ -243,7 +243,7 @@ export function PlinkoBoard({ mode }: PlinkoBoardProps) {
         <BetSummaryPanel
           variant="static"
           amount={pendingAmount}
-          targetMultiplier={maxMultFor(risk, rows)}
+          targetMultiplier={getMaxMultiplier(risk, rows)}
           winChancePct={undefined}
         />
       </div>
@@ -275,13 +275,3 @@ function slotTint(mult: number): string {
   return "var(--color-rose)";
 }
 
-/** Max-mult lookup mirrors PlinkoRenderer's MAX_MULT (kept inline to avoid extra export). */
-function maxMultFor(risk: RiskLevel, rows: RowCount): number {
-  // simple hardcoded mirror — Renderer derives from MULTIPLIERS, here we use a small map.
-  const MAX: Record<RiskLevel, Record<RowCount, number>> = {
-    low: { 8: 5.6, 12: 10, 16: 16 },
-    medium: { 8: 13, 12: 33, 16: 110 },
-    high: { 8: 29, 12: 76, 16: 1000 },
-  };
-  return MAX[risk][rows];
-}

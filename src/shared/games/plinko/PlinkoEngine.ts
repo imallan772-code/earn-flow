@@ -171,3 +171,11 @@ function mulberry32(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+/**
+ * Max multiplier for a given (risk, rows). Single source of truth — derived
+ * directly from MULTIPLIERS so UI (BetSummary) auto-syncs when tables change.
+ */
+export function getMaxMultiplier(risk: RiskLevel, rows: RowCount): number {
+  return Math.max(...MULTIPLIERS[risk][rows]);
+}

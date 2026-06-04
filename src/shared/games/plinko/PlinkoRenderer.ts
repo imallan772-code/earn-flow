@@ -436,9 +436,8 @@ export class PlinkoRenderer {
       const py = this.padTop + ny * innerH;
       const count = row + 2;
       for (let c = 0; c < count; c++) {
+        // peg x: matches engine's (cumRight + 0.5) / (row + 2) — same formula.
         const nx = (c + 0.5) / count;
-        // Wait — engine uses (cum + 0.5) / (row + 2) which assumes row 0 has 2 pegs.
-        // Adjust: row r has (r + 2) pegs from row=0..rows-1. For pegs we draw row index 0..rows-1.
         const px = this.padX + nx * innerW;
         ctx.beginPath();
         ctx.arc(px, py, this.pegRadius, 0, Math.PI * 2);
