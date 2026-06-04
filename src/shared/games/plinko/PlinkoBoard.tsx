@@ -131,8 +131,10 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
       });
 
       rendererRef.current.playDrop(result, engineRef.current, (slot, multiplier) => {
-        const effectiveMult = mode === "real" ? multiplier * 0.97 : multiplier;
-        const payout = amount * effectiveMult;
+        // House edge applies to payout only — displayed multiplier always matches the slot label.
+        const grossPayout = amount * multiplier;
+        const rake = mode === "real" ? grossPayout * 0.03 : 0;
+        const payout = grossPayout - rake;
         const profit = payout - amount;
         const won = payout >= amount;
 
@@ -143,7 +145,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
         onOutcome?.(outcome);
 
         liveBetsStore.update(liveBetId, {
-          multiplier: won ? effectiveMult : null,
+          multiplier: won ? multiplier : null,
           profit: +profit.toFixed(2),
           status: won ? "win" : "loss",
         });
