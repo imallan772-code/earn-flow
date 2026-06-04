@@ -205,7 +205,6 @@ export function CrashScreen() {
   }, [phase, bet?.cashedAt]);
 
   const bettingProgress = phase === "betting" ? 1 - bettingMsLeft / BETTING_MS : undefined;
-  const hasActiveBet = !!bet && phase === "running";
 
   return (
     <div className="flex flex-col gap-3">
