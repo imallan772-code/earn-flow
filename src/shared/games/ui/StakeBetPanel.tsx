@@ -15,6 +15,8 @@ import {
   step as autoStep,
 } from "@/shared/games/engine/autoBet";
 
+import { t } from "@/shared/i18n";
+
 export interface BetCallbacks {
   onPlace: (amount: number, autoTarget: number) => void;
   onCashout: () => void;
