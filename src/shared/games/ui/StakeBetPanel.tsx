@@ -305,7 +305,14 @@ export function StakeBetPanel({
         ) : (
           <button
             disabled={!canPlace || amount <= 0}
-            onClick={() => onPlace(amount, target)}
+            onClick={() => {
+              if (placingRef.current) return;
+              if (!canPlace || amount <= 0) return;
+              placingRef.current = true;
+              onPlace(amount, target);
+              // Safety release in case parent never transitions canPlace.
+              window.setTimeout(() => { placingRef.current = false; }, 600);
+            }}
             className={cn(
               "relative overflow-hidden rounded-xl py-3 text-sm font-extrabold transition active:scale-[0.98]",
               canPlace && amount > 0
