@@ -195,33 +195,35 @@ export function StakeBetPanel({
       </Field>
 
       {/* auto target */}
-      <Field label="자동 캐쉬아웃 (배수)">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setTarget((t) => Math.max(1.01, +(t - 0.1).toFixed(2)))}
-            className="rounded-lg bg-[var(--color-surface-hi)] px-2 py-1.5 text-[11px] font-bold"
-          >
-            −
-          </button>
-          <input
-            type="number"
-            min={1.01}
-            step={0.01}
-            value={target}
-            onChange={(e) => setTarget(Math.max(1.01, Number(e.target.value) || 1.01))}
-            className="font-numeric flex-1 rounded-lg bg-[var(--color-bg-0)] px-2 py-1.5 text-sm outline-none"
-          />
-          <button
-            onClick={() => setTarget((t) => +(t + 0.1).toFixed(2))}
-            className="rounded-lg bg-[var(--color-surface-hi)] px-2 py-1.5 text-[11px] font-bold"
-          >
-            +
-          </button>
-        </div>
-      </Field>
+      {showAutoTarget && (
+        <Field label="자동 캐쉬아웃 (배수)">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setTarget((t) => Math.max(1.01, +(t - 0.1).toFixed(2)))}
+              className="rounded-lg bg-[var(--color-surface-hi)] px-2 py-1.5 text-[11px] font-bold"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              min={1.01}
+              step={0.01}
+              value={target}
+              onChange={(e) => setTarget(Math.max(1.01, Number(e.target.value) || 1.01))}
+              className="font-numeric flex-1 rounded-lg bg-[var(--color-bg-0)] px-2 py-1.5 text-sm outline-none"
+            />
+            <button
+              onClick={() => setTarget((t) => +(t + 0.1).toFixed(2))}
+              className="rounded-lg bg-[var(--color-surface-hi)] px-2 py-1.5 text-[11px] font-bold"
+            >
+              +
+            </button>
+          </div>
+        </Field>
+      )}
 
       {/* auto-only config */}
-      {tab === "auto" && (
+      {!compact && tab === "auto" && (
         <div className="flex flex-col gap-2 border-t border-[var(--color-border)] pt-2">
           <Field label="전략">
             <select
@@ -274,14 +276,23 @@ export function StakeBetPanel({
       )}
 
       {/* action */}
-      {tab === "manual" ? (
+      {effectiveTab === "manual" ? (
         hasActiveBet ? (
-          <button
-            onClick={onCashout}
-            className="rounded-xl bg-[var(--color-warning)] py-3 text-sm font-extrabold text-[var(--color-bg-0)] shadow-glow-gold active:scale-[0.98]"
-          >
-            캐쉬아웃
-          </button>
+          suppressCashoutButton ? (
+            <button
+              disabled
+              className="rounded-xl bg-[var(--color-surface-hi)] py-3 text-sm font-bold text-[var(--color-muted-2)]"
+            >
+              라운드 진행 중 — 위에서 캐쉬아웃
+            </button>
+          ) : (
+            <button
+              onClick={onCashout}
+              className="rounded-xl bg-[var(--color-warning)] py-3 text-sm font-extrabold text-[var(--color-bg-0)] shadow-glow-gold active:scale-[0.98]"
+            >
+              캐쉬아웃
+            </button>
+          )
         ) : (
           <button
             disabled={!canPlace || amount <= 0}
@@ -300,7 +311,7 @@ export function StakeBetPanel({
                 style={{ width: `${progressPct}%` }}
               />
             )}
-            <span className="relative">{canPlace ? "베팅 (다음 라운드)" : "라운드 진행 중"}</span>
+            <span className="relative">{canPlace ? "베팅" : "라운드 진행 중"}</span>
           </button>
         )
       ) : autoRunning ? (
