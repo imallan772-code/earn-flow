@@ -1,130 +1,81 @@
-## 최종 통합 플랜 v3
+# 라운드 F: Crash 버튼 통일 + Dice 정통 Stake 화 + 화면 이동 시 상태 유지
 
-이전 8개 항목 + **Crash 일관성 보강**:
+## 0. 긴급 — Dice3D 즉시 대체 (승인 후 1순위)
 
-- Crash도 다른 게임과 동일하게 **접이식 룰 카드** 적용
-- Crash도 동일한 **베팅 요약 패널** 적용 (다른 게임과 통일된 위치/디자인)
-- 활성 베팅 중에는 패널이 **실시간 모드**로 전환: 현재 배수 × 베팅액 = 예상 수익이 매 프레임 카운트업
+plan 모드 진입 전 `src/shared/games/dice/Dice3D.tsx`가 이미 삭제됨. 빌드 모드 전환 즉시:
+- 신규 `DiceResultDisplay.tsx` 생성 (아래 §2)
+- `DiceScreen.tsx`에서 `Dice3D` 임포트 → `DiceResultDisplay`로 교체
 
----
+## 1. Crash — 캐쉬아웃 버튼 1개로 통일
 
-## 1~6. (이전 플랜과 동일)
-1. 홈 글로벌 데모/리얼 토글
-2. 글로벌 라이브 베팅 피드 (봇+실유저)
-3. 잠재 수익 카운트업 (베팅 요약 패널로 통합 — 7번 참조)
-4. 하우스 엣지 (데모 100% / 리얼 97%)
-5. Dice 3D 큐브 + 카운트다운 + 롤 애니메이션
-6. 전 게임 한글 100% (전략명 포함)
+라이브 라운드 중 노란 버튼이 상단 BetSummaryPanel + 하단 StakeBetPanel에 동시에 보임.
 
----
+- `StakeBetPanel.tsx`에 신규 prop `suppressCashoutButton?: boolean`
+  - true 시 `hasActiveBet`이어도 노란 캐쉬아웃 렌더하지 않고, 비활성 회색 "라운드 진행 중 — 위에서 캐쉬아웃" 표시
+- `CrashScreen.tsx`: `<StakeBetPanel suppressCashoutButton />` 전달
+- 캐쉬아웃은 `BetSummaryPanel`의 내장 버튼이 유일한 진입점
 
-## 7. 베팅 요약 패널 — **전 게임 통일 (Crash 포함)**
+## 2. Dice — 3D 큐브 완전 제거, Stake/Roobet 정통 결과 패널
 
-**`BetSummaryPanel.tsx`** — 모든 게임 공통, 결과 디스플레이와 베팅 패널 사이 고정
+큰 숫자(0~99.99)와 1~6면 큐브가 의미상 불일치 → 큐브 완전 제거.
 
-### 7.1 비활성 상태 (베팅 입력 중) — Dice/Slots/Crash 동일
-```
-┌─────────────────────────────────────────┐
-│ 💰 베팅액      목표 배수    예상 수익    │
-│   10.00 USDT    2.00x       +9.70 USDT  │
-│ ▓▓▓▓░░░░░░░ 1.94x 배당 (리얼 97% RTP)  │
-│ 최대 손실 -10.00 USDT                    │
-└─────────────────────────────────────────┘
-```
-- Crash: "목표 배수" = 자동 캐쉬아웃 타겟
-- Dice: "목표 배수" = `payoutMultiplier(target, mode)`
-- Slots: 평균 RTP × 베팅액
+- 신규 `src/shared/games/dice/DiceResultDisplay.tsx`
+  - 좌측: 큰 결과 숫자(64px), rolling 시 셔플
+  - 우측: 배수 / 목표(OVER·UNDER) / 승률 3행
+  - 승/패 시 숫자 컬러 펄스, loss 시 패널 흔들림
+  - 높이 140px 고정 (기존 큐브 컨테이너보다 컴팩트)
+- `Dice3D.tsx` 삭제 (이미 완료)
 
-### 7.2 활성 상태 (Crash 전용 라이브 모드)
-라운드 진행 중 베팅이 살아있을 때 패널이 자동으로 **라이브 카운터**로 전환:
-```
-┌─────────────────────────────────────────┐
-│ 🟢 LIVE  내 베팅 10.00 USDT             │
-│                                          │
-│   현재 배수      2.34x   ← rAF 매프레임 │
-│   예상 수익   +13.40 USDT ← 카운트업    │
-│   ▓▓▓▓▓▓▓▓▓░░ 목표 2.00x ✓ 도달!       │
-│                                          │
-│   [캐쉬아웃 @ 2.34x]  ← 빠른 액션 버튼  │
-└─────────────────────────────────────────┘
-```
-- **현재 배수**: CrashEngine tick에서 받아오는 값 (리얼이면 × 0.97 표시)
-- **예상 수익**: `amount * (currentMul * rtp - 1)` 매 프레임 갱신
-- **목표 도달 표시**: 자동 캐쉬아웃 타겟 넘어가면 ✓ 에메랄드, 그 전엔 진행률 바
-- **즉시 캐쉬아웃 버튼**: 베팅 패널까지 안 내려가도 여기서 바로 실행 (사용성 ↑)
-- **Bust 시**: 0.3s 동안 로즈 플래시 → "터짐 @ X.XXx · -10.00 USDT" 표시
+## 3. Dice — 타이머 완전 제거 (즉시 굴림)
 
-### 7.3 위치
-- Crash: 캔버스 ↔ 베팅 패널 사이 (기존 캔버스 우상단 HUD 제거, 패널로 통합)
-- Dice: 큐브 결과 ↔ 슬라이더 사이
-- 모든 게임 동일 컴포넌트, props로 mode 전환 (`mode: "static" | "live"`)
+- `DiceScreen.tsx`
+  - `BETTING_MS`, `bettingMsLeft`, 베팅 카운트다운 useEffect 전부 삭제
+  - phase 타입: `"idle" | "rolling" | "settled"` (betting 제거)
+  - 베팅 클릭 → 즉시 `setPhase("rolling")` → 결과 → `SETTLED_MS=800ms` → `idle` 복귀(=상시 베팅 가능)
+  - `StakeBetPanel` props: `canPlace={phase==="idle" && !activeBet}`, `bettingProgress={undefined}`
+- `gameRules.ts` DICE_RULES "기본 규칙"에 "즉시 굴려집니다(대기 타이머 없음)" 추가
 
----
+## 4. Dice — 스크롤 없이 한 화면에 베팅 버튼 노출 (390×844)
 
-## 8. 접이식 게임 룰 카드 — **전 게임 (Crash 포함)**
+- `StakeBetPanel.tsx`에 신규 prop:
+  - `variant?: "full" | "compact"` — compact 시 자동탭/자동HUD 숨김, 자동캐쉬아웃 필드 숨김
+  - `showAutoTarget?: boolean` (기본 true) — Dice는 false
+- Dice 화면 수직 순서 재배치:
+  1. 헤더 56px
+  2. 룰 카드(접힘) 48px
+  3. 히스토리 스트립 32px
+  4. `DiceResultDisplay` 140px
+  5. `DiceSlider` (글래스 박스, 패딩 축소) 130px
+  6. `BetSummaryPanel`(static, 컴팩트) 80px
+  7. `StakeBetPanel variant="compact"` (수동 + 베팅버튼) 130px
+  - 총 ≈ 616px < 844px → 베팅 버튼 첫 뷰포트 노출
+- 라이브 피드는 스크롤 시 노출
 
-**`GameRulesCard.tsx`** — 헤더 바로 아래, 기본 접힘
+## 5. 화면 이동해도 결과·잔액·히스토리 유지 (Stake/Roobet 식)
 
-### Crash 룰 (`src/shared/games/rules/crashRules.ts`)
-```
-▸ 기본 규칙
-  배수가 1.00x부터 위로 상승합니다. 언제든
-  캐쉬아웃 가능하지만, 터지면(BUST) 전액
-  손실입니다.
+- 신규 `src/shared/games/state/persistedGameState.ts`
+  - 의존성 0 (zustand 안 씀). `useSyncExternalStore` + localStorage + 50ms 디바운스 flush
+  - 스토어 2개:
+    - `diceStore`: `{ balance, nonce, history, lastRoll, lastOutcome, target, diceMode, pendingAmount }`
+    - `crashStore`: `{ balance, nonce, history, lastOutcome, pendingAmount, pendingTarget }`
+  - 키: `phonara.gamestate.dice.v1` / `phonara.gamestate.crash.v1`
+- `DiceScreen.tsx` / `CrashScreen.tsx`
+  - 위 7~8개 state를 `useState` → `store.use(s => s.X)` + `store.set(...)`로 전환
+  - phase, activeBet, bettingMsLeft 등 일시적 라운드 진행 상태는 그대로 useState (메모리만)
+  - 결과 표시·잔액·히스토리는 모두 store에서 읽음 → 화면 나갔다 돌아와도 마지막 결과/잔액/히스토리/슬라이더 위치 그대로
+- Crash 화면 unmount 시 활성 베팅(아직 캐쉬아웃 안 됨)은 자동으로 베팅액 환불 처리(`return () => { if (bet && bet.cashedAt==null) crashStore.set(s=>({...s,balance:s.balance+bet.amount})) }`) — 잔액 손실 방지
 
-▸ 승리 조건
-  터지기 전에 캐쉬아웃하면 (현재 배수 ×
-  베팅액) 만큼 받습니다.
+## 변경 파일
 
-▸ 자동 캐쉬아웃
-  목표 배수를 미리 설정하면, 그 배수에
-  도달하는 순간 자동으로 정산됩니다.
-
-▸ 배당 계산
-  순수익 = 베팅액 × (캐쉬아웃 배수 × RTP − 1)
-  예: 2.00x에서 캐쉬아웃 → 리얼 모드 +0.94배
-
-▸ 데모 vs 리얼
-  • 데모: 100% RTP, 가상 잔액
-  • 리얼: 97% RTP, 실제 잔액
-
-▸ 공정성
-  서버 시드 + 클라이언트 시드 + 라운드 번호
-  → HMAC-SHA256으로 bust point 결정
-  [검증하기 →]
-```
-
-### Dice 룰 (이전 플랜과 동일, 5섹션 표준 구조)
-### Slots/Mines 룰 (향후 게임 추가 시 동일 템플릿)
-
----
-
-## 파일 변경 (Crash 통일 반영)
-
-**신규** (이전과 동일, `crashRules.ts` 포함)
-
-**수정 — Crash 부분 강화**
-- `src/features/games/crash/CrashScreen.tsx`:
-  - 헤더 ↓ `GameRulesCard` 삽입
-  - 캔버스 우상단 기존 HUD 제거
-  - 캔버스 ↓ `BetSummaryPanel` 삽입 (`mode={hasActiveBet ? "live" : "static"}`)
-  - 캐쉬아웃 버튼 패널 내장 + 기존 베팅 패널에도 유지 (이중 진입점)
-- `src/shared/games/crash/CrashCanvas.tsx`: tick 콜백으로 현재 배수 외부 노출 (`onMultiplierChange`)
-
----
+**생성 (2):** `state/persistedGameState.ts`, `dice/DiceResultDisplay.tsx`
+**수정 (4):** `CrashScreen.tsx`, `DiceScreen.tsx`, `StakeBetPanel.tsx`, `gameRules.ts`
+**삭제 (1):** `dice/Dice3D.tsx` (이미 삭제됨)
 
 ## 검증
 
-- 390×844 Crash 화면 한 뷰에: [헤더 / 룰토글 / 캔버스 / 베팅요약(라이브) / 베팅패널] 전부 보임, 스크롤 없이
-- 베팅 → 활성화 시 패널 0.2s 안에 LIVE 모드 전환
-- 매 프레임 현재 배수·예상 수익 동기, 60fps 유지
-- 리얼 모드 토글 시 모든 게임 예상 수익 × 0.97 즉시 반영
-- vitest GREEN (BetSummaryPanel 정적/라이브 계산 테스트 추가)
-- 영문 라벨 0개 (해시값 제외)
-
----
-
-## 옵션
-
-- **A. 전체 통합 한 번에 (8개 항목 모두)** — 추천
-- **B. 라운드1: 모드+엣지+한글화+룰카드+베팅요약(전 게임) / 라운드2: 라이브피드+Dice3D+Crash 라이브 패널**
+- 390×844 Dice 진입: 스크롤 0, 베팅 버튼 즉시 보임
+- Dice 베팅 클릭: 즉시 굴림(타이머 X), 결과 숫자가 슬라이더 마커와 같은 값
+- Crash 라운드 중 캐쉬아웃 버튼은 상단 1개만 활성
+- Dice/Crash 화면 → 홈/다른 게임 → 다시 진입: 잔액·히스토리·마지막 결과·슬라이더 위치 100% 보존
+- 브라우저 새로고침 후에도 동일 (localStorage)
+- 기존 vitest 38/38 GREEN 유지
