@@ -65,7 +65,7 @@ docs/lovable/   Lovable SSOT
 
 ## 백로그 (나중에 할 일)
 
-`docs/backlog/` — 지금 당장 하지 않는 작업을 잊지 않기 위한 리스트. 마스터: `docs/backlog/LATER.md`
+`docs/backlog/` — 지금 당장 하지 않는 작업 + Lovable 승인 플랜. 마스터: `LATER.md` · 라운드: `rounds/P2-limbo-wheel.md`
 
 ## 레거시 문서
 

@@ -6,14 +6,15 @@
 
 1. 새 항목 → `LATER.md` 해당 섹션에 한 줄 추가 (우선순위·담당·상태 표기)
 2. 착수 시 → `상태`를 `🔄 진행중`으로 바꾸고, 완료 시 `✅ 완료` + 날짜
-3. Lovable 라운드 전 → `LATER.md`의 **Lovable** 섹션만 프롬프트에 붙여도 됨
-4. Cursor 세션 전 → **Cursor** / **Supabase** 섹션 확인
+3. Lovable 라운드 전 → `rounds/` 승인 플랜 + [`PROMPT_HEADER.md`](../lovable/PROMPT_HEADER.md) 복붙
+4. Cursor 세션 전 → **Cursor** / **Supabase** 섹션 + `LATER.md` 확인
 
 ## 파일
 
 | 파일 | 내용 |
 |------|------|
 | [`LATER.md`](./LATER.md) | 마스터 백로그 (우선순위·담당·체크리스트) |
+| [`rounds/`](./rounds/) | Lovable 라운드별 **승인된 플랜** + 복붙용 지시문 |
 
 ## SSOT 관계
 
