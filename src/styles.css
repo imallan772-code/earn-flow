@@ -17,7 +17,8 @@
   --radius-xl: 20px;
   --radius-2xl: 28px;
 
-  --font-display: "Pretendard", "Pretendard Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display:
+    "Pretendard", "Pretendard Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-numeric: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-sans: var(--font-display);
   --font-mono: var(--font-numeric);
@@ -26,18 +27,18 @@
   --color-bg-1: oklch(0.18 0.05 282);
   --color-bg-2: oklch(0.22 0.06 285);
   --color-surface: oklch(0.24 0.05 282);
-  --color-surface-hi: oklch(0.30 0.06 285);
+  --color-surface-hi: oklch(0.3 0.06 285);
   --color-foreground: oklch(0.98 0.01 280);
   --color-muted: oklch(0.68 0.03 282);
-  --color-muted-2: oklch(0.50 0.04 282);
+  --color-muted-2: oklch(0.5 0.04 282);
   --color-border: oklch(1 0 0 / 0.08);
   --color-border-hi: oklch(1 0 0 / 0.16);
 
   --color-cyan: oklch(0.85 0.18 200);
-  --color-purple: oklch(0.70 0.24 300);
+  --color-purple: oklch(0.7 0.24 300);
   --color-pink: oklch(0.74 0.24 350);
   --color-gold: oklch(0.86 0.18 90);
-  --color-emerald: oklch(0.80 0.18 155);
+  --color-emerald: oklch(0.8 0.18 155);
   --color-rose: oklch(0.68 0.22 25);
 
   --color-success: oklch(0.78 0.17 155);
@@ -81,7 +82,8 @@
     border-color: var(--color-border);
   }
 
-  html, body {
+  html,
+  body {
     background-color: var(--color-bg-0);
     color: var(--color-foreground);
     font-family: var(--font-display);
@@ -89,7 +91,8 @@
     text-rendering: optimizeLegibility;
   }
 
-  .font-numeric, .tabular {
+  .font-numeric,
+  .tabular {
     font-family: var(--font-numeric);
     font-variant-numeric: tabular-nums;
   }
@@ -126,14 +129,31 @@
   }
   .bg-cosmic {
     background:
-      radial-gradient(ellipse 80% 50% at 20% 0%, color-mix(in oklab, var(--color-purple) 22%, transparent), transparent 60%),
-      radial-gradient(ellipse 70% 50% at 90% 10%, color-mix(in oklab, var(--color-cyan) 18%, transparent), transparent 60%),
-      radial-gradient(ellipse 60% 60% at 50% 100%, color-mix(in oklab, var(--color-pink) 18%, transparent), transparent 60%),
+      radial-gradient(
+        ellipse 80% 50% at 20% 0%,
+        color-mix(in oklab, var(--color-purple) 22%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        ellipse 70% 50% at 90% 10%,
+        color-mix(in oklab, var(--color-cyan) 18%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        ellipse 60% 60% at 50% 100%,
+        color-mix(in oklab, var(--color-pink) 18%, transparent),
+        transparent 60%
+      ),
       var(--color-bg-0);
   }
 
   .text-holographic {
-    background: linear-gradient(135deg, var(--color-cyan), var(--color-purple) 50%, var(--color-pink));
+    background: linear-gradient(
+      135deg,
+      var(--color-cyan),
+      var(--color-purple) 50%,
+      var(--color-pink)
+    );
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -155,10 +175,18 @@
       0 22px 60px -20px oklch(0 0 0 / 0.8);
   }
 
-  .shadow-glow-cyan { box-shadow: 0 0 28px color-mix(in oklab, var(--color-cyan) 55%, transparent); }
-  .shadow-glow-purple { box-shadow: 0 0 28px color-mix(in oklab, var(--color-purple) 55%, transparent); }
-  .shadow-glow-pink { box-shadow: 0 0 28px color-mix(in oklab, var(--color-pink) 55%, transparent); }
-  .shadow-glow-gold { box-shadow: 0 0 28px color-mix(in oklab, var(--color-gold) 55%, transparent); }
+  .shadow-glow-cyan {
+    box-shadow: 0 0 28px color-mix(in oklab, var(--color-cyan) 55%, transparent);
+  }
+  .shadow-glow-purple {
+    box-shadow: 0 0 28px color-mix(in oklab, var(--color-purple) 55%, transparent);
+  }
+  .shadow-glow-pink {
+    box-shadow: 0 0 28px color-mix(in oklab, var(--color-pink) 55%, transparent);
+  }
+  .shadow-glow-gold {
+    box-shadow: 0 0 28px color-mix(in oklab, var(--color-gold) 55%, transparent);
+  }
 
   .ring-aurora-live {
     box-shadow:
@@ -166,18 +194,33 @@
       0 0 24px color-mix(in oklab, var(--color-purple) 45%, transparent);
   }
 
-  .safe-top { padding-top: max(env(safe-area-inset-top), 0px); }
-  .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+  .safe-top {
+    padding-top: max(env(safe-area-inset-top), 0px);
+  }
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  }
 
   @keyframes phon-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.55; }
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.55;
+    }
   }
-  .animate-phon-pulse { animation: phon-pulse 1.6s ease-in-out infinite; }
+  .animate-phon-pulse {
+    animation: phon-pulse 1.6s ease-in-out infinite;
+  }
 
   @keyframes phon-marquee {
-    0% { transform: translate3d(0,0,0); }
-    100% { transform: translate3d(-50%,0,0); }
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+    100% {
+      transform: translate3d(-50%, 0, 0);
+    }
   }
   .animate-marquee,
   .animate-marquee-rev {
@@ -185,56 +228,124 @@
     backface-visibility: hidden;
     contain: layout paint style;
   }
-  .animate-marquee { animation: phon-marquee 32s linear infinite; }
-  .animate-marquee-rev { animation: phon-marquee 38s linear infinite reverse; }
+  .animate-marquee {
+    animation: phon-marquee 32s linear infinite;
+  }
+  .animate-marquee-rev {
+    animation: phon-marquee 38s linear infinite reverse;
+  }
 
   @keyframes crash-shake {
-    0%, 100% { transform: translate3d(0, 0, 0); }
-    20% { transform: translate3d(-6px, 2px, 0); }
-    40% { transform: translate3d(5px, -2px, 0); }
-    60% { transform: translate3d(-4px, 1px, 0); }
-    80% { transform: translate3d(3px, -1px, 0); }
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+    20% {
+      transform: translate3d(-6px, 2px, 0);
+    }
+    40% {
+      transform: translate3d(5px, -2px, 0);
+    }
+    60% {
+      transform: translate3d(-4px, 1px, 0);
+    }
+    80% {
+      transform: translate3d(3px, -1px, 0);
+    }
   }
-  .animate-crash-shake { animation: crash-shake 0.45s cubic-bezier(.36,.07,.19,.97) both; }
+  .animate-crash-shake {
+    animation: crash-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
 
   @keyframes crash-flash {
-    0% { opacity: 0; }
-    20% { opacity: 0.55; }
-    100% { opacity: 0; }
+    0% {
+      opacity: 0;
+    }
+    20% {
+      opacity: 0.55;
+    }
+    100% {
+      opacity: 0;
+    }
   }
-  .animate-crash-flash { animation: crash-flash 0.7s ease-out forwards; }
+  .animate-crash-flash {
+    animation: crash-flash 0.7s ease-out forwards;
+  }
 
   @keyframes result-pop {
-    0% { transform: scale(0.6); opacity: 0; }
-    60% { transform: scale(1.08); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
+    0% {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+    60% {
+      transform: scale(1.08);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
   }
-  .animate-result-pop { animation: result-pop 0.38s cubic-bezier(.34,1.56,.64,1) both; }
+  .animate-result-pop {
+    animation: result-pop 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
 
   @keyframes float-up {
-    0% { transform: translate3d(0, 8px, 0); opacity: 0; }
-    20% { opacity: 1; }
-    100% { transform: translate3d(0, -32px, 0); opacity: 0; }
+    0% {
+      transform: translate3d(0, 8px, 0);
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate3d(0, -32px, 0);
+      opacity: 0;
+    }
   }
-  .animate-float-up { animation: float-up 1.2s ease-out forwards; }
+  .animate-float-up {
+    animation: float-up 1.2s ease-out forwards;
+  }
 
   @keyframes dice-roll {
-    0%   { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1); }
-    25%  { transform: rotateX(360deg) rotateY(180deg) rotateZ(90deg) scale(1.08); filter: blur(1px); }
-    50%  { transform: rotateX(720deg) rotateY(540deg) rotateZ(180deg) scale(1.12); filter: blur(1.5px); }
-    75%  { transform: rotateX(1080deg) rotateY(720deg) rotateZ(270deg) scale(1.06); filter: blur(0.8px); }
-    100% { transform: rotateX(1440deg) rotateY(900deg) rotateZ(360deg) scale(1); }
+    0% {
+      transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1);
+    }
+    25% {
+      transform: rotateX(360deg) rotateY(180deg) rotateZ(90deg) scale(1.08);
+      filter: blur(1px);
+    }
+    50% {
+      transform: rotateX(720deg) rotateY(540deg) rotateZ(180deg) scale(1.12);
+      filter: blur(1.5px);
+    }
+    75% {
+      transform: rotateX(1080deg) rotateY(720deg) rotateZ(270deg) scale(1.06);
+      filter: blur(0.8px);
+    }
+    100% {
+      transform: rotateX(1440deg) rotateY(900deg) rotateZ(360deg) scale(1);
+    }
   }
 
   @keyframes dice-spin-slow {
-    from { transform: rotateX(0deg) rotateY(0deg); }
-    to   { transform: rotateX(360deg) rotateY(360deg); }
+    from {
+      transform: rotateX(0deg) rotateY(0deg);
+    }
+    to {
+      transform: rotateX(360deg) rotateY(360deg);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .animate-marquee, .animate-marquee-rev, .animate-phon-pulse,
-    .animate-crash-shake, .animate-crash-flash, .animate-result-pop,
-    .animate-float-up { animation: none; }
+    .animate-marquee,
+    .animate-marquee-rev,
+    .animate-phon-pulse,
+    .animate-crash-shake,
+    .animate-crash-flash,
+    .animate-result-pop,
+    .animate-float-up {
+      animation: none;
+    }
   }
 }
-

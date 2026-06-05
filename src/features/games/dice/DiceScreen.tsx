@@ -101,7 +101,7 @@ export function DiceScreen() {
     return () => {
       alive = false;
     };
-  }, [phase, activeBet, mode]);
+  }, [phase, activeBet, mode, credit]);
 
   // Settled → idle (ready for next bet)
   useEffect(() => {
@@ -133,7 +133,7 @@ export function DiceScreen() {
       appToast.game.bet({ amount: formatPHON(amount) });
       setPhase("rolling");
     },
-    [phase, activeBet, target, diceMode, mode, nonce],
+    [phase, activeBet, target, diceMode, mode, nonce, tryDebit],
   );
 
   const setTarget = useCallback((t: number) => diceStore.set((s) => ({ ...s, target: t })), []);

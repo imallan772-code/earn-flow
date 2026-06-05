@@ -10,11 +10,11 @@ Connected project: **phonara-gb** (`https://kanftnqenuzverroodev.supabase.co`)
 
 ## Modules
 
-| File | Role |
-|------|------|
+| File        | Role                                                   |
+| ----------- | ------------------------------------------------------ |
 | `client.ts` | Browser Supabase client (auth session in localStorage) |
-| `env.ts` | Public env validation |
-| `types.ts` | Generated DB types |
+| `env.ts`    | Public env validation                                  |
+| `types.ts`  | Generated DB types                                     |
 
 ## App wiring
 

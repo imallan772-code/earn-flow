@@ -1,7 +1,7 @@
 import { useParams } from "@tanstack/react-router";
-import { TrendingUp } from "lucide-react";
 import { PremiumPageHeader } from "@/shared/ui/PremiumPageHeader";
 import { Premium3DCard } from "@/shared/ui/Premium3DCard";
+import { ExchangeChart } from "./ExchangeChart";
 
 export function ExchangePlaceholder() {
   const { symbol } = useParams({ from: "/_app/exchange/$symbol" });
@@ -10,16 +10,10 @@ export function ExchangePlaceholder() {
       <PremiumPageHeader
         eyebrow="📈 TRADE"
         title={symbol}
-        description="거래소 화면 — 본편 Cursor에서 lightweight-charts로 합체"
+        description="lightweight-charts · 데모 캔들 데이터"
       />
-      <Premium3DCard className="flex h-64 items-center justify-center p-6">
-        <div className="text-center">
-          <TrendingUp size={32} className="mx-auto mb-2" style={{ color: "var(--color-cyan)" }} />
-          <div className="text-sm font-semibold">차트 placeholder</div>
-          <div className="mt-1 text-xs text-[var(--color-muted)]">
-            PR-4에서 트레이딩 터미널 활성화 예정
-          </div>
-        </div>
+      <Premium3DCard className="overflow-hidden p-2">
+        <ExchangeChart symbol={symbol} className="h-64 w-full" />
       </Premium3DCard>
       <div className="grid grid-cols-2 gap-2">
         <button

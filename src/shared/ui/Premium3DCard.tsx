@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +18,7 @@ const glowClass = {
 };
 
 export function Premium3DCard({ children, className, glow, onClick, interactive }: Props) {
-  const Cmp = interactive ? motion.button : motion.div;
+  const Cmp = interactive ? m.button : m.div;
   return (
     <Cmp
       onClick={onClick}

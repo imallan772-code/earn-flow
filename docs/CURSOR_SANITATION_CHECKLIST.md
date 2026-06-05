@@ -20,15 +20,15 @@ rg "liveBets:\s*\d+" src/features
 
 ## 3. PASS/FAIL
 
-| # | 검사 | FAIL 조치 |
-|---|------|-----------|
-| 1 | mock/useEffect에서 wallet 호출 | 제거, useGameWallet |
-| 2 | MOCK_BALANCE money fallback | loading/unauth |
-| 3 | Screen 200줄+ Plinko 패턴 | 셸 분리 |
-| 4 | 인라인 mock | src/mocks/ 이동 |
-| 5 | gameRegistry 미등록 | registry 등록 |
-| 6 | Lovable이 supabase/ 수정 | 재검증 |
-| 7 | bun run check RED | Cursor 수정 |
+| #   | 검사                           | FAIL 조치           |
+| --- | ------------------------------ | ------------------- |
+| 1   | mock/useEffect에서 wallet 호출 | 제거, useGameWallet |
+| 2   | MOCK_BALANCE money fallback    | loading/unauth      |
+| 3   | Screen 200줄+ Plinko 패턴      | 셸 분리             |
+| 4   | 인라인 mock                    | src/mocks/ 이동     |
+| 5   | gameRegistry 미등록            | registry 등록       |
+| 6   | Lovable이 supabase/ 수정       | 재검증              |
+| 7   | bun run check RED              | Cursor 수정         |
 
 ## 4. 수동 회귀 (해당 라운드만)
 

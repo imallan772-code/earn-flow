@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Zap, Gamepad2, TrendingUp, User, Bell, type LucideIcon } from "lucide-react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { springSnappy } from "../motion/springs";
 import { t, type MessageKey } from "@/shared/i18n";
@@ -47,20 +47,20 @@ export function BottomNav() {
               )}
             >
               {active && (
-                <motion.span
+                <m.span
                   layoutId="botnav-pill"
                   className="absolute inset-0 rounded-2xl ring-aurora-live"
                   style={{ background: "color-mix(in oklab, var(--color-cyan) 12%, transparent)" }}
                   transition={springSnappy}
                 />
               )}
-              <motion.span
+              <m.span
                 animate={{ scale: active ? 1.12 : 1 }}
                 transition={springSnappy}
                 className="relative z-10"
               >
                 <it.Icon size={22} strokeWidth={active ? 2.4 : 2} />
-              </motion.span>
+              </m.span>
               <span className="relative z-10 font-medium">{t(it.labelKey)}</span>
             </Link>
           );

@@ -18,7 +18,7 @@ import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
 import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { profitOf, payoutOf } from "@/shared/games/engine/houseEdge";
-import { plinkoStore } from "@/shared/games/state/persistedGameState";
+import { plinkoStore, type PlinkoOutcome } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { cn } from "@/lib/utils";
@@ -44,7 +44,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
   const pendingAmount = plinkoStore.use((s) => s.pendingAmount);
   const lastOutcome = plinkoStore.use((s) => s.lastOutcome);
   const [muted, setMuted] = useState(false);
-  const [jackpot, setJackpot] = useState<LastOutcome | null>(null);
+  const [jackpot, setJackpot] = useState<PlinkoOutcome | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);

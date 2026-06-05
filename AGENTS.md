@@ -8,16 +8,16 @@ Lovable 생성 → GitHub export/push → Cursor pull → 최적화·감사·수
 
 ## Tech Stack (고정)
 
-| 항목 | 값 |
-|------|-----|
-| Framework | TanStack Start **v1** + TanStack Router |
-| UI | React **19**, TypeScript **strict** |
-| Style | Tailwind **v4** — `src/styles.css` `@theme` (CSS-first) |
-| Motion | Framer Motion — `LazyMotion` + `domAnimation` |
-| Backend | Supabase — RLS, RPC (SECURITY DEFINER), Realtime, Edge Functions |
-| Charts | `@tradingview/lightweight-charts` + Canvas2D + Web Workers |
-| PWA | Vite PWA plugin (Cursor only) |
-| Monorepo | **pnpm** target: `apps/web` + `apps/admin` (현재 루트 단일 패키지 + bun) |
+| 항목      | 값                                                                       |
+| --------- | ------------------------------------------------------------------------ |
+| Framework | TanStack Start **v1** + TanStack Router                                  |
+| UI        | React **19**, TypeScript **strict**                                      |
+| Style     | Tailwind **v4** — `src/styles.css` `@theme` (CSS-first)                  |
+| Motion    | Framer Motion — `LazyMotion` + `domAnimation`                            |
+| Backend   | Supabase — RLS, RPC (SECURITY DEFINER), Realtime, Edge Functions         |
+| Charts    | `@tradingview/lightweight-charts` + Canvas2D + Web Workers               |
+| PWA       | Vite PWA plugin (Cursor only)                                            |
+| Monorepo  | **pnpm** target: `apps/web` + `apps/admin` (현재 루트 단일 패키지 + bun) |
 
 Full detail: `docs/TECH_STACK.md`
 

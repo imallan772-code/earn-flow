@@ -2,11 +2,11 @@
 
 ## 프로젝트 Lock
 
-| 항목 | 값 |
-|------|-----|
-| 이름 | phonara-gb |
-| Reference ID | kanftnqenuzverroodev |
-| URL | https://kanftnqenuzverroodev.supabase.co |
+| 항목         | 값                                       |
+| ------------ | ---------------------------------------- |
+| 이름         | phonara-gb                               |
+| Reference ID | kanftnqenuzverroodev                     |
+| URL          | https://kanftnqenuzverroodev.supabase.co |
 
 **배제:** phonara-world-main, phonetok — 절대 참조 금지
 

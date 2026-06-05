@@ -165,9 +165,11 @@ export function getGameById(id: GameId): GameRegistryEntry | undefined {
   return GAME_REGISTRY.find((g) => g.id === id);
 }
 
-/** Public route path for TanStack Router Link `to` prop. */
-export function gamePath(id: GameId): `/games/${GameId}` | null {
+export type OpenGamePath = "/games/crash" | "/games/dice" | "/games/plinko" | "/games/mines";
+
+/** Public route path for TanStack Router Link `to` prop (open games only). */
+export function gamePath(id: GameId): OpenGamePath | null {
   const entry = getGameById(id);
   if (!entry?.open || !entry.route) return null;
-  return `/games/${id}`;
+  return `/games/${id}` as OpenGamePath;
 }

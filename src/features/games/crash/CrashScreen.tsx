@@ -181,7 +181,7 @@ export function CrashScreen() {
       }, COOLDOWN_MS - 1200);
     }, 1200);
     return () => window.clearTimeout(t);
-  }, [phase, bet, crashPoint, nonce, mode]);
+  }, [phase, bet, crashPoint, nonce, mode, credit]);
 
   const handlePlace = useCallback(
     (amount: number, autoTarget: number) => {
@@ -205,7 +205,7 @@ export function CrashScreen() {
       setBet({ amount, autoTarget, cashedAt: null, liveBetId });
       appToast.game.bet({ amount: formatPHON(amount) });
     },
-    [phase, bet, mode],
+    [phase, bet, mode, tryDebit],
   );
 
   const handleCashout = useCallback(() => {

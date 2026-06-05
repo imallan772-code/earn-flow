@@ -13,26 +13,26 @@
 
 ## Lovable 담당 (OK)
 
-| 영역 | 경로 | 내용 |
-|------|------|------|
-| UI 화면 | `src/features/**` | Screen, Hub, Form 레이아웃 |
-| 게임 Engine | `src/shared/games/*/Engine.ts` | 순수함수 + vitest |
-| 게임 Screen | `src/features/games/**` | GameShell + 패널 조합 |
-| 라우트 | `src/routes/_app/games.*.tsx` | thin route |
-| UI 공유 | `src/shared/games/ui/` | StakeBetPanel 등 재사용 |
-| FOMO mock | `src/mocks/` | 표시용 정적 데이터만 |
-| 스타일/모션 | `src/shared/motion/`, `className` | Framer Motion |
+| 영역        | 경로                              | 내용                       |
+| ----------- | --------------------------------- | -------------------------- |
+| UI 화면     | `src/features/**`                 | Screen, Hub, Form 레이아웃 |
+| 게임 Engine | `src/shared/games/*/Engine.ts`    | 순수함수 + vitest          |
+| 게임 Screen | `src/features/games/**`           | GameShell + 패널 조합      |
+| 라우트      | `src/routes/_app/games.*.tsx`     | thin route                 |
+| UI 공유     | `src/shared/games/ui/`            | StakeBetPanel 등 재사용    |
+| FOMO mock   | `src/mocks/`                      | 표시용 정적 데이터만       |
+| 스타일/모션 | `src/shared/motion/`, `className` | Framer Motion              |
 
 ## Lovable 금지 (Cursor 전담)
 
-| 영역 | 경로 | 이유 |
-|------|------|------|
-| Supabase migration | `supabase/migrations/` | RLS/RPC/trigger SSOT |
-| Supabase client/types | `src/integrations/supabase/` | phonara-gb 연결 |
-| API 래퍼 | `src/lib/api/` | RPC 단일 진입점 |
-| walletStore 스키마 | `src/shared/wallet/walletStore.ts` | 돈 SSOT |
-| Cursor 규칙 | `.cursor/`, `AGENTS.md` | Agent 인프라 |
-| vitest config | `vitest.config.ts`, `src/test/` | 테스트 인프라 |
+| 영역                  | 경로                               | 이유                 |
+| --------------------- | ---------------------------------- | -------------------- |
+| Supabase migration    | `supabase/migrations/`             | RLS/RPC/trigger SSOT |
+| Supabase client/types | `src/integrations/supabase/`       | phonara-gb 연결      |
+| API 래퍼              | `src/lib/api/`                     | RPC 단일 진입점      |
+| walletStore 스키마    | `src/shared/wallet/walletStore.ts` | 돈 SSOT              |
+| Cursor 규칙           | `.cursor/`, `AGENTS.md`            | Agent 인프라         |
+| vitest config         | `vitest.config.ts`, `src/test/`    | 테스트 인프라        |
 
 ## Money 규칙 (Lovable)
 
@@ -52,13 +52,13 @@
 
 ## 흔한 실수 → FAIL
 
-| 실수 | 올바른 방법 |
-|------|-------------|
-| Screen 300줄+ | Engine/훅 분리 |
-| 인라인 `const DATA = [...]` | `src/mocks/` |
-| PlinkoBoard 패턴 복제 | GameShell + Engine |
-| `.rpc()` 직접 호출 | TODO 주석, Cursor가 `src/lib/api/` |
-| Mines를 single-step | `isMultiStep: true` |
+| 실수                        | 올바른 방법                        |
+| --------------------------- | ---------------------------------- |
+| Screen 300줄+               | Engine/훅 분리                     |
+| 인라인 `const DATA = [...]` | `src/mocks/`                       |
+| PlinkoBoard 패턴 복제       | GameShell + Engine                 |
+| `.rpc()` 직접 호출          | TODO 주석, Cursor가 `src/lib/api/` |
+| Mines를 single-step         | `isMultiStep: true`                |
 
 ## 참고 문서
 

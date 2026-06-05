@@ -3,7 +3,7 @@
  *
  * Holographic active indicator using shared layoutId. Design tokens only.
  */
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { springSnappy } from "@/shared/motion/springs";
@@ -52,7 +52,7 @@ export function SegmentedTabs<T extends string>({
             )}
           >
             {active && (
-              <motion.span
+              <m.span
                 layoutId={layoutId}
                 className="absolute inset-0 rounded-xl bg-holographic shadow-glow-purple"
                 transition={springSnappy}

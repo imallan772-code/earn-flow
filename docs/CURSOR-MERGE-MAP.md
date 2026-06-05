@@ -6,6 +6,7 @@
 > **earn-flow** (`imallan772-code/earn-flow`)가 PHONARA 본편 SSOT이며, 모든 작업은 이 레포 안에서만 진행합니다.
 >
 > 대신 사용할 문서:
+>
 > - `docs/GOLDEN_LOOP.md`
 > - `docs/CURSOR_SANITATION_CHECKLIST.md`
 > - `docs/lovable/BOUNDARIES.md`
@@ -19,8 +20,8 @@
 
 ~~이식 규칙~~ — **무효**
 
-| 금지 항목 | 대체 |
-|-----------|------|
-| phonara-world-main 이식 | earn-flow 내 직접 개발 |
-| phonara-world-main Supabase | phonara-gb only |
-| 별도 "본편" reconnect | earn-flow `useAuth`, `useGameWallet`, `lib/api/` |
+| 금지 항목                   | 대체                                             |
+| --------------------------- | ------------------------------------------------ |
+| phonara-world-main 이식     | earn-flow 내 직접 개발                           |
+| phonara-world-main Supabase | phonara-gb only                                  |
+| 별도 "본편" reconnect       | earn-flow `useAuth`, `useGameWallet`, `lib/api/` |

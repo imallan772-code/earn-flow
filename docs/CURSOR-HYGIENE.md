@@ -5,19 +5,19 @@
 - node_modules/, bun.lock
 - dist/, .output/, .vinxi/, .tanstack/, .nitro/
 - src/routeTree.gen.ts
-- .env, .env.*
+- .env, .env.\*
 - .lovable/
 
 ## alwaysApply 규칙
 
-| 파일 | alwaysApply |
-|------|-------------|
-| `00-earn-flow-master.mdc` | true |
-| `golden-loop.mdc` | true |
-| `quality-gate.mdc` | true |
-| `money-safety.mdc` | true |
-| `supabase-auto.mdc` | true |
-| `lovable-handoff.mdc` | false (globs) |
+| 파일                      | alwaysApply   |
+| ------------------------- | ------------- |
+| `00-earn-flow-master.mdc` | true          |
+| `golden-loop.mdc`         | true          |
+| `quality-gate.mdc`        | true          |
+| `money-safety.mdc`        | true          |
+| `supabase-auto.mdc`       | true          |
+| `lovable-handoff.mdc`     | false (globs) |
 
 ## Lovable 연동
 

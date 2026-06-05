@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Flame } from "lucide-react";
 
 interface Props {
@@ -12,7 +12,7 @@ export function StreakFlame({ days, size = 56 }: Props) {
       className="relative inline-flex items-center justify-center"
       style={{ width: size, height: size }}
     >
-      <motion.div
+      <m.div
         className="absolute inset-0 rounded-full shadow-glow-pink"
         animate={{ scale: [1, 1.08, 1], opacity: [0.7, 1, 0.7] }}
         transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}

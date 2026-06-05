@@ -4,7 +4,11 @@
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
-import { GAME_REGISTRY, gamePath, type GameRegistryEntry } from "@/shared/games/registry/gameRegistry";
+import {
+  GAME_REGISTRY,
+  gamePath,
+  type GameRegistryEntry,
+} from "@/shared/games/registry/gameRegistry";
 
 export function GameLobby() {
   return (

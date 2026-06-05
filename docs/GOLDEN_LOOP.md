@@ -18,13 +18,13 @@
 
 ## 역할 분담
 
-| | Lovable | Cursor |
-|---|---------|--------|
-| UI / Engine / Screen | O | 감사만 |
-| mocks FOMO | O | money fallback 금지 검사 |
-| supabase/ migration | **X** | **O** |
-| walletStore 스키마 | **X** | **O** |
-| 수리 | **X** | **O** |
+|                      | Lovable | Cursor                   |
+| -------------------- | ------- | ------------------------ |
+| UI / Engine / Screen | O       | 감사만                   |
+| mocks FOMO           | O       | money fallback 금지 검사 |
+| supabase/ migration  | **X**   | **O**                    |
+| walletStore 스키마   | **X**   | **O**                    |
+| 수리                 | **X**   | **O**                    |
 
 ## Supabase SSOT
 

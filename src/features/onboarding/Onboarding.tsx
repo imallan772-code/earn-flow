@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { appToast } from "@/shared/ui/toast";
 import { Sparkles, Copy, Flame } from "lucide-react";
 import { AuthPageShell } from "@/shared/layout/AuthPageShell";
@@ -107,7 +107,7 @@ function OnboardingFlow() {
 
         <div className="relative mt-10 flex items-center justify-center">
           {step === 0 && (
-            <motion.button
+            <m.button
               onClick={advance}
               disabled={submitting}
               whileTap={{ scale: 0.95 }}
@@ -115,7 +115,7 @@ function OnboardingFlow() {
             >
               <RewardBurst trigger={burst} />
               <Sparkles size={64} className="text-[var(--color-bg-0)]" strokeWidth={2} />
-            </motion.button>
+            </m.button>
           )}
           {step === 1 && (
             <div className="w-full space-y-3">
@@ -155,7 +155,7 @@ function OnboardingFlow() {
             </div>
           )}
           {step === 3 && (
-            <motion.button
+            <m.button
               onClick={advance}
               disabled={submitting}
               whileTap={{ scale: 0.95 }}
@@ -167,7 +167,7 @@ function OnboardingFlow() {
             >
               <RewardBurst trigger={burst} />
               <Flame size={84} style={{ color: "var(--color-gold)" }} strokeWidth={2.2} />
-            </motion.button>
+            </m.button>
           )}
         </div>
       </div>

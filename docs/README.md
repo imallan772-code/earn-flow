@@ -4,10 +4,10 @@
 
 ## 절대 배제 (NEVER)
 
-| 프로젝트 | 이유 |
-|----------|------|
+| 프로젝트               | 이유                                         |
+| ---------------------- | -------------------------------------------- |
 | **phonara-world-main** | 구 레거시. 이식·참조·Supabase 연결 전부 금지 |
-| **phonetok** | 별도 프로젝트. 참조 금지 |
+| **phonetok**           | 별도 프로젝트. 참조 금지                     |
 
 유일한 Supabase: **phonara-gb** (`kanftnqenuzverroodev`) — `docs/SUPABASE-PROJECT-LOCK.md`
 
@@ -52,16 +52,16 @@ docs/lovable/   Lovable SSOT
 
 ## 핵심 라우트
 
-| 경로 | 화면 |
-|------|------|
-| `/` | Landing |
-| `/login`, `/signup` | Auth |
-| `/onboarding` | 온보딩 |
-| `/feed` | Pulse 피드 |
-| `/earn` | 미션 · 게임 로비 |
-| `/games/{crash,dice,plinko,mines}` | Provably Fair 게임 |
-| `/my` | 프로필 |
-| `/deposit`, `/withdrawal`, `/transfer` | 입출금 |
+| 경로                                   | 화면               |
+| -------------------------------------- | ------------------ |
+| `/`                                    | Landing            |
+| `/login`, `/signup`                    | Auth               |
+| `/onboarding`                          | 온보딩             |
+| `/feed`                                | Pulse 피드         |
+| `/earn`                                | 미션 · 게임 로비   |
+| `/games/{crash,dice,plinko,mines}`     | Provably Fair 게임 |
+| `/my`                                  | 프로필             |
+| `/deposit`, `/withdrawal`, `/transfer` | 입출금             |
 
 ## 레거시 문서
 

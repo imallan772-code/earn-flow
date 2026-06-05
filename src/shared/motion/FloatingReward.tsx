@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 
 interface Props {
   amount: number | null;
@@ -9,7 +9,7 @@ export function FloatingReward({ amount }: Props) {
   return (
     <AnimatePresence>
       {amount != null && (
-        <motion.div
+        <m.div
           key={amount + "-" + Math.random()}
           className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center"
           initial={{ opacity: 0, y: 24, scale: 0.9 }}
@@ -20,7 +20,7 @@ export function FloatingReward({ amount }: Props) {
           <div className="font-numeric text-5xl font-extrabold text-holographic drop-shadow-[0_0_24px_rgba(168,85,247,0.6)]">
             +{new Intl.NumberFormat("ko-KR").format(amount)} PHON
           </div>
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   );

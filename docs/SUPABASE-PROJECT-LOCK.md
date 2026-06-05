@@ -2,11 +2,11 @@
 
 earn-flow의 **유일한** Supabase 프로젝트.
 
-| 항목 | 값 |
-|------|-----|
-| Dashboard 이름 | phonara-gb |
-| Reference ID | kanftnqenuzverroodev |
-| API URL | https://kanftnqenuzverroodev.supabase.co |
+| 항목           | 값                                       |
+| -------------- | ---------------------------------------- |
+| Dashboard 이름 | phonara-gb                               |
+| Reference ID   | kanftnqenuzverroodev                     |
+| API URL        | https://kanftnqenuzverroodev.supabase.co |
 
 ## 절대 금지
 

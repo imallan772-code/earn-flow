@@ -30,7 +30,11 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 async function fetchProfile(userId: string): Promise<Profile | null> {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
   if (error) throw error;
   return data;
 }

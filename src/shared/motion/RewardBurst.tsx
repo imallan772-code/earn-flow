@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useMemo } from "react";
 
 interface Props {
@@ -25,7 +25,7 @@ export function RewardBurst({ trigger, count = 10 }: Props) {
   return (
     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
       {particles.map((p) => (
-        <motion.span
+        <m.span
           key={`${trigger}-${p.id}`}
           className="absolute h-2 w-2 rounded-full bg-holographic"
           initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}

@@ -4,7 +4,7 @@ import { Smartphone, Mail, KeyRound, ArrowLeft } from "lucide-react";
 import { AuthPageShell } from "@/shared/layout/AuthPageShell";
 import { appToast } from "@/shared/ui/toast";
 import { OnlineCounterChip } from "@/shared/layout/OnlineCounterChip";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/AuthContext";
 import { GuestOnly } from "@/features/auth/RequireAuth";
@@ -139,7 +139,7 @@ function AuthShellForm({ mode }: Props) {
             )}
           >
             {tab === t.id && (
-              <motion.span
+              <m.span
                 layoutId="auth-tab"
                 className="absolute inset-0 rounded-xl ring-aurora-live"
                 style={{ background: "color-mix(in oklab, var(--color-cyan) 14%, transparent)" }}
@@ -232,11 +232,7 @@ function AuthShellForm({ mode }: Props) {
         disabled={submitting}
         className="mt-5 flex h-14 w-full items-center justify-center rounded-2xl bg-holographic text-base font-extrabold text-[var(--color-bg-0)] shadow-glow-purple disabled:opacity-60"
       >
-        {submitting
-          ? "연결 중..."
-          : isSignup
-            ? "지금 시작하고 1,800 PHON 받기"
-            : "로그인"}
+        {submitting ? "연결 중..." : isSignup ? "지금 시작하고 1,800 PHON 받기" : "로그인"}
       </button>
 
       <Link

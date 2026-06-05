@@ -113,7 +113,7 @@ export function MinesScreen() {
       round.place();
       appToast.game.bet({ amount: formatPHON(amount) });
     },
-    [round, mode, mineCount, nonce],
+    [round, mode, mineCount, nonce, tryDebit],
   );
 
   const handleReveal = useCallback(
@@ -192,7 +192,7 @@ export function MinesScreen() {
     appToast.game.cashout({ mult: currentMult.toFixed(2), amount: formatPHON(profit) });
     settledRef.current = true;
     round.settle();
-  }, [round, active, revealed, hitTile, currentMult, mode]);
+  }, [round, active, revealed, hitTile, currentMult, mode, credit]);
 
   const tiles = useMemo(() => Array.from({ length: TOTAL_TILES }, (_, i) => i), []);
   const safeRevealable = TOTAL_TILES - mineCount;
