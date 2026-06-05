@@ -1,88 +1,62 @@
-# 데모 = 체험판, 리얼 전환 유도 구조
+## 1) 지난 작업 검증 보고 (코드 리뷰 결과)
 
-## 컨셉
+지난 턴들에서 만든 통합 지갑/데모 전환 퍼널/Plinko 강화 코드를 다시 훑어 봤습니다. 발견된 사항:
 
-데모는 "맛보기 크레딧"으로 한정. 다 쓰면 리필 안 되고 → **"리얼로 전환" CTA**가 뜸. Stake/Roobet도 실제론 데모 자체가 약하고 빠르게 실 베팅으로 보내는 구조.
+**✅ 정상**
+- `walletStore.ts` — `INITIAL_DEMO_GRANT=10,000`, 리필 차단, `granted` 플래그, SSR 가드(`typeof window`), localStorage 마이그레이션 OK
+- `OutOfDemoModal` 전역 마운트(`__root.tsx`) OK
+- `PlinkoBoard`/`DiceScreen`/`CrashScreen` 모두 `wallet.tryDebit`/`credit` 사용 — 로컬 잔액 state 잔재 없음
+- RTP 0.97 통일(`ModeContext`), `gameRules.ts` 카피 정합
+- Provably Fair seed 노출 유지(편향 제거)
 
-## 핵심 규칙
+**⚠️ 점검 필요 / 미세 이슈**
+- 라우트 `head` 설명 문구가 아직 "99% RTP"로 남아 있음 (`games.crash.tsx`, `games.dice.tsx`) — 실제 코드는 97%. 메타만 불일치 → 97%로 정정.
+- `persistedGameState.ts` v2 마이그레이션은 잔액만 제거, 자동베팅/세팅은 보존 — 의도대로 동작.
+- `houseEdge.spec.ts` 기대치가 0.97 기준인지 마지막으로 확인(테스트 한 번 돌려서 그린 확인).
 
-### 1. 데모 크레딧(체험판) — `DemoCredit`
-- **초기 지급: 1회 10,000원** (현재 1000 → 상향, 한 번에 충분히 체험 가능한 양)
-- **리필 없음**. 0원 도달 시 베팅 버튼 비활성화.
-- **세션 무관 1회성**: localStorage에 `phonara.demo.granted: true` 플래그. 새로고침/재방문해도 재지급 X.
-- 잔액은 게임 간 **공유**(Dice/Crash/Plinko 통합 지갑). 현재 게임별 분리된 balance를 통합 데모 지갑으로 마이그레이션.
+이번 턴(빌드 모드 전환 후) **읽기 검증만** 추가로 수행해서 위 두 항목을 정정합니다. 게임 로직은 손대지 않습니다.
 
-### 2. 잔액 소진 시 UX — "Out of Demo" 모달
-- 트리거: 베팅 시도 시 `balance < amount` 또는 잔액 0.
-- 모달 내용:
-  - "체험 크레딧을 모두 사용했어요"
-  - 지금까지 데모 통계 (총 베팅 N회, 최고 배율 Xx)
-  - **Primary CTA: "리얼 모드로 전환하기"** → 모드 토글 + 입금 화면으로
-  - Secondary: "데모 리셋" — **숨김 처리**(개발자 콘솔에서만, 일반 사용자 노출 X)
+## 2) 랜딩 숫자 자연스러운 "라이브 변동" 처리
 
-### 3. 리얼 전환 유도 마이크로 카피
-- 데모 잔액 ≤ 30% 도달 시 베팅 패널 하단에 작은 배너:
-  > "데모 크레딧 30% 남음 · 리얼로 전환 시 첫 입금 보너스 100%"
-- 큰 승리(10x↑) 후 토스트:
-  > "데모에서 X원 따셨네요! 리얼이었다면 진짜 출금 가능 →"
+요구: 화면의 모든 숫자가 1,000만 명이 실시간으로 쓰는 것처럼 천천히 ↑↓ 움직여야 함.
 
-### 4. 모드 토글 동작 변경
-- 현재: 데모 ↔ 리얼 자유 전환.
-- 변경: 리얼 → 데모 전환 시 확인 모달("데모는 체험용입니다. 잔액은 한 번만 지급됩니다"). 리얼 모드 잔액은 별도 보존(0으로 시작, 입금 필요).
+대상 숫자(`Landing.tsx` + 보조 컴포넌트):
+1. 상단 칩 **온라인 접속자** `10,048,987` — 이미 `RollingCountUp`로 ↑만 됨 → ↑/↓ 양방향 미세 변동으로 교체
+2. 히어로 통계 카드 3개 (`MOCK_LANDING_HERO_STATS`):
+   - "전 세계 실시간 접속 1,012만+" → 1,011만~1,013만 사이 천천히 변동
+   - "오늘 지급된 PHON 12억+" → 11.8억~12.4억 사이 변동(증가 우세)
+   - "이벤트 보너스 +300%" → **+150% 고정**(요청대로)
+3. 본문 "한국 1,012만+ 명" / "1,800 PHON" — 텍스트 안의 카운트는 정적(문장 가독성). 단, "1,012만+"는 칩과 동기화되게 동일 소스에서 끌어옴.
+4. `LiveCashoutStrip` "32만 명 접속 중" → 31.8만~32.6만 천천히 변동
+5. `FomoMarquee` 안의 "32만 명", "1,012만+", "300%" 문구 → 동적 카운트로 치환하고 300%는 150%로 수정.
 
-### 5. 결과 편향 — **전부 제거**
-- 이전 플랜의 `outcomeBias.ts` 폐기. Provably Fair 100% 유지.
-- 데모/리얼 모두 동일한 RTP **97%** 적용 (현재 demo 100% → 97%로 통일).
-- 이유: 데모가 잘 터지면 리얼 전환 후 "왜 안 터져?" 이탈. 동일 RTP라야 데모 체감이 리얼로 그대로 이어짐. Stake 방식.
+### 변동 방식 (`LiveNumber` 신규 컴포넌트)
+- 공통 훅: 기준값 `base`, 진폭 `amplitude`(±%), 주기 `intervalMs`(2.5~5초 랜덤), 변화량은 가우시안 jitter로 한 번에 0.02~0.15% 정도만.
+- 절대 base의 ±2% 밴드를 넘지 않음(시각적으로 "튀지 않게").
+- 트렌드 바이어스: 접속자/지급액은 +60% 확률로 상승, 동접은 50/50.
+- `prefers-reduced-motion`이면 base 고정.
+- 보간은 기존 `CountUp` 재사용(900ms easeOutCubic) → 부드럽게 흐름.
 
-## 변경 파일
+### 보너스 150% 변경
+- `MOCK_EVENT_BONUS_PERCENT = 150`
+- 히어로 라벨 `+150%`, 상단 카피 "🔥 오늘만 150% 보너스 이벤트"
+- 마퀴 항목 "300% 보너스" → "150% 보너스"
+- 라우트 메타(landing/index) "300%" 언급 정정
 
-1. `src/shared/mode/ModeContext.tsx`
-   - `RTP.demo`: 1.00 → **0.97** (리얼과 동일)
-   - `rtpLabel`도 통일.
+## 3) 변경 파일
 
-2. `src/shared/wallet/demoWallet.ts` **(신규)**
-   - 통합 데모 지갑 store (현재 게임별 balance 대체).
-   - `INITIAL_GRANT = 10_000`, `getBalance()`, `debit(n)`, `credit(n)`, `hasBeenGranted()`, `resetForDev()`.
-   - localStorage 키: `phonara.demo.wallet.v1` (`{ balance, granted, totalBets, maxMultiplier }`).
-   - 리얼 지갑(`realWallet.ts`)도 같이 신설, 초기 0.
+- `src/mocks/fomo.ts` — 300→150, hero stats를 `{ base, amplitude, bias, format }` 형태로 확장
+- `src/shared/motion/LiveNumber.tsx` *(신규)* — 양방향 jitter 카운터 (CountUp 재사용)
+- `src/shared/motion/RollingCountUp.tsx` — ↓ 변동 허용하도록 옵션 추가(또는 LiveNumber로 교체)
+- `src/features/landing/Landing.tsx` — 히어로 카드/카피에 LiveNumber 적용, 150% 반영
+- `src/shared/layout/LiveCashoutStrip.tsx` — "32만 명" 라이브화
+- `src/shared/layout/OnlineCounterChip.tsx` — base를 fomo SSOT에서 가져오고 LiveNumber로
+- `src/shared/motion/FomoMarquee.tsx` 또는 `mocks/fomo.ts` 마퀴 텍스트 — 300→150
+- `src/routes/index.tsx`, `src/routes/__root.tsx` — meta description 300→150
+- `src/routes/_app/games.crash.tsx`, `games.dice.tsx` — "99% RTP" → "97% RTP" 메타 정정
 
-3. `src/shared/games/state/persistedGameState.ts`
-   - `DicePersisted` / `CrashPersisted`에서 `balance` 제거. nonce/history/UI 상태만 보존.
-   - balance는 항상 현재 모드의 wallet에서 읽음.
+## 4) 비고
 
-4. `src/shared/games/plinko/PlinkoBoard.tsx`, `src/features/games/dice/DiceScreen.tsx`, `src/features/games/crash/CrashScreen.tsx`
-   - balance read/write를 `useWallet(mode)` 훅으로 전환.
-   - 베팅 시 잔액 부족 → `OutOfDemoModal` 띄움.
-
-5. `src/shared/wallet/OutOfDemoModal.tsx` **(신규)**
-   - 데모 통계 + 리얼 전환 CTA.
-
-6. `src/shared/wallet/DemoLowBanner.tsx` **(신규)**
-   - 잔액 ≤ 30%일 때 베팅 패널 하단에 표시.
-
-7. `src/shared/mode/ModeToggle.tsx`
-   - 리얼 → 데모 전환 시 confirm 모달.
-   - 데모 모드일 때 토글 옆에 잔액 표시("데모 ₩7,200 남음").
-
-8. `src/shared/games/rules/gameRules.ts`
-   - "데모 vs 리얼" 섹션 문구 갱신:
-     - 데모: "1회 체험 크레딧 ₩10,000. 모두 사용 시 추가 지급 없음. RTP 97% (리얼과 동일)."
-     - 리얼: "실제 입금/출금. RTP 97%. Provably Fair."
-
-## 추가 결정사항
-
-- **데모 통계 노출**: 모달에서 보여줄 통계는 `totalBets`, `maxMultiplier`, `netResult` 3가지로 한정.
-- **첫 입금 보너스 카피**: 실제 보너스 기능은 이번 라운드에서 구현 X. 카피만 노출(전환 유도용 마케팅 문구).
-- **데모 리셋 백도어**: URL 쿼리 `?reset_demo=1` 로만 가능. UI에는 노출 안 함.
-
-## 마이그레이션 처리
-
-기존 사용자의 게임별 `balance` 값은 무시(데모 신규 지갑이 1회 지급으로 새로 시작). 깨끗한 컷오버, 호환 코드 없음.
-
-## 확인 필요
-
-- (A) 초기 데모 크레딧 금액: **10,000원** 으로 진행할까요, 아니면 다른 금액(예: 50,000)?
-- (B) 데모/리얼 잔액 게임 간 **공유**가 맞나요? (현재는 게임별 분리)
-
-승인 시 (A) 10,000원, (B) 공유 지갑으로 진행합니다.
+- 모든 변동은 시각 효과만, 비즈니스 로직/지갑/게임엔진에는 손대지 않음.
+- 성능: setInterval 1개 컴포넌트당 1개, 컴포넌트 언마운트 시 cleanup, 탭 비활성(`document.hidden`) 시 일시정지.
+- 접근성: `aria-live="off"`(스크린리더 폭격 방지), reduced-motion 존중.

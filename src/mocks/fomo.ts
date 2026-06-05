@@ -2,7 +2,7 @@
 
 export const MOCK_ONLINE_BASE = 10_048_293;
 export const MOCK_CONCURRENT_PEAK = 327_412; // 32만 명 동시 접속
-export const MOCK_EVENT_BONUS_PERCENT = 300;
+export const MOCK_EVENT_BONUS_PERCENT = 150;
 export const MOCK_TOTAL_PAID_TODAY_PHON = 1_240_000_000;
 
 export interface MarqueeRow {
@@ -15,7 +15,7 @@ export const MOCK_MARQUEE_ROWS: MarqueeRow[] = [
   { id: "m1", text: "🔥 김** 님이 방금 1,240,000 PHON 출금 완료", accent: "gold" },
   { id: "m2", text: "⚡ 지금 32만 명이 동시에 PHONARA에서 돈 벌고 있어요", accent: "cyan" },
   { id: "m3", text: "💎 박** 님 크래시 27.4× 캐시아웃 성공", accent: "purple" },
-  { id: "m4", text: "🎁 오늘만 300% 보너스 — 마감 임박", accent: "pink" },
+  { id: "m4", text: "🎁 오늘만 150% 보너스 — 마감 임박", accent: "pink" },
   { id: "m5", text: "🚀 이** 님 슬롯에서 잭팟 8,400,000 PHON", accent: "gold" },
   { id: "m6", text: "💸 지금 1,012만+ 명이 PHONARA에 접속 중", accent: "cyan" },
   { id: "m7", text: "🏆 TOP 0.01% VIP 승급 폭주", accent: "purple" },
@@ -44,8 +44,34 @@ export const MOCK_CASHOUT_FEED: CashoutTick[] = [
   { id: "c8", name: "조**", amount: 540_000, multiplier: 5.4 },
 ];
 
-export const MOCK_LANDING_HERO_STATS = [
-  { label: "전 세계 실시간 접속", value: "1,012만+", accent: "cyan" as const, sub: "지금 폭주 중" },
-  { label: "오늘 지급된 PHON", value: "12억+", accent: "gold" as const, sub: "마감까지 남은 시간" },
-  { label: "이벤트 보너스", value: "+300%", accent: "pink" as const, sub: "오늘만" },
+export interface LandingHeroStat {
+  label: string;
+  accent: "cyan" | "gold" | "pink" | "purple";
+  sub: string;
+  /** Live-animated numeric value */
+  live?: { base: number; amplitudeRatio: number; bias: number; suffix?: string; prefix?: string; mode: "manlike" | "eok" | "raw" | "percent" };
+  /** Static display (when no live) */
+  staticValue?: string;
+}
+
+export const MOCK_LANDING_HERO_STATS: LandingHeroStat[] = [
+  {
+    label: "전 세계 실시간 접속",
+    accent: "cyan",
+    sub: "지금 폭주 중",
+    live: { base: 10_120_000, amplitudeRatio: 0.003, bias: 0.5, mode: "manlike", suffix: "+" },
+  },
+  {
+    label: "오늘 지급된 PHON",
+    accent: "gold",
+    sub: "마감까지 남은 시간",
+    live: { base: 1_240_000_000, amplitudeRatio: 0.005, bias: 0.62, mode: "eok", suffix: "+" },
+  },
+  {
+    label: "이벤트 보너스",
+    accent: "pink",
+    sub: "오늘만",
+    staticValue: `+${MOCK_EVENT_BONUS_PERCENT}%`,
+  },
 ];
+

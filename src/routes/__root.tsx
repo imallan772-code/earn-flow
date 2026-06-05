@@ -71,7 +71,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#0d0a1a" },
       { title: "PHONARA — 1,012만+ 명이 매일 돈 버는 곳" },
-      { name: "description", content: "한국 1,012만+ 명이 매일 접속하는 무료 부수입 플랫폼. 출석만 해도 PHON 지급, 오늘 300% 보너스 이벤트." },
+      { name: "description", content: "한국 1,012만+ 명이 매일 접속하는 무료 부수입 플랫폼. 출석만 해도 PHON 지급, 오늘 150% 보너스 이벤트." },
       { property: "og:title", content: "PHONARA — 매일 도파민 부수입" },
       { property: "og:description", content: "출석·미션·게임으로 PHON을 모아 KRW/USDT로 인출하세요." },
       { property: "og:type", content: "website" },
