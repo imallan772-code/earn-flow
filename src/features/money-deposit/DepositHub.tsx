@@ -10,7 +10,10 @@ export function DepositHub() {
     <MobileShell>
       <main className="flex-1 px-4 pb-6 pt-3">
         <div className="mb-3 flex items-center gap-2">
-          <Link to="/my" className="glass-1 inline-flex h-9 w-9 items-center justify-center rounded-xl">
+          <Link
+            to="/my"
+            className="glass-1 inline-flex h-9 w-9 items-center justify-center rounded-xl"
+          >
             <ArrowLeft size={16} />
           </Link>
           <PremiumPageHeader eyebrow="💰 입금" title="입금 방식 선택" />
@@ -18,7 +21,9 @@ export function DepositHub() {
 
         {/* FOMO 상단 배너 — 거래소 톤이지만 이벤트는 표시 */}
         <div className="glass-1 mb-4 flex items-center gap-2 rounded-2xl px-3 py-2.5 text-xs">
-          <span className="text-[var(--color-gold)] font-semibold">🎁 오늘 입금 시 +10% 보너스</span>
+          <span className="text-[var(--color-gold)] font-semibold">
+            🎁 오늘 입금 시 +10% 보너스
+          </span>
           <span className="text-[var(--color-muted)]">— 24시간 한정</span>
         </div>
 
@@ -48,10 +53,13 @@ export function DepositHub() {
           />
         </div>
 
-        <div className="mt-5 flex items-start gap-2 rounded-2xl border px-3 py-2.5 text-[11px] text-[var(--color-muted)]"
-          style={{ borderColor: "var(--color-border)" }}>
+        <div
+          className="mt-5 flex items-start gap-2 rounded-2xl border px-3 py-2.5 text-[11px] text-[var(--color-muted)]"
+          style={{ borderColor: "var(--color-border)" }}
+        >
           <ShieldAlert size={14} className="mt-0.5 shrink-0" />
-          실제 반영은 입금 확인 후 영업시간 내 처리됩니다. 외부 송금 시 정확한 네트워크/메모를 확인하세요.
+          실제 반영은 입금 확인 후 영업시간 내 처리됩니다. 외부 송금 시 정확한 네트워크/메모를
+          확인하세요.
         </div>
       </main>
       <BottomNav />

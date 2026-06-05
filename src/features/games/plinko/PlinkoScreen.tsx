@@ -60,10 +60,11 @@ export function PlinkoScreen() {
               </button>
             </div>
             <p className="text-xs leading-relaxed text-[var(--color-muted)]">
-              매 라운드 시드 = <code className="text-[var(--color-cyan)]">phonara-plinko-{`{nonce}`}</code>.
-              이 시드를 HMAC-SHA256으로 해시하여 각 줄(row)에서의 좌/우 튕김 방향을
-              비트 단위로 추출합니다. 결과 슬롯은 시드만으로 사전에 결정되어 있어
-              누구나 동일한 시드로 재현·검증할 수 있습니다.
+              매 라운드 시드 ={" "}
+              <code className="text-[var(--color-cyan)]">phonara-plinko-{`{nonce}`}</code>. 이
+              시드를 HMAC-SHA256으로 해시하여 각 줄(row)에서의 좌/우 튕김 방향을 비트 단위로
+              추출합니다. 결과 슬롯은 시드만으로 사전에 결정되어 있어 누구나 동일한 시드로
+              재현·검증할 수 있습니다.
             </p>
             <p className="mt-3 text-[10px] leading-relaxed text-[var(--color-muted-2)]">
               ※ 정식 출시 시 server seed commit/reveal 방식으로 전환 예정.

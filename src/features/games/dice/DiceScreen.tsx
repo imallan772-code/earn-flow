@@ -67,38 +67,42 @@ export function DiceScreen() {
   useEffect(() => {
     if (phase !== "rolling" || !activeBet) return;
     let alive = true;
-    computeRoll({ serverSeed: SERVER_SEED, clientSeed: CLIENT_SEED, nonce: activeBet.nonce }).then((roll) => {
-      if (!alive) return;
-      const won = isWin(roll, activeBet.target, activeBet.mode);
-      const pm = payoutMultiplier(winChance(activeBet.target, activeBet.mode));
-      const profit = won ? profitOf(activeBet.amount, pm, mode) : -activeBet.amount;
-
-      if (won) {
-        // gross payout = stake + profit (stake was already debited at place)
-        wallet.credit(mode, activeBet.amount + profit, pm);
-      }
-      diceStore.set((s) => ({
-        ...s,
-        lastRoll: roll,
-        history: [{ id: `n${activeBet.nonce}`, roll, win: won }, ...s.history].slice(0, 30),
-        lastOutcome: { outcome: won ? "win" : "loss", profit, nonce: activeBet.nonce, roll },
-      }));
-
-      liveBetsStore.update(activeBet.liveBetId, {
-        multiplier: won ? pm : null,
-        profit: won ? +profit.toFixed(2) : -activeBet.amount,
-        status: won ? "win" : "loss",
-      });
-
-      if (won) appToast.game.win({ amount: formatPHON(profit) });
-      else appToast.game.lose({ amount: formatPHON(activeBet.amount) });
-
-      window.setTimeout(() => {
+    computeRoll({ serverSeed: SERVER_SEED, clientSeed: CLIENT_SEED, nonce: activeBet.nonce }).then(
+      (roll) => {
         if (!alive) return;
-        setPhase("settled");
-      }, ROLLING_MS);
-    });
-    return () => { alive = false; };
+        const won = isWin(roll, activeBet.target, activeBet.mode);
+        const pm = payoutMultiplier(winChance(activeBet.target, activeBet.mode));
+        const profit = won ? profitOf(activeBet.amount, pm, mode) : -activeBet.amount;
+
+        if (won) {
+          // gross payout = stake + profit (stake was already debited at place)
+          wallet.credit(mode, activeBet.amount + profit, pm);
+        }
+        diceStore.set((s) => ({
+          ...s,
+          lastRoll: roll,
+          history: [{ id: `n${activeBet.nonce}`, roll, win: won }, ...s.history].slice(0, 30),
+          lastOutcome: { outcome: won ? "win" : "loss", profit, nonce: activeBet.nonce, roll },
+        }));
+
+        liveBetsStore.update(activeBet.liveBetId, {
+          multiplier: won ? pm : null,
+          profit: won ? +profit.toFixed(2) : -activeBet.amount,
+          status: won ? "win" : "loss",
+        });
+
+        if (won) appToast.game.win({ amount: formatPHON(profit) });
+        else appToast.game.lose({ amount: formatPHON(activeBet.amount) });
+
+        window.setTimeout(() => {
+          if (!alive) return;
+          setPhase("settled");
+        }, ROLLING_MS);
+      },
+    );
+    return () => {
+      alive = false;
+    };
   }, [phase, activeBet, mode]);
 
   // Settled → idle (ready for next bet)
@@ -135,7 +139,10 @@ export function DiceScreen() {
   );
 
   const setTarget = useCallback((t: number) => diceStore.set((s) => ({ ...s, target: t })), []);
-  const setDiceMode = useCallback((m: DiceMode) => diceStore.set((s) => ({ ...s, diceMode: m })), []);
+  const setDiceMode = useCallback(
+    (m: DiceMode) => diceStore.set((s) => ({ ...s, diceMode: m })),
+    [],
+  );
 
   const winPct = winChance(target, diceMode);
   const targetMult = payoutMultiplier(winPct);
@@ -144,7 +151,11 @@ export function DiceScreen() {
   return (
     <div className="flex flex-col gap-2">
       <header className="flex items-center gap-2">
-        <Link to="/earn" className="glass-1 grid h-9 w-9 place-items-center rounded-full" aria-label="뒤로">
+        <Link
+          to="/earn"
+          className="glass-1 grid h-9 w-9 place-items-center rounded-full"
+          aria-label="뒤로"
+        >
           <ArrowLeft size={16} />
         </Link>
         <div className="min-w-0">
@@ -233,7 +244,10 @@ export function DiceScreen() {
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
           onClick={() => setShowFair(false)}
         >
-          <div className="glass-2 w-full max-w-md rounded-t-3xl p-5" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="glass-2 w-full max-w-md rounded-t-3xl p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-extrabold">공정성 검증</h2>
               <button onClick={() => setShowFair(false)}>
@@ -259,7 +273,8 @@ export function DiceScreen() {
               </Row>
             </dl>
             <p className="mt-4 text-[10px] leading-relaxed text-[var(--color-muted)]">
-              결과 = floor(floatFromBytes(HMAC-SHA256(serverSeed, &quot;clientSeed:nonce:0&quot;)) × 10000) / 100
+              결과 = floor(floatFromBytes(HMAC-SHA256(serverSeed, &quot;clientSeed:nonce:0&quot;)) ×
+              10000) / 100
             </p>
           </div>
         </div>

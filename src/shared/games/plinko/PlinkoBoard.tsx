@@ -5,7 +5,13 @@
  * Engine + payout accounting unchanged.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PlinkoEngine, getMaxMultiplier, MULTIPLIERS, type RiskLevel, type RowCount } from "./PlinkoEngine";
+import {
+  PlinkoEngine,
+  getMaxMultiplier,
+  MULTIPLIERS,
+  type RiskLevel,
+  type RowCount,
+} from "./PlinkoEngine";
 import { PlinkoRenderer, type QualityLevel } from "./PlinkoRenderer";
 import { getPlinkoSFX } from "./PlinkoSFX";
 import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
@@ -73,14 +79,20 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
         setMuted(true);
         getPlinkoSFX().setMuted(true);
       }
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
   }, []);
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {
       const next = !m;
       getPlinkoSFX().setMuted(next);
-      try { localStorage.setItem(MUTE_KEY, next ? "1" : "0"); } catch { /* noop */ }
+      try {
+        localStorage.setItem(MUTE_KEY, next ? "1" : "0");
+      } catch {
+        /* noop */
+      }
       if (!next) getPlinkoSFX().resume();
       return next;
     });
@@ -115,9 +127,15 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { rendererRef.current?.setQuality(quality); }, [quality]);
-  useEffect(() => { rendererRef.current?.setRows(rows); }, [rows]);
-  useEffect(() => { rendererRef.current?.setRisk(risk); }, [risk]);
+  useEffect(() => {
+    rendererRef.current?.setQuality(quality);
+  }, [quality]);
+  useEffect(() => {
+    rendererRef.current?.setRows(rows);
+  }, [rows]);
+  useEffect(() => {
+    rendererRef.current?.setRisk(risk);
+  }, [risk]);
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -200,7 +218,9 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
         if (typeof navigator !== "undefined" && "vibrate" in navigator) {
           try {
             navigator.vibrate(isJackpot ? [50, 30, 80] : won ? [30] : [12]);
-          } catch { /* noop */ }
+          } catch {
+            /* noop */
+          }
         }
 
         // Jackpot overlay
@@ -280,10 +300,14 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
             aria-label="잭팟"
           >
             <div className="flex flex-col items-center gap-2 text-center">
-              <div className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#fde68a]">JACKPOT</div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#fde68a]">
+                JACKPOT
+              </div>
               <div
                 className="font-numeric text-6xl font-black text-[#fde68a] animate-scale-in"
-                style={{ textShadow: "0 0 28px rgba(251,191,36,0.9), 0 0 60px rgba(251,191,36,0.6)" }}
+                style={{
+                  textShadow: "0 0 28px rgba(251,191,36,0.9), 0 0 60px rgba(251,191,36,0.6)",
+                }}
               >
                 {jackpot.multiplier}x
               </div>
@@ -316,7 +340,8 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
               {lastOutcome.profit.toFixed(2)} USDT
             </div>
             <div className="font-numeric text-[10px] text-[var(--color-muted-2)]">
-              {lastOutcome.bet.toFixed(2)} × {lastOutcome.multiplier}x = {lastOutcome.payout.toFixed(2)}
+              {lastOutcome.bet.toFixed(2)} × {lastOutcome.multiplier}x ={" "}
+              {lastOutcome.payout.toFixed(2)}
             </div>
           </div>
         )}
@@ -374,9 +399,15 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
         canPlace={canPlace}
         hasActiveBet={false}
         balance={balance}
-        lastOutcome={lastOutcome ? { outcome: lastOutcome.outcome, profit: lastOutcome.profit, nonce: lastOutcome.nonce } : null}
+        lastOutcome={
+          lastOutcome
+            ? { outcome: lastOutcome.outcome, profit: lastOutcome.profit, nonce: lastOutcome.nonce }
+            : null
+        }
         onPlace={(amount) => handlePlace(amount)}
-        onCashout={() => { /* Plinko has no cashout */ }}
+        onCashout={() => {
+          /* Plinko has no cashout */
+        }}
       />
 
       <div className="text-center text-[11px] text-[var(--color-muted-2)] font-numeric">

@@ -21,7 +21,10 @@ const accentColor = {
 export function MoneyChannelCard({ to, Icon, title, subtitle, meta, accent = "cyan" }: Props) {
   const color = accentColor[accent];
   return (
-    <Link to={to} className="glass-2 flex items-center gap-3 rounded-2xl p-4 transition-colors hover:bg-white/5">
+    <Link
+      to={to}
+      className="glass-2 flex items-center gap-3 rounded-2xl p-4 transition-colors hover:bg-white/5"
+    >
       <div
         className="flex h-12 w-12 items-center justify-center rounded-xl"
         style={{ background: `color-mix(in oklab, ${color} 14%, transparent)`, color }}

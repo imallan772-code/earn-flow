@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  MAX_ROLL,
-  computeRoll,
-  isWin,
-  payoutMultiplier,
-  winChance,
-} from "../DiceEngine";
+import { MAX_ROLL, computeRoll, isWin, payoutMultiplier, winChance } from "../DiceEngine";
 
 const seeds = (n: number) => ({
   serverSeed: "dice-server-seed-fixed",

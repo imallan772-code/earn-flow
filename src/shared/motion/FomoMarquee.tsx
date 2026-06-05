@@ -11,9 +11,13 @@ function Row({ rows, reverse }: { rows: MarqueeRow[]; reverse?: boolean }) {
   const doubled = [...rows, ...rows];
   return (
     <div className="relative w-full overflow-hidden">
-      <div className={`flex w-max gap-8 whitespace-nowrap py-2 ${reverse ? "animate-marquee-rev" : "animate-marquee"}`}>
+      <div
+        className={`flex w-max gap-8 whitespace-nowrap py-2 ${reverse ? "animate-marquee-rev" : "animate-marquee"}`}
+      >
         {doubled.map((r, i) => (
-          <span key={r.id + i} className={`text-sm ${accentClass[r.accent]}`}>{r.text}</span>
+          <span key={r.id + i} className={`text-sm ${accentClass[r.accent]}`}>
+            {r.text}
+          </span>
         ))}
       </div>
     </div>

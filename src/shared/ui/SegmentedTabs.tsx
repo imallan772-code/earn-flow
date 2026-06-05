@@ -34,10 +34,7 @@ export function SegmentedTabs<T extends string>({
   return (
     <div
       role="tablist"
-      className={cn(
-        "glass-1 flex items-stretch gap-1 rounded-2xl p-1",
-        className,
-      )}
+      className={cn("glass-1 flex items-stretch gap-1 rounded-2xl p-1", className)}
     >
       {items.map((it) => {
         const active = it.id === value;
@@ -67,10 +64,7 @@ export function SegmentedTabs<T extends string>({
                 <span className="text-sm font-extrabold">{it.label}</span>
                 {it.sub && (
                   <span
-                    className={cn(
-                      "text-[10px] font-medium",
-                      active ? "opacity-80" : "opacity-70",
-                    )}
+                    className={cn("text-[10px] font-medium", active ? "opacity-80" : "opacity-70")}
                   >
                     {it.sub}
                   </span>

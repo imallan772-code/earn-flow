@@ -146,7 +146,7 @@ export function StakeBetPanel({
                 "rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
                 tab === t
                   ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)]"
-                  : "text-[var(--color-muted)]"
+                  : "text-[var(--color-muted)]",
               )}
             >
               {t === "manual" ? "수동" : "자동"}
@@ -162,7 +162,10 @@ export function StakeBetPanel({
             ● AUTO
           </span>
           <span className="text-[var(--color-muted)]">
-            라운드 <span className="font-numeric text-[var(--color-foreground)]">{autoState.betsPlaced}</span>
+            라운드{" "}
+            <span className="font-numeric text-[var(--color-foreground)]">
+              {autoState.betsPlaced}
+            </span>
             {cfg.numberOfBets > 0 ? ` / ${cfg.numberOfBets}` : " / ∞"}
           </span>
           <span
@@ -171,7 +174,8 @@ export function StakeBetPanel({
               autoState.pnl >= 0 ? "text-[var(--color-emerald)]" : "text-[var(--color-rose)]",
             )}
           >
-            {autoState.pnl >= 0 ? "+" : ""}{autoState.pnl.toFixed(2)}
+            {autoState.pnl >= 0 ? "+" : ""}
+            {autoState.pnl.toFixed(2)}
           </span>
         </div>
       )}
@@ -311,13 +315,15 @@ export function StakeBetPanel({
               placingRef.current = true;
               onPlace(amount, target);
               // Safety release in case parent never transitions canPlace.
-              window.setTimeout(() => { placingRef.current = false; }, 600);
+              window.setTimeout(() => {
+                placingRef.current = false;
+              }, 600);
             }}
             className={cn(
               "relative overflow-hidden rounded-xl py-3 text-sm font-extrabold transition active:scale-[0.98]",
               canPlace && amount > 0
                 ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)] shadow-glow-cyan"
-                : "bg-[var(--color-surface-hi)] text-[var(--color-muted-2)]"
+                : "bg-[var(--color-surface-hi)] text-[var(--color-muted-2)]",
             )}
           >
             {bettingProgress != null && canPlace && (

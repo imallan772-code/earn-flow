@@ -48,7 +48,8 @@ class PlinkoSFX {
     try {
       const Ctor =
         typeof window !== "undefined"
-          ? (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)
+          ? window.AudioContext ||
+            (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
           : null;
       if (!Ctor) return false;
       this.ctx = new Ctor();

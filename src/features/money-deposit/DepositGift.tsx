@@ -13,7 +13,12 @@ export function DepositGift() {
     <MobileShell>
       <main className="flex-1 px-4 pb-6 pt-3">
         <div className="mb-3 flex items-center gap-2">
-          <Link to="/deposit" className="glass-1 inline-flex h-9 w-9 items-center justify-center rounded-xl"><ArrowLeft size={16} /></Link>
+          <Link
+            to="/deposit"
+            className="glass-1 inline-flex h-9 w-9 items-center justify-center rounded-xl"
+          >
+            <ArrowLeft size={16} />
+          </Link>
           <PremiumPageHeader eyebrow="상품권" title="코드 입력" />
         </div>
         <Premium3DCard className="p-5">

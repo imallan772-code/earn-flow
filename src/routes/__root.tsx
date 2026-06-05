@@ -47,15 +47,23 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-dvh items-center justify-center bg-cosmic px-4">
       <div className="glass-3 max-w-sm rounded-3xl p-8 text-center shadow-depth-3">
         <h1 className="text-lg font-semibold">잠시 문제가 생겼어요</h1>
-        <p className="mt-1.5 text-sm text-[var(--color-muted)]">다시 시도하거나 홈으로 돌아가 주세요.</p>
+        <p className="mt-1.5 text-sm text-[var(--color-muted)]">
+          다시 시도하거나 홈으로 돌아가 주세요.
+        </p>
         <div className="mt-5 flex justify-center gap-2">
           <button
-            onClick={() => { router.invalidate(); reset(); }}
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
             className="inline-flex h-10 items-center justify-center rounded-2xl bg-holographic px-4 text-sm font-semibold text-[var(--color-bg-0)]"
           >
             다시 시도
           </button>
-          <a href="/" className="glass-2 inline-flex h-10 items-center justify-center rounded-2xl px-4 text-sm">
+          <a
+            href="/"
+            className="glass-2 inline-flex h-10 items-center justify-center rounded-2xl px-4 text-sm"
+          >
             홈으로
           </a>
         </div>
@@ -71,9 +79,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#0d0a1a" },
       { title: "PHONARA — 1,012만+ 명이 매일 돈 버는 곳" },
-      { name: "description", content: "한국 1,012만+ 명이 매일 접속하는 무료 부수입 플랫폼. 출석만 해도 PHON 지급, 오늘 150% 보너스 이벤트." },
+      {
+        name: "description",
+        content:
+          "한국 1,012만+ 명이 매일 접속하는 무료 부수입 플랫폼. 출석만 해도 PHON 지급, 오늘 150% 보너스 이벤트.",
+      },
       { property: "og:title", content: "PHONARA — 매일 도파민 부수입" },
-      { property: "og:description", content: "출석·미션·게임으로 PHON을 모아 KRW/USDT로 인출하세요." },
+      {
+        property: "og:description",
+        content: "출석·미션·게임으로 PHON을 모아 KRW/USDT로 인출하세요.",
+      },
       { property: "og:type", content: "website" },
     ],
     links: [
@@ -81,8 +96,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "preconnect", href: "https://cdn.jsdelivr.net", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,

@@ -48,13 +48,19 @@ export function Onboarding() {
           {STEPS.map((_, i) => (
             <span
               key={i}
-              className={cn("h-1.5 w-8 rounded-full transition-colors", i <= step ? "bg-holographic" : "bg-white/10")}
+              className={cn(
+                "h-1.5 w-8 rounded-full transition-colors",
+                i <= step ? "bg-holographic" : "bg-white/10",
+              )}
             />
           ))}
         </div>
         <div className="glass-1 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5">
           <Sparkles size={14} style={{ color: "var(--color-gold)" }} />
-          <CountUp value={balance} className="font-numeric text-sm font-bold text-[var(--color-gold)]" />
+          <CountUp
+            value={balance}
+            className="font-numeric text-sm font-bold text-[var(--color-gold)]"
+          />
           <span className="text-[10px] text-[var(--color-muted)]">PHON</span>
         </div>
       </div>
@@ -98,7 +104,9 @@ export function Onboarding() {
           {step === 2 && (
             <div className="glass-3 w-full rounded-3xl p-6 text-center">
               <div className="text-xs text-[var(--color-muted)]">내 추천코드</div>
-              <div className="mt-2 font-numeric text-3xl font-extrabold text-holographic">PHO-K7Q2X9</div>
+              <div className="mt-2 font-numeric text-3xl font-extrabold text-holographic">
+                PHO-K7Q2X9
+              </div>
               <button
                 onClick={() => {
                   navigator.clipboard?.writeText("PHO-K7Q2X9").catch(() => {});
@@ -116,7 +124,10 @@ export function Onboarding() {
               onClick={advance}
               whileTap={{ scale: 0.95 }}
               className="relative flex h-48 w-48 items-center justify-center rounded-full"
-              style={{ background: "radial-gradient(circle, color-mix(in oklab, var(--color-pink) 40%, transparent), transparent 70%)" }}
+              style={{
+                background:
+                  "radial-gradient(circle, color-mix(in oklab, var(--color-pink) 40%, transparent), transparent 70%)",
+              }}
             >
               <RewardBurst trigger={burst} />
               <Flame size={84} style={{ color: "var(--color-gold)" }} strokeWidth={2.2} />

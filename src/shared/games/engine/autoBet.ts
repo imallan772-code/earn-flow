@@ -82,8 +82,7 @@ export function step(state: AutoBetState, input: StepInput): AutoBetState {
   let nextBet = state.currentBet;
   let nextFibIndex = state.fibIndex;
 
-  const pct =
-    input.outcome === "win" ? config.onWinIncreasePct : config.onLossIncreasePct;
+  const pct = input.outcome === "win" ? config.onWinIncreasePct : config.onLossIncreasePct;
 
   if (pct !== 0) {
     nextBet = state.currentBet * (1 + pct / 100);

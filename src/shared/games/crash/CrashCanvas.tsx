@@ -85,8 +85,7 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
     const xMax = Math.max(elapsed, 8000);
     const yMax = Math.max(liveM, 2);
     const toX = (t: number) => (t / xMax) * cssW * 0.92 + cssW * 0.04;
-    const toY = (m: number) =>
-      cssH - ((m - 1) / (yMax - 1)) * cssH * 0.82 - cssH * 0.06;
+    const toY = (m: number) => cssH - ((m - 1) / (yMax - 1)) * cssH * 0.82 - cssH * 0.06;
 
     // y-axis multiplier labels (1x .. yMax)
     ctx.font = "600 9px JetBrains Mono, monospace";

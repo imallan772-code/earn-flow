@@ -49,9 +49,13 @@ export function AdminNotice() {
         {list.map((n) => (
           <div key={n.id} className="glass-2 flex items-center gap-3 rounded-2xl p-4">
             {n.pinned && <Pin size={14} className="text-[var(--color-gold)]" />}
-            <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-bold">{n.category}</span>
+            <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-bold">
+              {n.category}
+            </span>
             <span className="flex-1 truncate text-sm font-semibold">{n.title}</span>
-            <span className="font-numeric text-[11px] text-[var(--color-muted)]">{n.publishedAt.slice(0, 10)}</span>
+            <span className="font-numeric text-[11px] text-[var(--color-muted)]">
+              {n.publishedAt.slice(0, 10)}
+            </span>
             <button onClick={() => setEditing(n)} className="rounded-lg p-1.5 hover:bg-white/8">
               <Edit3 size={14} />
             </button>
@@ -68,15 +72,21 @@ export function AdminNotice() {
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="glass-3 w-full max-w-lg rounded-3xl p-6 shadow-depth-3">
-            <h2 className="mb-4 text-lg font-bold">{NOTICES.find((p) => p.id === editing.id) ? "공지 수정" : "새 공지"}</h2>
+            <h2 className="mb-4 text-lg font-bold">
+              {NOTICES.find((p) => p.id === editing.id) ? "공지 수정" : "새 공지"}
+            </h2>
             <div className="flex flex-col gap-3">
               <select
                 value={editing.category}
-                onChange={(e) => setEditing({ ...editing, category: e.target.value as Notice["category"] })}
+                onChange={(e) =>
+                  setEditing({ ...editing, category: e.target.value as Notice["category"] })
+                }
                 className="glass-1 rounded-xl px-3 py-2 text-sm"
               >
                 {["공지", "업데이트", "점검", "보안"].map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
                 ))}
               </select>
               <input
@@ -111,14 +121,26 @@ export function AdminNotice() {
                 <input
                   type="datetime-local"
                   value={editing.publishedAt.slice(0, 16)}
-                  onChange={(e) => setEditing({ ...editing, publishedAt: new Date(e.target.value).toISOString() })}
+                  onChange={(e) =>
+                    setEditing({ ...editing, publishedAt: new Date(e.target.value).toISOString() })
+                  }
                   className="glass-1 ml-auto rounded-lg px-2 py-1 text-xs"
                 />
               </label>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setEditing(null)} className="glass-1 rounded-xl px-4 py-2 text-sm">취소</button>
-              <button onClick={() => save(editing)} className="rounded-xl bg-holographic px-4 py-2 text-sm font-bold text-[var(--color-bg-0)]">저장</button>
+              <button
+                onClick={() => setEditing(null)}
+                className="glass-1 rounded-xl px-4 py-2 text-sm"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => save(editing)}
+                className="rounded-xl bg-holographic px-4 py-2 text-sm font-bold text-[var(--color-bg-0)]"
+              >
+                저장
+              </button>
             </div>
           </div>
         </div>

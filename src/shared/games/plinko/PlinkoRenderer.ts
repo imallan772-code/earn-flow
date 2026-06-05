@@ -760,9 +760,7 @@ export class PlinkoRenderer {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     const label =
-      mult >= 100
-        ? `${mult.toFixed(0)}x`
-        : `${mult.toFixed(mult >= 10 ? 0 : mult >= 1 ? 1 : 1)}x`;
+      mult >= 100 ? `${mult.toFixed(0)}x` : `${mult.toFixed(mult >= 10 ? 0 : mult >= 1 ? 1 : 1)}x`;
     ctx.shadowColor = `color-mix(in oklab, ${color} 80%, transparent)`;
     ctx.shadowBlur = 4;
     ctx.fillText(label, sx + sw / 2, drawY + drawH / 2);
@@ -881,7 +879,13 @@ export class PlinkoRenderer {
       // specular
       ctx.fillStyle = "rgba(255,255,255,0.95)";
       ctx.beginPath();
-      ctx.arc(-this.ballRadius * 0.4, -this.ballRadius * 0.45, this.ballRadius * 0.3, 0, Math.PI * 2);
+      ctx.arc(
+        -this.ballRadius * 0.4,
+        -this.ballRadius * 0.45,
+        this.ballRadius * 0.3,
+        0,
+        Math.PI * 2,
+      );
       ctx.fill();
       ctx.restore();
     }

@@ -26,7 +26,9 @@ export async function computeRoll(input: ProvablyFairInput): Promise<number> {
 /** Win probability as a percentage (0..100). */
 export function winChance(target: number, mode: DiceMode): number {
   const t = clamp01(target);
-  return mode === "over" ? ((MAX_ROLL - t) / (MAX_ROLL + 0.01)) * 100 : ((t + 0.01) / (MAX_ROLL + 0.01)) * 100;
+  return mode === "over"
+    ? ((MAX_ROLL - t) / (MAX_ROLL + 0.01)) * 100
+    : ((t + 0.01) / (MAX_ROLL + 0.01)) * 100;
 }
 
 /** Payout multiplier (1% house edge). */

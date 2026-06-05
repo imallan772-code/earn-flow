@@ -59,7 +59,7 @@ export function Landing() {
             <span className="text-holographic">진짜 돈 버는 곳.</span>
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
-            글로벌 매일 출석·미션·게임으로 PHON을 모아 KRW/USDE로 인출합니다. 가입 즉시{" "}
+            글로벌 매일 출석·미션·게임으로 PHON을 모아 KRW/USDT로 인출합니다. 가입 즉시{" "}
             <span className="font-semibold text-[var(--color-gold)]">5,000 PHON+</span>
           </p>
         </section>
@@ -73,7 +73,10 @@ export function Landing() {
             지금 무료 시작
             <ArrowRight size={18} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
-          <Link to="/login" className="glass-2 flex h-14 items-center justify-center rounded-2xl px-5 text-sm font-semibold">
+          <Link
+            to="/login"
+            className="glass-2 flex h-14 items-center justify-center rounded-2xl px-5 text-sm font-semibold"
+          >
             로그인
           </Link>
         </div>
@@ -90,7 +93,10 @@ export function Landing() {
             return (
               <Premium3DCard key={s.label} className="p-3">
                 <div className="text-[10px] font-medium text-[var(--color-muted)]">{s.label}</div>
-                <div className="mt-1 font-numeric text-xl font-extrabold" style={{ color: accentColor[s.accent] }}>
+                <div
+                  className="mt-1 font-numeric text-xl font-extrabold"
+                  style={{ color: accentColor[s.accent] }}
+                >
                   {s.syncKey === "globalOnline" ? (
                     <CountUp value={liveOnline} duration={1400} format={fmt} />
                   ) : s.live ? (
@@ -122,7 +128,9 @@ export function Landing() {
             <Zap size={22} style={{ color: "var(--color-cyan)" }} />
             <div>
               <div className="text-sm font-semibold">3초 시작 · 직장인·주부·대학생 누구나</div>
-              <div className="text-xs text-[var(--color-muted)]">가입하자마자 첫 보상 떨어집니다</div>
+              <div className="text-xs text-[var(--color-muted)]">
+                가입하자마자 첫 보상 떨어집니다
+              </div>
             </div>
           </Premium3DCard>
           <Premium3DCard className="flex items-center gap-3 p-4" glow="gold">

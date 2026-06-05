@@ -63,8 +63,7 @@ export function shouldAutoCashout(elapsedMs: number, autoTarget: number): boolea
  */
 export async function computeCrashPoint(input: ProvablyFairInput): Promise<number> {
   const bytes = await bytesGenerator(input, 0);
-  const h =
-    ((bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3]) >>> 0;
+  const h = ((bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3]) >>> 0;
   if (h % 100 === 0) return 1.0;
   const max = 2 ** 32;
   const cp = Math.floor((100 * max - h) / (max - h)) / 100;

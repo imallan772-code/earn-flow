@@ -11,11 +11,25 @@
 import { toast as sonner } from "sonner";
 import { t, type MessageParams } from "@/shared/i18n";
 
-interface AmountParams { amount: number | string }
-interface MultParams { mult: number | string; amount: number | string }
-interface TradeFillParams { side: string; sym: string; qty: number | string; price: number | string }
-interface TradePartialParams extends TradeFillParams { filled: number | string }
-interface ReasonParams { reason: string }
+interface AmountParams {
+  amount: number | string;
+}
+interface MultParams {
+  mult: number | string;
+  amount: number | string;
+}
+interface TradeFillParams {
+  side: string;
+  sym: string;
+  qty: number | string;
+  price: number | string;
+}
+interface TradePartialParams extends TradeFillParams {
+  filled: number | string;
+}
+interface ReasonParams {
+  reason: string;
+}
 
 export const appToast = {
   // ----- 트레이딩 (진중, 이모지 금지) -----
@@ -25,8 +39,7 @@ export const appToast = {
     partial: (p: TradePartialParams) =>
       sonner(t("trade.partial", p as unknown as MessageParams), { duration: 2500 }),
     canceled: () => sonner(t("trade.canceled")),
-    rejected: (p: ReasonParams) =>
-      sonner.error(t("trade.rejected", p as unknown as MessageParams)),
+    rejected: (p: ReasonParams) => sonner.error(t("trade.rejected", p as unknown as MessageParams)),
     orderPlaced: (p: TradeFillParams) =>
       sonner(t("order.placed", p as unknown as MessageParams), { duration: 2000 }),
   },
@@ -35,14 +48,10 @@ export const appToast = {
   game: {
     bet: (p: AmountParams) =>
       sonner(t("game.bet", p as unknown as MessageParams), { duration: 1500 }),
-    cashout: (p: MultParams) =>
-      sonner.success(t("game.cashout", p as unknown as MessageParams)),
-    bust: (p: AmountParams) =>
-      sonner(t("game.bust", p as unknown as MessageParams)),
-    win: (p: AmountParams) =>
-      sonner.success(t("game.win", p as unknown as MessageParams)),
-    lose: (p: AmountParams) =>
-      sonner(t("game.lose", p as unknown as MessageParams)),
+    cashout: (p: MultParams) => sonner.success(t("game.cashout", p as unknown as MessageParams)),
+    bust: (p: AmountParams) => sonner(t("game.bust", p as unknown as MessageParams)),
+    win: (p: AmountParams) => sonner.success(t("game.win", p as unknown as MessageParams)),
+    lose: (p: AmountParams) => sonner(t("game.lose", p as unknown as MessageParams)),
   },
 
   // ----- 공용 UI (귀여운 톤, 이모지는 카탈로그 내 포함) -----
@@ -57,8 +66,7 @@ export const appToast = {
       sonner.success(t("mission.claimed", p as unknown as MessageParams)),
   },
   box: {
-    opened: (p: AmountParams) =>
-      sonner.success(t("box.opened", p as unknown as MessageParams)),
+    opened: (p: AmountParams) => sonner.success(t("box.opened", p as unknown as MessageParams)),
   },
   referral: {
     copied: () => sonner.success(t("referral.copied")),
@@ -78,8 +86,7 @@ export const appToast = {
   // ----- 입금 -----
   deposit: {
     giftPending: () => sonner(t("deposit.giftPending")),
-    failed: (p: ReasonParams) =>
-      sonner.error(t("deposit.failed", p as unknown as MessageParams)),
+    failed: (p: ReasonParams) => sonner.error(t("deposit.failed", p as unknown as MessageParams)),
   },
 
   // ----- 출금 (손실 톤) -----

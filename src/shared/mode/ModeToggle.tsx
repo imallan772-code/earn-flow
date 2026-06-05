@@ -39,12 +39,7 @@ export function ModeToggle({ className, size = "md" }: Props) {
   const txt = size === "sm" ? "text-xs" : "text-sm";
 
   return (
-    <div
-      className={cn(
-        "glass-2 grid grid-cols-2 gap-1 rounded-2xl p-1 shadow-depth-2",
-        className,
-      )}
-    >
+    <div className={cn("glass-2 grid grid-cols-2 gap-1 rounded-2xl p-1 shadow-depth-2", className)}>
       <button
         onClick={() => pick("demo")}
         className={cn(

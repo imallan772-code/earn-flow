@@ -179,6 +179,12 @@
     0% { transform: translate3d(0,0,0); }
     100% { transform: translate3d(-50%,0,0); }
   }
+  .animate-marquee,
+  .animate-marquee-rev {
+    will-change: transform;
+    backface-visibility: hidden;
+    contain: layout paint style;
+  }
   .animate-marquee { animation: phon-marquee 32s linear infinite; }
   .animate-marquee-rev { animation: phon-marquee 38s linear infinite reverse; }
 

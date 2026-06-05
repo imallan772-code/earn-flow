@@ -97,7 +97,11 @@ function createStore<T extends object>(key: string, initial: T, version = 1): St
   }
 
   function use<S>(selector: (s: T) => S): S {
-    return useSyncExternalStore(subscribe, () => selector(state), () => selector(initial));
+    return useSyncExternalStore(
+      subscribe,
+      () => selector(state),
+      () => selector(initial),
+    );
   }
 
   return { get: () => state, set, subscribe, use };
@@ -106,8 +110,17 @@ function createStore<T extends object>(key: string, initial: T, version = 1): St
 // ───────── DICE ─────────
 // Dice 게임 nonce/히스토리/마지막 결과/타깃·모드/대기 베팅 보존.
 // balance는 src/shared/wallet/walletStore에서 모드별로 관리.
-export interface DiceRoll { id: string; roll: number; win: boolean }
-export interface DiceOutcome { outcome: "win" | "loss"; profit: number; nonce: number; roll: number }
+export interface DiceRoll {
+  id: string;
+  roll: number;
+  win: boolean;
+}
+export interface DiceOutcome {
+  outcome: "win" | "loss";
+  profit: number;
+  nonce: number;
+  roll: number;
+}
 export interface DicePersisted {
   nonce: number;
   history: DiceRoll[];
@@ -117,21 +130,32 @@ export interface DicePersisted {
   diceMode: "over" | "under";
   pendingAmount: number;
 }
-export const diceStore = createStore<DicePersisted>("dice", {
-  nonce: 0,
-  history: [],
-  lastRoll: null,
-  lastOutcome: null,
-  target: 50,
-  diceMode: "over",
-  pendingAmount: 10,
-}, 2);
+export const diceStore = createStore<DicePersisted>(
+  "dice",
+  {
+    nonce: 0,
+    history: [],
+    lastRoll: null,
+    lastOutcome: null,
+    target: 50,
+    diceMode: "over",
+    pendingAmount: 10,
+  },
+  2,
+);
 
 // ───────── CRASH ─────────
 // Crash 게임 nonce/히스토리/마지막 결과/대기 베팅/대기 자동캐쉬아웃 보존.
 // balance는 walletStore에서 관리.
-export interface CrashHistoryItem { id: string; multiplier: number }
-export interface CrashOutcome { outcome: "win" | "loss"; profit: number; nonce: number }
+export interface CrashHistoryItem {
+  id: string;
+  multiplier: number;
+}
+export interface CrashOutcome {
+  outcome: "win" | "loss";
+  profit: number;
+  nonce: number;
+}
 export interface CrashPersisted {
   nonce: number;
   history: CrashHistoryItem[];
@@ -139,11 +163,14 @@ export interface CrashPersisted {
   pendingAmount: number;
   pendingTarget: number;
 }
-export const crashStore = createStore<CrashPersisted>("crash", {
-  nonce: 0,
-  history: [],
-  lastOutcome: null,
-  pendingAmount: 10,
-  pendingTarget: 2.0,
-}, 2);
-
+export const crashStore = createStore<CrashPersisted>(
+  "crash",
+  {
+    nonce: 0,
+    history: [],
+    lastOutcome: null,
+    pendingAmount: 10,
+    pendingTarget: 2.0,
+  },
+  2,
+);

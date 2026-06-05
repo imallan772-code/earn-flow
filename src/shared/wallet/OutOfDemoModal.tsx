@@ -58,7 +58,10 @@ export function OutOfDemoModal() {
         {/* Stats */}
         <div className="mb-5 grid grid-cols-3 gap-2">
           <Stat label="총 베팅" value={`${stats.totalBets}회`} />
-          <Stat label="최고 배율" value={stats.maxMultiplier > 0 ? `${stats.maxMultiplier.toFixed(2)}x` : "—"} />
+          <Stat
+            label="최고 배율"
+            value={stats.maxMultiplier > 0 ? `${stats.maxMultiplier.toFixed(2)}x` : "—"}
+          />
           <Stat
             label="순손익"
             value={`${stats.netResult >= 0 ? "+" : ""}${stats.netResult.toFixed(0)}`}
@@ -67,7 +70,9 @@ export function OutOfDemoModal() {
         </div>
 
         <div className="mb-3 rounded-xl border border-[color-mix(in_oklab,var(--color-gold)_30%,transparent)] bg-[color-mix(in_oklab,var(--color-gold)_8%,transparent)] p-3 text-center">
-          <div className="text-[11px] uppercase tracking-wider text-[var(--color-gold)]">첫 입금 보너스</div>
+          <div className="text-[11px] uppercase tracking-wider text-[var(--color-gold)]">
+            첫 입금 보너스
+          </div>
           <div className="font-numeric text-xl font-extrabold text-[var(--color-gold)]">+100%</div>
           <div className="text-[10px] text-[var(--color-muted-2)]">최대 200,000원까지 매칭</div>
         </div>
@@ -88,15 +93,7 @@ export function OutOfDemoModal() {
   );
 }
 
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "win" | "loss";
-}) {
+function Stat({ label, value, tone }: { label: string; value: string; tone?: "win" | "loss" }) {
   const color =
     tone === "win"
       ? "var(--color-emerald)"
@@ -106,7 +103,9 @@ function Stat({
   return (
     <div className="glass-1 rounded-xl p-2.5 text-center">
       <div className="text-[10px] text-[var(--color-muted-2)]">{label}</div>
-      <div className="font-numeric text-sm font-extrabold" style={{ color }}>{value}</div>
+      <div className="font-numeric text-sm font-extrabold" style={{ color }}>
+        {value}
+      </div>
     </div>
   );
 }

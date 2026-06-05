@@ -5,9 +5,40 @@
 
 const POOLS = [
   // Korean
-  ["phona", "byte", "stak", "nova", "zero", "moon", "luna", "kim", "park", "lee", "choi", "yoon", "jung", "han", "cho"],
+  [
+    "phona",
+    "byte",
+    "stak",
+    "nova",
+    "zero",
+    "moon",
+    "luna",
+    "kim",
+    "park",
+    "lee",
+    "choi",
+    "yoon",
+    "jung",
+    "han",
+    "cho",
+  ],
   // English / Western
-  ["alpha", "neo", "shadow", "blaze", "pixel", "rogue", "echo", "vex", "lynx", "raze", "hunter", "viper", "drake", "raven"],
+  [
+    "alpha",
+    "neo",
+    "shadow",
+    "blaze",
+    "pixel",
+    "rogue",
+    "echo",
+    "vex",
+    "lynx",
+    "raze",
+    "hunter",
+    "viper",
+    "drake",
+    "raven",
+  ],
   // Japanese (romaji-style)
   ["sato", "yuki", "haru", "ren", "aki", "kaito", "rina", "sora", "taka", "miki"],
   // Russian (transliterated)

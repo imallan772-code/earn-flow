@@ -35,7 +35,7 @@ async function hmacSha256(keyStr: string, msgStr: string): Promise<Uint8Array> {
     enc.encode(keyStr),
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["sign"]
+    ["sign"],
   );
   const sig = await crypto.subtle.sign("HMAC", key, enc.encode(msgStr));
   return new Uint8Array(sig);
@@ -47,7 +47,7 @@ async function hmacSha256(keyStr: string, msgStr: string): Promise<Uint8Array> {
  */
 export async function bytesGenerator(
   { serverSeed, clientSeed, nonce }: ProvablyFairInput,
-  cursor: number
+  cursor: number,
 ): Promise<Uint8Array> {
   return hmacSha256(serverSeed, `${clientSeed}:${nonce}:${cursor}`);
 }

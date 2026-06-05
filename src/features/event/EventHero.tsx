@@ -20,7 +20,9 @@ export function EventHero() {
         <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-gold)]">
           <Sparkles size={12} /> 진행중 이벤트
         </div>
-        <Link to="/event" className="text-[11px] text-[var(--color-muted)]">전체 →</Link>
+        <Link to="/event" className="text-[11px] text-[var(--color-muted)]">
+          전체 →
+        </Link>
       </div>
       <div className="relative overflow-hidden rounded-3xl">
         <div
@@ -33,9 +35,16 @@ export function EventHero() {
               to="/event/$id"
               params={{ id: e.id }}
               className="relative block w-full shrink-0 p-5 shadow-depth-2"
-              style={{ background: `linear-gradient(135deg, color-mix(in oklab, ${e.bgFrom} 45%, var(--color-bg-1)), color-mix(in oklab, ${e.bgTo} 45%, var(--color-bg-1)))` }}
+              style={{
+                background: `linear-gradient(135deg, color-mix(in oklab, ${e.bgFrom} 45%, var(--color-bg-1)), color-mix(in oklab, ${e.bgTo} 45%, var(--color-bg-1)))`,
+              }}
             >
-              <div className="pointer-events-none absolute inset-0 opacity-25 mix-blend-overlay" style={{ background: "radial-gradient(ellipse at top right, white, transparent 60%)" }} />
+              <div
+                className="pointer-events-none absolute inset-0 opacity-25 mix-blend-overlay"
+                style={{
+                  background: "radial-gradient(ellipse at top right, white, transparent 60%)",
+                }}
+              />
               <div className="relative flex flex-col gap-2">
                 <span className="w-fit rounded-full bg-black/35 px-2 py-0.5 text-[10px] font-bold backdrop-blur">
                   {e.tagline}
@@ -57,7 +66,10 @@ export function EventHero() {
                 className="h-1 rounded-full transition-all"
                 style={{
                   width: idx === i ? 16 : 6,
-                  background: idx === i ? "var(--color-foreground)" : "color-mix(in oklab, var(--color-foreground) 40%, transparent)",
+                  background:
+                    idx === i
+                      ? "var(--color-foreground)"
+                      : "color-mix(in oklab, var(--color-foreground) 40%, transparent)",
                 }}
               />
             ))}

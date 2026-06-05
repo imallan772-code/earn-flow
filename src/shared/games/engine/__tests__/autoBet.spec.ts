@@ -71,7 +71,7 @@ describe("autoBet reducer", () => {
       expect(s.currentBet).toBe(3);
       s = step(s, { outcome: "loss", delta: -3 }); // idx 4 → 5
       expect(s.currentBet).toBe(5);
-      s = step(s, { outcome: "win", delta: 5 });   // idx 2 → 2
+      s = step(s, { outcome: "win", delta: 5 }); // idx 2 → 2
       expect(s.currentBet).toBe(2);
     });
   });
