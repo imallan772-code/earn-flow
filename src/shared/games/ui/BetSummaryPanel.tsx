@@ -332,11 +332,28 @@ function LivePanel({
 
       {onCashout && !busted && (
         <button
-          onClick={onCashout}
-          className="mt-1 flex items-center justify-center gap-1.5 rounded-xl bg-warning py-2.5 text-sm font-extrabold text-(--color-bg-0) shadow-glow-gold active:scale-[0.98]"
+          // Instant cashout if `requiresHold` is false (Dice/legacy paths).
+          // Otherwise pointerdown/up drive the 150ms hold timer — onClick is a no-op.
+          onClick={requiresHold ? undefined : onCashout}
+          onPointerDown={requiresHold ? startHold : undefined}
+          onPointerUp={requiresHold ? cancelHold : undefined}
+          onPointerLeave={requiresHold ? cancelHold : undefined}
+          onPointerCancel={requiresHold ? cancelHold : undefined}
+          className="relative mt-1 flex items-center justify-center gap-1.5 overflow-hidden rounded-xl bg-warning py-2.5 text-sm font-extrabold text-(--color-bg-0) shadow-glow-gold active:scale-[0.98] select-none"
         >
-          <Zap size={14} />
-          캐쉬아웃 @ {effectiveLive.toFixed(2)}x
+          {requiresHold && (
+            <span
+              aria-hidden
+              className="absolute inset-y-0 left-0 bg-(--color-emerald)/40 transition-[width] duration-75"
+              style={{ width: `${holdProgress * 100}%` }}
+            />
+          )}
+          <span className="relative flex items-center gap-1.5">
+            <Zap size={14} />
+            {requiresHold && holdProgress > 0 && holdProgress < 1
+              ? "꾹 눌러 확정..."
+              : `캐쉬아웃 @ ${effectiveLive.toFixed(2)}x`}
+          </span>
         </button>
       )}
 
