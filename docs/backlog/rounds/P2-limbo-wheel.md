@@ -2,7 +2,7 @@
 
 | 항목 | 값 |
 |------|-----|
-| **상태** | ✅ Cursor 승인 — Lovable 착수 대기 |
+| **상태** | ✅ Lovable 완료 (2026-06-05) |
 | **승인일** | 2026-06-05 |
 | **담당** | 🤖 Lovable |
 | **베이스라인** | vitest **57** GREEN → 완료 후 **69** GREEN |
@@ -41,7 +41,7 @@ P1에서 `GameShell` + `useGameRound(single/multi)` + Mines(multi)를 검증 완
 
 - `bun run lint:strict`
 - `bun run test` — 기존 **57 GREEN (10 spec files)** 확인 (P1 누적 baseline)
-- 신규 ROUND 문서: `src/shared/games/shell/ROUND_G_PART2_PLAN.md` (Limbo/Wheel 선정 근거 + **MinesScreen single-step 패턴** 재사용 명시)
+- Limbo/Wheel = **MinesScreen single-step 패턴** 재사용 (설계 SSOT: 본 문서 + `docs/lovable/BOUNDARIES.md`)
 
 ### 1. Limbo (single-step, MinesScreen 패턴 채택)
 
@@ -133,7 +133,7 @@ HiLo(P3 multi-step), Keno(P4), Roulette(P5), Plinko 셸 마이그레이션, Cras
 
 ## 영향 파일 (신규 9, 수정 5 [+선택 1])
 
-**신규 9:**
+**신규 8:**
 
 - `src/shared/games/limbo/LimboEngine.ts`
 - `src/shared/games/limbo/__tests__/limboEngine.spec.ts`
@@ -143,7 +143,6 @@ HiLo(P3 multi-step), Keno(P4), Roulette(P5), Plinko 셸 마이그레이션, Cras
 - `src/shared/games/wheel/__tests__/wheelEngine.spec.ts`
 - `src/features/games/wheel/WheelScreen.tsx`
 - `src/routes/_app/games.wheel.tsx`
-- `src/shared/games/shell/ROUND_G_PART2_PLAN.md`
 
 **수정 5:**
 

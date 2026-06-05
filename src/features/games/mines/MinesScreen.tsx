@@ -1,7 +1,7 @@
 /**
  * MinesScreen — multi-step (place → playing → settle) Stake-style Mines.
  *
- * 설계 결정 (ROUND_G_PART1_PLAN / LOVABLE_WORK_RULES)
+ * 설계 결정 (GameShell / LOVABLE_WORK_RULES)
  *  - useGameRound({ isMultiStep: true }) 사용. reveal 루프 + cashout/mine-hit → settle().
  *  - GameShell 위에 displayArea/controls/betPanel 슬롯만 주입. 비즈 로직은 화면 내 useEffect.
  *  - LiveBetsFeed는 GameShell 바깥(DiceScreen 패턴).
