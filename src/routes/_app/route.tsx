@@ -1,7 +1,7 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { RequireAuth } from "@/features/auth/RequireAuth";
-import { MobileShell } from "@/shared/layout/MobileShell";
-import { BottomNav } from "@/shared/layout/BottomNav";
+import { GameLayoutProvider } from "@/shared/layout/GameLayoutProvider";
+import { ResponsiveShell } from "@/shared/layout/ResponsiveShell";
 
 export const Route = createFileRoute("/_app")({
   ssr: false,
@@ -11,12 +11,11 @@ export const Route = createFileRoute("/_app")({
 function AppLayout() {
   return (
     <RequireAuth>
-      <MobileShell>
-        <main className="flex-1 px-4 pb-6 pt-3">
+      <GameLayoutProvider>
+        <ResponsiveShell>
           <Outlet />
-        </main>
-        <BottomNav />
-      </MobileShell>
+        </ResponsiveShell>
+      </GameLayoutProvider>
     </RequireAuth>
   );
 }
