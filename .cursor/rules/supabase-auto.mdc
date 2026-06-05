@@ -1,0 +1,21 @@
+---
+description: Supabase migration/SQL/RPC/types — Cursor auto, phonara-gb only
+globs: supabase/**,src/integrations/supabase/**,src/lib/api/**
+alwaysApply: true
+---
+
+# Supabase Auto
+
+Project: **phonara-gb** (kanftnqenuzverroodev) ONLY.
+
+When schema/RLS/RPC/types needed:
+
+1. Read docs/SUPABASE_AUTOMATION_RULES.md
+2. MCP: list_tables → get_advisors → migration SQL → apply_migration
+3. generate_typescript_types → types.ts
+4. src/lib/api/ wrapper before feature wiring
+5. get_advisors after migration
+6. bun run check
+
+Never let Lovable edit supabase/ or types.ts.
+Money: RPC only, RLS on all public tables.

@@ -1,0 +1,42 @@
+---
+description: PHONARA earn-flow 최상위 규칙 — Golden Loop, phonara-gb, 품질 게이트
+alwaysApply: true
+---
+
+# earn-flow Master Rule
+
+## Golden Loop
+
+Lovable → GitHub push → Cursor pull → 감사 → 수리 → `bun run check` → 다음 라운드.
+
+- Lovable: UI, Engine, Screen, mocks (docs/lovable/)
+- Cursor: SSOT 수리, Supabase, wallet wire
+
+## Supabase Lock
+
+- **ONLY:** phonara-gb (`kanftnqenuzverroodev`)
+- **NEVER:** phonara-world-main, phonetok
+
+## Runtime
+
+- TanStack Start + Vite + Bun
+- 신규 라우트: `src/routes/` only
+- vite.config.ts 플러그인 수동 추가 금지 (@lovable.dev/vite-tanstack-config)
+
+## Money
+
+- demo: walletStore localStorage
+- real: Supabase RPC only — client 발행 금지
+- useGameWallet 경유
+
+## Quality Gate
+
+```bash
+bun run check
+```
+
+## 문서 SSOT
+
+- Lovable: docs/lovable/PROMPT_HEADER.md
+- Cursor 감사: docs/CURSOR_SANITATION_CHECKLIST.md
+- Supabase: docs/SUPABASE_AUTOMATION_RULES.md

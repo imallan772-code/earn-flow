@@ -1,0 +1,23 @@
+﻿# Dependencies & lockfiles
+node_modules/
+bun.lock
+
+# Build output
+dist/
+dist-ssr/
+.output/
+.vinxi/
+.tanstack/
+.nitro/
+.wrangler/
+
+# Generated
+src/routeTree.gen.ts
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Lovable sandbox metadata
+.lovable/

@@ -1,9 +1,10 @@
 # LOVABLE_WORK_RULES — Lovable 작업 공통 규칙 (지존급 끝판왕 버전)
 
-이 문서는 Lovable AI에게 작업을 지시할 때마다 반드시 참고해야 하는 최상위 규칙이다.
-모든 프롬프트 시작 부분에 아래 문장을 포함시킬 것:
+> **Lovable 진입점:** [docs/lovable/README.md](./lovable/README.md)  
+> **매 라운드 복붙:** [docs/lovable/PROMPT_HEADER.md](./lovable/PROMPT_HEADER.md)
 
-> "아래 LOVABLE_WORK_RULES.md 파일의 모든 규칙을 반드시 준수하라."
+이 문서는 Lovable AI에게 작업을 지시할 때마다 반드시 참고해야 하는 상위 규칙이다.
+모든 프롬프트 시작 부분에 **PROMPT_HEADER.md 전체**를 복붙할 것.
 
 ## 1. 프로젝트 비전 및 대상
 

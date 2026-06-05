@@ -1,0 +1,25 @@
+---
+description: Lovable 담당 범위 — features/games/mocks only
+globs: src/features/**,src/shared/games/**,src/mocks/**
+alwaysApply: false
+---
+
+# Lovable Handoff
+
+## OK
+
+- Engine 순수함수 + vitest
+- Screen ~150줄, GameShell + StakeBetPanel
+- src/mocks/ FOMO only
+- games.*.tsx routes
+
+## FAIL patterns
+
+- PlinkoBoard monolith (canvas+wallet in one file)
+- Inline mock arrays in components
+- wallet.credit in useEffect/mock
+- Direct .rpc() — use TODO for Cursor
+
+## DB
+
+TODO only: `// TODO: real money — <rpc_name> (Cursor)`

@@ -1,0 +1,24 @@
+---
+description: Money SSOT — useGameWallet, no client real-mode issuance
+alwaysApply: true
+---
+
+# Money Safety
+
+## SSOT
+
+- demo: walletStore (localStorage)
+- real: Supabase wallet_balances via RPC
+- display FOMO: mocks/ only — NOT money UI fallback
+
+## Rules
+
+- Games use `useGameWallet`, not raw walletStore in new code
+- No wallet.credit/tryDebit in mocks or useEffect
+- real mode betting blocked until RPC exists
+- VIP from useProfile only — no hardcoded tier strings
+
+## Future RPC
+
+All balance mutations via SECURITY DEFINER RPC in supabase/migrations/.
+Client: src/lib/api/ wrappers only.

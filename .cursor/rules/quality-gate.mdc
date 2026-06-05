@@ -1,0 +1,19 @@
+---
+description: Quality gate — bun run check before round complete
+alwaysApply: true
+---
+
+# Quality Gate
+
+Before declaring work complete:
+
+```bash
+bun run check
+```
+
+= `lint` + `test` + `build`
+
+Lovable round end: report eslint/vitest/build results.
+Cursor after pull: CURSOR_SANITATION_CHECKLIST + check.
+
+Supabase changes: get_advisors + types regen.

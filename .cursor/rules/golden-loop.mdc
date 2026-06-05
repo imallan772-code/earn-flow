@@ -1,0 +1,16 @@
+---
+description: Lovable→GitHub→Cursor Golden Loop SOP
+alwaysApply: true
+---
+
+# Golden Loop
+
+1. Lovable: PROMPT_HEADER + BOUNDARIES + LOVABLE_WORK_RULES
+2. Lovable 게이트: eslint, vitest, build
+3. GitHub push
+4. Cursor: git pull + CURSOR_SANITATION_CHECKLIST
+5. FAIL → Cursor 수리 (Lovable 재요청 금지)
+6. Supabase TODO → SUPABASE_AUTOMATION_RULES
+7. bun run check GREEN → 다음 라운드
+
+Lovable 금지: supabase/, integrations/supabase/, lib/api/, walletStore 스키마
