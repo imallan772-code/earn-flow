@@ -368,14 +368,17 @@ export function WheelScreen() {
           </div>
         }
         displayArea={
-          <WheelDisplay
-            risk={displayRisk}
-            segments={displaySegments}
-            phase={round.phase as "idle" | "rolling" | "settled"}
-            resultIndex={resultIndex}
-            resultMultiplier={resultMult}
-            jackpotTrigger={jackpotTrigger}
-          />
+          <div className="flex flex-col gap-3">
+            <WheelDisplay
+              risk={displayRisk}
+              segments={displaySegments}
+              phase={round.phase as "idle" | "rolling" | "settled"}
+              resultIndex={resultIndex}
+              resultMultiplier={resultMult}
+              jackpotTrigger={jackpotTrigger}
+            />
+            <WheelLegend risk={displayRisk} segments={displaySegments} />
+          </div>
         }
         controls={
           <WheelControls
