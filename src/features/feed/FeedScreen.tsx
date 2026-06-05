@@ -41,7 +41,6 @@ export function FeedScreen() {
       {/* 데스크탑 RightRail 등록 (Rail 내부 useRegisterRightRail 단일 호출, 모바일 자동 미등록) */}
       <FeedRightRail />
 
-
       {/* Hot strip */}
       <section>
         <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-pink">
