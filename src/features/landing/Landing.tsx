@@ -6,6 +6,8 @@ import { FomoMarquee } from "@/shared/motion/FomoMarquee";
 import { LiveCashoutStrip } from "@/shared/layout/LiveCashoutStrip";
 import { Premium3DCard } from "@/shared/ui/Premium3DCard";
 import { LiveNumber } from "@/shared/motion/LiveNumber";
+import { CountUp } from "@/shared/motion/CountUp";
+import { useLiveOnline } from "@/shared/motion/liveOnlineStore";
 import { MOCK_LANDING_HERO_STATS, MOCK_EVENT_BONUS_PERCENT } from "@/mocks/fomo";
 
 const accentColor = {
@@ -30,6 +32,7 @@ function formatEok(n: number, suffix = "") {
 }
 
 export function Landing() {
+  const liveOnline = useLiveOnline();
   return (
     <div className="relative min-h-dvh w-full overflow-hidden bg-cosmic">
       <FloatingOrbs />
@@ -106,7 +109,9 @@ export function Landing() {
               <Premium3DCard key={s.label} className="p-3">
                 <div className="text-[10px] font-medium text-[var(--color-muted)]">{s.label}</div>
                 <div className="mt-1 font-numeric text-xl font-extrabold" style={{ color: accentColor[s.accent] }}>
-                  {s.live ? (
+                  {s.syncKey === "globalOnline" ? (
+                    <CountUp value={liveOnline} duration={1400} format={fmt} />
+                  ) : s.live ? (
                     <LiveNumber
                       base={s.live.base}
                       amplitudeRatio={s.live.amplitudeRatio}

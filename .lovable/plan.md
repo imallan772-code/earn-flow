@@ -1,62 +1,45 @@
-## 1) 지난 작업 검증 보고 (코드 리뷰 결과)
 
-지난 턴들에서 만든 통합 지갑/데모 전환 퍼널/Plinko 강화 코드를 다시 훑어 봤습니다. 발견된 사항:
+## 목표
+상단 칩(`10,048,293`)과 히어로 stats의 "전 세계 실시간 접속"(`1,012만+`)이 **항상 같은 숫자**를 가리키도록 한다. (포맷만 다르게 — 칩=원시숫자, 히어로=만+ 단위)
 
-**✅ 정상**
-- `walletStore.ts` — `INITIAL_DEMO_GRANT=10,000`, 리필 차단, `granted` 플래그, SSR 가드(`typeof window`), localStorage 마이그레이션 OK
-- `OutOfDemoModal` 전역 마운트(`__root.tsx`) OK
-- `PlinkoBoard`/`DiceScreen`/`CrashScreen` 모두 `wallet.tryDebit`/`credit` 사용 — 로컬 잔액 state 잔재 없음
-- RTP 0.97 통일(`ModeContext`), `gameRules.ts` 카피 정합
-- Provably Fair seed 노출 유지(편향 제거)
+## 문제
+- 현재 칩: `MOCK_ONLINE_BASE = 10,048,293` 기준 LiveNumber
+- 히어로 stat: `base: 10,120,000` 기준 LiveNumber (별도 인스턴스, 다른 base)
+- 둘이 서로 다른 base에서 독립적으로 jitter → 절대 동일하게 안 보임
 
-**⚠️ 점검 필요 / 미세 이슈**
-- 라우트 `head` 설명 문구가 아직 "99% RTP"로 남아 있음 (`games.crash.tsx`, `games.dice.tsx`) — 실제 코드는 97%. 메타만 불일치 → 97%로 정정.
-- `persistedGameState.ts` v2 마이그레이션은 잔액만 제거, 자동베팅/세팅은 보존 — 의도대로 동작.
-- `houseEdge.spec.ts` 기대치가 0.97 기준인지 마지막으로 확인(테스트 한 번 돌려서 그린 확인).
+## 해결 방법: 전역 동기화 스토어
+숫자 한 개를 한 곳에서 jitter시키고 두 컴포넌트가 같은 값을 구독하게 한다.
 
-이번 턴(빌드 모드 전환 후) **읽기 검증만** 추가로 수행해서 위 두 항목을 정정합니다. 게임 로직은 손대지 않습니다.
+### 1) `src/shared/motion/liveOnlineStore.ts` (신규)
+- `MOCK_ONLINE_BASE`(=10,048,293)를 base로 하는 단일 jitter 루프
+- amplitudeRatio 0.003, bias 0.52, intervalMs 2800 (한 곳에서만 돌아감)
+- `useLiveOnline()` 훅: 현재 값을 구독해 반환 (useSyncExternalStore)
+- `prefers-reduced-motion`/`document.hidden` 가드 유지
+- 첫 구독 시 루프 시작, 마지막 구독 해제 시 정지 (ref count)
 
-## 2) 랜딩 숫자 자연스러운 "라이브 변동" 처리
+### 2) `src/shared/motion/LiveNumber.tsx` — 옵션 확장
+- 외부에서 `value`를 직접 주입할 수 있는 변형 추가 (기존 `base/amplitudeRatio/bias` 모드는 그대로 유지)
+- 또는 더 간단히, 두 컴포넌트가 `useLiveOnline()` 값을 받아 `CountUp`으로 직접 렌더링하도록 호출부만 수정 (LiveNumber 수정 없음). 이 방식 채택.
 
-요구: 화면의 모든 숫자가 1,000만 명이 실시간으로 쓰는 것처럼 천천히 ↑↓ 움직여야 함.
+### 3) `src/shared/layout/OnlineCounterChip.tsx`
+- 기존 `<LiveNumber base={MOCK_ONLINE_BASE} ... />` 제거
+- `const v = useLiveOnline();` → `<CountUp value={v} duration={1400} format={(n)=>KO.format(Math.round(n))} />`
 
-대상 숫자(`Landing.tsx` + 보조 컴포넌트):
-1. 상단 칩 **온라인 접속자** `10,048,987` — 이미 `RollingCountUp`로 ↑만 됨 → ↑/↓ 양방향 미세 변동으로 교체
-2. 히어로 통계 카드 3개 (`MOCK_LANDING_HERO_STATS`):
-   - "전 세계 실시간 접속 1,012만+" → 1,011만~1,013만 사이 천천히 변동
-   - "오늘 지급된 PHON 12억+" → 11.8억~12.4억 사이 변동(증가 우세)
-   - "이벤트 보너스 +300%" → **+150% 고정**(요청대로)
-3. 본문 "한국 1,012만+ 명" / "1,800 PHON" — 텍스트 안의 카운트는 정적(문장 가독성). 단, "1,012만+"는 칩과 동기화되게 동일 소스에서 끌어옴.
-4. `LiveCashoutStrip` "32만 명 접속 중" → 31.8만~32.6만 천천히 변동
-5. `FomoMarquee` 안의 "32만 명", "1,012만+", "300%" 문구 → 동적 카운트로 치환하고 300%는 150%로 수정.
+### 4) `src/features/landing/Landing.tsx` — 히어로 stats 렌더링
+- `s.live`가 "전 세계 실시간 접속" 항목(mode=`manlike`, key=`globalOnline` 같은 플래그)인 경우:
+  - `useLiveOnline()` 사용해 `CountUp value={v} format={(n)=>formatManlike(n,"+")}`
+- 다른 stat(`오늘 지급 PHON` 등)은 기존 LiveNumber 그대로
 
-### 변동 방식 (`LiveNumber` 신규 컴포넌트)
-- 공통 훅: 기준값 `base`, 진폭 `amplitude`(±%), 주기 `intervalMs`(2.5~5초 랜덤), 변화량은 가우시안 jitter로 한 번에 0.02~0.15% 정도만.
-- 절대 base의 ±2% 밴드를 넘지 않음(시각적으로 "튀지 않게").
-- 트렌드 바이어스: 접속자/지급액은 +60% 확률로 상승, 동접은 50/50.
-- `prefers-reduced-motion`이면 base 고정.
-- 보간은 기존 `CountUp` 재사용(900ms easeOutCubic) → 부드럽게 흐름.
+### 5) `src/mocks/fomo.ts`
+- 히어로 stats 중 "전 세계 실시간 접속" 항목에 `syncKey: "globalOnline"` 플래그 추가 (Landing에서 분기용)
+- `live.base`는 더 이상 사용 안 되지만 타입 호환 위해 `MOCK_ONLINE_BASE`로 통일
 
-### 보너스 150% 변경
-- `MOCK_EVENT_BONUS_PERCENT = 150`
-- 히어로 라벨 `+150%`, 상단 카피 "🔥 오늘만 150% 보너스 이벤트"
-- 마퀴 항목 "300% 보너스" → "150% 보너스"
-- 라우트 메타(landing/index) "300%" 언급 정정
+## 결과
+- 칩과 히어로 카드가 **정확히 같은 순간 같은 숫자**를 표시 (포맷만 `10,048,293` ↔ `1,005만+`)
+- 참고: `10,048,293` → `formatManlike` = `1,005만+`. 사용자가 보여준 `1,012만+`은 옛 base였음. 실제 동기화하면 칩 숫자에 맞춰 `1,005만+` 부근으로 표시됨 (둘 다 함께 미세 변동).
 
-## 3) 변경 파일
+## 영향 파일
+- 신규: `src/shared/motion/liveOnlineStore.ts`
+- 수정: `src/shared/layout/OnlineCounterChip.tsx`, `src/features/landing/Landing.tsx`, `src/mocks/fomo.ts`
 
-- `src/mocks/fomo.ts` — 300→150, hero stats를 `{ base, amplitude, bias, format }` 형태로 확장
-- `src/shared/motion/LiveNumber.tsx` *(신규)* — 양방향 jitter 카운터 (CountUp 재사용)
-- `src/shared/motion/RollingCountUp.tsx` — ↓ 변동 허용하도록 옵션 추가(또는 LiveNumber로 교체)
-- `src/features/landing/Landing.tsx` — 히어로 카드/카피에 LiveNumber 적용, 150% 반영
-- `src/shared/layout/LiveCashoutStrip.tsx` — "32만 명" 라이브화
-- `src/shared/layout/OnlineCounterChip.tsx` — base를 fomo SSOT에서 가져오고 LiveNumber로
-- `src/shared/motion/FomoMarquee.tsx` 또는 `mocks/fomo.ts` 마퀴 텍스트 — 300→150
-- `src/routes/index.tsx`, `src/routes/__root.tsx` — meta description 300→150
-- `src/routes/_app/games.crash.tsx`, `games.dice.tsx` — "99% RTP" → "97% RTP" 메타 정정
-
-## 4) 비고
-
-- 모든 변동은 시각 효과만, 비즈니스 로직/지갑/게임엔진에는 손대지 않음.
-- 성능: setInterval 1개 컴포넌트당 1개, 컴포넌트 언마운트 시 cleanup, 탭 비활성(`document.hidden`) 시 일시정지.
-- 접근성: `aria-live="off"`(스크린리더 폭격 방지), reduced-motion 존중.
+비즈니스 로직/RTP/지갑/게임 코드 변경 없음.
