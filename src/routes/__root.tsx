@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { LazyMotion, domAnimation } from "framer-motion";
 import { Toaster } from "sonner";
+import { AuthProvider } from "@/features/auth/AuthContext";
 import { ModeProvider } from "@/shared/mode/ModeContext";
 import { OutOfDemoModal } from "@/shared/wallet/OutOfDemoModal";
 
@@ -130,24 +131,26 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <ModeProvider>
-        <LazyMotion features={domAnimation}>
-          <Outlet />
-          <OutOfDemoModal />
-          <Toaster
-            position="top-center"
-            theme="dark"
-            toastOptions={{
-              style: {
-                background: "color-mix(in oklab, oklch(0.24 0.05 282) 90%, transparent)",
-                border: "1px solid oklch(1 0 0 / 0.12)",
-                color: "oklch(0.98 0.01 280)",
-                backdropFilter: "blur(14px)",
-              },
-            }}
-          />
-        </LazyMotion>
-      </ModeProvider>
+      <AuthProvider>
+        <ModeProvider>
+          <LazyMotion features={domAnimation} strict>
+            <Outlet />
+            <OutOfDemoModal />
+            <Toaster
+              position="top-center"
+              theme="dark"
+              toastOptions={{
+                style: {
+                  background: "color-mix(in oklab, oklch(0.24 0.05 282) 90%, transparent)",
+                  border: "1px solid oklch(1 0 0 / 0.12)",
+                  color: "oklch(0.98 0.01 280)",
+                  backdropFilter: "blur(14px)",
+                },
+              }}
+            />
+          </LazyMotion>
+        </ModeProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

@@ -13,7 +13,6 @@ import { DICE_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
-import { useMode } from "@/shared/mode/ModeContext";
 import { profitOf } from "@/shared/games/engine/houseEdge";
 import {
   type DiceMode,
@@ -24,7 +23,7 @@ import {
 } from "@/shared/games/dice/DiceEngine";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
 import { diceStore } from "@/shared/games/state/persistedGameState";
-import { useBalance, wallet } from "@/shared/wallet/walletStore";
+import { useGameWallet } from "@/shared/wallet/useGameWallet";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { cn } from "@/lib/utils";
 import { appToast } from "@/shared/ui/toast";
@@ -36,11 +35,10 @@ const ROLLING_MS = 800;
 const SETTLED_MS = 800;
 
 export function DiceScreen() {
-  const { mode } = useMode();
+  const { mode, balance, tryDebit, credit } = useGameWallet();
   const [phase, setPhase] = useState<DicePhase>("idle");
 
   // Persisted state
-  const balance = useBalance(mode);
   const nonce = diceStore.use((s) => s.nonce);
   const history = diceStore.use((s) => s.history);
   const lastRoll = diceStore.use((s) => s.lastRoll);
@@ -76,7 +74,7 @@ export function DiceScreen() {
 
         if (won) {
           // gross payout = stake + profit (stake was already debited at place)
-          wallet.credit(mode, activeBet.amount + profit, pm);
+          credit(activeBet.amount + profit, pm);
         }
         diceStore.set((s) => ({
           ...s,
@@ -119,7 +117,7 @@ export function DiceScreen() {
   const handlePlace = useCallback(
     (amount: number) => {
       if (phase !== "idle" || activeBet || amount <= 0) return;
-      if (!wallet.tryDebit(mode, amount)) return; // demo: opens modal automatically
+      if (!tryDebit(amount)) return; // demo: opens modal automatically
       diceStore.set((s) => ({ ...s, pendingAmount: amount }));
       const liveBetId = liveBetsStore.push({
         user: "나의_베팅",

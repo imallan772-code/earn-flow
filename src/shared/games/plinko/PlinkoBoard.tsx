@@ -17,7 +17,9 @@ import { getPlinkoSFX } from "./PlinkoSFX";
 import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
 import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
-import { useBalance, wallet } from "@/shared/wallet/walletStore";
+import { profitOf, payoutOf } from "@/shared/games/engine/houseEdge";
+import { plinkoStore } from "@/shared/games/state/persistedGameState";
+import { useGameWallet } from "@/shared/wallet/useGameWallet";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { cn } from "@/lib/utils";
 import { Volume2, VolumeX } from "lucide-react";
@@ -32,31 +34,15 @@ const RISK_OPTIONS: RiskLevel[] = ["low", "medium", "high"];
 const RISK_LABEL: Record<RiskLevel, string> = { low: "낮음", medium: "보통", high: "높음" };
 const MUTE_KEY = "phonara.plinko.muted";
 
-interface HistoryEntry {
-  id: string;
-  multiplier: number;
-  slot: number;
-}
-
-interface LastOutcome {
-  outcome: "win" | "loss";
-  profit: number;
-  multiplier: number;
-  bet: number;
-  payout: number;
-  nonce: number;
-  jackpot: boolean;
-}
-
 export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
+  const { balance, tryDebit, credit } = useGameWallet();
   const [phase, setPhase] = useState<"idle" | "rolling" | "settled">("idle");
-  const balance = useBalance(mode);
-  const [nonce, setNonce] = useState(0);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [rows, setRows] = useState<RowCount>(16);
-  const [risk, setRisk] = useState<RiskLevel>("medium");
-  const [pendingAmount, setPendingAmount] = useState(10);
-  const [lastOutcome, setLastOutcome] = useState<LastOutcome | null>(null);
+  const nonce = plinkoStore.use((s) => s.nonce);
+  const history = plinkoStore.use((s) => s.history);
+  const rows = plinkoStore.use((s) => s.rows);
+  const risk = plinkoStore.use((s) => s.risk);
+  const pendingAmount = plinkoStore.use((s) => s.pendingAmount);
+  const lastOutcome = plinkoStore.use((s) => s.lastOutcome);
   const [muted, setMuted] = useState(false);
   const [jackpot, setJackpot] = useState<LastOutcome | null>(null);
 
@@ -164,7 +150,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
       if (phase !== "idle") return;
       if (amount <= 0) return;
       if (!engineRef.current || !rendererRef.current) return;
-      if (!wallet.tryDebit(mode, amount)) return; // demo: opens OutOfDemoModal
+      if (!tryDebit(amount)) return; // demo: opens OutOfDemoModal
       placingRef.current = true;
 
       // Unlock + play release SFX (user gesture path)
@@ -172,7 +158,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
       sfx.resume();
       sfx.ballRelease();
 
-      setPendingAmount(amount);
+      plinkoStore.set((s) => ({ ...s, pendingAmount: amount }));
       setPhase("rolling");
 
       const seed = `phonara-plinko-${nonce}`;
@@ -190,19 +176,15 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
       });
 
       rendererRef.current.playDrop(result, engineRef.current, (slot, multiplier) => {
-        const grossPayout = amount * multiplier;
-        const rake = mode === "real" ? grossPayout * 0.03 : 0;
-        const payout = grossPayout - rake;
-        const profit = payout - amount;
-        const won = payout >= amount;
+        const payout = payoutOf(amount, multiplier, mode);
+        const profit = profitOf(amount, multiplier, mode);
+        const won = profit >= 0;
 
-        if (payout > 0) wallet.credit(mode, payout, multiplier);
-        setHistory((h) => [{ id: `n${nonce}-${slot}`, multiplier, slot }, ...h].slice(0, 30));
-
+        if (payout > 0) credit(payout, multiplier);
         const max = Math.max(...MULTIPLIERS[risk][rows]);
         const isJackpot = multiplier >= max * 0.5 && multiplier >= 5;
-        const outcomePayload: LastOutcome = {
-          outcome: won ? "win" : "loss",
+        const outcomePayload = {
+          outcome: won ? ("win" as const) : ("loss" as const),
           profit,
           multiplier,
           bet: amount,
@@ -210,7 +192,11 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
           nonce,
           jackpot: isJackpot,
         };
-        setLastOutcome(outcomePayload);
+        plinkoStore.set((s) => ({
+          ...s,
+          history: [{ id: `n${nonce}-${slot}`, multiplier, slot }, ...s.history].slice(0, 30),
+          lastOutcome: outcomePayload,
+        }));
         onOutcome?.({ outcome: outcomePayload.outcome, profit, nonce });
 
         // SFX + haptic
@@ -241,13 +227,13 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
         if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
         settleTimerRef.current = setTimeout(() => {
           setPhase("idle");
-          setNonce((n) => n + 1);
+          plinkoStore.set((s) => ({ ...s, nonce: s.nonce + 1 }));
           settleTimerRef.current = null;
           placingRef.current = false;
         }, 800);
       });
     },
-    [phase, nonce, rows, risk, mode, onOutcome],
+    [phase, nonce, rows, risk, mode, onOutcome, tryDebit, credit],
   );
 
   const canPlace = phase === "idle";
@@ -353,7 +339,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
           {RISK_OPTIONS.map((r) => (
             <button
               key={r}
-              onClick={() => setRisk(r)}
+              onClick={() => plinkoStore.set((s) => ({ ...s, risk: r }))}
               disabled={phase !== "idle"}
               className={cn(
                 "flex-1 rounded-lg py-1.5 text-[11px] font-bold uppercase tracking-wider transition disabled:opacity-50",
@@ -370,7 +356,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
           {ROW_OPTIONS.map((n) => (
             <button
               key={n}
-              onClick={() => setRows(n)}
+              onClick={() => plinkoStore.set((s) => ({ ...s, rows: n }))}
               disabled={phase !== "idle"}
               className={cn(
                 "flex-1 rounded-lg py-1.5 text-[11px] font-bold transition disabled:opacity-50",

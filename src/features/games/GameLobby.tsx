@@ -1,132 +1,10 @@
 /**
- * GameLobby — 8-game grid for the Earn tab.
- *
- * Crash / Dice: OPEN — clickable
- * Others: SOON — disabled badge
+ * GameLobby — earn tab game grid (SSOT: gameRegistry).
  */
 import { Link } from "@tanstack/react-router";
-import {
-  Rocket,
-  Dices,
-  Cherry,
-  CircleDot,
-  Hand,
-  Gift,
-  Layers,
-  Trophy,
-  Coins,
-  Bomb,
-} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
-
-type GameId =
-  | "crash"
-  | "dice"
-  | "plinko"
-  | "mines"
-  | "slots"
-  | "roulette"
-  | "rps"
-  | "luckybox"
-  | "cardflip"
-  | "keepy";
-
-interface GameCard {
-  id: GameId;
-  name: string;
-  rtp: string;
-  liveBets: number;
-  Icon: typeof Rocket;
-  open: boolean;
-  accent: "cyan" | "gold" | "emerald" | "purple" | "pink" | "warning";
-}
-
-const GAMES: GameCard[] = [
-  {
-    id: "crash",
-    name: "Crash",
-    rtp: "99%",
-    liveBets: 482,
-    Icon: Rocket,
-    open: true,
-    accent: "cyan",
-  },
-  {
-    id: "dice",
-    name: "Dice",
-    rtp: "99%",
-    liveBets: 311,
-    Icon: Dices,
-    open: true,
-    accent: "emerald",
-  },
-  {
-    id: "plinko",
-    name: "Plinko",
-    rtp: "97%",
-    liveBets: 207,
-    Icon: Coins,
-    open: true,
-    accent: "purple",
-  },
-  {
-    id: "mines",
-    name: "Mines",
-    rtp: "99%",
-    liveBets: 156,
-    Icon: Bomb,
-    open: true,
-    accent: "warning",
-  },
-  {
-    id: "slots",
-    name: "Slots",
-    rtp: "96%",
-    liveBets: 0,
-    Icon: Cherry,
-    open: false,
-    accent: "pink",
-  },
-
-  {
-    id: "roulette",
-    name: "Roulette",
-    rtp: "97.3%",
-    liveBets: 0,
-    Icon: CircleDot,
-    open: false,
-    accent: "warning",
-  },
-  { id: "rps", name: "RPS", rtp: "98%", liveBets: 0, Icon: Hand, open: false, accent: "purple" },
-  {
-    id: "luckybox",
-    name: "LuckyBox",
-    rtp: "95%",
-    liveBets: 0,
-    Icon: Gift,
-    open: false,
-    accent: "gold",
-  },
-  {
-    id: "cardflip",
-    name: "CardFlip",
-    rtp: "98%",
-    liveBets: 0,
-    Icon: Layers,
-    open: false,
-    accent: "cyan",
-  },
-  {
-    id: "keepy",
-    name: "Keepy-Uppy",
-    rtp: "—",
-    liveBets: 0,
-    Icon: Trophy,
-    open: false,
-    accent: "emerald",
-  },
-];
+import { GAME_REGISTRY, gamePath, type GameRegistryEntry } from "@/shared/games/registry/gameRegistry";
 
 export function GameLobby() {
   return (
@@ -138,7 +16,7 @@ export function GameLobby() {
         <ModeBadge />
       </div>
       <div className="grid grid-cols-2 gap-2.5">
-        {GAMES.map((g) => (
+        {GAME_REGISTRY.map((g) => (
           <GameTile key={g.id} card={g} />
         ))}
       </div>
@@ -146,7 +24,7 @@ export function GameLobby() {
   );
 }
 
-function GameTile({ card }: { card: GameCard }) {
+function GameTile({ card }: { card: GameRegistryEntry }) {
   const inner = (
     <div
       className={cn(
@@ -183,30 +61,11 @@ function GameTile({ card }: { card: GameCard }) {
     </div>
   );
 
-  if (!card.open) return inner;
-  if (card.id === "crash")
-    return (
-      <Link to="/games/crash" className="block">
-        {inner}
-      </Link>
-    );
-  if (card.id === "dice")
-    return (
-      <Link to="/games/dice" className="block">
-        {inner}
-      </Link>
-    );
-  if (card.id === "plinko")
-    return (
-      <Link to="/games/plinko" className="block">
-        {inner}
-      </Link>
-    );
-  if (card.id === "mines")
-    return (
-      <Link to="/games/mines" className="block">
-        {inner}
-      </Link>
-    );
-  return inner;
+  const path = gamePath(card.id);
+  if (!path) return inner;
+  return (
+    <Link to={path} className="block">
+      {inner}
+    </Link>
+  );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { appToast } from "@/shared/ui/toast";
@@ -8,6 +8,9 @@ import { FloatingReward } from "@/shared/motion/FloatingReward";
 import { RewardBurst } from "@/shared/motion/RewardBurst";
 import { CountUp } from "@/shared/motion/CountUp";
 import { cn } from "@/lib/utils";
+import { RequireOnboarding } from "@/features/auth/RequireAuth";
+import { useAuth } from "@/features/auth/AuthContext";
+import { useProfile } from "@/features/profile/useProfile";
 
 const STEPS = [
   { reward: 1000, title: "탭하여 1,000 PHON 받기", caption: "지금 8,420명이 받는 중" },
@@ -17,32 +20,62 @@ const STEPS = [
 ];
 
 export function Onboarding() {
+  return (
+    <RequireOnboarding>
+      <OnboardingFlow />
+    </RequireOnboarding>
+  );
+}
+
+function OnboardingFlow() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(0);
-  const [balance, setBalance] = useState(0);
+  const { profile, refreshProfile } = useAuth();
+  const { completeOnboardingStep, balance } = useProfile();
+  const [step, setStep] = useState(profile?.onboarding_step ?? 0);
+  const [balanceView, setBalanceView] = useState(balance?.phon ?? 0);
   const [floatAmt, setFloatAmt] = useState<number | null>(null);
   const [burst, setBurst] = useState(0);
-  const [nickname, setNickname] = useState("");
+  const [nickname, setNickname] = useState(profile?.nickname ?? "");
+  const [submitting, setSubmitting] = useState(false);
 
-  const cfg = STEPS[step];
+  useEffect(() => {
+    if (profile?.onboarding_step != null) setStep(profile.onboarding_step);
+  }, [profile?.onboarding_step]);
 
-  function advance() {
-    const next = step + 1;
-    // MERGE: replace with mockCompleteStep → onboarding RPC in phonara-world-main
-    setBalance((b) => b + cfg.reward);
-    setFloatAmt(cfg.reward);
-    setBurst((n) => n + 1);
-    setTimeout(() => setFloatAmt(null), 900);
-    if (next >= STEPS.length) {
-      setTimeout(() => navigate({ to: "/feed" }), 700);
-    } else {
-      setTimeout(() => setStep(next), 700);
+  useEffect(() => {
+    if (balance?.phon != null) setBalanceView(balance.phon);
+  }, [balance?.phon]);
+
+  const cfg = STEPS[step] ?? STEPS[0];
+  const referralCode = balance?.referralCode ?? profile?.referral_code ?? "PHO-------";
+
+  async function advance() {
+    if (submitting || step >= STEPS.length) return;
+    setSubmitting(true);
+    try {
+      const result = await completeOnboardingStep(step, step === 1 ? nickname : undefined);
+      setBalanceView(result.balance.phon);
+      setFloatAmt(result.reward);
+      setBurst((n) => n + 1);
+      setTimeout(() => setFloatAmt(null), 900);
+      await refreshProfile();
+
+      const next = step + 1;
+      if (next >= STEPS.length) {
+        setTimeout(() => navigate({ to: "/feed" }), 700);
+      } else {
+        setTimeout(() => setStep(next), 700);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "온보딩 처리에 실패했습니다";
+      appToast.raw.error(message);
+    } finally {
+      setSubmitting(false);
     }
   }
 
   return (
     <AuthPageShell>
-      {/* progress */}
       <div className="flex items-center justify-between">
         <div className="flex gap-1.5">
           {STEPS.map((_, i) => (
@@ -58,7 +91,7 @@ export function Onboarding() {
         <div className="glass-1 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5">
           <Sparkles size={14} style={{ color: "var(--color-gold)" }} />
           <CountUp
-            value={balance}
+            value={balanceView}
             className="font-numeric text-sm font-bold text-[var(--color-gold)]"
           />
           <span className="text-[10px] text-[var(--color-muted)]">PHON</span>
@@ -76,8 +109,9 @@ export function Onboarding() {
           {step === 0 && (
             <motion.button
               onClick={advance}
+              disabled={submitting}
               whileTap={{ scale: 0.95 }}
-              className="relative flex h-48 w-48 items-center justify-center rounded-full bg-holographic shadow-glow-purple"
+              className="relative flex h-48 w-48 items-center justify-center rounded-full bg-holographic shadow-glow-purple disabled:opacity-60"
             >
               <RewardBurst trigger={burst} />
               <Sparkles size={64} className="text-[var(--color-bg-0)]" strokeWidth={2} />
@@ -94,7 +128,7 @@ export function Onboarding() {
               />
               <button
                 onClick={advance}
-                disabled={nickname.length < 2}
+                disabled={nickname.length < 2 || submitting}
                 className="flex h-14 w-full items-center justify-center rounded-2xl bg-holographic text-base font-bold text-[var(--color-bg-0)] shadow-glow-purple disabled:opacity-50"
               >
                 저장하고 +500 PHON
@@ -105,15 +139,16 @@ export function Onboarding() {
             <div className="glass-3 w-full rounded-3xl p-6 text-center">
               <div className="text-xs text-[var(--color-muted)]">내 추천코드</div>
               <div className="mt-2 font-numeric text-3xl font-extrabold text-holographic">
-                PHO-K7Q2X9
+                {referralCode}
               </div>
               <button
                 onClick={() => {
-                  navigator.clipboard?.writeText("PHO-K7Q2X9").catch(() => {});
+                  navigator.clipboard?.writeText(referralCode).catch(() => {});
                   appToast.referral.copied();
-                  advance();
+                  void advance();
                 }}
-                className="mt-4 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-holographic px-6 font-bold text-[var(--color-bg-0)] shadow-glow-pink"
+                disabled={submitting}
+                className="mt-4 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-holographic px-6 font-bold text-[var(--color-bg-0)] shadow-glow-pink disabled:opacity-60"
               >
                 <Copy size={16} /> 복사하고 +200 PHON
               </button>
@@ -122,8 +157,9 @@ export function Onboarding() {
           {step === 3 && (
             <motion.button
               onClick={advance}
+              disabled={submitting}
               whileTap={{ scale: 0.95 }}
-              className="relative flex h-48 w-48 items-center justify-center rounded-full"
+              className="relative flex h-48 w-48 items-center justify-center rounded-full disabled:opacity-60"
               style={{
                 background:
                   "radial-gradient(circle, color-mix(in oklab, var(--color-pink) 40%, transparent), transparent 70%)",

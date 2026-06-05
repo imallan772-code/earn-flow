@@ -21,12 +21,11 @@ import { CRASH_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
-import { useMode } from "@/shared/mode/ModeContext";
 import { profitOf } from "@/shared/games/engine/houseEdge";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
 import { reachedTarget } from "@/shared/games/engine/clamp";
 import { crashStore } from "@/shared/games/state/persistedGameState";
-import { useBalance, wallet } from "@/shared/wallet/walletStore";
+import { useGameWallet } from "@/shared/wallet/useGameWallet";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { cn } from "@/lib/utils";
 import { appToast } from "@/shared/ui/toast";
@@ -45,10 +44,9 @@ interface ActiveBet {
 }
 
 export function CrashScreen() {
-  const { mode } = useMode();
+  const { mode, balance, tryDebit, credit, refund } = useGameWallet();
 
   // Persisted
-  const balance = useBalance(mode);
   const nonce = crashStore.use((s) => s.nonce);
   const history = crashStore.use((s) => s.history);
   const lastOutcome = crashStore.use((s) => s.lastOutcome);
@@ -75,13 +73,13 @@ export function CrashScreen() {
   }, []);
 
   // Refund unsettled bet on unmount (user left mid-round)
-  const modeRef = useRef(mode);
-  modeRef.current = mode;
+  const refundRef = useRef(refund);
+  refundRef.current = refund;
   useEffect(() => {
     return () => {
       const b = betRef.current;
       if (b && b.cashedAt === null) {
-        wallet.refund(modeRef.current, b.amount);
+        refundRef.current(b.amount);
       }
     };
   }, []);
@@ -143,7 +141,7 @@ export function CrashScreen() {
       const cashed = bet.cashedAt;
       if (cashed !== null) {
         const profit = profitOf(bet.amount, cashed, mode);
-        wallet.credit(mode, bet.amount + profit, cashed);
+        credit(bet.amount + profit, cashed);
         crashStore.set((s) => ({
           ...s,
           lastOutcome: { outcome: "win", profit, nonce },
@@ -188,7 +186,7 @@ export function CrashScreen() {
   const handlePlace = useCallback(
     (amount: number, autoTarget: number) => {
       if (phase !== "betting" || bet || amount <= 0) return;
-      if (!wallet.tryDebit(mode, amount)) return;
+      if (!tryDebit(amount)) return;
       crashStore.set((s) => ({
         ...s,
         pendingAmount: amount,

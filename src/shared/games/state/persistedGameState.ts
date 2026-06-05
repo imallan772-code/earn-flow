@@ -116,3 +116,39 @@ export const minesStore = createGameStore<MinesPersisted>(
   },
   1,
 );
+
+// ───────── PLINKO ─────────
+export interface PlinkoHistoryItem {
+  id: string;
+  multiplier: number;
+  slot: number;
+}
+export interface PlinkoOutcome {
+  outcome: "win" | "loss";
+  profit: number;
+  multiplier: number;
+  bet: number;
+  payout: number;
+  nonce: number;
+  jackpot: boolean;
+}
+export interface PlinkoPersisted {
+  nonce: number;
+  history: PlinkoHistoryItem[];
+  lastOutcome: PlinkoOutcome | null;
+  rows: 8 | 12 | 16;
+  risk: "low" | "medium" | "high";
+  pendingAmount: number;
+}
+export const plinkoStore = createGameStore<PlinkoPersisted>(
+  "plinko",
+  {
+    nonce: 0,
+    history: [],
+    lastOutcome: null,
+    rows: 16,
+    risk: "medium",
+    pendingAmount: 10,
+  },
+  1,
+);

@@ -5,7 +5,9 @@ import { MobileShell } from "@/shared/layout/MobileShell";
 import { BottomNav } from "@/shared/layout/BottomNav";
 import { Premium3DCard } from "@/shared/ui/Premium3DCard";
 import { PremiumPageHeader } from "@/shared/ui/PremiumPageHeader";
-import { MOCK_BALANCE } from "@/mocks/balance";
+import { useProfile } from "@/features/profile/useProfile";
+import { resolveBalanceView } from "@/features/profile/balanceView";
+import { useAuth } from "@/features/auth/AuthContext";
 import { formatPHON, formatKRW } from "@/lib/format";
 import { appToast } from "@/shared/ui/toast";
 
@@ -15,6 +17,9 @@ interface Props {
 
 export function WithdrawalForm({ kind }: Props) {
   const [amount, setAmount] = useState(50_000);
+  const { balance, isLoading } = useProfile();
+  const { isConfigured } = useAuth();
+  const { view: userBalance } = resolveBalanceView(balance, { isLoading, isConfigured });
   const fee = kind === "phon" ? amount * 0.01 : 1;
   return (
     <MobileShell>
@@ -39,7 +44,8 @@ export function WithdrawalForm({ kind }: Props) {
               style={{ borderColor: "var(--color-border-hi)" }}
             />
             <div className="mt-1.5 text-[11px] text-[var(--color-muted)]">
-              보유 {formatPHON(MOCK_BALANCE.phon)} {kind === "phon" ? "PHON" : "USDT"}
+              보유 {formatPHON(kind === "phon" ? userBalance.phon : userBalance.usdt)}{" "}
+              {kind === "phon" ? "PHON" : "USDT"}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">

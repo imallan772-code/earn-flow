@@ -6,9 +6,13 @@
  */
 import { getSupabaseClient } from "@/integrations/supabase/client";
 
-// TODO: implement debit_phon_for_bet RPC when real-mode betting ships
-export async function debitPhonForBet(_amount: number, _game: string, _roundId: string) {
+export async function debitPhonForBet(amount: number, game: string, roundId: string) {
   const supabase = getSupabaseClient();
-  if (!supabase) throw new Error("Supabase not configured");
-  throw new Error("debit_phon_for_bet RPC not implemented — Cursor task");
+  const { data, error } = await supabase.rpc("debit_phon_for_bet", {
+    p_amount: amount,
+    p_game: game,
+    p_round_id: roundId,
+  });
+  if (error) throw error;
+  return data;
 }

@@ -6,6 +6,8 @@ import { appToast } from "@/shared/ui/toast";
 import { OnlineCounterChip } from "@/shared/layout/OnlineCounterChip";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/features/auth/AuthContext";
+import { GuestOnly } from "@/features/auth/RequireAuth";
 
 type Mode = "signin" | "signup";
 type Tab = "phone" | "email" | "passkey" | "google";
@@ -22,20 +24,59 @@ const TABS: { id: Tab; label: string; Icon: typeof Smartphone }[] = [
 ];
 
 export function AuthShell({ mode }: Props) {
-  const [tab, setTab] = useState<Tab>("phone");
+  return (
+    <GuestOnly>
+      <AuthShellForm mode={mode} />
+    </GuestOnly>
+  );
+}
+
+function AuthShellForm({ mode }: Props) {
+  const [tab, setTab] = useState<Tab>("email");
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState(["", "", "", "", "", ""]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { signInWithEmail, signUpWithEmail, refreshProfile, isConfigured } = useAuth();
 
   const isSignup = mode === "signup";
 
-  function mockSignIn() {
-    if (isSignup) appToast.auth.signupDone();
-    else appToast.auth.welcomeBack();
-    // MERGE: replace with useAuth().signInWithX from phonara-world-main
-    navigate({ to: isSignup ? "/onboarding" : "/feed" });
+  async function handleSubmit() {
+    if (!isConfigured) {
+      appToast.ui.comingSoon();
+      return;
+    }
+
+    if (tab !== "email") {
+      appToast.ui.comingSoon();
+      return;
+    }
+
+    if (!email.trim() || password.length < 6) {
+      appToast.raw.error("이메일과 비밀번호(6자 이상)를 입력해 주세요.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      if (isSignup) {
+        await signUpWithEmail(email.trim(), password);
+        appToast.auth.signupDone();
+        navigate({ to: "/onboarding" });
+      } else {
+        await signInWithEmail(email.trim(), password);
+        const prof = await refreshProfile();
+        appToast.auth.welcomeBack();
+        navigate({ to: prof?.onboarding_completed ? "/feed" : "/onboarding" });
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "인증에 실패했습니다";
+      appToast.raw.error(message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function updatePin(i: number, v: string) {
@@ -87,7 +128,6 @@ export function AuthShell({ mode }: Props) {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="glass-2 mt-6 grid grid-cols-4 gap-1 rounded-2xl p-1">
         {TABS.map((t) => (
           <button
@@ -141,6 +181,9 @@ export function AuthShell({ mode }: Props) {
                 ))}
               </div>
             </Field>
+            <p className="text-[11px] text-[var(--color-muted)]">
+              휴대폰 OTP 로그인은 곧 지원됩니다. 지금은 이메일 탭을 이용해 주세요.
+            </p>
           </div>
         )}
         {tab === "email" && (
@@ -150,6 +193,8 @@ export function AuthShell({ mode }: Props) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@phonara.app"
+                type="email"
+                autoComplete="email"
                 className="phon-input"
               />
             </Field>
@@ -158,7 +203,8 @@ export function AuthShell({ mode }: Props) {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="********"
+                placeholder="6자 이상"
+                autoComplete={isSignup ? "new-password" : "current-password"}
                 className="phon-input"
               />
             </Field>
@@ -168,7 +214,7 @@ export function AuthShell({ mode }: Props) {
           <div className="glass-2 rounded-2xl p-5 text-center text-sm text-[var(--color-muted)]">
             <KeyRound size={28} className="mx-auto mb-2" style={{ color: "var(--color-cyan)" }} />
             <div className="font-semibold text-[var(--color-foreground)]">패스키로 1초 로그인</div>
-            <div className="mt-1 text-xs">Face ID · Touch ID · 윈도우 Hello</div>
+            <div className="mt-1 text-xs">Face ID · Touch ID · 윈도우 Hello — 준비 중</div>
           </div>
         )}
         {tab === "google" && (
@@ -176,16 +222,21 @@ export function AuthShell({ mode }: Props) {
             <div className="font-semibold text-[var(--color-foreground)]">
               구글 계정으로 계속하기
             </div>
-            <div className="mt-1 text-xs">탭하면 mock 인증 후 다음 화면으로 이동합니다</div>
+            <div className="mt-1 text-xs">OAuth 연동 준비 중 — 이메일로 가입해 주세요</div>
           </div>
         )}
       </div>
 
       <button
-        onClick={mockSignIn}
-        className="mt-5 flex h-14 w-full items-center justify-center rounded-2xl bg-holographic text-base font-extrabold text-[var(--color-bg-0)] shadow-glow-purple"
+        onClick={handleSubmit}
+        disabled={submitting}
+        className="mt-5 flex h-14 w-full items-center justify-center rounded-2xl bg-holographic text-base font-extrabold text-[var(--color-bg-0)] shadow-glow-purple disabled:opacity-60"
       >
-        {isSignup ? "지금 시작하고 1,800 PHON 받기" : "로그인"}
+        {submitting
+          ? "연결 중..."
+          : isSignup
+            ? "지금 시작하고 1,800 PHON 받기"
+            : "로그인"}
       </button>
 
       <Link

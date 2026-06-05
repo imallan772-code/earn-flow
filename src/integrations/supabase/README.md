@@ -1,12 +1,32 @@
-# Supabase integration — mock only · merge forbidden
+# Supabase integration
 
-이 디렉토리는 **Lovable Visual Lab 프로젝트**의 자동 통합 파일입니다.
+Connected project: **phonara-gb** (`https://kanftnqenuzverroodev.supabase.co`)
 
-- **절대 본편 `phonara-world-main`에 export 하지 않습니다.**
-- 본 프로젝트의 모든 데이터는 `src/mocks/*` 모듈에서만 제공됩니다.
-- Lovable 코드에서 이 디렉토리를 import 하지 않습니다.
-- migration / RPC / Realtime / Edge / 실제 OAuth 전부 금지.
+## Setup
 
-## Cursor merge 시
+1. Copy `.env.example` → `.env`
+2. Fill `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from the Supabase dashboard
+3. `bun run dev`
 
-본편 `src/integrations/supabase/`를 그대로 유지하세요. Lovable 산출물에서 이식하는 것은 JSX/className/motion 뿐이며, 모든 핸들러는 본편의 기존 `useGameWallet`, `useAuth`, RPC에 reconnect 합니다.
+## Modules
+
+| File | Role |
+|------|------|
+| `client.ts` | Browser Supabase client (auth session in localStorage) |
+| `env.ts` | Public env validation |
+| `types.ts` | Generated DB types |
+
+## App wiring
+
+- `AuthProvider` / `useAuth` — session + profile
+- `useProfile` — balances + onboarding RPC
+- `useGameWallet` — demo localStorage + real Supabase PHON sync
+- `RequireAuth` — protects `/_app/*` routes
+
+## Database
+
+- `profiles` — nickname, referral, VIP, onboarding state (RLS: own row)
+- `wallet_balances` — PHON / USDT / KRW (RLS: own row)
+- `complete_onboarding_step` RPC — server-authoritative onboarding rewards (1000+500+200+100 PHON)
+
+Migrations live in `supabase/migrations/`.

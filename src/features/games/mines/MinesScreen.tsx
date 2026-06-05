@@ -23,7 +23,6 @@ import { MINES_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
-import { useMode } from "@/shared/mode/ModeContext";
 import { profitOf } from "@/shared/games/engine/houseEdge";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
 import {
@@ -37,7 +36,7 @@ import {
   placeMines,
 } from "@/shared/games/mines/MinesEngine";
 import { minesStore } from "@/shared/games/state/persistedGameState";
-import { useBalance, wallet } from "@/shared/wallet/walletStore";
+import { useGameWallet } from "@/shared/wallet/useGameWallet";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { cn } from "@/lib/utils";
 import { appToast } from "@/shared/ui/toast";
@@ -55,8 +54,7 @@ interface ActiveBet {
 }
 
 export function MinesScreen() {
-  const { mode } = useMode();
-  const balance = useBalance(mode);
+  const { mode, balance, tryDebit, credit } = useGameWallet();
   const nonce = minesStore.use((s) => s.nonce);
   const history = minesStore.use((s) => s.history);
   const lastOutcome = minesStore.use((s) => s.lastOutcome);
@@ -93,7 +91,7 @@ export function MinesScreen() {
   const handlePlace = useCallback(
     async (amount: number) => {
       if (!round.isIdle || amount <= 0) return;
-      if (!wallet.tryDebit(mode, amount)) return;
+      if (!tryDebit(amount)) return;
       minesStore.set((s) => ({ ...s, pendingAmount: amount }));
       const mines = await placeMines(
         { serverSeed: SERVER_SEED, clientSeed: CLIENT_SEED, nonce },
@@ -164,7 +162,7 @@ export function MinesScreen() {
   const handleCashout = useCallback(() => {
     if (round.phase !== "playing" || !active || revealed.length === 0 || hitTile != null) return;
     const profit = profitOf(active.amount, currentMult, mode);
-    wallet.credit(mode, active.amount + profit, currentMult);
+    credit(active.amount + profit, currentMult);
     liveBetsStore.update(active.liveBetId, {
       multiplier: currentMult,
       profit: +profit.toFixed(2),

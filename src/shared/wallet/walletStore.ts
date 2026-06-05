@@ -91,6 +91,12 @@ function set(next: Partial<WalletState>) {
   emit();
 }
 
+/** Sync Supabase real-mode PHON balance into the local game wallet. */
+export function syncRealBalance(amount: number) {
+  if (amount < 0 || state.realBalance === amount) return;
+  set({ realBalance: amount });
+}
+
 function subscribe(cb: () => void) {
   listeners.add(cb);
   return () => {

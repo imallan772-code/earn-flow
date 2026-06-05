@@ -8,7 +8,9 @@ import { OnlineCounterChip } from "@/shared/layout/OnlineCounterChip";
 import { SegmentedTabs } from "@/shared/ui/SegmentedTabs";
 import { GameLobby } from "@/features/games/GameLobby";
 import { MOCK_MISSIONS } from "@/mocks/missions";
-import { MOCK_BALANCE } from "@/mocks/balance";
+import { useProfile } from "@/features/profile/useProfile";
+import { resolveBalanceView } from "@/features/profile/balanceView";
+import { useAuth } from "@/features/auth/AuthContext";
 import { formatPHON } from "@/lib/format";
 import { t } from "@/shared/i18n";
 import { appToast } from "@/shared/ui/toast";
@@ -17,6 +19,9 @@ type EarnTab = "missions" | "games";
 
 export function EarnScreen() {
   const [tab, setTab] = useState<EarnTab>("missions");
+  const { balance, isLoading } = useProfile();
+  const { isConfigured } = useAuth();
+  const { view: userBalance } = resolveBalanceView(balance, { isLoading, isConfigured });
 
   return (
     <div className="flex flex-col gap-4">
@@ -51,10 +56,10 @@ export function EarnScreen() {
         <>
           {/* Streak + VIP banner */}
           <Premium3DCard className="flex items-center gap-4 p-4" glow="gold">
-            <StreakFlame days={MOCK_BALANCE.streakDays} />
+            <StreakFlame days={userBalance.streakDays} />
             <div className="flex-1">
               <div className="text-xs text-[var(--color-muted)]">연속 출석</div>
-              <div className="text-lg font-extrabold">{MOCK_BALANCE.streakDays}일 째 🔥</div>
+              <div className="text-lg font-extrabold">{userBalance.streakDays}일 째 🔥</div>
               <div className="mt-0.5 text-[11px] text-[var(--color-gold)]">
                 7일마다 +500,000 PHON 보너스
               </div>

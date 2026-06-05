@@ -19,7 +19,7 @@ export function PlinkoScreen() {
     <div className="flex flex-col gap-2">
       <header className="flex items-center gap-2">
         <Link
-          to="/games"
+          to="/earn"
           className="glass-1 grid h-9 w-9 place-items-center rounded-full"
           aria-label="뒤로"
         >
