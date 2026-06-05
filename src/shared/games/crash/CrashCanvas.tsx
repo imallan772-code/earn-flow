@@ -193,7 +193,6 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
       }
     }
 
-
     // text overlays
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";

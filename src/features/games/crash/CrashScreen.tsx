@@ -474,9 +474,7 @@ export function CrashScreen() {
       label: "현재 라운드 결과",
       content: (
         <code className="font-numeric text-gold">
-          {phase === "crashed" || phase === "cooldown"
-            ? `${crashPoint.toFixed(2)}x`
-            : "진행 중"}
+          {phase === "crashed" || phase === "cooldown" ? `${crashPoint.toFixed(2)}x` : "진행 중"}
         </code>
       ),
     },
