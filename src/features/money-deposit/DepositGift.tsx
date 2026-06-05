@@ -35,7 +35,7 @@ export function DepositGift() {
           />
           <button
             onClick={() => appToast.deposit.giftPending()}
-            className="mt-3 h-12 w-full rounded-2xl bg-holographic font-bold text-[var(--color-bg-0)]"
+            className="mt-3 h-12 w-full rounded-2xl bg-holographic font-bold text-(--color-bg-0)"
           >
             등록하기
           </button>

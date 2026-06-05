@@ -217,14 +217,14 @@ export function MinesScreen() {
               <h1 className="text-xl font-extrabold leading-tight">Mines</h1>
               <ModeBadge className="mt-0.5" />
             </div>
-            <span className="glass-1 ml-auto rounded-full px-2.5 py-1 text-[10px] font-bold text-[var(--color-muted)] font-numeric">
+            <span className="glass-1 ml-auto rounded-full px-2.5 py-1 text-[10px] font-bold text-(--color-muted) font-numeric">
               #{nonce.toString().padStart(4, "0")}
             </span>
             <button
               onClick={() => setShowFair(true)}
               className="glass-1 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold"
             >
-              <ShieldCheck size={12} className="text-[var(--color-emerald)]" />
+              <ShieldCheck size={12} className="text-emerald" />
               공정성
             </button>
           </header>
@@ -238,33 +238,33 @@ export function MinesScreen() {
                 className={cn(
                   "font-numeric shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-extrabold",
                   h.win
-                    ? "bg-[color-mix(in_oklab,var(--color-emerald)_22%,transparent)] text-[var(--color-emerald)]"
-                    : "bg-[color-mix(in_oklab,var(--color-rose)_22%,transparent)] text-[var(--color-rose)]",
+                    ? "bg-[color-mix(in_oklab,var(--color-emerald)_22%,transparent)] text-emerald"
+                    : "bg-[color-mix(in_oklab,var(--color-rose)_22%,transparent)] text-(--color-rose)",
                 )}
               >
                 {h.multiplier.toFixed(2)}x
               </li>
             ))}
             {history.length === 0 && (
-              <li className="text-[11px] text-[var(--color-muted-2)]">아직 라운드 없음</li>
+              <li className="text-[11px] text-muted-2">아직 라운드 없음</li>
             )}
           </ul>
         }
         displayArea={
           <div className="glass-2 rounded-2xl p-3">
             <div className="mb-2 flex items-center justify-between text-[11px]">
-              <span className="font-bold text-[var(--color-muted)]">
+              <span className="font-bold text-(--color-muted)">
                 지뢰{" "}
-                <span className="font-numeric text-[var(--color-rose)]">
+                <span className="font-numeric text-(--color-rose)">
                   {active?.mineCount ?? mineCount}
                 </span>
                 {" · "}
                 보석{" "}
-                <span className="font-numeric text-[var(--color-emerald)]">
+                <span className="font-numeric text-emerald">
                   {revealed.length}/{safeRevealable}
                 </span>
               </span>
-              <span className="font-numeric font-extrabold text-[var(--color-gold)]">
+              <span className="font-numeric font-extrabold text-gold">
                 {currentMult.toFixed(2)}x
               </span>
             </div>
@@ -282,21 +282,21 @@ export function MinesScreen() {
                     className={cn(
                       "aspect-square rounded-lg text-xs font-extrabold transition active:scale-95",
                       isRevealed &&
-                        "bg-[color-mix(in_oklab,var(--color-emerald)_25%,transparent)] text-[var(--color-emerald)]",
+                        "bg-[color-mix(in_oklab,var(--color-emerald)_25%,transparent)] text-emerald",
                       isHit &&
-                        "bg-[color-mix(in_oklab,var(--color-rose)_35%,transparent)] text-[var(--color-rose)]",
+                        "bg-[color-mix(in_oklab,var(--color-rose)_35%,transparent)] text-(--color-rose)",
                       !isRevealed &&
                         !isHit &&
                         isMineRevealed &&
-                        "bg-[color-mix(in_oklab,var(--color-rose)_18%,transparent)] text-[var(--color-rose)] opacity-70",
+                        "bg-[color-mix(in_oklab,var(--color-rose)_18%,transparent)] text-(--color-rose) opacity-70",
                       !isRevealed &&
                         !isHit &&
                         !isMineRevealed &&
-                        "bg-[var(--color-surface-hi)] text-[var(--color-muted)]",
+                        "bg-(--color-surface-hi) text-(--color-muted)",
                       round.phase === "playing" &&
                         !isRevealed &&
                         hitTile == null &&
-                        "hover:bg-[var(--color-surface-2)]",
+                        "hover:bg-(--color-bg-2)",
                     )}
                   >
                     {isRevealed ? (
@@ -317,8 +317,8 @@ export function MinesScreen() {
                 className={cn(
                   "mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-extrabold transition active:scale-[0.98]",
                   revealed.length > 0 && hitTile == null
-                    ? "bg-[var(--color-warning)] text-[var(--color-bg-0)] shadow-glow-gold"
-                    : "bg-[var(--color-surface-hi)] text-[var(--color-muted-2)]",
+                    ? "bg-warning text-(--color-bg-0) shadow-glow-gold"
+                    : "bg-(--color-surface-hi) text-muted-2",
                 )}
               >
                 <Zap size={14} />
@@ -329,23 +329,23 @@ export function MinesScreen() {
         }
         controls={
           <div className="glass-2 flex items-center gap-2 rounded-2xl p-3">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-(--color-muted)">
               지뢰 수
             </span>
             <button
               onClick={() => setMineCount(mineCount - 1)}
               disabled={!round.isIdle || mineCount <= MIN_MINES}
-              className="rounded-lg bg-[var(--color-surface-hi)] px-3 py-1.5 text-sm font-bold disabled:opacity-40"
+              className="rounded-lg bg-(--color-surface-hi) px-3 py-1.5 text-sm font-bold disabled:opacity-40"
             >
               −
             </button>
-            <span className="font-numeric flex-1 text-center text-base font-extrabold text-[var(--color-rose)]">
+            <span className="font-numeric flex-1 text-center text-base font-extrabold text-(--color-rose)">
               {mineCount}
             </span>
             <button
               onClick={() => setMineCount(mineCount + 1)}
               disabled={!round.isIdle || mineCount >= MAX_MINES}
-              className="rounded-lg bg-[var(--color-surface-hi)] px-3 py-1.5 text-sm font-bold disabled:opacity-40"
+              className="rounded-lg bg-(--color-surface-hi) px-3 py-1.5 text-sm font-bold disabled:opacity-40"
             >
               +
             </button>
@@ -404,21 +404,21 @@ export function MinesScreen() {
             </div>
             <dl className="flex flex-col gap-3 text-xs">
               <FairRow k="서버 시드 (해시)">
-                <code className="break-all text-[10px] text-[var(--color-cyan)]">
+                <code className="break-all text-[10px] text-(--color-cyan)">
                   {commit || "로딩 중..."}
                 </code>
               </FairRow>
               <FairRow k="클라이언트 시드">
-                <code className="text-[var(--color-purple)]">{CLIENT_SEED}</code>
+                <code className="text-(--color-purple)">{CLIENT_SEED}</code>
               </FairRow>
               <FairRow k="다음 라운드 번호">
                 <code className="font-numeric">{nonce}</code>
               </FairRow>
               <FairRow k="현재 지뢰 수">
-                <code className="font-numeric text-[var(--color-rose)]">{mineCount}</code>
+                <code className="font-numeric text-(--color-rose)">{mineCount}</code>
               </FairRow>
             </dl>
-            <p className="mt-4 text-[10px] leading-relaxed text-[var(--color-muted)]">
+            <p className="mt-4 text-[10px] leading-relaxed text-(--color-muted)">
               지뢰 배치 = Fisher-Yates(HMAC-SHA256(serverSeed, &quot;clientSeed:nonce:cursor&quot;))
               → 첫 {mineCount}개 인덱스. 동일 시드/라운드에 대해 항상 같은 배치가 나옵니다.
             </p>
@@ -432,7 +432,7 @@ export function MinesScreen() {
 function FairRow({ k, children }: { k: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-3">
-      <dt className="shrink-0 text-[var(--color-muted)]">{k}</dt>
+      <dt className="shrink-0 text-(--color-muted)">{k}</dt>
       <dd className="min-w-0 text-right">{children}</dd>
     </div>
   );

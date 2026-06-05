@@ -92,18 +92,18 @@ function OnboardingFlow() {
           <Sparkles size={14} style={{ color: "var(--color-gold)" }} />
           <CountUp
             value={balanceView}
-            className="font-numeric text-sm font-bold text-[var(--color-gold)]"
+            className="font-numeric text-sm font-bold text-gold"
           />
-          <span className="text-[10px] text-[var(--color-muted)]">PHON</span>
+          <span className="text-[10px] text-(--color-muted)">PHON</span>
         </div>
       </div>
 
       <div className="mt-12 flex-1">
-        <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-cyan)]">
+        <div className="text-xs font-semibold uppercase tracking-wider text-(--color-cyan)">
           STEP {step + 1} / {STEPS.length}
         </div>
         <h1 className="mt-2 text-3xl font-extrabold leading-tight">{cfg.title}</h1>
-        <p className="mt-2 text-xs text-[var(--color-muted)]">{cfg.caption}</p>
+        <p className="mt-2 text-xs text-(--color-muted)">{cfg.caption}</p>
 
         <div className="relative mt-10 flex items-center justify-center">
           {step === 0 && (
@@ -114,7 +114,7 @@ function OnboardingFlow() {
               className="relative flex h-48 w-48 items-center justify-center rounded-full bg-holographic shadow-glow-purple disabled:opacity-60"
             >
               <RewardBurst trigger={burst} />
-              <Sparkles size={64} className="text-[var(--color-bg-0)]" strokeWidth={2} />
+              <Sparkles size={64} className="text-(--color-bg-0)" strokeWidth={2} />
             </m.button>
           )}
           {step === 1 && (
@@ -129,7 +129,7 @@ function OnboardingFlow() {
               <button
                 onClick={advance}
                 disabled={nickname.length < 2 || submitting}
-                className="flex h-14 w-full items-center justify-center rounded-2xl bg-holographic text-base font-bold text-[var(--color-bg-0)] shadow-glow-purple disabled:opacity-50"
+                className="flex h-14 w-full items-center justify-center rounded-2xl bg-holographic text-base font-bold text-(--color-bg-0) shadow-glow-purple disabled:opacity-50"
               >
                 저장하고 +500 PHON
               </button>
@@ -137,7 +137,7 @@ function OnboardingFlow() {
           )}
           {step === 2 && (
             <div className="glass-3 w-full rounded-3xl p-6 text-center">
-              <div className="text-xs text-[var(--color-muted)]">내 추천코드</div>
+              <div className="text-xs text-(--color-muted)">내 추천코드</div>
               <div className="mt-2 font-numeric text-3xl font-extrabold text-holographic">
                 {referralCode}
               </div>
@@ -148,7 +148,7 @@ function OnboardingFlow() {
                   void advance();
                 }}
                 disabled={submitting}
-                className="mt-4 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-holographic px-6 font-bold text-[var(--color-bg-0)] shadow-glow-pink disabled:opacity-60"
+                className="mt-4 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-holographic px-6 font-bold text-(--color-bg-0) shadow-glow-pink disabled:opacity-60"
               >
                 <Copy size={16} /> 복사하고 +200 PHON
               </button>
@@ -172,7 +172,7 @@ function OnboardingFlow() {
         </div>
       </div>
 
-      <div className="mt-6 text-center text-[11px] text-[var(--color-muted-2)]">
+      <div className="mt-6 text-center text-[11px] text-muted-2">
         뒤로가기 불가 · 4단계만 완료하면 끝
       </div>
 

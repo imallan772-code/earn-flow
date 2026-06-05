@@ -40,8 +40,8 @@ export function DiceSlider({ target, mode, onTargetChange, onModeChange, lastRol
             className={cn(
               "rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
               mode === m
-                ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)] shadow-glow-cyan"
-                : "text-[var(--color-muted)]",
+                ? "bg-(--color-cyan) text-(--color-bg-0) shadow-glow-cyan"
+                : "text-(--color-muted)",
             )}
           >
             {m === "under" ? "낮게 (Under)" : "높게 (Over)"}
@@ -59,7 +59,7 @@ export function DiceSlider({ target, mode, onTargetChange, onModeChange, lastRol
           {[0, 25, 50, 75, 100].map((p) => (
             <span
               key={p}
-              className="absolute top-full mt-2 -translate-x-1/2 text-[9px] font-bold text-[var(--color-muted-2)] font-numeric"
+              className="absolute top-full mt-2 -translate-x-1/2 text-[9px] font-bold text-muted-2 font-numeric"
               style={{ left: `${p}%` }}
             >
               {p === 100 ? "99.99" : ((p * MAX_ROLL) / 100).toFixed(0)}
@@ -68,7 +68,7 @@ export function DiceSlider({ target, mode, onTargetChange, onModeChange, lastRol
           {lastPct != null && (
             <div
               key={lastPct}
-              className="animate-result-pop absolute top-1/2 h-7 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--color-foreground)] shadow-[0_0_10px_var(--color-foreground)]"
+              className="animate-result-pop absolute top-1/2 h-7 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-(--color-foreground) shadow-[0_0_10px_var(--color-foreground)]"
               style={{ left: `${lastPct}%` }}
               aria-hidden
             />
@@ -85,17 +85,17 @@ export function DiceSlider({ target, mode, onTargetChange, onModeChange, lastRol
           className="-mt-4 h-4 w-full cursor-pointer appearance-none bg-transparent
                      [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-7
                      [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:rounded-full
-                     [&::-webkit-slider-thumb]:bg-[var(--color-foreground)]
+                     [&::-webkit-slider-thumb]:bg-(--color-foreground)
                      [&::-webkit-slider-thumb]:shadow-glow-cyan
                      [&::-webkit-slider-thumb]:border-2
-                     [&::-webkit-slider-thumb]:border-[var(--color-cyan)]
+                     [&::-webkit-slider-thumb]:border-(--color-cyan)
                      [&::-webkit-slider-thumb]:transition-transform
                      active:[&::-webkit-slider-thumb]:scale-110
                      [&::-moz-range-thumb]:h-7 [&::-moz-range-thumb]:w-7
                      [&::-moz-range-thumb]:rounded-full
-                     [&::-moz-range-thumb]:bg-[var(--color-foreground)]
+                     [&::-moz-range-thumb]:bg-(--color-foreground)
                      [&::-moz-range-thumb]:border-2
-                     [&::-moz-range-thumb]:border-[var(--color-cyan)]"
+                     [&::-moz-range-thumb]:border-(--color-cyan)"
         />
       </div>
 
@@ -124,7 +124,7 @@ function Stat({
 }) {
   return (
     <div className="glass-1 rounded-xl px-2 py-2">
-      <div className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+      <div className="text-[9px] font-bold uppercase tracking-wider text-(--color-muted)">
         {label}
       </div>
       <div

@@ -37,15 +37,15 @@ export function TransferBridge() {
             onClick={() => setFrom(from === "PHON" ? "USDT" : "PHON")}
             className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-holographic shadow-glow-purple"
           >
-            <ArrowDown size={18} className="text-[var(--color-bg-0)]" />
+            <ArrowDown size={18} className="text-(--color-bg-0)" />
           </button>
           <Side label="To" sym={to} amount={converted} />
-          <div className="text-[11px] text-[var(--color-muted)]">
+          <div className="text-[11px] text-(--color-muted)">
             기준환율 1 USDT = {RATE.toLocaleString()} PHON
           </div>
           <button
             onClick={() => appToast.transfer.done()}
-            className="h-14 w-full rounded-2xl bg-holographic font-extrabold text-[var(--color-bg-0)]"
+            className="h-14 w-full rounded-2xl bg-holographic font-extrabold text-(--color-bg-0)"
           >
             전환하기
           </button>
@@ -78,7 +78,7 @@ function Side({
       }}
     >
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-[10px] text-[var(--color-muted)]">{label}</span>
+        <span className="text-[10px] text-(--color-muted)">{label}</span>
         <span
           className="text-xs font-bold"
           style={{ color: sym === "PHON" ? "var(--color-gold)" : "var(--color-cyan)" }}

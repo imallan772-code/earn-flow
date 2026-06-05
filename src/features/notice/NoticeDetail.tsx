@@ -11,10 +11,10 @@ export function NoticeDetail({ id }: { id: string }) {
   const n = getNoticeById(id);
   if (!n) {
     return (
-      <div className="glass-2 rounded-2xl p-8 text-center text-sm text-[var(--color-muted)]">
+      <div className="glass-2 rounded-2xl p-8 text-center text-sm text-(--color-muted)">
         공지를 찾을 수 없습니다.
         <div className="mt-3">
-          <Link to="/notice" className="text-[var(--color-cyan)]">
+          <Link to="/notice" className="text-(--color-cyan)">
             목록으로
           </Link>
         </div>
@@ -23,27 +23,27 @@ export function NoticeDetail({ id }: { id: string }) {
   }
   return (
     <div className="flex flex-col gap-4">
-      <Link to="/notice" className="flex items-center gap-1 text-sm text-[var(--color-muted)]">
+      <Link to="/notice" className="flex items-center gap-1 text-sm text-(--color-muted)">
         <ArrowLeft size={16} /> 공지사항
       </Link>
       <article className="glass-3 flex flex-col gap-3 rounded-3xl p-5 shadow-depth-2">
         <div className="flex items-center gap-2">
-          {n.pinned && <Pin size={12} className="text-[var(--color-gold)]" />}
+          {n.pinned && <Pin size={12} className="text-gold" />}
           <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-bold">
             {n.category}
           </span>
-          <span className="ml-auto font-numeric text-[11px] text-[var(--color-muted)]">
+          <span className="ml-auto font-numeric text-[11px] text-(--color-muted)">
             {fmtFull(n.publishedAt)}
           </span>
         </div>
         <h1 className="text-xl font-extrabold leading-snug">{n.title}</h1>
-        <div className="text-xs text-[var(--color-muted-2)]">작성: {n.author}</div>
-        <div className="my-2 h-px bg-[var(--color-border)]" />
+        <div className="text-xs text-muted-2">작성: {n.author}</div>
+        <div className="my-2 h-px bg-(--color-border)" />
         <div className="whitespace-pre-wrap text-sm leading-relaxed">{n.body}</div>
 
         {n.attachments && n.attachments.length > 0 && (
           <div className="mt-3 flex flex-col gap-1.5">
-            <div className="text-xs text-[var(--color-muted)]">첨부파일</div>
+            <div className="text-xs text-(--color-muted)">첨부파일</div>
             {n.attachments.map((a) => (
               <div
                 key={a.name}
@@ -51,7 +51,7 @@ export function NoticeDetail({ id }: { id: string }) {
               >
                 <Paperclip size={12} />
                 <span className="flex-1 truncate">{a.name}</span>
-                <span className="text-[var(--color-muted)]">{a.size}</span>
+                <span className="text-(--color-muted)">{a.size}</span>
               </div>
             ))}
           </div>

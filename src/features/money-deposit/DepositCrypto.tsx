@@ -23,7 +23,7 @@ export function DepositCrypto() {
         </div>
 
         <Premium3DCard className="flex flex-col items-center p-5">
-          <div className="text-xs text-[var(--color-muted)]">네트워크</div>
+          <div className="text-xs text-(--color-muted)">네트워크</div>
           <div className="mt-1 inline-flex gap-1.5">
             {["TRC20", "ERC20", "BSC"].map((n, i) => (
               <span
@@ -53,7 +53,7 @@ export function DepositCrypto() {
               ))}
             </div>
           </div>
-          <div className="text-[10px] font-semibold text-[var(--color-muted)]">
+          <div className="text-[10px] font-semibold text-(--color-muted)">
             입금 주소 (mock)
           </div>
           <div
@@ -77,7 +77,7 @@ export function DepositCrypto() {
         </Premium3DCard>
 
         <div
-          className="mt-4 flex items-start gap-2 rounded-2xl border px-3 py-2.5 text-[11px] text-[var(--color-muted)]"
+          className="mt-4 flex items-start gap-2 rounded-2xl border px-3 py-2.5 text-[11px] text-(--color-muted)"
           style={{ borderColor: "var(--color-border)" }}
         >
           <ShieldAlert size={14} className="mt-0.5 shrink-0" />

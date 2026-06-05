@@ -28,13 +28,13 @@ const KPIS = [
 
 export function AdminDashboard() {
   return (
-    <div className="min-h-dvh bg-cosmic text-[var(--color-foreground)]">
+    <div className="min-h-dvh bg-cosmic text-(--color-foreground)">
       <div className="flex">
         {/* Sidebar */}
         <aside className="glass-2 hidden min-h-dvh w-60 flex-col gap-1 p-4 md:flex">
           <div className="mb-4 flex items-center gap-2 px-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-holographic">
-              <LayoutDashboard size={16} className="text-[var(--color-bg-0)]" />
+              <LayoutDashboard size={16} className="text-(--color-bg-0)" />
             </div>
             <span className="text-sm font-extrabold">PHONARA Admin</span>
           </div>
@@ -47,7 +47,7 @@ export function AdminDashboard() {
           ].map((it) => (
             <button
               key={it.label}
-              className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${it.active ? "bg-white/8 font-semibold" : "text-[var(--color-muted)] hover:bg-white/5"}`}
+              className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${it.active ? "bg-white/8 font-semibold" : "text-(--color-muted) hover:bg-white/5"}`}
             >
               <it.Icon size={16} />
               {it.label}
@@ -59,13 +59,13 @@ export function AdminDashboard() {
         <main className="flex-1 p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-extrabold">대시보드</h1>
-            <p className="text-sm text-[var(--color-muted)]">실시간 KPI · 1인 운영 콘솔 (mock)</p>
+            <p className="text-sm text-(--color-muted)">실시간 KPI · 1인 운영 콘솔 (mock)</p>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {KPIS.map((k) => (
               <div key={k.label} className="glass-3 rounded-3xl p-5 shadow-depth-2">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs text-[var(--color-muted)]">{k.label}</div>
+                  <div className="text-xs text-(--color-muted)">{k.label}</div>
                   <k.Icon size={18} style={{ color: k.color }} />
                 </div>
                 <div className="mt-2">
@@ -91,14 +91,14 @@ export function AdminDashboard() {
                     className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2"
                   >
                     <span>{r}</span>
-                    <span className="text-[var(--color-emerald)]">승인됨</span>
+                    <span className="text-emerald">승인됨</span>
                   </div>
                 ))}
               </div>
             </div>
             <div className="glass-3 rounded-3xl p-5 shadow-depth-2">
               <div className="text-sm font-semibold">어뷰징 알림</div>
-              <div className="mt-3 text-xs text-[var(--color-muted)]">
+              <div className="mt-3 text-xs text-(--color-muted)">
                 최근 24시간 이슈 없음 · 시스템 정상
               </div>
             </div>

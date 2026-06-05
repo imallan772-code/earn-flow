@@ -77,7 +77,7 @@ export function DiceResultDisplay({
   return (
     <div
       className={cn(
-        "relative flex h-[140px] w-full items-center justify-between overflow-hidden rounded-2xl border border-[var(--color-border)] px-5",
+        "relative flex h-[140px] w-full items-center justify-between overflow-hidden rounded-2xl border border-(--color-border) px-5",
         outcome === "loss" && phase === "settled" && "animate-crash-shake",
       )}
       style={{
@@ -96,7 +96,7 @@ export function DiceResultDisplay({
       />
 
       <div className="relative">
-        <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-[var(--color-muted)]">
+        <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-(--color-muted)">
           {label}
         </div>
         <div
@@ -137,7 +137,7 @@ export function DiceResultDisplay({
 function MetaRow({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div className="flex items-baseline gap-2">
-      <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+      <span className="text-[9px] font-bold uppercase tracking-wider text-(--color-muted)">
         {label}
       </span>
       <span className="font-numeric text-sm font-extrabold tabular-nums" style={{ color }}>

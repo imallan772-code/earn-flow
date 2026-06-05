@@ -20,11 +20,11 @@ export function NoticeBar() {
       className="glass-2 flex h-11 items-center gap-2 overflow-hidden rounded-2xl px-3"
     >
       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-holographic">
-        <Bell size={11} className="text-[var(--color-bg-0)]" />
+        <Bell size={11} className="text-(--color-bg-0)" />
       </span>
-      <Pin size={10} className="shrink-0 text-[var(--color-gold)]" />
+      <Pin size={10} className="shrink-0 text-gold" />
       <span className="flex-1 truncate text-xs font-semibold">{n.title}</span>
-      <ChevronRight size={14} className="shrink-0 text-[var(--color-muted)]" />
+      <ChevronRight size={14} className="shrink-0 text-(--color-muted)" />
     </Link>
   );
 }

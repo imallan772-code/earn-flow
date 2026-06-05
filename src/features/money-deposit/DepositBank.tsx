@@ -20,21 +20,21 @@ export function DepositBank() {
         </div>
         <Premium3DCard className="p-5">
           <div className="grid grid-cols-3 gap-2 text-xs">
-            <div className="text-[var(--color-muted)]">은행</div>
+            <div className="text-(--color-muted)">은행</div>
             <div className="col-span-2 font-semibold">국민은행</div>
-            <div className="text-[var(--color-muted)]">계좌</div>
+            <div className="text-(--color-muted)">계좌</div>
             <div className="col-span-2 font-numeric font-semibold">123-4567-8901-23</div>
-            <div className="text-[var(--color-muted)]">예금주</div>
+            <div className="text-(--color-muted)">예금주</div>
             <div className="col-span-2 font-semibold">(주)포나라월드</div>
-            <div className="text-[var(--color-muted)]">입금자명</div>
+            <div className="text-(--color-muted)">입금자명</div>
             <div className="col-span-2 font-semibold">PHO-K7Q2X9 (회원코드)</div>
           </div>
-          <button className="mt-5 h-12 w-full rounded-2xl bg-holographic font-bold text-[var(--color-bg-0)] shadow-glow-purple">
+          <button className="mt-5 h-12 w-full rounded-2xl bg-holographic font-bold text-(--color-bg-0) shadow-glow-purple">
             입금 신청서 작성
           </button>
         </Premium3DCard>
         <div
-          className="mt-4 flex items-start gap-2 rounded-2xl border px-3 py-2.5 text-[11px] text-[var(--color-muted)]"
+          className="mt-4 flex items-start gap-2 rounded-2xl border px-3 py-2.5 text-[11px] text-(--color-muted)"
           style={{ borderColor: "var(--color-border)" }}
         >
           <ShieldAlert size={14} className="mt-0.5 shrink-0" />

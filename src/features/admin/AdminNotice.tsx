@@ -20,11 +20,11 @@ export function AdminNotice() {
   };
 
   return (
-    <div className="min-h-dvh bg-cosmic p-6 text-[var(--color-foreground)]">
+    <div className="min-h-dvh bg-cosmic p-6 text-(--color-foreground)">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold">공지 관리</h1>
-          <p className="text-sm text-[var(--color-muted)]">예약 발행 · 핀고정 · 푸시연동 (mock)</p>
+          <p className="text-sm text-(--color-muted)">예약 발행 · 핀고정 · 푸시연동 (mock)</p>
         </div>
         <button
           onClick={() =>
@@ -39,7 +39,7 @@ export function AdminNotice() {
               author: "운영팀",
             })
           }
-          className="flex items-center gap-1 rounded-2xl bg-holographic px-4 py-2 text-sm font-bold text-[var(--color-bg-0)]"
+          className="flex items-center gap-1 rounded-2xl bg-holographic px-4 py-2 text-sm font-bold text-(--color-bg-0)"
         >
           <Plus size={14} /> 새 공지
         </button>
@@ -48,12 +48,12 @@ export function AdminNotice() {
       <div className="grid gap-2">
         {list.map((n) => (
           <div key={n.id} className="glass-2 flex items-center gap-3 rounded-2xl p-4">
-            {n.pinned && <Pin size={14} className="text-[var(--color-gold)]" />}
+            {n.pinned && <Pin size={14} className="text-gold" />}
             <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-bold">
               {n.category}
             </span>
             <span className="flex-1 truncate text-sm font-semibold">{n.title}</span>
-            <span className="font-numeric text-[11px] text-[var(--color-muted)]">
+            <span className="font-numeric text-[11px] text-(--color-muted)">
               {n.publishedAt.slice(0, 10)}
             </span>
             <button onClick={() => setEditing(n)} className="rounded-lg p-1.5 hover:bg-white/8">
@@ -61,7 +61,7 @@ export function AdminNotice() {
             </button>
             <button
               onClick={() => setList((prev) => prev.filter((p) => p.id !== n.id))}
-              className="rounded-lg p-1.5 text-[var(--color-rose)] hover:bg-white/8"
+              className="rounded-lg p-1.5 text-(--color-rose) hover:bg-white/8"
             >
               <Trash2 size={14} />
             </button>
@@ -116,7 +116,7 @@ export function AdminNotice() {
                 />
                 상단 고정
               </label>
-              <label className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
+              <label className="flex items-center gap-2 text-xs text-(--color-muted)">
                 <Calendar size={12} /> 예약 발행
                 <input
                   type="datetime-local"
@@ -137,7 +137,7 @@ export function AdminNotice() {
               </button>
               <button
                 onClick={() => save(editing)}
-                className="rounded-xl bg-holographic px-4 py-2 text-sm font-bold text-[var(--color-bg-0)]"
+                className="rounded-xl bg-holographic px-4 py-2 text-sm font-bold text-(--color-bg-0)"
               >
                 저장
               </button>

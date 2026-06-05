@@ -27,7 +27,7 @@ export function EventScreen() {
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-extrabold">이벤트</h1>
-        <p className="text-sm text-[var(--color-muted)]">놓치면 후회하는 한정 보상</p>
+        <p className="text-sm text-(--color-muted)">놓치면 후회하는 한정 보상</p>
       </header>
 
       <div className="glass-2 flex gap-1 rounded-2xl p-1">
@@ -37,7 +37,7 @@ export function EventScreen() {
             onClick={() => setTab(t)}
             className={cn(
               "flex-1 rounded-xl py-2 text-xs font-semibold transition",
-              tab === t ? "bg-holographic text-[var(--color-bg-0)]" : "text-[var(--color-muted)]",
+              tab === t ? "bg-holographic text-(--color-bg-0)" : "text-(--color-muted)",
             )}
           >
             {t}
@@ -53,7 +53,7 @@ export function EventScreen() {
           <EventCard key={e.id} e={e} />
         ))}
         {list.length === 0 && (
-          <li className="glass-1 rounded-2xl p-8 text-center text-sm text-[var(--color-muted)]">
+          <li className="glass-1 rounded-2xl p-8 text-center text-sm text-(--color-muted)">
             해당 상태의 이벤트가 없습니다.
           </li>
         )}
@@ -90,13 +90,13 @@ export function EventCard({ e }: { e: AppEventView }) {
         </div>
         <h3 className="text-lg font-extrabold leading-snug">{e.title}</h3>
         <div className="flex items-center gap-1 text-xs font-semibold">
-          <Trophy size={12} className="text-[var(--color-gold)]" />
+          <Trophy size={12} className="text-gold" />
           {e.rewardPreview}
         </div>
 
         {e.status !== "종료" && (
           <div className="glass-2 flex items-center justify-between rounded-2xl px-3 py-2">
-            <div className="flex items-center gap-1.5 text-[10px] text-[var(--color-muted)]">
+            <div className="flex items-center gap-1.5 text-[10px] text-(--color-muted)">
               <Clock size={11} />
               {e.status === "예정" ? "오픈까지" : "남은 시간"}
             </div>
@@ -110,7 +110,7 @@ export function EventCard({ e }: { e: AppEventView }) {
 
         <div>
           <div className="mb-1 flex items-center justify-between text-[11px]">
-            <span className="flex items-center gap-1 text-[var(--color-muted)]">
+            <span className="flex items-center gap-1 text-(--color-muted)">
               <Users size={11} />
               <span className="font-numeric">{e.participants.toLocaleString()}</span>명 참여
             </span>

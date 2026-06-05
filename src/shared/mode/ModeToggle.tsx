@@ -48,15 +48,15 @@ export function ModeToggle({ className, size = "md" }: Props) {
           padY,
           txt,
           mode === "demo"
-            ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)] shadow-glow-cyan"
-            : "text-[var(--color-muted)] hover:text-[var(--color-foreground)]",
+            ? "bg-(--color-cyan) text-(--color-bg-0) shadow-glow-cyan"
+            : "text-(--color-muted) hover:text-(--color-foreground)",
         )}
         aria-pressed={mode === "demo"}
       >
         <Gamepad2 size={size === "sm" ? 14 : 16} />
         <span>데모</span>
         {mode === "demo" && (
-          <span className="font-numeric ml-1 rounded-full bg-[var(--color-bg-0)]/20 px-1.5 py-0.5 text-[9px] font-bold">
+          <span className="font-numeric ml-1 rounded-full bg-(--color-bg-0)/20 px-1.5 py-0.5 text-[9px] font-bold">
             ₩{demoBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </span>
         )}
@@ -69,15 +69,15 @@ export function ModeToggle({ className, size = "md" }: Props) {
           padY,
           txt,
           mode === "real"
-            ? "bg-[var(--color-gold)] text-[var(--color-bg-0)] shadow-glow-gold"
-            : "text-[var(--color-muted)] hover:text-[var(--color-foreground)]",
+            ? "bg-gold text-(--color-bg-0) shadow-glow-gold"
+            : "text-(--color-muted) hover:text-(--color-foreground)",
         )}
         aria-pressed={mode === "real"}
       >
         <Gem size={size === "sm" ? 14 : 16} />
         <span>리얼</span>
         {mode === "real" && (
-          <span className="ml-1 rounded-full bg-[var(--color-bg-0)]/20 px-1.5 py-0.5 text-[9px] font-bold">
+          <span className="ml-1 rounded-full bg-(--color-bg-0)/20 px-1.5 py-0.5 text-[9px] font-bold">
             RTP 97%
           </span>
         )}

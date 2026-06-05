@@ -7,7 +7,7 @@ function AuthSpinner() {
     <div className="flex min-h-dvh items-center justify-center bg-cosmic">
       <div className="glass-3 rounded-3xl px-8 py-6 text-center">
         <div className="text-sm font-semibold">세션 확인 중...</div>
-        <div className="mt-1 text-xs text-[var(--color-muted)]">PHONARA 연결</div>
+        <div className="mt-1 text-xs text-(--color-muted)">PHONARA 연결</div>
       </div>
     </div>
   );

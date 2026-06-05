@@ -21,7 +21,7 @@ export function LiveCashoutStrip() {
           className="inline-flex h-2 w-2 animate-phon-pulse rounded-full"
           style={{ background: "var(--color-emerald)" }}
         />
-        <span className="text-xs font-semibold text-[var(--color-muted)]">
+        <span className="text-xs font-semibold text-(--color-muted)">
           실시간 캐시아웃 ·{" "}
           <LiveNumber
             base={MOCK_REALTIME_CASHOUT_PHON}
@@ -45,7 +45,7 @@ export function LiveCashoutStrip() {
           {doubled.map((t, i) => (
             <span key={t.id + i} className="inline-flex items-center gap-1.5 text-sm">
               <TrendingUp size={14} style={{ color: "var(--color-emerald)" }} />
-              <span className="font-medium text-[var(--color-foreground)]">{t.name}</span>
+              <span className="font-medium text-(--color-foreground)">{t.name}</span>
               {t.multiplier && (
                 <span className="font-numeric text-xs" style={{ color: "var(--color-cyan)" }}>
                   {t.multiplier.toFixed(1)}×

@@ -39,10 +39,10 @@ export function GameRulesCard({ rules, onVerify }: Props) {
         aria-expanded={open}
       >
         <span className="flex items-center gap-2 text-xs font-bold">
-          <BookOpen size={14} className="text-[var(--color-cyan)]" />
+          <BookOpen size={14} className="text-(--color-cyan)" />
           <span>게임 룰 · {rules.name}</span>
           {!open && (
-            <span className="text-[10px] font-normal text-[var(--color-muted-2)]">
+            <span className="text-[10px] font-normal text-muted-2">
               (펼쳐서 보기)
             </span>
           )}
@@ -50,7 +50,7 @@ export function GameRulesCard({ rules, onVerify }: Props) {
         <ChevronDown
           size={16}
           className={cn(
-            "text-[var(--color-muted)] transition-transform duration-200",
+            "text-(--color-muted) transition-transform duration-200",
             open && "rotate-180",
           )}
         />
@@ -62,12 +62,12 @@ export function GameRulesCard({ rules, onVerify }: Props) {
         )}
       >
         <div className="overflow-hidden">
-          <div className="border-t border-[var(--color-border)] px-3.5 py-3">
+          <div className="border-t border-(--color-border) px-3.5 py-3">
             <ul className="flex flex-col gap-3">
               {rules.sections.map((s) => (
                 <li key={s.title}>
-                  <div className="text-[11px] font-bold text-[var(--color-cyan)]">▸ {s.title}</div>
-                  <p className="mt-1 whitespace-pre-line text-[11px] leading-relaxed text-[var(--color-muted)]">
+                  <div className="text-[11px] font-bold text-(--color-cyan)">▸ {s.title}</div>
+                  <p className="mt-1 whitespace-pre-line text-[11px] leading-relaxed text-(--color-muted)">
                     {s.body}
                   </p>
                 </li>
@@ -76,7 +76,7 @@ export function GameRulesCard({ rules, onVerify }: Props) {
                 <li>
                   <button
                     onClick={onVerify}
-                    className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-[color-mix(in_oklab,var(--color-emerald)_18%,transparent)] px-3 py-1.5 text-[11px] font-bold text-[var(--color-emerald)]"
+                    className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-[color-mix(in_oklab,var(--color-emerald)_18%,transparent)] px-3 py-1.5 text-[11px] font-bold text-emerald"
                   >
                     <ShieldCheck size={12} />
                     공정성 검증하기 →

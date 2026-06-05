@@ -47,7 +47,7 @@ export function ProfileScreen() {
       <Premium3DCard className="p-4" glow="gold">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-holographic shadow-glow-purple">
-            <Crown size={22} className="text-[var(--color-bg-0)]" />
+            <Crown size={22} className="text-(--color-bg-0)" />
           </div>
           <div className="flex-1">
             <div className="text-sm font-semibold">{view.vipTier} · VIP 승급 폭주</div>
@@ -57,7 +57,7 @@ export function ProfileScreen() {
                 style={{ width: `${view.vipProgress * 100}%` }}
               />
             </div>
-            <div className="mt-1 text-[11px] text-[var(--color-muted)]">
+            <div className="mt-1 text-[11px] text-(--color-muted)">
               다음 등급까지 38% — TOP 0.01% 도전
             </div>
           </div>
@@ -71,7 +71,7 @@ export function ProfileScreen() {
           { label: "KRW", value: formatKRW(view.krw), color: "var(--color-pink)" },
         ].map((b) => (
           <Premium3DCard key={b.label} className="p-3 text-center">
-            <div className="text-[10px] text-[var(--color-muted)]">{b.label}</div>
+            <div className="text-[10px] text-(--color-muted)">{b.label}</div>
             <div className="mt-1 font-numeric text-base font-extrabold" style={{ color: b.color }}>
               {b.value}
             </div>
@@ -95,7 +95,7 @@ export function ProfileScreen() {
       </div>
 
       <Premium3DCard className="p-4">
-        <div className="text-xs text-[var(--color-muted)]">내 추천코드</div>
+        <div className="text-xs text-(--color-muted)">내 추천코드</div>
         <div className="mt-1 flex items-center justify-between">
           <div className="font-numeric text-2xl font-extrabold text-holographic">
             {view.referralCode}
@@ -110,7 +110,7 @@ export function ProfileScreen() {
             <Copy size={14} />
           </button>
         </div>
-        <div className="mt-2 text-[11px] text-[var(--color-gold)]">친구 1명당 즉시 +5,000 PHON</div>
+        <div className="mt-2 text-[11px] text-gold">친구 1명당 즉시 +5,000 PHON</div>
       </Premium3DCard>
 
       <div className="space-y-2">
@@ -141,7 +141,7 @@ export function ProfileScreen() {
           >
             <row.Icon size={18} style={{ color: "var(--color-muted)" }} />
             <span className="flex-1 text-sm font-semibold">{row.label}</span>
-            <span className="text-xs text-[var(--color-muted)]">{row.note}</span>
+            <span className="text-xs text-(--color-muted)">{row.note}</span>
             <ChevronRight size={14} style={{ color: "var(--color-muted)" }} />
           </button>
         ))}

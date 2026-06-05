@@ -35,7 +35,7 @@ export function WithdrawalForm({ kind }: Props) {
         </div>
         <Premium3DCard className="p-5 space-y-4">
           <div>
-            <div className="mb-1.5 text-xs text-[var(--color-muted)]">출금 금액</div>
+            <div className="mb-1.5 text-xs text-(--color-muted)">출금 금액</div>
             <input
               type="number"
               value={amount}
@@ -43,7 +43,7 @@ export function WithdrawalForm({ kind }: Props) {
               className="h-14 w-full rounded-2xl border bg-transparent px-4 font-numeric text-xl font-bold outline-none"
               style={{ borderColor: "var(--color-border-hi)" }}
             />
-            <div className="mt-1.5 text-[11px] text-[var(--color-muted)]">
+            <div className="mt-1.5 text-[11px] text-(--color-muted)">
               보유 {formatPHON(kind === "phon" ? userBalance.phon : userBalance.usdt)}{" "}
               {kind === "phon" ? "PHON" : "USDT"}
             </div>
@@ -53,7 +53,7 @@ export function WithdrawalForm({ kind }: Props) {
               className="rounded-xl border px-3 py-2"
               style={{ borderColor: "var(--color-border)" }}
             >
-              <div className="text-[var(--color-muted)]">수수료</div>
+              <div className="text-(--color-muted)">수수료</div>
               <div className="font-numeric font-semibold">
                 {kind === "phon" ? formatPHON(fee) + " PHON" : "1.00 USDT"}
               </div>
@@ -62,21 +62,21 @@ export function WithdrawalForm({ kind }: Props) {
               className="rounded-xl border px-3 py-2"
               style={{ borderColor: "var(--color-border)" }}
             >
-              <div className="text-[var(--color-muted)]">예상 수령</div>
-              <div className="font-numeric font-semibold text-[var(--color-emerald)]">
+              <div className="text-(--color-muted)">예상 수령</div>
+              <div className="font-numeric font-semibold text-emerald">
                 {kind === "phon" ? formatKRW(amount - fee) : `${(amount - 1).toFixed(2)} USDT`}
               </div>
             </div>
           </div>
           <button
             onClick={() => appToast.withdrawal.submitted()}
-            className="h-14 w-full rounded-2xl bg-holographic font-extrabold text-[var(--color-bg-0)] shadow-glow-purple"
+            className="h-14 w-full rounded-2xl bg-holographic font-extrabold text-(--color-bg-0) shadow-glow-purple"
           >
             출금 신청
           </button>
         </Premium3DCard>
         <div
-          className="mt-4 flex items-start gap-2 rounded-2xl border px-3 py-2.5 text-[11px] text-[var(--color-muted)]"
+          className="mt-4 flex items-start gap-2 rounded-2xl border px-3 py-2.5 text-[11px] text-(--color-muted)"
           style={{ borderColor: "var(--color-border)" }}
         >
           <ShieldAlert size={14} className="mt-0.5 shrink-0" />

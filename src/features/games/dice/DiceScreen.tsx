@@ -164,14 +164,14 @@ export function DiceScreen() {
           <h1 className="text-xl font-extrabold leading-tight">Dice</h1>
           <ModeBadge className="mt-0.5" />
         </div>
-        <span className="glass-1 ml-auto rounded-full px-2.5 py-1 text-[10px] font-bold text-[var(--color-muted)] font-numeric">
+        <span className="glass-1 ml-auto rounded-full px-2.5 py-1 text-[10px] font-bold text-(--color-muted) font-numeric">
           #{nonce.toString().padStart(4, "0")}
         </span>
         <button
           onClick={() => setShowFair(true)}
           className="glass-1 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold"
         >
-          <ShieldCheck size={12} className="text-[var(--color-emerald)]" />
+          <ShieldCheck size={12} className="text-emerald" />
           공정성
         </button>
       </header>
@@ -185,15 +185,15 @@ export function DiceScreen() {
             className={cn(
               "font-numeric shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-extrabold",
               h.win
-                ? "bg-[color-mix(in_oklab,var(--color-emerald)_22%,transparent)] text-[var(--color-emerald)]"
-                : "bg-[color-mix(in_oklab,var(--color-rose)_22%,transparent)] text-[var(--color-rose)]",
+                ? "bg-[color-mix(in_oklab,var(--color-emerald)_22%,transparent)] text-emerald"
+                : "bg-[color-mix(in_oklab,var(--color-rose)_22%,transparent)] text-(--color-rose)",
             )}
           >
             {h.roll.toFixed(2)}
           </li>
         ))}
         {history.length === 0 && (
-          <li className="text-[11px] text-[var(--color-muted-2)]">아직 라운드 없음</li>
+          <li className="text-[11px] text-muted-2">아직 라운드 없음</li>
         )}
       </ul>
 
@@ -258,23 +258,23 @@ export function DiceScreen() {
             </div>
             <dl className="flex flex-col gap-3 text-xs">
               <Row k="서버 시드 (해시)">
-                <code className="break-all text-[10px] text-[var(--color-cyan)]">
+                <code className="break-all text-[10px] text-(--color-cyan)">
                   {commit || "로딩 중..."}
                 </code>
               </Row>
               <Row k="클라이언트 시드">
-                <code className="text-[var(--color-purple)]">{CLIENT_SEED}</code>
+                <code className="text-(--color-purple)">{CLIENT_SEED}</code>
               </Row>
               <Row k="다음 라운드 번호">
                 <code className="font-numeric">{nonce}</code>
               </Row>
               <Row k="마지막 결과">
-                <code className="font-numeric text-[var(--color-gold)]">
+                <code className="font-numeric text-gold">
                   {lastRoll != null ? lastRoll.toFixed(2) : "—"}
                 </code>
               </Row>
             </dl>
-            <p className="mt-4 text-[10px] leading-relaxed text-[var(--color-muted)]">
+            <p className="mt-4 text-[10px] leading-relaxed text-(--color-muted)">
               결과 = floor(floatFromBytes(HMAC-SHA256(serverSeed, &quot;clientSeed:nonce:0&quot;)) ×
               10000) / 100
             </p>
@@ -288,7 +288,7 @@ export function DiceScreen() {
 function Row({ k, children }: { k: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-3">
-      <dt className="shrink-0 text-[var(--color-muted)]">{k}</dt>
+      <dt className="shrink-0 text-(--color-muted)">{k}</dt>
       <dd className="min-w-0 text-right">{children}</dd>
     </div>
   );

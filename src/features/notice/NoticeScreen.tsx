@@ -51,15 +51,15 @@ export function NoticeScreen() {
       <header className="flex flex-col gap-3">
         <div>
           <h1 className="text-2xl font-extrabold">공지사항</h1>
-          <p className="text-sm text-[var(--color-muted)]">중요한 업데이트와 운영 소식</p>
+          <p className="text-sm text-(--color-muted)">중요한 업데이트와 운영 소식</p>
         </div>
         <label className="glass-2 flex h-11 items-center gap-2 rounded-2xl px-3">
-          <Search size={16} className="text-[var(--color-muted)]" />
+          <Search size={16} className="text-(--color-muted)" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="공지 검색"
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--color-muted-2)]"
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-2"
           />
         </label>
         <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
@@ -72,8 +72,8 @@ export function NoticeScreen() {
                 className={cn(
                   "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition",
                   active
-                    ? "bg-holographic text-[var(--color-bg-0)] shadow-glow-purple"
-                    : "glass-1 text-[var(--color-muted)]",
+                    ? "bg-holographic text-(--color-bg-0) shadow-glow-purple"
+                    : "glass-1 text-(--color-muted)",
                 )}
               >
                 <c.Icon size={12} />
@@ -89,7 +89,7 @@ export function NoticeScreen() {
           <NoticeRow key={n.id} n={n} />
         ))}
         {list.length === 0 && (
-          <li className="glass-1 rounded-2xl p-8 text-center text-sm text-[var(--color-muted)]">
+          <li className="glass-1 rounded-2xl p-8 text-center text-sm text-(--color-muted)">
             조건에 맞는 공지가 없습니다.
           </li>
         )}
@@ -106,7 +106,7 @@ function NoticeRow({ n }: { n: Notice }) {
       className="glass-2 group flex flex-col gap-1.5 rounded-2xl p-4 transition active:scale-[0.99]"
     >
       <div className="flex items-center gap-2">
-        {n.pinned && <Pin size={12} className="text-[var(--color-gold)]" />}
+        {n.pinned && <Pin size={12} className="text-gold" />}
         <span
           className="rounded-full px-2 py-0.5 text-[10px] font-bold"
           style={{
@@ -116,12 +116,12 @@ function NoticeRow({ n }: { n: Notice }) {
         >
           {n.category}
         </span>
-        <span className="ml-auto font-numeric text-[11px] text-[var(--color-muted)]">
+        <span className="ml-auto font-numeric text-[11px] text-(--color-muted)">
           {fmtDate(n.publishedAt)}
         </span>
       </div>
       <h3 className="text-[15px] font-bold leading-snug">{n.title}</h3>
-      <p className="line-clamp-1 text-xs text-[var(--color-muted)]">{n.excerpt}</p>
+      <p className="line-clamp-1 text-xs text-(--color-muted)">{n.excerpt}</p>
     </Link>
   );
 }

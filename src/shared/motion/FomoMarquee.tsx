@@ -1,10 +1,10 @@
 import { MOCK_MARQUEE_ROWS, type MarqueeRow } from "@/mocks/fomo";
 
 const accentClass: Record<MarqueeRow["accent"], string> = {
-  cyan: "text-[var(--color-cyan)]",
-  purple: "text-[var(--color-purple)]",
-  pink: "text-[var(--color-pink)]",
-  gold: "text-[var(--color-gold)]",
+  cyan: "text-(--color-cyan)",
+  purple: "text-(--color-purple)",
+  pink: "text-pink",
+  gold: "text-gold",
 };
 
 function Row({ rows, reverse }: { rows: MarqueeRow[]; reverse?: boolean }) {

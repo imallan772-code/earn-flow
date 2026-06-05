@@ -149,7 +149,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
       <div className="flex items-center gap-2">
         <ul className="-mx-1 flex flex-1 gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none">
           {history.length === 0 ? (
-            <li className="text-[11px] text-[var(--color-muted-2)]">아직 라운드 없음</li>
+            <li className="text-[11px] text-muted-2">아직 라운드 없음</li>
           ) : (
             history.slice(0, 12).map((h) => (
               <li
@@ -167,7 +167,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
         </ul>
         <button
           onClick={toggleMute}
-          className="grid size-8 shrink-0 place-items-center rounded-lg text-[var(--color-muted)] transition hover:text-[var(--color-foreground)]"
+          className="grid size-8 shrink-0 place-items-center rounded-lg text-(--color-muted) transition hover:text-(--color-foreground)"
           aria-label={muted ? "사운드 켜기" : "사운드 끄기"}
         >
           {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
@@ -193,8 +193,8 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
               className={cn(
                 "flex-1 rounded-lg py-1.5 text-[11px] font-bold uppercase tracking-wider transition disabled:opacity-50",
                 risk === r
-                  ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)]"
-                  : "text-[var(--color-muted)]",
+                  ? "bg-(--color-cyan) text-(--color-bg-0)"
+                  : "text-(--color-muted)",
               )}
             >
               {RISK_LABEL[r]}
@@ -210,8 +210,8 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
               className={cn(
                 "flex-1 rounded-lg py-1.5 text-[11px] font-bold transition disabled:opacity-50",
                 rows === n
-                  ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)]"
-                  : "text-[var(--color-muted)]",
+                  ? "bg-(--color-cyan) text-(--color-bg-0)"
+                  : "text-(--color-muted)",
               )}
             >
               {n}줄
@@ -243,8 +243,8 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
         onCashout={() => {}}
       />
 
-      <div className="text-center text-[11px] text-[var(--color-muted-2)] font-numeric">
-        잔액 <span className="text-[var(--color-foreground)]">{balance.toFixed(2)}</span> USDT
+      <div className="text-center text-[11px] text-muted-2 font-numeric">
+        잔액 <span className="text-(--color-foreground)">{balance.toFixed(2)}</span> USDT
         {" · "}#{nonce.toString().padStart(4, "0")}
       </div>
     </div>

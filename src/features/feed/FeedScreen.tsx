@@ -31,15 +31,15 @@ export function FeedScreen() {
 
       {/* Hot strip */}
       <section>
-        <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-pink)]">
+        <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-pink">
           <TrendingUp size={12} /> 오늘의 핫 모먼트
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none]">
           {MOCK_FEED_HOT.map((h) => (
             <Premium3DCard key={h.id} className="min-w-[180px] p-3" glow="gold">
-              <div className="text-[11px] text-[var(--color-muted)]">{h.name}</div>
+              <div className="text-[11px] text-(--color-muted)">{h.name}</div>
               <div className="mt-1 text-sm font-semibold">{h.action}</div>
-              <div className="mt-1 font-numeric text-base font-extrabold text-[var(--color-gold)]">
+              <div className="mt-1 font-numeric text-base font-extrabold text-gold">
                 +{formatPHON(h.amount)} PHON
               </div>
             </Premium3DCard>
@@ -49,7 +49,7 @@ export function FeedScreen() {
 
       {/* Stream */}
       <section className="space-y-3">
-        <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-cyan)]">
+        <div className="text-xs font-semibold uppercase tracking-wider text-(--color-cyan)">
           실시간 스트림
         </div>
         {[
@@ -81,20 +81,20 @@ export function FeedScreen() {
           <Premium3DCard key={p.id} className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-holographic text-xs font-bold text-[var(--color-bg-0)]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-holographic text-xs font-bold text-(--color-bg-0)">
                   {p.who.slice(0, 1)}
                 </div>
                 <div>
                   <div className="text-sm font-semibold">{p.who}</div>
-                  <div className="text-[10px] text-[var(--color-muted)]">방금</div>
+                  <div className="text-[10px] text-(--color-muted)">방금</div>
                 </div>
               </div>
-              <div className="font-numeric text-sm font-bold text-[var(--color-gold)]">
+              <div className="font-numeric text-sm font-bold text-gold">
                 +{formatPHON(p.reward)}
               </div>
             </div>
             <p className="mt-2.5 text-sm leading-relaxed">{p.body}</p>
-            <div className="mt-3 flex items-center gap-4 text-[var(--color-muted)]">
+            <div className="mt-3 flex items-center gap-4 text-(--color-muted)">
               <button className="inline-flex items-center gap-1 text-xs">
                 <Heart size={14} /> 1.2K
               </button>

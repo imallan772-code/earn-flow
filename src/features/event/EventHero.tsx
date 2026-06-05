@@ -17,10 +17,10 @@ export function EventHero() {
   return (
     <section ref={ref} className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-gold)]">
+        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gold">
           <Sparkles size={12} /> 진행중 이벤트
         </div>
-        <Link to="/event" className="text-[11px] text-[var(--color-muted)]">
+        <Link to="/event" className="text-[11px] text-(--color-muted)">
           전체 →
         </Link>
       </div>
@@ -51,7 +51,7 @@ export function EventHero() {
                 </span>
                 <h3 className="text-lg font-extrabold leading-tight">{e.title}</h3>
                 <div className="flex items-center gap-1 text-xs font-semibold">
-                  <Trophy size={12} className="text-[var(--color-gold)]" />
+                  <Trophy size={12} className="text-gold" />
                   {e.rewardPreview}
                 </div>
               </div>

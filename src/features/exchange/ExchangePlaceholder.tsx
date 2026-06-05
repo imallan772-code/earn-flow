@@ -36,11 +36,11 @@ export function ExchangePlaceholder() {
 
       <div className="glass-2 grid grid-cols-2 gap-2 rounded-2xl p-3 text-xs">
         <div>
-          <div className="text-[var(--color-muted)]">USDT 잔액</div>
+          <div className="text-(--color-muted)">USDT 잔액</div>
           <div className="font-numeric font-bold">{formatUSDT(balance?.usdt ?? 0)}</div>
         </div>
         <div>
-          <div className="text-[var(--color-muted)]">보유 포지션</div>
+          <div className="text-(--color-muted)">보유 포지션</div>
           <div className="font-numeric font-bold">
             {position ? `${position.qty} @ ${position.avg_price}` : "—"}
           </div>
@@ -71,7 +71,7 @@ export function ExchangePlaceholder() {
           매도 {defaultQty}
         </button>
       </div>
-      <div className="text-center text-[11px] text-[var(--color-muted-2)]">
+      <div className="text-center text-[11px] text-muted-2">
         데모 마켓 · 실제 거래소 연동 전 · USDT는 RPC로만 변동
       </div>
     </div>

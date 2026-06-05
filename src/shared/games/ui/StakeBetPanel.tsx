@@ -145,8 +145,8 @@ export function StakeBetPanel({
               className={cn(
                 "rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
                 tab === t
-                  ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)]"
-                  : "text-[var(--color-muted)]",
+                  ? "bg-(--color-cyan) text-(--color-bg-0)"
+                  : "text-(--color-muted)",
               )}
             >
               {t === "manual" ? "수동" : "자동"}
@@ -158,12 +158,12 @@ export function StakeBetPanel({
       {/* AUTO HUD */}
       {effectiveTab === "auto" && autoRunning && autoState && (
         <div className="glass-1 flex items-center justify-between rounded-xl px-3 py-2 text-[11px]">
-          <span className="font-bold uppercase tracking-wider text-[var(--color-cyan)]">
+          <span className="font-bold uppercase tracking-wider text-(--color-cyan)">
             ● AUTO
           </span>
-          <span className="text-[var(--color-muted)]">
+          <span className="text-(--color-muted)">
             라운드{" "}
-            <span className="font-numeric text-[var(--color-foreground)]">
+            <span className="font-numeric text-(--color-foreground)">
               {autoState.betsPlaced}
             </span>
             {cfg.numberOfBets > 0 ? ` / ${cfg.numberOfBets}` : " / ∞"}
@@ -171,7 +171,7 @@ export function StakeBetPanel({
           <span
             className={cn(
               "font-numeric font-bold",
-              autoState.pnl >= 0 ? "text-[var(--color-emerald)]" : "text-[var(--color-rose)]",
+              autoState.pnl >= 0 ? "text-emerald" : "text-(--color-rose)",
             )}
           >
             {autoState.pnl >= 0 ? "+" : ""}
@@ -189,7 +189,7 @@ export function StakeBetPanel({
             step={0.01}
             value={amount}
             onChange={(e) => setAmount(Math.max(0, Number(e.target.value) || 0))}
-            className="font-numeric flex-1 rounded-lg bg-[var(--color-bg-0)] px-2 py-1.5 text-sm outline-none"
+            className="font-numeric flex-1 rounded-lg bg-(--color-bg-0) px-2 py-1.5 text-sm outline-none"
           />
           {[
             { lbl: "½", fn: () => setAmount((a) => +(a / 2).toFixed(2)) },
@@ -199,7 +199,7 @@ export function StakeBetPanel({
             <button
               key={b.lbl}
               onClick={b.fn}
-              className="rounded-lg bg-[var(--color-surface-hi)] px-2 py-1.5 text-[11px] font-bold"
+              className="rounded-lg bg-(--color-surface-hi) px-2 py-1.5 text-[11px] font-bold"
             >
               {b.lbl}
             </button>
@@ -213,7 +213,7 @@ export function StakeBetPanel({
           <div className="flex items-center gap-1">
             <button
               onClick={() => setTarget((t) => Math.max(1.01, +(t - 0.1).toFixed(2)))}
-              className="rounded-lg bg-[var(--color-surface-hi)] px-2 py-1.5 text-[11px] font-bold"
+              className="rounded-lg bg-(--color-surface-hi) px-2 py-1.5 text-[11px] font-bold"
             >
               −
             </button>
@@ -223,11 +223,11 @@ export function StakeBetPanel({
               step={0.01}
               value={target}
               onChange={(e) => setTarget(Math.max(1.01, Number(e.target.value) || 1.01))}
-              className="font-numeric flex-1 rounded-lg bg-[var(--color-bg-0)] px-2 py-1.5 text-sm outline-none"
+              className="font-numeric flex-1 rounded-lg bg-(--color-bg-0) px-2 py-1.5 text-sm outline-none"
             />
             <button
               onClick={() => setTarget((t) => +(t + 0.1).toFixed(2))}
-              className="rounded-lg bg-[var(--color-surface-hi)] px-2 py-1.5 text-[11px] font-bold"
+              className="rounded-lg bg-(--color-surface-hi) px-2 py-1.5 text-[11px] font-bold"
             >
               +
             </button>
@@ -237,12 +237,12 @@ export function StakeBetPanel({
 
       {/* auto-only config */}
       {!compact && tab === "auto" && (
-        <div className="flex flex-col gap-2 border-t border-[var(--color-border)] pt-2">
+        <div className="flex flex-col gap-2 border-t border-(--color-border) pt-2">
           <Field label="전략">
             <select
               value={cfg.strategy}
               onChange={(e) => setCfg({ ...cfg, strategy: e.target.value as Strategy })}
-              className="w-full rounded-lg bg-[var(--color-bg-0)] px-2 py-1.5 text-sm outline-none"
+              className="w-full rounded-lg bg-(--color-bg-0) px-2 py-1.5 text-sm outline-none"
             >
               {STRATEGIES.map((s) => (
                 <option key={s} value={s}>
@@ -257,7 +257,7 @@ export function StakeBetPanel({
                 type="number"
                 value={cfg.onLossIncreasePct}
                 onChange={(e) => setCfg({ ...cfg, onLossIncreasePct: Number(e.target.value) || 0 })}
-                className="font-numeric w-full rounded-lg bg-[var(--color-bg-0)] px-2 py-1.5 text-sm outline-none"
+                className="font-numeric w-full rounded-lg bg-(--color-bg-0) px-2 py-1.5 text-sm outline-none"
               />
             </Field>
             <Field label="승리 시 증가 %">
@@ -265,7 +265,7 @@ export function StakeBetPanel({
                 type="number"
                 value={cfg.onWinIncreasePct}
                 onChange={(e) => setCfg({ ...cfg, onWinIncreasePct: Number(e.target.value) || 0 })}
-                className="font-numeric w-full rounded-lg bg-[var(--color-bg-0)] px-2 py-1.5 text-sm outline-none"
+                className="font-numeric w-full rounded-lg bg-(--color-bg-0) px-2 py-1.5 text-sm outline-none"
               />
             </Field>
             <Field label="익절 정지">
@@ -273,7 +273,7 @@ export function StakeBetPanel({
                 type="number"
                 value={cfg.stopOnProfit}
                 onChange={(e) => setCfg({ ...cfg, stopOnProfit: Number(e.target.value) || 0 })}
-                className="font-numeric w-full rounded-lg bg-[var(--color-bg-0)] px-2 py-1.5 text-sm outline-none"
+                className="font-numeric w-full rounded-lg bg-(--color-bg-0) px-2 py-1.5 text-sm outline-none"
               />
             </Field>
             <Field label="손절 정지">
@@ -281,7 +281,7 @@ export function StakeBetPanel({
                 type="number"
                 value={cfg.stopOnLoss}
                 onChange={(e) => setCfg({ ...cfg, stopOnLoss: Number(e.target.value) || 0 })}
-                className="font-numeric w-full rounded-lg bg-[var(--color-bg-0)] px-2 py-1.5 text-sm outline-none"
+                className="font-numeric w-full rounded-lg bg-(--color-bg-0) px-2 py-1.5 text-sm outline-none"
               />
             </Field>
           </div>
@@ -294,14 +294,14 @@ export function StakeBetPanel({
           suppressCashoutButton ? (
             <button
               disabled
-              className="rounded-xl bg-[var(--color-surface-hi)] py-3 text-sm font-bold text-[var(--color-muted-2)]"
+              className="rounded-xl bg-(--color-surface-hi) py-3 text-sm font-bold text-muted-2"
             >
               라운드 진행 중 — 위에서 캐쉬아웃
             </button>
           ) : (
             <button
               onClick={onCashout}
-              className="rounded-xl bg-[var(--color-warning)] py-3 text-sm font-extrabold text-[var(--color-bg-0)] shadow-glow-gold active:scale-[0.98]"
+              className="rounded-xl bg-warning py-3 text-sm font-extrabold text-(--color-bg-0) shadow-glow-gold active:scale-[0.98]"
             >
               캐쉬아웃
             </button>
@@ -322,8 +322,8 @@ export function StakeBetPanel({
             className={cn(
               "relative overflow-hidden rounded-xl py-3 text-sm font-extrabold transition active:scale-[0.98]",
               canPlace && amount > 0
-                ? "bg-[var(--color-cyan)] text-[var(--color-bg-0)] shadow-glow-cyan"
-                : "bg-[var(--color-surface-hi)] text-[var(--color-muted-2)]",
+                ? "bg-(--color-cyan) text-(--color-bg-0) shadow-glow-cyan"
+                : "bg-(--color-surface-hi) text-muted-2",
             )}
           >
             {bettingProgress != null && canPlace && (
@@ -339,20 +339,20 @@ export function StakeBetPanel({
       ) : autoRunning ? (
         <button
           onClick={stopAuto}
-          className="rounded-xl bg-[var(--color-rose)] py-3 text-sm font-extrabold text-[var(--color-bg-0)]"
+          className="rounded-xl bg-(--color-rose) py-3 text-sm font-extrabold text-(--color-bg-0)"
         >
           자동 정지
         </button>
       ) : (
         <button
           onClick={startAuto}
-          className="rounded-xl bg-[var(--color-emerald)] py-3 text-sm font-extrabold text-[var(--color-bg-0)] shadow-glow-cyan"
+          className="rounded-xl bg-emerald py-3 text-sm font-extrabold text-(--color-bg-0) shadow-glow-cyan"
         >
           자동 시작
         </button>
       )}
 
-      <div className="flex justify-between text-[11px] text-[var(--color-muted)]">
+      <div className="flex justify-between text-[11px] text-(--color-muted)">
         <span>잔액</span>
         <span className="font-numeric">{balance.toFixed(2)} USDT</span>
       </div>
@@ -363,7 +363,7 @@ export function StakeBetPanel({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-(--color-muted)">
         {label}
       </span>
       {children}

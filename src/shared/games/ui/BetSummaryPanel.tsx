@@ -95,7 +95,7 @@ function StaticPanel({
       </div>
 
       {/* multiplier bar */}
-      <div className="relative h-1.5 overflow-hidden rounded-full bg-[var(--color-bg-0)]">
+      <div className="relative h-1.5 overflow-hidden rounded-full bg-(--color-bg-0)">
         <div
           className="h-full rounded-full transition-[width] duration-200"
           style={{
@@ -106,9 +106,9 @@ function StaticPanel({
       </div>
 
       <div className="flex items-center justify-between text-[10px]">
-        <span className="text-[var(--color-muted-2)]">
+        <span className="text-muted-2">
           배당{" "}
-          <span className="font-numeric font-bold text-[var(--color-foreground)]">
+          <span className="font-numeric font-bold text-(--color-foreground)">
             {effectiveMult.toFixed(2)}x
           </span>
           <span
@@ -121,7 +121,7 @@ function StaticPanel({
             {rtpLabel}
           </span>
         </span>
-        <span className="font-numeric text-[var(--color-rose)]">
+        <span className="font-numeric text-(--color-rose)">
           최대 손실 -{maxLoss.toFixed(2)}
         </span>
       </div>
@@ -159,16 +159,16 @@ function LivePanel({
   if (cashedAt != null) {
     const lockedProfit = amount * (applyEdge(cashedAt, mode) - 1);
     return (
-      <div className="glass-2 flex flex-col gap-2 rounded-2xl p-3.5 ring-2 ring-[var(--color-emerald)]">
+      <div className="glass-2 flex flex-col gap-2 rounded-2xl p-3.5 ring-2 ring-emerald">
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--color-emerald)]">
+          <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald">
             ✓ 캐쉬아웃 완료
           </span>
-          <span className="font-numeric text-xs text-[var(--color-muted)]">
+          <span className="font-numeric text-xs text-(--color-muted)">
             @ {cashedAt.toFixed(2)}x
           </span>
         </div>
-        <div className="font-numeric text-3xl font-extrabold text-[var(--color-emerald)]">
+        <div className="font-numeric text-3xl font-extrabold text-emerald">
           +{lockedProfit.toFixed(2)} USDT
         </div>
       </div>
@@ -179,18 +179,18 @@ function LivePanel({
     <div
       className={cn(
         "glass-2 flex flex-col gap-2.5 rounded-2xl p-3.5 transition-all",
-        busted && "animate-crash-flash ring-2 ring-[var(--color-rose)]",
-        !busted && "ring-2 ring-[var(--color-cyan)] shadow-glow-cyan",
+        busted && "animate-crash-flash ring-2 ring-(--color-rose)",
+        !busted && "ring-2 ring-(--color-cyan) shadow-glow-cyan",
       )}
     >
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--color-cyan)]">
-          <span className="inline-flex h-2 w-2 animate-phon-pulse rounded-full bg-[var(--color-emerald)]" />
+        <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-(--color-cyan)">
+          <span className="inline-flex h-2 w-2 animate-phon-pulse rounded-full bg-emerald" />
           LIVE · 라운드 진행 중
         </span>
-        <span className="text-[10px] text-[var(--color-muted)]">
+        <span className="text-[10px] text-(--color-muted)">
           내 베팅{" "}
-          <span className="font-numeric font-bold text-[var(--color-foreground)]">
+          <span className="font-numeric font-bold text-(--color-foreground)">
             {amount.toFixed(2)}
           </span>
         </span>
@@ -198,26 +198,26 @@ function LivePanel({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-(--color-muted)">
             현재 배수
           </div>
           <div
             className={cn(
               "font-numeric text-2xl font-extrabold tabular-nums",
-              busted ? "text-[var(--color-rose)]" : "text-[var(--color-foreground)]",
+              busted ? "text-(--color-rose)" : "text-(--color-foreground)",
             )}
           >
             {effectiveLive.toFixed(2)}x
           </div>
         </div>
         <div className="text-right">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-(--color-muted)">
             예상 수익
           </div>
           <div
             className={cn(
               "font-numeric text-2xl font-extrabold tabular-nums",
-              busted ? "text-[var(--color-rose)]" : "text-[var(--color-emerald)]",
+              busted ? "text-(--color-rose)" : "text-emerald",
             )}
           >
             {busted ? `-${amount.toFixed(2)}` : `+${liveProfit.toFixed(2)}`}
@@ -226,32 +226,32 @@ function LivePanel({
       </div>
 
       {/* target progress */}
-      <div className="relative h-1.5 overflow-hidden rounded-full bg-[var(--color-bg-0)]">
+      <div className="relative h-1.5 overflow-hidden rounded-full bg-(--color-bg-0)">
         <div
           className={cn(
             "h-full rounded-full transition-[width] duration-100",
             reached
-              ? "bg-[var(--color-emerald)] shadow-glow-cyan"
-              : "bg-gradient-to-r from-[var(--color-cyan)] to-[var(--color-purple)]",
+              ? "bg-emerald shadow-glow-cyan"
+              : "bg-linear-to-r from-(--color-cyan) to-(--color-purple)",
           )}
           style={{ width: `${targetPct}%` }}
         />
       </div>
       <div className="flex items-center justify-between text-[10px]">
-        <span className="text-[var(--color-muted-2)]">
+        <span className="text-muted-2">
           목표{" "}
-          <span className="font-numeric font-bold text-[var(--color-foreground)]">
+          <span className="font-numeric font-bold text-(--color-foreground)">
             {targetMultiplier.toFixed(2)}x
           </span>
-          {reached && <span className="ml-1.5 text-[var(--color-emerald)]">✓ 도달</span>}
+          {reached && <span className="ml-1.5 text-emerald">✓ 도달</span>}
         </span>
-        <span className="text-[var(--color-muted-2)]">{rtpLabel}</span>
+        <span className="text-muted-2">{rtpLabel}</span>
       </div>
 
       {onCashout && !busted && (
         <button
           onClick={onCashout}
-          className="mt-1 flex items-center justify-center gap-1.5 rounded-xl bg-[var(--color-warning)] py-2.5 text-sm font-extrabold text-[var(--color-bg-0)] shadow-glow-gold active:scale-[0.98]"
+          className="mt-1 flex items-center justify-center gap-1.5 rounded-xl bg-warning py-2.5 text-sm font-extrabold text-(--color-bg-0) shadow-glow-gold active:scale-[0.98]"
         >
           <Zap size={14} />
           캐쉬아웃 @ {effectiveLive.toFixed(2)}x
@@ -260,10 +260,10 @@ function LivePanel({
 
       {busted && (
         <div className="rounded-lg bg-[color-mix(in_oklab,var(--color-rose)_18%,transparent)] px-3 py-2 text-center">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-rose)]">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-(--color-rose)">
             <TrendingUp size={10} className="inline" /> 라운드 종료
           </div>
-          <div className="font-numeric mt-0.5 text-base font-extrabold text-[var(--color-rose)]">
+          <div className="font-numeric mt-0.5 text-base font-extrabold text-(--color-rose)">
             -{amount.toFixed(2)} USDT
           </div>
         </div>
@@ -288,8 +288,8 @@ function Cell({
   emphasize?: boolean;
 }) {
   return (
-    <div className="rounded-xl bg-[var(--color-bg-0)] px-2 py-1.5">
-      <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+    <div className="rounded-xl bg-(--color-bg-0) px-2 py-1.5">
+      <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-(--color-muted)">
         <span aria-hidden>{icon}</span>
         {label}
       </div>
@@ -302,7 +302,7 @@ function Cell({
       >
         {value}
         {unit && (
-          <span className="ml-1 text-[9px] font-bold text-[var(--color-muted-2)]">{unit}</span>
+          <span className="ml-1 text-[9px] font-bold text-muted-2">{unit}</span>
         )}
       </div>
     </div>

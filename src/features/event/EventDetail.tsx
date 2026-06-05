@@ -23,10 +23,10 @@ export function EventDetail({ id }: { id: string }) {
 
   if (!e) {
     return (
-      <div className="glass-2 rounded-2xl p-8 text-center text-sm text-[var(--color-muted)]">
+      <div className="glass-2 rounded-2xl p-8 text-center text-sm text-(--color-muted)">
         이벤트를 찾을 수 없습니다.
         <div className="mt-3">
-          <Link to="/event" className="text-[var(--color-cyan)]">
+          <Link to="/event" className="text-(--color-cyan)">
             목록으로
           </Link>
         </div>
@@ -48,7 +48,7 @@ export function EventDetail({ id }: { id: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <Link to="/event" className="flex items-center gap-1 text-sm text-[var(--color-muted)]">
+      <Link to="/event" className="flex items-center gap-1 text-sm text-(--color-muted)">
         <ArrowLeft size={16} /> 이벤트
       </Link>
 
@@ -64,7 +64,7 @@ export function EventDetail({ id }: { id: string }) {
         <h1 className="mt-3 text-2xl font-extrabold leading-tight">{e.title}</h1>
         <p className="mt-1 text-sm opacity-90">{e.tagline}</p>
         <div className="mt-4 flex items-center gap-2 text-sm font-semibold">
-          <Trophy size={14} className="text-[var(--color-gold)]" /> {e.rewardPreview}
+          <Trophy size={14} className="text-gold" /> {e.rewardPreview}
         </div>
       </div>
 
@@ -83,7 +83,7 @@ export function EventDetail({ id }: { id: string }) {
               <div className="font-numeric text-2xl font-extrabold tabular-nums">
                 {String(v).padStart(2, "0")}
               </div>
-              <div className="text-[10px] text-[var(--color-muted)]">{l}</div>
+              <div className="text-[10px] text-(--color-muted)">{l}</div>
             </div>
           ))}
         </div>
@@ -91,11 +91,11 @@ export function EventDetail({ id }: { id: string }) {
 
       <div className="glass-2 rounded-2xl p-4">
         <div className="mb-2 flex items-center justify-between text-xs">
-          <span className="flex items-center gap-1 text-[var(--color-muted)]">
+          <span className="flex items-center gap-1 text-(--color-muted)">
             <Users size={12} />
             <span className="font-numeric">{e.participants.toLocaleString()}</span>명 참여
             {e.cap && (
-              <span className="text-[var(--color-muted-2)]"> / {e.cap.toLocaleString()}</span>
+              <span className="text-muted-2"> / {e.cap.toLocaleString()}</span>
             )}
           </span>
           <span className="font-numeric font-bold">{pct}%</span>
@@ -110,7 +110,7 @@ export function EventDetail({ id }: { id: string }) {
 
       <div className="glass-2 rounded-2xl p-4">
         <h2 className="mb-2 text-sm font-bold">이벤트 안내</h2>
-        <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--color-muted)]">
+        <p className="whitespace-pre-wrap text-sm leading-relaxed text-(--color-muted)">
           {e.body}
         </p>
       </div>
@@ -118,7 +118,7 @@ export function EventDetail({ id }: { id: string }) {
       {leaderboard.length > 0 && (
         <div className="glass-2 rounded-2xl p-4">
           <h2 className="mb-3 flex items-center gap-1 text-sm font-bold">
-            <Crown size={14} className="text-[var(--color-gold)]" /> 실시간 리더보드
+            <Crown size={14} className="text-gold" /> 실시간 리더보드
           </h2>
           <ul className="flex flex-col gap-1.5">
             {leaderboard.map((row) => (
@@ -136,7 +136,7 @@ export function EventDetail({ id }: { id: string }) {
                   {row.rank}
                 </span>
                 <span className="flex-1 truncate">{row.nickname}</span>
-                <span className="font-numeric text-xs font-bold text-[var(--color-emerald)]">
+                <span className="font-numeric text-xs font-bold text-emerald">
                   +{row.score}%
                 </span>
               </li>
@@ -147,10 +147,10 @@ export function EventDetail({ id }: { id: string }) {
 
       <div className="glass-2 rounded-2xl p-4">
         <h2 className="mb-2 text-sm font-bold">참여 약관</h2>
-        <ul className="flex flex-col gap-1 text-xs text-[var(--color-muted)]">
+        <ul className="flex flex-col gap-1 text-xs text-(--color-muted)">
           {e.terms.map((t) => (
             <li key={t} className="flex items-start gap-1.5">
-              <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-[var(--color-muted)]" />
+              <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-(--color-muted)" />
               {t}
             </li>
           ))}
@@ -160,7 +160,7 @@ export function EventDetail({ id }: { id: string }) {
       <button
         onClick={() => void handleJoin()}
         disabled={e.status === "종료" || join.isPending}
-        className="sticky bottom-20 z-10 flex h-12 items-center justify-center gap-2 rounded-2xl bg-holographic text-sm font-bold text-[var(--color-bg-0)] shadow-glow-purple disabled:opacity-50"
+        className="sticky bottom-20 z-10 flex h-12 items-center justify-center gap-2 rounded-2xl bg-holographic text-sm font-bold text-(--color-bg-0) shadow-glow-purple disabled:opacity-50"
       >
         <Clock size={14} />
         {e.ctaLabel}

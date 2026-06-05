@@ -68,9 +68,9 @@ export function EarnScreen() {
           <Premium3DCard className="flex items-center gap-4 p-4" glow="gold">
             <StreakFlame days={userBalance.streakDays} />
             <div className="flex-1">
-              <div className="text-xs text-[var(--color-muted)]">연속 출석</div>
+              <div className="text-xs text-(--color-muted)">연속 출석</div>
               <div className="text-lg font-extrabold">{userBalance.streakDays}일 째 🔥</div>
-              <div className="mt-0.5 text-[11px] text-[var(--color-gold)]">
+              <div className="mt-0.5 text-[11px] text-gold">
                 7일마다 +500,000 PHON 보너스
               </div>
             </div>
@@ -79,10 +79,10 @@ export function EarnScreen() {
 
           <section className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-cyan)]">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-(--color-cyan)">
                 데일리 · 한정 미션
               </h2>
-              <span className="text-[11px] text-[var(--color-muted)]">
+              <span className="text-[11px] text-(--color-muted)">
                 총 {missions.length}개{isLive ? " · 실시간" : " · 데모"}
               </span>
             </div>
@@ -121,22 +121,22 @@ export function EarnScreen() {
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <div className="text-right">
-                      <div className="font-numeric text-sm font-extrabold text-[var(--color-gold)]">
+                      <div className="font-numeric text-sm font-extrabold text-gold">
                         +{formatPHON(m.reward)}
                       </div>
-                      <div className="text-[10px] text-[var(--color-muted)]">PHON</div>
+                      <div className="text-[10px] text-(--color-muted)">PHON</div>
                     </div>
                     {isLive && claimable && (
                       <button
                         disabled={isClaiming}
                         onClick={() => void handleClaim(m.id)}
-                        className="rounded-lg bg-holographic px-2 py-1 text-[10px] font-bold text-[var(--color-bg-0)]"
+                        className="rounded-lg bg-holographic px-2 py-1 text-[10px] font-bold text-(--color-bg-0)"
                       >
                         받기
                       </button>
                     )}
                     {claimed && (
-                      <span className="text-[10px] text-[var(--color-emerald)]">수령 완료</span>
+                      <span className="text-[10px] text-emerald">수령 완료</span>
                     )}
                   </div>
                 </Premium3DCard>
@@ -146,11 +146,11 @@ export function EarnScreen() {
 
           <Premium3DCard className="flex items-center gap-3 p-4" glow="purple">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-holographic shadow-glow-purple">
-              <Gift size={22} className="text-[var(--color-bg-0)]" />
+              <Gift size={22} className="text-(--color-bg-0)" />
             </div>
             <div className="flex-1">
               <div className="text-sm font-semibold">오늘의 미스터리 박스</div>
-              <div className="text-[11px] text-[var(--color-muted)]">
+              <div className="text-[11px] text-(--color-muted)">
                 최대 3,000,000 PHON · 일일 1회
               </div>
             </div>
@@ -159,7 +159,7 @@ export function EarnScreen() {
                 if (isLive) void recordProgress({ missionId: "m-lim-1" });
                 appToast.box.opened({ amount: formatPHON(1_250_000) });
               }}
-              className="rounded-xl bg-holographic px-4 py-2 text-xs font-bold text-[var(--color-bg-0)]"
+              className="rounded-xl bg-holographic px-4 py-2 text-xs font-bold text-(--color-bg-0)"
             >
               열기
             </button>
@@ -170,10 +170,10 @@ export function EarnScreen() {
       {tab === "games" && (
         <section>
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="inline-flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wider text-[var(--color-pink)]">
+            <h2 className="inline-flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wider text-pink">
               <Gamepad2 size={14} /> 게임 로비
             </h2>
-            <span className="text-[11px] text-[var(--color-muted)]">8게임 · Provably Fair</span>
+            <span className="text-[11px] text-(--color-muted)">8게임 · Provably Fair</span>
           </div>
           <GameLobby />
         </section>

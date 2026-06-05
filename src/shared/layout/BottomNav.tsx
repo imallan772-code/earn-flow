@@ -43,7 +43,7 @@ export function BottomNav() {
               to={it.to}
               className={cn(
                 "relative flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-1.5 text-xs",
-                active ? "text-[var(--color-cyan)]" : "text-[var(--color-muted)]",
+                active ? "text-(--color-cyan)" : "text-(--color-muted)",
               )}
             >
               {active && (

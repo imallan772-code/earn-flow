@@ -33,9 +33,9 @@ export function MoneyChannelCard({ to, Icon, title, subtitle, meta, accent = "cy
       </div>
       <div className="flex-1">
         <div className="text-sm font-semibold">{title}</div>
-        <div className="text-xs text-[var(--color-muted)]">{subtitle}</div>
+        <div className="text-xs text-(--color-muted)">{subtitle}</div>
       </div>
-      <div className="flex items-center gap-1.5 text-xs text-[var(--color-muted)]">
+      <div className="flex items-center gap-1.5 text-xs text-(--color-muted)">
         {meta}
         <ChevronRight size={16} />
       </div>

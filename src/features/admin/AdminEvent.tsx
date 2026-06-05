@@ -20,11 +20,11 @@ export function AdminEvent() {
   };
 
   return (
-    <div className="min-h-dvh bg-cosmic p-6 text-[var(--color-foreground)]">
+    <div className="min-h-dvh bg-cosmic p-6 text-(--color-foreground)">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold">이벤트 관리</h1>
-          <p className="text-sm text-[var(--color-muted)]">
+          <p className="text-sm text-(--color-muted)">
             진행중 · 예정 · 종료 · 카운트다운 · 리더보드 (mock)
           </p>
         </div>
@@ -47,7 +47,7 @@ export function AdminEvent() {
               bgTo: "var(--color-pink)",
             })
           }
-          className="flex items-center gap-1 rounded-2xl bg-holographic px-4 py-2 text-sm font-bold text-[var(--color-bg-0)]"
+          className="flex items-center gap-1 rounded-2xl bg-holographic px-4 py-2 text-sm font-bold text-(--color-bg-0)"
         >
           <Plus size={14} /> 새 이벤트
         </button>
@@ -60,17 +60,17 @@ export function AdminEvent() {
               <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-bold">
                 {e.status}
               </span>
-              <span className="ml-auto font-numeric text-[11px] text-[var(--color-muted)]">
+              <span className="ml-auto font-numeric text-[11px] text-(--color-muted)">
                 {e.startsAt.slice(0, 10)} ~ {e.endsAt.slice(0, 10)}
               </span>
             </div>
             <div className="text-sm font-bold">{e.title}</div>
-            <div className="flex items-center gap-1 text-xs text-[var(--color-muted)]">
-              <Trophy size={11} className="text-[var(--color-gold)]" />
+            <div className="flex items-center gap-1 text-xs text-(--color-muted)">
+              <Trophy size={11} className="text-gold" />
               {e.rewardPreview}
             </div>
             <div className="flex items-center justify-between">
-              <span className="font-numeric text-xs text-[var(--color-muted)]">
+              <span className="font-numeric text-xs text-(--color-muted)">
                 참여 {e.participants.toLocaleString()}
               </span>
               <div className="flex gap-1">
@@ -79,7 +79,7 @@ export function AdminEvent() {
                 </button>
                 <button
                   onClick={() => setList((prev) => prev.filter((p) => p.id !== e.id))}
-                  className="rounded-lg p-1.5 text-[var(--color-rose)] hover:bg-white/8"
+                  className="rounded-lg p-1.5 text-(--color-rose) hover:bg-white/8"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -187,7 +187,7 @@ export function AdminEvent() {
               </button>
               <button
                 onClick={() => save(editing)}
-                className="rounded-xl bg-holographic px-4 py-2 text-sm font-bold text-[var(--color-bg-0)]"
+                className="rounded-xl bg-holographic px-4 py-2 text-sm font-bold text-(--color-bg-0)"
               >
                 저장
               </button>

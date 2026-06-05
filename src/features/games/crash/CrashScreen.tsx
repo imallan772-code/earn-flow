@@ -236,14 +236,14 @@ export function CrashScreen() {
           <h1 className="text-xl font-extrabold leading-tight">Crash</h1>
           <ModeBadge className="mt-0.5" />
         </div>
-        <span className="glass-1 ml-auto rounded-full px-2.5 py-1 text-[10px] font-bold text-[var(--color-muted)] font-numeric">
+        <span className="glass-1 ml-auto rounded-full px-2.5 py-1 text-[10px] font-bold text-(--color-muted) font-numeric">
           #{nonce.toString().padStart(4, "0")}
         </span>
         <button
           onClick={() => setShowFair(true)}
           className="glass-1 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold"
         >
-          <ShieldCheck size={12} className="text-[var(--color-emerald)]" />
+          <ShieldCheck size={12} className="text-emerald" />
           공정성
         </button>
       </header>
@@ -257,10 +257,10 @@ export function CrashScreen() {
             className={cn(
               "font-numeric shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-extrabold",
               h.multiplier < 2
-                ? "bg-[color-mix(in_oklab,var(--color-rose)_22%,transparent)] text-[var(--color-rose)]"
+                ? "bg-[color-mix(in_oklab,var(--color-rose)_22%,transparent)] text-(--color-rose)"
                 : h.multiplier < 10
-                  ? "bg-[color-mix(in_oklab,var(--color-warning)_22%,transparent)] text-[var(--color-warning)]"
-                  : "bg-[color-mix(in_oklab,var(--color-emerald)_22%,transparent)] text-[var(--color-emerald)]",
+                  ? "bg-[color-mix(in_oklab,var(--color-warning)_22%,transparent)] text-warning"
+                  : "bg-[color-mix(in_oklab,var(--color-emerald)_22%,transparent)] text-emerald",
             )}
           >
             {h.multiplier.toFixed(2)}x
@@ -270,7 +270,7 @@ export function CrashScreen() {
 
       <div
         className={cn(
-          "relative aspect-[5/4] w-full overflow-hidden rounded-2xl border border-[var(--color-border)]",
+          "relative aspect-5/4 w-full overflow-hidden rounded-2xl border border-(--color-border)",
           phase === "crashed" && "animate-crash-shake",
         )}
       >
@@ -283,7 +283,7 @@ export function CrashScreen() {
         {phase === "crashed" && (
           <div
             key={flashKey}
-            className="animate-crash-flash pointer-events-none absolute inset-0 bg-[var(--color-rose)]"
+            className="animate-crash-flash pointer-events-none absolute inset-0 bg-(--color-rose)"
             aria-hidden
           />
         )}
@@ -342,25 +342,25 @@ export function CrashScreen() {
             </div>
             <dl className="flex flex-col gap-3 text-xs">
               <Row k="다음 서버 시드 (해시)">
-                <code className="break-all text-[10px] text-[var(--color-cyan)]">
+                <code className="break-all text-[10px] text-(--color-cyan)">
                   {commit || "로딩 중..."}
                 </code>
               </Row>
               <Row k="클라이언트 시드">
-                <code className="text-[var(--color-purple)]">{CLIENT_SEED}</code>
+                <code className="text-(--color-purple)">{CLIENT_SEED}</code>
               </Row>
               <Row k="다음 라운드 번호">
                 <code className="font-numeric">{nonce}</code>
               </Row>
               <Row k="현재 라운드 결과">
-                <code className="font-numeric text-[var(--color-gold)]">
+                <code className="font-numeric text-gold">
                   {phase === "crashed" || phase === "cooldown"
                     ? `${crashPoint.toFixed(2)}x`
                     : "진행 중"}
                 </code>
               </Row>
             </dl>
-            <p className="mt-4 text-[10px] leading-relaxed text-[var(--color-muted)]">
+            <p className="mt-4 text-[10px] leading-relaxed text-(--color-muted)">
               라운드 종료 후 서버 시드가 공개되면 위 해시를 직접 SHA-256으로 검증할 수 있습니다.
               모든 라운드는 HMAC-SHA256(serverSeed, &quot;clientSeed:nonce:0&quot;)으로 결정됩니다.
             </p>
@@ -374,7 +374,7 @@ export function CrashScreen() {
 function Row({ k, children }: { k: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-3">
-      <dt className="shrink-0 text-[var(--color-muted)]">{k}</dt>
+      <dt className="shrink-0 text-(--color-muted)">{k}</dt>
       <dd className="min-w-0 text-right">{children}</dd>
     </div>
   );

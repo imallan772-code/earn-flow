@@ -21,10 +21,10 @@ export function DepositHub() {
 
         {/* FOMO 상단 배너 — 거래소 톤이지만 이벤트는 표시 */}
         <div className="glass-1 mb-4 flex items-center gap-2 rounded-2xl px-3 py-2.5 text-xs">
-          <span className="text-[var(--color-gold)] font-semibold">
+          <span className="text-gold font-semibold">
             🎁 오늘 입금 시 +10% 보너스
           </span>
-          <span className="text-[var(--color-muted)]">— 24시간 한정</span>
+          <span className="text-(--color-muted)">— 24시간 한정</span>
         </div>
 
         <div className="space-y-2.5">
@@ -54,7 +54,7 @@ export function DepositHub() {
         </div>
 
         <div
-          className="mt-5 flex items-start gap-2 rounded-2xl border px-3 py-2.5 text-[11px] text-[var(--color-muted)]"
+          className="mt-5 flex items-start gap-2 rounded-2xl border px-3 py-2.5 text-[11px] text-(--color-muted)"
           style={{ borderColor: "var(--color-border)" }}
         >
           <ShieldAlert size={14} className="mt-0.5 shrink-0" />

@@ -23,12 +23,12 @@ function NotFoundComponent() {
       <div className="glass-3 max-w-sm rounded-3xl p-8 text-center shadow-depth-3">
         <h1 className="text-holographic text-6xl font-extrabold">404</h1>
         <h2 className="mt-3 text-lg font-semibold">길을 잃었어요</h2>
-        <p className="mt-1.5 text-sm text-[var(--color-muted)]">
+        <p className="mt-1.5 text-sm text-(--color-muted)">
           요청하신 페이지를 찾을 수 없어요. 처음 화면으로 돌아가서 다시 시작해 주세요.
         </p>
         <Link
           to="/"
-          className="mt-5 inline-flex h-10 items-center justify-center rounded-2xl bg-holographic px-5 text-sm font-semibold text-[var(--color-bg-0)] shadow-glow-purple"
+          className="mt-5 inline-flex h-10 items-center justify-center rounded-2xl bg-holographic px-5 text-sm font-semibold text-(--color-bg-0) shadow-glow-purple"
         >
           홈으로
         </Link>
@@ -48,7 +48,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-dvh items-center justify-center bg-cosmic px-4">
       <div className="glass-3 max-w-sm rounded-3xl p-8 text-center shadow-depth-3">
         <h1 className="text-lg font-semibold">잠시 문제가 생겼어요</h1>
-        <p className="mt-1.5 text-sm text-[var(--color-muted)]">
+        <p className="mt-1.5 text-sm text-(--color-muted)">
           다시 시도하거나 홈으로 돌아가 주세요.
         </p>
         <div className="mt-5 flex justify-center gap-2">
@@ -57,7 +57,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
               router.invalidate();
               reset();
             }}
-            className="inline-flex h-10 items-center justify-center rounded-2xl bg-holographic px-4 text-sm font-semibold text-[var(--color-bg-0)]"
+            className="inline-flex h-10 items-center justify-center rounded-2xl bg-holographic px-4 text-sm font-semibold text-(--color-bg-0)"
           >
             다시 시도
           </button>

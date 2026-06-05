@@ -63,17 +63,17 @@ export function LiveBetsFeed({ limit = 12, showHeader = true, game, className }:
     <section className={cn("glass-2 rounded-2xl p-3", className)}>
       {showHeader && (
         <header className="mb-2 flex items-center justify-between">
-          <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
-            <span className="inline-flex h-2 w-2 animate-phon-pulse rounded-full bg-[var(--color-emerald)]" />
+          <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-(--color-muted)">
+            <span className="inline-flex h-2 w-2 animate-phon-pulse rounded-full bg-emerald" />
             <Globe2 size={12} /> 글로벌 라이브 베팅
           </h3>
-          <span className="flex items-center gap-2 text-[10px] text-[var(--color-muted-2)]">
+          <span className="flex items-center gap-2 text-[10px] text-muted-2">
             <Users size={10} />
-            <span className="font-numeric font-bold text-[var(--color-foreground)]">
+            <span className="font-numeric font-bold text-(--color-foreground)">
               <RollingCountUp base={1_240_000} />
             </span>
             <span>· 누적</span>
-            <span className="font-numeric font-bold text-[var(--color-gold)]">
+            <span className="font-numeric font-bold text-gold">
               {(total / 1000).toFixed(1)}K USDT
             </span>
           </span>
@@ -82,7 +82,7 @@ export function LiveBetsFeed({ limit = 12, showHeader = true, game, className }:
 
       <ul className="flex flex-col">
         {view.length === 0 ? (
-          <li className="py-4 text-center text-[11px] text-[var(--color-muted-2)]">
+          <li className="py-4 text-center text-[11px] text-muted-2">
             베팅 대기 중...
           </li>
         ) : (
@@ -120,7 +120,7 @@ function LiveBetRow({ bet }: { bet: LiveBet }) {
   return (
     <li
       className={cn(
-        "grid grid-cols-[auto_1fr_auto_auto_auto] items-center gap-2 border-b border-[var(--color-border)] py-1.5 text-xs last:border-b-0",
+        "grid grid-cols-[auto_1fr_auto_auto_auto] items-center gap-2 border-b border-(--color-border) py-1.5 text-xs last:border-b-0",
         bet.isMe &&
           "rounded-lg bg-[color-mix(in_oklab,var(--color-cyan)_8%,transparent)] px-1.5 ring-1 ring-[color-mix(in_oklab,var(--color-cyan)_40%,transparent)]",
       )}
@@ -130,14 +130,14 @@ function LiveBetRow({ bet }: { bet: LiveBet }) {
         style={{ background: GAME_ACCENT[bet.game] }}
         title={GAME_LABEL[bet.game]}
       />
-      <span className="truncate text-[var(--color-muted)]">
+      <span className="truncate text-(--color-muted)">
         {bet.isMe && (
-          <span className="mr-1 rounded-sm bg-[var(--color-cyan)] px-1 py-px text-[8px] font-bold text-[var(--color-bg-0)]">
+          <span className="mr-1 rounded-sm bg-(--color-cyan) px-1 py-px text-[8px] font-bold text-(--color-bg-0)">
             ME
           </span>
         )}
         {bet.user}
-        <span className="ml-1 text-[9px] uppercase text-[var(--color-muted-2)]">
+        <span className="ml-1 text-[9px] uppercase text-muted-2">
           {bet.mode === "demo" ? "·데모" : ""}
         </span>
       </span>
@@ -145,7 +145,7 @@ function LiveBetRow({ bet }: { bet: LiveBet }) {
       <span
         className={cn(
           "font-numeric w-14 text-right tabular-nums",
-          bet.status === "bust" ? "text-[var(--color-rose)]" : "text-[var(--color-muted)]",
+          bet.status === "bust" ? "text-(--color-rose)" : "text-(--color-muted)",
         )}
       >
         {multText}

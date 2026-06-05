@@ -14,7 +14,7 @@ export function GameLobby() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-(--color-muted)">
           현재 모드
         </span>
         <ModeBadge />
@@ -47,18 +47,18 @@ function GameTile({ card }: { card: GameRegistryEntry }) {
           <card.Icon size={20} />
         </div>
         {card.open ? (
-          <span className="rounded-full bg-[color-mix(in_oklab,var(--color-emerald)_22%,transparent)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[var(--color-emerald)]">
+          <span className="rounded-full bg-[color-mix(in_oklab,var(--color-emerald)_22%,transparent)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald">
             LIVE
           </span>
         ) : (
-          <span className="rounded-full bg-[var(--color-surface-hi)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+          <span className="rounded-full bg-(--color-surface-hi) px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-(--color-muted)">
             SOON
           </span>
         )}
       </div>
       <div>
         <div className="text-sm font-extrabold">{card.name}</div>
-        <div className="font-numeric text-[10px] text-[var(--color-muted)]">
+        <div className="font-numeric text-[10px] text-(--color-muted)">
           RTP {card.rtp} · {card.liveBets > 0 ? `${card.liveBets} live` : "준비중"}
         </div>
       </div>

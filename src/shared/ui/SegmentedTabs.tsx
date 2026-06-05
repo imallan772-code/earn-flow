@@ -47,8 +47,8 @@ export function SegmentedTabs<T extends string>({
             className={cn(
               "relative flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-sm transition-colors",
               active
-                ? "text-[var(--color-bg-0)]"
-                : "text-[var(--color-muted)] hover:text-[var(--color-foreground)]",
+                ? "text-(--color-bg-0)"
+                : "text-(--color-muted) hover:text-(--color-foreground)",
             )}
           >
             {active && (

@@ -67,7 +67,7 @@ export function ExchangeChart({ symbol, className }: ExchangeChartProps) {
         role="img"
         aria-label={`${symbol} candlestick chart`}
       />
-      <span className="pointer-events-none absolute right-2 top-2 rounded-full bg-black/40 px-2 py-0.5 text-[10px] text-[var(--color-muted)]">
+      <span className="pointer-events-none absolute right-2 top-2 rounded-full bg-black/40 px-2 py-0.5 text-[10px] text-(--color-muted)">
         {isLive ? "Supabase" : "fallback"}
       </span>
     </div>
