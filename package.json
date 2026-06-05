@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p apps/admin/tsconfig.json",
     "format": "prettier --write .",
     "admin:dev": "pnpm --filter @phonara/admin dev",
-    "admin:build": "pnpm --filter @phonara/admin build"
+    "admin:build": "pnpm --filter @phonara/admin build",
+    "supabase:config:push": "bun scripts/push-supabase-auth-config.ts"
   },
   "packageManager": "pnpm@9.15.4",
   "dependencies": {
@@ -47,7 +48,7 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@supabase/supabase-js": "^2.49.8",
+    "@supabase/supabase-js": "^2.105.0",
     "@tanstack/react-query": "^5.83.0",
     "@tanstack/react-router": "^1.168.25",
     "@tanstack/react-start": "^1.167.50",

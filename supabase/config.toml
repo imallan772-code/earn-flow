@@ -1,5 +1,45 @@
-# earn-flow — phonara-gb (linked for Supabase GitHub integration)
+# earn-flow — phonara-gb (kanftnqenuzverroodev)
+# Push to remote: bun run supabase:config:push  (needs `supabase login` or SUPABASE_ACCESS_TOKEN)
 project_id = "kanftnqenuzverroodev"
 
 [db.migrations]
 enabled = true
+
+# ─── Auth (supabase config push → Dashboard URL / Passkeys / Providers) ───────
+[auth]
+enabled = true
+site_url = "http://localhost:8080"
+additional_redirect_urls = [
+  "http://localhost:8080/**",
+  "http://localhost:8080",
+  "http://127.0.0.1:8080/**",
+  "http://127.0.0.1:8080",
+  "http://localhost:5174/**",
+  "http://localhost:5174",
+]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+# Dev-friendly: sign up → immediate session. Set true in production.
+enable_confirmations = false
+secure_password_change = false
+max_frequency = "1s"
+
+[auth.passkey]
+enabled = true
+
+[auth.webauthn]
+rp_display_name = "PHONARA"
+rp_id = "localhost"
+rp_origins = ["http://localhost:8080", "http://localhost:5174", "http://127.0.0.1:8080"]
+
+# Enable in Dashboard + set GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET env for config push.
+[auth.external.google]
+enabled = false
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"
+skip_nonce_check = false

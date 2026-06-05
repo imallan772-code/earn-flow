@@ -67,6 +67,8 @@ docs/lovable/   Lovable SSOT
 
 `docs/backlog/` — 지금 당장 하지 않는 작업 + Lovable 승인 플랜. 마스터: `LATER.md` · 라운드: `rounds/P2-limbo-wheel.md`
 
+**플랫폼 출시 전 (도메인·패스키·Auth·Admin):** `docs/PRE_LAUNCH_CHECKLIST.md`
+
 ## 레거시 문서
 
 `docs/CURSOR-MERGE-MAP.md` — **폐기**. phonara-world-main 이식 가이드였으나 더 이상 사용하지 않음.

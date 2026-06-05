@@ -8,6 +8,7 @@ import { m } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/AuthContext";
 import { GuestOnly } from "@/features/auth/RequireAuth";
+import { isPasskeySupported } from "@/lib/auth/webauthn";
 
 type Mode = "signin" | "signup";
 type Tab = "phone" | "email" | "passkey" | "google";
@@ -39,9 +40,29 @@ function AuthShellForm({ mode }: Props) {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { signInWithEmail, signUpWithEmail, refreshProfile, isConfigured } = useAuth();
+  const {
+    signInWithEmail,
+    signUpWithEmail,
+    signInWithPasskey,
+    signInWithGoogle,
+    resetPasswordForEmail,
+    refreshProfile,
+    isConfigured,
+  } = useAuth();
 
   const isSignup = mode === "signup";
+  const passkeyReady = isPasskeySupported();
+
+  async function finishAuth() {
+    const prof = await refreshProfile();
+    if (isSignup) {
+      appToast.auth.signupDone();
+      navigate({ to: "/onboarding" });
+    } else {
+      appToast.auth.welcomeBack();
+      navigate({ to: prof?.onboarding_completed ? "/feed" : "/onboarding" });
+    }
+  }
 
   async function handleSubmit() {
     if (!isConfigured) {
@@ -49,8 +70,43 @@ function AuthShellForm({ mode }: Props) {
       return;
     }
 
-    if (tab !== "email") {
+    if (tab === "phone") {
       appToast.ui.comingSoon();
+      return;
+    }
+
+    if (tab === "google") {
+      setSubmitting(true);
+      try {
+        await signInWithGoogle();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "구글 로그인에 실패했습니다";
+        appToast.raw.error(message);
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    if (tab === "passkey") {
+      if (isSignup) {
+        appToast.raw.error("패스키는 이메일 가입 후 프로필에서 등록할 수 있어요.");
+        return;
+      }
+      if (!passkeyReady) {
+        appToast.raw.error("이 브라우저/기기는 패스키를 지원하지 않습니다.");
+        return;
+      }
+      setSubmitting(true);
+      try {
+        await signInWithPasskey();
+        await finishAuth();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "패스키 로그인에 실패했습니다";
+        appToast.raw.error(message);
+      } finally {
+        setSubmitting(false);
+      }
       return;
     }
 
@@ -63,16 +119,30 @@ function AuthShellForm({ mode }: Props) {
     try {
       if (isSignup) {
         await signUpWithEmail(email.trim(), password);
-        appToast.auth.signupDone();
-        navigate({ to: "/onboarding" });
+        await finishAuth();
       } else {
         await signInWithEmail(email.trim(), password);
-        const prof = await refreshProfile();
-        appToast.auth.welcomeBack();
-        navigate({ to: prof?.onboarding_completed ? "/feed" : "/onboarding" });
+        await finishAuth();
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "인증에 실패했습니다";
+      appToast.raw.error(message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleResetPassword() {
+    if (!email.trim()) {
+      appToast.raw.error("비밀번호 재설정 메일을 받을 이메일을 입력해 주세요.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await resetPasswordForEmail(email.trim());
+      appToast.raw.success("비밀번호 재설정 메일을 보냈습니다.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "메일 전송에 실패했습니다";
       appToast.raw.error(message);
     } finally {
       setSubmitting(false);
@@ -89,6 +159,19 @@ function AuthShellForm({ mode }: Props) {
       el?.focus();
     }
   }
+
+  const ctaLabel =
+    tab === "google"
+      ? "구글 계정으로 계속"
+      : tab === "passkey"
+        ? isSignup
+          ? "이메일 탭에서 가입하기"
+          : "패스키로 로그인"
+        : submitting
+          ? "연결 중..."
+          : isSignup
+            ? "지금 시작하고 10,000 PHON 받기"
+            : "로그인";
 
   return (
     <AuthPageShell>
@@ -181,7 +264,7 @@ function AuthShellForm({ mode }: Props) {
               </div>
             </Field>
             <p className="text-[11px] text-muted">
-              휴대폰 OTP 로그인은 곧 지원됩니다. 지금은 이메일 탭을 이용해 주세요.
+              휴대폰 OTP 로그인은 곧 지원됩니다. 지금은 이메일·패스키·구글을 이용해 주세요.
             </p>
           </div>
         )}
@@ -207,29 +290,51 @@ function AuthShellForm({ mode }: Props) {
                 className="phon-input"
               />
             </Field>
+            {!isSignup && (
+              <button
+                type="button"
+                onClick={() => void handleResetPassword()}
+                disabled={submitting}
+                className="text-xs text-cyan underline-offset-2 hover:underline disabled:opacity-50"
+              >
+                비밀번호를 잊으셨나요?
+              </button>
+            )}
           </div>
         )}
         {tab === "passkey" && (
           <div className="glass-2 rounded-2xl p-5 text-center text-sm text-muted">
             <KeyRound size={28} className="mx-auto mb-2" style={{ color: "var(--color-cyan)" }} />
             <div className="font-semibold text-foreground">패스키로 1초 로그인</div>
-            <div className="mt-1 text-xs">Face ID · Touch ID · 윈도우 Hello — 준비 중</div>
+            <div className="mt-1 text-xs">
+              Face ID · Touch ID · Windows Hello
+              {!passkeyReady && " · 이 기기에서는 사용 불가"}
+            </div>
+            {isSignup ? (
+              <p className="mt-3 text-[11px]">
+                먼저 이메일로 가입한 뒤, 프로필에서 패스키를 등록하세요.
+              </p>
+            ) : (
+              <p className="mt-3 text-[11px]">아래 버튼을 누르면 기기 인증 창이 열립니다.</p>
+            )}
           </div>
         )}
         {tab === "google" && (
           <div className="glass-2 rounded-2xl p-5 text-center text-sm text-muted">
             <div className="font-semibold text-foreground">구글 계정으로 계속하기</div>
-            <div className="mt-1 text-xs">OAuth 연동 준비 중 — 이메일로 가입해 주세요</div>
+            <div className="mt-1 text-xs">
+              Supabase에서 Google Provider를 켜고 OAuth 클라이언트를 설정하면 바로 연결됩니다.
+            </div>
           </div>
         )}
       </div>
 
       <button
-        onClick={handleSubmit}
-        disabled={submitting}
+        onClick={() => void handleSubmit()}
+        disabled={submitting || (tab === "passkey" && isSignup)}
         className="mt-5 flex h-14 w-full items-center justify-center rounded-2xl bg-holographic text-base font-extrabold text-bg-0 shadow-glow-purple disabled:opacity-60"
       >
-        {submitting ? "연결 중..." : isSignup ? "지금 시작하고 10,000 PHON 받기" : "로그인"}
+        {submitting ? "연결 중..." : ctaLabel}
       </button>
 
       <Link to={isSignup ? "/login" : "/signup"} className="mt-4 text-center text-xs text-muted">

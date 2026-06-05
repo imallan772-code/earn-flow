@@ -18,6 +18,7 @@ import { formatPHON, formatUSDT, formatKRW } from "@/lib/format";
 import { useProfile } from "@/features/profile/useProfile";
 import { resolveBalanceView } from "@/features/profile/balanceView";
 import { useAuth } from "@/features/auth/AuthContext";
+import { PasskeySettings } from "@/features/auth/PasskeySettings";
 
 export function ProfileScreen() {
   const navigate = useNavigate();
@@ -112,6 +113,8 @@ export function ProfileScreen() {
         </div>
         <div className="mt-2 text-[11px] text-gold">친구 1명당 즉시 +5,000 PHON</div>
       </Premium3DCard>
+
+      {isConfigured && <PasskeySettings />}
 
       <div className="space-y-2">
         {[

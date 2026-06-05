@@ -1,3 +1,7 @@
+[run]
+# `bun run dev` → Vite를 Node 대신 Bun 런타임으로 실행 (시작·HMR 더 빠름)
+bun = true
+
 [install]
 # 24h supply-chain guard: skip package versions published less than a day ago.
 minimumReleaseAge = 86400

@@ -11,6 +11,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/integrations/supabase/client";
 import type { Profile } from "@/integrations/supabase/types";
 import { isSupabaseConfigured } from "@/integrations/supabase/env";
+import { getAuthRedirectUrl } from "@/lib/auth/redirect";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -23,6 +24,10 @@ interface AuthContextValue {
   refreshProfile: () => Promise<Profile | null>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string) => Promise<void>;
+  signInWithPasskey: () => Promise<void>;
+  registerPasskey: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  resetPasswordForEmail: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -103,7 +108,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUpWithEmail = useCallback(async (email: string, password: string) => {
     const supabase = getSupabaseClient();
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: getAuthRedirectUrl("/onboarding") },
+    });
+    if (error) throw error;
+  }, []);
+
+  const signInWithPasskey = useCallback(async () => {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.auth.signInWithPasskey();
+    if (error) throw error;
+  }, []);
+
+  const registerPasskey = useCallback(async () => {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.auth.registerPasskey();
+    if (error) throw error;
+  }, []);
+
+  const signInWithGoogle = useCallback(async () => {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: getAuthRedirectUrl("/feed") },
+    });
+    if (error) throw error;
+  }, []);
+
+  const resetPasswordForEmail = useCallback(async (email: string) => {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: getAuthRedirectUrl("/login"),
+    });
     if (error) throw error;
   }, []);
 
@@ -126,6 +164,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshProfile,
       signInWithEmail,
       signUpWithEmail,
+      signInWithPasskey,
+      registerPasskey,
+      signInWithGoogle,
+      resetPasswordForEmail,
       signOut,
     }),
     [
@@ -136,6 +178,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshProfile,
       signInWithEmail,
       signUpWithEmail,
+      signInWithPasskey,
+      registerPasskey,
+      signInWithGoogle,
+      resetPasswordForEmail,
       signOut,
     ],
   );
