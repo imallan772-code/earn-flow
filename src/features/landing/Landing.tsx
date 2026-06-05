@@ -59,26 +59,8 @@ export function Landing() {
             <span className="text-holographic">진짜 돈 버는 곳.</span>
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
-            한국{" "}
-            <span className="font-semibold text-[var(--color-foreground)]">
-              <LiveNumber
-                base={10_120_000}
-                amplitudeRatio={0.003}
-                bias={0.5}
-                format={(n) => formatManlike(n, "+ 명")}
-              />
-            </span>
-            이 매일 출석·미션·게임으로 PHON을 모아 KRW/USDT로 인출합니다. 가입 즉시{" "}
-            <span className="font-semibold text-[var(--color-gold)]">
-              <LiveNumber
-                base={1_800}
-                amplitudeRatio={0.02}
-                bias={0.5}
-                intervalMs={4500}
-                format={(n) => `${KO.format(Math.round(n))} PHON`}
-              />
-            </span>
-            .
+            글로벌 매일 출석·미션·게임으로 PHON을 모아 KRW/USDE로 인출합니다. 가입 즉시{" "}
+            <span className="font-semibold text-[var(--color-gold)]">5,000 PHON+</span>
           </p>
         </section>
 
@@ -154,7 +136,7 @@ export function Landing() {
             <ShieldCheck size={22} style={{ color: "var(--color-purple)" }} />
             <div>
               <div className="text-sm font-semibold">투명한 정산 · 24/7 지원</div>
-              <div className="text-xs text-[var(--color-muted)]">한국 운영팀 직접 운영</div>
+              <div className="text-xs text-[var(--color-muted)]">글로벌 운영팀 24/7 운영</div>
             </div>
           </Premium3DCard>
         </div>

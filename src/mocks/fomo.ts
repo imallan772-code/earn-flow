@@ -4,6 +4,7 @@ export const MOCK_ONLINE_BASE = 10_048_293;
 export const MOCK_CONCURRENT_PEAK = 327_412; // 32만 명 동시 접속
 export const MOCK_EVENT_BONUS_PERCENT = 150;
 export const MOCK_TOTAL_PAID_TODAY_PHON = 1_240_000_000;
+export const MOCK_REALTIME_CASHOUT_KRW = 5_290_000;
 
 export interface MarqueeRow {
   id: string;
@@ -12,18 +13,18 @@ export interface MarqueeRow {
 }
 
 export const MOCK_MARQUEE_ROWS: MarqueeRow[] = [
-  { id: "m1", text: "🔥 김** 님이 방금 1,240,000 PHON 출금 완료", accent: "gold" },
+  { id: "m1", text: "🔥 Park*** 님이 방금 1,240,000 PHON 출금 완료", accent: "gold" },
   { id: "m2", text: "⚡ 지금 32만 명이 동시에 PHONARA에서 돈 벌고 있어요", accent: "cyan" },
-  { id: "m3", text: "💎 박** 님 크래시 27.4× 캐시아웃 성공", accent: "purple" },
+  { id: "m3", text: "💎 Tanaka*** 님 크래시 27.4× 캐시아웃 성공", accent: "purple" },
   { id: "m4", text: "🎁 오늘만 150% 보너스 — 마감 임박", accent: "pink" },
-  { id: "m5", text: "🚀 이** 님 슬롯에서 잭팟 8,400,000 PHON", accent: "gold" },
-  { id: "m6", text: "💸 지금 1,012만+ 명이 PHONARA에 접속 중", accent: "cyan" },
+  { id: "m5", text: "🚀 Lee*** 님 슬롯에서 잭팟 8,400,000 PHON", accent: "gold" },
+  { id: "m6", text: "💸 지금 1,005만+ 명이 PHONARA에 접속 중", accent: "cyan" },
   { id: "m7", text: "🏆 TOP 0.01% VIP 승급 폭주", accent: "purple" },
-  { id: "m8", text: "🎯 최** 님 출석 30일 연속 — +500,000 PHON 보너스", accent: "gold" },
+  { id: "m8", text: "🎯 Ivanov*** 님 출석 30일 연속 — +500,000 PHON 보너스", accent: "gold" },
   { id: "m9", text: "🔥 럭키박스 레전더리 드랍 12건 발생", accent: "pink" },
   { id: "m10", text: "⏳ 한정 미션 남은 자리 47석", accent: "cyan" },
-  { id: "m11", text: "💰 정** 님 룰렛 35배 적중", accent: "purple" },
-  { id: "m12", text: "🇰🇷 한국 사용자 1,012만+ 돌파", accent: "gold" },
+  { id: "m11", text: "💰 Jeong*** 님 룰렛 35배 적중", accent: "purple" },
+  { id: "m12", text: "🌍 전 세계 사용자 1,000만+ 돌파", accent: "gold" },
 ];
 
 export interface CashoutTick {
@@ -34,14 +35,14 @@ export interface CashoutTick {
 }
 
 export const MOCK_CASHOUT_FEED: CashoutTick[] = [
-  { id: "c1", name: "김**", amount: 1_240_000, multiplier: 12.4 },
-  { id: "c2", name: "박**수", amount: 480_000, multiplier: 4.8 },
-  { id: "c3", name: "이**", amount: 2_140_000, multiplier: 27.4 },
-  { id: "c4", name: "최**경", amount: 320_000, multiplier: 3.2 },
-  { id: "c5", name: "정**", amount: 8_400_000, multiplier: 84.0 },
-  { id: "c6", name: "강**", amount: 720_000, multiplier: 7.2 },
-  { id: "c7", name: "윤**호", amount: 1_900_000, multiplier: 19.0 },
-  { id: "c8", name: "조**", amount: 540_000, multiplier: 5.4 },
+  { id: "c1", name: "Kim***", amount: 1_240_000, multiplier: 12.4 },
+  { id: "c2", name: "Sato***", amount: 480_000, multiplier: 4.8 },
+  { id: "c3", name: "Lee***", amount: 2_140_000, multiplier: 27.4 },
+  { id: "c4", name: "Choi***", amount: 320_000, multiplier: 3.2 },
+  { id: "c5", name: "João***", amount: 8_400_000, multiplier: 84.0 },
+  { id: "c6", name: "Kang***", amount: 720_000, multiplier: 7.2 },
+  { id: "c7", name: "Nguyen***", amount: 1_900_000, multiplier: 19.0 },
+  { id: "c8", name: "Wang***", amount: 540_000, multiplier: 5.4 },
 ];
 
 export interface LandingHeroStat {
