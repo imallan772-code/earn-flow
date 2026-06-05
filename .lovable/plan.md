@@ -1,47 +1,39 @@
-# LAYOUT-L hotfix — Wheel 데스크탑 폭 정정
+# LAYOUT-L hotfix v2 — Wheel 박스 빈 공간 제거
 
-## 증상
-≥1024px에서 `WheelDisplay`의 `aspect-square w-full`이 DesktopShell main `max-w-4xl` 폭(~896px)을 그대로 받아 거대한 정사각형 빈 박스가 생기고, 내부 SVG 휠은 `maxWidth: 280px`로 작게 떠 있음. 하단 컨트롤/베팅 패널이 화면 한참 아래로 밀림.
+## 현 상태 (스크린샷 확인)
+- v1 hotfix(`lg:max-w-xl` = 576px) 적용됨 → 박스가 화면 전체에서 ~520px로 축소됨 ✅
+- 하지만 휠 SVG는 280px cap → 정사각형 박스(520×520) 안에 휠이 상단 중앙에만 그려져 하단 큰 빈 공간 잔존
 
 ## 원인
-- `DesktopShell`의 `<main className="... lg:max-w-4xl ...">` 폭이 게임에 너무 넓음
-- `WheelDisplay` 정사각형 컨테이너는 폭 = 높이 → 폭이 커지면 박스가 통째로 커짐
-- 휠 SVG는 280px cap → 비주얼 미스매치
+`WheelDisplay`의 내부 SVG는 `maxWidth: 280px` 고정 (보호 대상, 0 diff). 박스 폭 > 휠 폭일 때 박스 하단 빈 공간이 그대로 보임.
 
-## 보호 대상 (0 diff)
-- `WheelDisplay.tsx`, `WheelEngine.ts`, `WheelControls.tsx`, `WheelLegend.tsx`
-- `GameShell.tsx`, `styles.css`
-- `DesktopShell.tsx` (P-0 SSOT — 다른 게임/페이지 회귀 위험)
-- Wheel 외 5게임, supabase, lib/api
+## 변경 — 1 파일, 1 줄
 
-## 변경 — 1 파일만
-
-### `src/features/games/wheel/WheelScreen.tsx`
-컴포넌트 최상위 `<div className="flex flex-col gap-2">` 에 데스크탑 전용 max-width + 중앙 정렬 추가:
-
+### `src/features/games/wheel/WheelScreen.tsx` line 339
 ```tsx
-// before
-<div className="flex flex-col gap-2">
+// before (현재)
+<div className="mx-auto flex w-full flex-col gap-2 lg:max-w-xl">
 
 // after
-<div className="mx-auto flex w-full flex-col gap-2 lg:max-w-xl">
+<div className="mx-auto flex w-full flex-col gap-2 lg:max-w-md">
 ```
 
-→ `lg:max-w-xl` (576px). 휠 디스플레이 정사각형이 576px 이하로 제한되고, 내부 SVG(280px max)와 시각 균형 회복. 컨트롤/베팅 패널도 같은 폭으로 자연 정렬.
+`lg:max-w-md` = 448px = 모바일 MobileShell과 동일 폭.
+박스(448²) - p-4(32) = 416px → SVG 280px maxWidth가 그대로 적용되지만 휠과 박스의 시각 비율이 모바일과 동일해짐.
 
-`<1024px`에서는 부모(MobileShell `max-w-md` = 448px)가 더 좁으므로 `lg:max-w-xl`이 무효 → 모바일 0 diff.
+## 기대 결과
+- 데스크탑 ≥1024 Wheel: 박스 약 448×448, 휠이 박스를 자연스럽게 채움 (모바일 동일)
+- 모바일: 0 diff (부모 max-w-md가 이미 좁아 무효)
+- 컨트롤/베팅 패널: 동일 폭으로 정렬
+- RightRail, 사이드바, 타 게임/페이지: 0 diff
+
+## 보호 대상 (계속 0 diff)
+`WheelDisplay`, `WheelEngine`, `WheelControls`, `WheelLegend`, `GameShell`, `DesktopShell`, `styles.css`, 타 5게임, supabase, lib/api.
 
 ## QA
-
-| 항목 | 기대 |
-|---|---|
-| <1024 Wheel | 모바일 0 diff |
-| ≥1024 Wheel center | max-w-xl(576px) 중앙 정렬, 디스플레이 정사각형 ~576px |
-| 휠 SVG vs 박스 | 박스가 휠을 적당히 감싸는 균형 (빈 박스 ❌) |
-| RightRail | 변동 없음 (P-0 register 그대로) |
-| 다른 게임/페이지 | 변동 없음 (WheelScreen 한정) |
-| `bun run check` | GREEN |
+- ≥1024 `/games/wheel` — 박스 ~448², 휠이 박스 거의 가득 채움
+- <1024 — 모바일 0 diff
+- `bun run check` GREEN
 
 ## 후속 (범위 외)
-- P-3에서 K~O 5게임 복제 시 동일 패턴(`lg:max-w-xl` 게임 래퍼) 적용 검토
-- 더 큰 wheel 시각을 원하면 별도 라운드에서 `WheelDisplay`의 `WHEEL_SIZE` / `maxWidth` 상향 (현재는 0 diff)
+박스를 더 크게 가져가고 싶다면 별도 라운드에서 `WheelDisplay`의 `WHEEL_SIZE`/`maxWidth` 상향 (현재 보호).
