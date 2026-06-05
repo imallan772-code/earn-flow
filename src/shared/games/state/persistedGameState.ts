@@ -208,9 +208,15 @@ export const plinkoStore = createGameStore<PlinkoPersisted>(
 );
 
 // ───────── LIMBO ─────────
-// ROUND I: multi-slot (×2 manual / active 1 auto) + clientSeed + activeRounds + lastOutcomeBySlot.
-// version=1 유지. createGameStore 머지 규칙 `{ ...initial, ...parsed }`로 기존 저장본은
-// 신규 필드만 기본값으로 주입 — migrate 불필요.
+// ROUND L-2-pre: 단일 슬롯 환원. v2 key (`phonara.gamestate.limbo.v2`) + v1 multi-slot
+// legacy 1회 read → migrate(refund 양 슬롯) → v2 persist.
+//
+// migrate 책임 (sync, hydrate 시점):
+//  - v2 키 없으면 v1 (`phonara.gamestate.limbo.v1`) 1회 read.
+//  - parsed.activeRounds 가 튜플이면 non-null 항목별 { amount, nonce } → pendingLegacyRefunds push.
+//  - lastOutcome = parsed.lastOutcomeBySlot?.find(Boolean) ?? parsed.lastOutcome ?? null
+//  - activeRound = null (UI carry-over 없음; 양 슬롯 모두 refund 대상)
+//  - 실제 refund() RPC 호출은 LimboScreen mount effect에서 drain (sync hydrate는 auth 없음).
 export interface LimboHistoryItem {
   id: string;
   crashPoint: number;
@@ -225,9 +231,8 @@ export interface LimboOutcome {
   target: number;
 }
 /**
- * 진행 중 라운드 스냅샷 (슬롯별). 새로고침 복원용.
- *  - `liveBetId`는 LiveBetsFeed의 동일 베팅 카드를 update할 수 있도록 보존.
- *  - settle 시점에 같은 tick에서 `null` 처리 (이중 차감 절대 금지).
+ * 진행 중 라운드 스냅샷. 새로고침 복원용.
+ *  - settle 시점에 같은 tick으로 `null` 처리 (이중 차감 절대 금지).
  */
 export interface ActiveLimboRound {
   nonce: number;
@@ -235,39 +240,102 @@ export interface ActiveLimboRound {
   target: number;
   liveBetId: string;
   placedAt: number;
-  slot: 0 | 1;
+}
+/** Legacy v1 → v2 fold 시점에 채워지는 mid-round refund 대기 항목. */
+export interface PendingLegacyRefund {
+  amount: number;
+  nonce: number;
 }
 export interface LimboPersisted {
-  /** global counter — place(slot) 성공 시 ++. ActiveLimboRound.nonce 스냅샷. */
   nonce: number;
   history: LimboHistoryItem[];
-  /** (호환) 마지막 settle 1건 — 기존 코드 호환. */
   lastOutcome: LimboOutcome | null;
-  /** 슬롯별 마지막 settle. StakeBetPanel auto-loop nonce 추적용. */
-  lastOutcomeBySlot: [LimboOutcome | null, LimboOutcome | null];
   target: number;
   pendingAmount: number;
-  /** 진행 중 라운드 (슬롯별). */
-  activeRounds: [ActiveLimboRound | null, ActiveLimboRound | null];
+  /** 진행 중 라운드 (없으면 null). 단일 슬롯. */
+  activeRound: ActiveLimboRound | null;
   /** PF 클라이언트 시드. 모달에서 변경 가능. */
   clientSeed: string;
-  /** Auto 탭이 노출되는 활성 슬롯. */
-  activeSlot: 0 | 1;
+  /** Legacy v1 multi-slot fold 시 채워지는 refund 대기. mount drain 후 즉시 비움. */
+  pendingLegacyRefunds: PendingLegacyRefund[];
 }
+
+const LIMBO_V1_KEY = "phonara.gamestate.limbo.v1";
+
+/** v1 multi-slot 저장본 → v2 single-slot 변환 + pendingLegacyRefunds 채우기. */
+export function migrateLimboPersisted(parsed: unknown, initial: LimboPersisted): LimboPersisted {
+  // v2 키에 데이터가 이미 있으면 그것을 사용 + 신규 필드 기본값 머지.
+  if (parsed && typeof parsed === "object") {
+    return { ...initial, ...(parsed as object) } as LimboPersisted;
+  }
+  // v2 없음 → v1 legacy 1회 read.
+  if (typeof window === "undefined") return initial;
+  let legacy: Record<string, unknown> | null = null;
+  try {
+    const raw = window.localStorage.getItem(LIMBO_V1_KEY);
+    if (raw) legacy = JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    return initial;
+  }
+  if (!legacy) return initial;
+
+  const pendingLegacyRefunds: PendingLegacyRefund[] = [];
+  const ars = legacy.activeRounds;
+  if (Array.isArray(ars)) {
+    for (const ar of ars) {
+      if (ar && typeof ar === "object") {
+        const amount = Number((ar as { amount?: unknown }).amount);
+        const ncRaw = (ar as { nonce?: unknown }).nonce;
+        const nonce = Number(ncRaw);
+        if (Number.isFinite(amount) && amount > 0 && Number.isFinite(nonce)) {
+          pendingLegacyRefunds.push({ amount, nonce });
+        }
+      }
+    }
+  }
+
+  let lastOutcome: LimboOutcome | null = null;
+  const slotOutcomes = legacy.lastOutcomeBySlot;
+  if (Array.isArray(slotOutcomes)) {
+    const first = slotOutcomes.find(Boolean);
+    if (first && typeof first === "object") lastOutcome = first as LimboOutcome;
+  }
+  if (!lastOutcome && legacy.lastOutcome && typeof legacy.lastOutcome === "object") {
+    lastOutcome = legacy.lastOutcome as LimboOutcome;
+  }
+
+  const pickNumber = (v: unknown, fallback: number) =>
+    typeof v === "number" && Number.isFinite(v) ? v : fallback;
+  const pickString = (v: unknown, fallback: string) => (typeof v === "string" ? v : fallback);
+  const history = Array.isArray(legacy.history) ? (legacy.history as LimboHistoryItem[]) : [];
+
+  return {
+    ...initial,
+    nonce: pickNumber(legacy.nonce, initial.nonce),
+    history,
+    lastOutcome,
+    target: pickNumber(legacy.target, initial.target),
+    pendingAmount: pickNumber(legacy.pendingAmount, initial.pendingAmount),
+    activeRound: null,
+    clientSeed: pickString(legacy.clientSeed, initial.clientSeed),
+    pendingLegacyRefunds,
+  };
+}
+
 export const limboStore = createGameStore<LimboPersisted>(
   "limbo",
   {
     nonce: 0,
     history: [],
     lastOutcome: null,
-    lastOutcomeBySlot: [null, null],
     target: 2.0,
     pendingAmount: 10,
-    activeRounds: [null, null],
+    activeRound: null,
     clientSeed: "phonara-player-001",
-    activeSlot: 0,
+    pendingLegacyRefunds: [],
   },
-  1,
+  2,
+  migrateLimboPersisted,
 );
 
 // ───────── WHEEL ─────────
