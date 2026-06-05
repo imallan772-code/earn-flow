@@ -13,12 +13,19 @@ Lovable: **매 라운드 시작 시 본 문서를 읽고 `blocking = Yes` 행을
 | L1-C | P0 | Cursor+Lovable | Yes (L-2) | integer-only real + StakeBetPanel clamp | AC-3 |
 | L1-D | P1 | Lovable | No (L-3) | hold 150ms too short | — |
 | L1-E | P2 | Lovable | No | HistoryPillStrip Dice "x" meaning bug | — |
+| **L2-pre** | P1 | Lovable | **Yes (before L-2 PR2)** | Limbo revert to **1 slot**; legacy 2-slot migrate + refund both | — |
 
 ## Resolved (L-2 PR1 — Cursor)
 
 | ID | status | note |
 |----|--------|------|
 | L1-A | **done** | remote migration applied · `refundPhonForBet` + `useGameWallet.refund` async |
+
+## Workflow order (2026-06-06)
+
+1. ~~L-2 PR1 (Cursor)~~ **done**
+2. **L-2-pre** — Limbo 1-slot revert + legacy migrate (Lovable)
+3. **L-2 PR2** — 5-game cancel + StakeBetPanel (Lovable)
 
 ## PR1–PR2 gap (intentional)
 
