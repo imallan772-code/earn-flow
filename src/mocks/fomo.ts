@@ -35,14 +35,14 @@ export interface CashoutTick {
 }
 
 export const MOCK_CASHOUT_FEED: CashoutTick[] = [
-  { id: "c1", name: "김**", amount: 1_240_000, multiplier: 12.4 },
-  { id: "c2", name: "박**수", amount: 480_000, multiplier: 4.8 },
-  { id: "c3", name: "이**", amount: 2_140_000, multiplier: 27.4 },
-  { id: "c4", name: "최**경", amount: 320_000, multiplier: 3.2 },
-  { id: "c5", name: "정**", amount: 8_400_000, multiplier: 84.0 },
-  { id: "c6", name: "강**", amount: 720_000, multiplier: 7.2 },
-  { id: "c7", name: "윤**호", amount: 1_900_000, multiplier: 19.0 },
-  { id: "c8", name: "조**", amount: 540_000, multiplier: 5.4 },
+  { id: "c1", name: "Kim***", amount: 1_240_000, multiplier: 12.4 },
+  { id: "c2", name: "Sato***", amount: 480_000, multiplier: 4.8 },
+  { id: "c3", name: "Lee***", amount: 2_140_000, multiplier: 27.4 },
+  { id: "c4", name: "Choi***", amount: 320_000, multiplier: 3.2 },
+  { id: "c5", name: "João***", amount: 8_400_000, multiplier: 84.0 },
+  { id: "c6", name: "Kang***", amount: 720_000, multiplier: 7.2 },
+  { id: "c7", name: "Nguyen***", amount: 1_900_000, multiplier: 19.0 },
+  { id: "c8", name: "Wang***", amount: 540_000, multiplier: 5.4 },
 ];
 
 export interface LandingHeroStat {
