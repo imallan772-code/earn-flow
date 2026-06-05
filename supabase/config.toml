@@ -1,0 +1,5 @@
+# earn-flow — phonara-gb (linked for Supabase GitHub integration)
+project_id = "kanftnqenuzverroodev"
+
+[db.migrations]
+enabled = true
