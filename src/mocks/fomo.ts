@@ -50,6 +50,8 @@ export interface LandingHeroStat {
   sub: string;
   /** Live-animated numeric value */
   live?: { base: number; amplitudeRatio: number; bias: number; suffix?: string; prefix?: string; mode: "manlike" | "eok" | "raw" | "percent" };
+  /** Sync with a global shared store (e.g. global online counter) */
+  syncKey?: "globalOnline";
   /** Static display (when no live) */
   staticValue?: string;
 }
@@ -59,7 +61,8 @@ export const MOCK_LANDING_HERO_STATS: LandingHeroStat[] = [
     label: "전 세계 실시간 접속",
     accent: "cyan",
     sub: "지금 폭주 중",
-    live: { base: 10_120_000, amplitudeRatio: 0.003, bias: 0.5, mode: "manlike", suffix: "+" },
+    live: { base: MOCK_ONLINE_BASE, amplitudeRatio: 0.003, bias: 0.52, mode: "manlike", suffix: "+" },
+    syncKey: "globalOnline",
   },
   {
     label: "오늘 지급된 PHON",
