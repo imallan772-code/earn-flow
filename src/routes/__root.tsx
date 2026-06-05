@@ -131,7 +131,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ModeProvider>
-        <LazyMotion features={domAnimation} strict>
+        <LazyMotion features={domAnimation}>
           <Outlet />
           <OutOfDemoModal />
           <Toaster

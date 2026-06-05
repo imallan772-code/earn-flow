@@ -5,7 +5,18 @@
  * Others: SOON — disabled badge
  */
 import { Link } from "@tanstack/react-router";
-import { Rocket, Dices, Cherry, CircleDot, Hand, Gift, Layers, Trophy, Coins } from "lucide-react";
+import {
+  Rocket,
+  Dices,
+  Cherry,
+  CircleDot,
+  Hand,
+  Gift,
+  Layers,
+  Trophy,
+  Coins,
+  Bomb,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 
@@ -13,6 +24,7 @@ type GameId =
   | "crash"
   | "dice"
   | "plinko"
+  | "mines"
   | "slots"
   | "roulette"
   | "rps"
@@ -59,6 +71,15 @@ const GAMES: GameCard[] = [
     accent: "purple",
   },
   {
+    id: "mines",
+    name: "Mines",
+    rtp: "99%",
+    liveBets: 156,
+    Icon: Bomb,
+    open: true,
+    accent: "warning",
+  },
+  {
     id: "slots",
     name: "Slots",
     rtp: "96%",
@@ -67,6 +88,7 @@ const GAMES: GameCard[] = [
     open: false,
     accent: "pink",
   },
+
   {
     id: "roulette",
     name: "Roulette",
@@ -177,6 +199,12 @@ function GameTile({ card }: { card: GameCard }) {
   if (card.id === "plinko")
     return (
       <Link to="/games/plinko" className="block">
+        {inner}
+      </Link>
+    );
+  if (card.id === "mines")
+    return (
+      <Link to="/games/mines" className="block">
         {inner}
       </Link>
     );

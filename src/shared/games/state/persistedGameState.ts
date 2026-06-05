@@ -1,115 +1,22 @@
 /**
- * persistedGameState — 게임별 영속 상태 (잔액·히스토리·대기 베팅 등)
+ * persistedGameState — 게임별 영속 상태 (nonce·히스토리·대기 베팅·사용자 선호).
  *
  * 역할
- *  - 새로고침/네비게이션 사이에서 게임 상태를 유지한다.
- *  - 외부 의존성 0(zustand 미사용). `useSyncExternalStore` + localStorage만 사용.
- *  - SSR-safe: `window` 가드를 두고, 서버에서는 initial을 그대로 반환.
+ *  - 새로고침/네비게이션 사이에서 게임 UI 상태를 유지한다.
+ *  - 외부 의존성 0(zustand 미사용). `useSyncExternalStore` + localStorage.
+ *  - balance는 `src/shared/wallet/walletStore`에서 모드별로 관리.
  *
- * 결정 이유
- *  - 번들/일관성/SSR 안전성 측면에서 zustand 도입 회피.
- *  - 80ms debounce로 연속 업데이트 시 localStorage write를 합쳐 비용을 줄임.
- *  - 머지 규칙은 `{ ...initial, ...parsed }` 고정 — 신규 필드를 추가해도 기존
- *    저장본이 호환되도록 보수적 머지.
+ * Round G Part 1 결과
+ *  - `createStore`는 `shell/createGameStore.ts`로 외부화 완료. 본 파일은 게임별
+ *    store 선언만 유지. 외부 시그니처·localStorage key·머지 규칙·디바운스 100% 보존.
+ *  - 기존 dice(v2)·crash(v2) 저장본은 그대로 로드된다. 신규 게임은 v1로 시작.
  *
- * Round G Part 1 마이그레이션 방향
- *  - 본 파일의 createStore는 `src/shared/games/shell/createGameStore.ts` 팩토리로
- *    추출 예정. 이 파일은 추출 후에도 `diceStore`/`crashStore` 두 export만
- *    유지하며, 외부 시그니처와 localStorage key는 절대 변경하지 않는다.
- *  - 본 정리 라운드에서는 외부 동작/시그니처/키/머지/디바운스 전부 불변.
+ * TODO(real-money): 잔액/베팅 신뢰 데이터는 Supabase 권한 모델로 이전. 본 스토어는
+ *  UI 임시 캐시(nonce·history·사용자 선호 입력값) 용도로 격하 예정.
  */
-import { useSyncExternalStore } from "react";
-
-interface Store<T> {
-  get: () => T;
-  set: (next: T | ((prev: T) => T)) => void;
-  subscribe: (cb: () => void) => () => void;
-  use: <S>(selector: (state: T) => S) => S;
-}
-
-/**
- * SSR-safe 초기 로드. 서버에서는 initial을, 브라우저에서는 localStorage 머지본을
- * 반환한다. parse 실패/쿼터 등 모든 예외는 무시하고 initial로 폴백.
- */
-function hydrate<T extends object>(storageKey: string, initial: T): T {
-  if (typeof window === "undefined") return initial;
-  try {
-    const raw = window.localStorage.getItem(storageKey);
-    if (!raw) return initial;
-    return { ...initial, ...JSON.parse(raw) } as T;
-  } catch {
-    return initial;
-  }
-}
-
-/**
- * 80ms debounce flush 스케줄러. 동일 tick 내 다중 set()은 1회 write로 합쳐진다.
- * 쿼터 초과 등 write 예외는 의도적으로 무시(앱 동작에 영향 X).
- */
-function createDebouncedFlusher<T>(
-  storageKey: string,
-  getState: () => T,
-  delay = 80,
-): { schedule: () => void } {
-  // 브라우저에서는 `window.setTimeout`이 number를 반환하지만, 타입 정의는 환경에
-  // 따라 NodeJS.Timeout으로 좁혀질 수 있다. 둘 다 안전하게 흡수하기 위해
-  // `ReturnType<typeof setTimeout>`을 사용.
-  let handle: ReturnType<typeof setTimeout> | null = null;
-  return {
-    schedule() {
-      if (typeof window === "undefined" || handle != null) return;
-      handle = setTimeout(() => {
-        handle = null;
-        try {
-          window.localStorage.setItem(storageKey, JSON.stringify(getState()));
-        } catch {
-          /* quota — ignore */
-        }
-      }, delay);
-    },
-  };
-}
-
-// TODO(Round G Part 1): 이 createStore를 src/shared/games/shell/createGameStore.ts
-// 팩토리로 추출. 본 파일은 diceStore/crashStore 두 export만 유지하고
-// factory import로 교체 예정. 외부 시그니처/localStorage key는 불변.
-function createStore<T extends object>(key: string, initial: T, version = 1): Store<T> {
-  const storageKey = `phonara.gamestate.${key}.v${version}`;
-  const listeners = new Set<() => void>();
-
-  let state: T = hydrate(storageKey, initial);
-
-  const flusher = createDebouncedFlusher(storageKey, () => state);
-
-  function set(next: T | ((prev: T) => T)) {
-    const computed = typeof next === "function" ? (next as (p: T) => T)(state) : next;
-    if (computed === state) return;
-    state = computed;
-    flusher.schedule();
-    listeners.forEach((cb) => cb());
-  }
-
-  function subscribe(cb: () => void) {
-    listeners.add(cb);
-    return () => {
-      listeners.delete(cb);
-    };
-  }
-
-  function use<S>(selector: (s: T) => S): S {
-    return useSyncExternalStore(
-      subscribe,
-      () => selector(state),
-      () => selector(initial),
-    );
-  }
-
-  return { get: () => state, set, subscribe, use };
-}
+import { createGameStore } from "@/shared/games/shell/createGameStore";
 
 // ───────── DICE ─────────
-// Dice 게임 nonce/히스토리/마지막 결과/타깃·모드/대기 베팅 보존.
-// balance는 src/shared/wallet/walletStore에서 모드별로 관리.
 export interface DiceRoll {
   id: string;
   roll: number;
@@ -130,7 +37,7 @@ export interface DicePersisted {
   diceMode: "over" | "under";
   pendingAmount: number;
 }
-export const diceStore = createStore<DicePersisted>(
+export const diceStore = createGameStore<DicePersisted>(
   "dice",
   {
     nonce: 0,
@@ -145,8 +52,6 @@ export const diceStore = createStore<DicePersisted>(
 );
 
 // ───────── CRASH ─────────
-// Crash 게임 nonce/히스토리/마지막 결과/대기 베팅/대기 자동캐쉬아웃 보존.
-// balance는 walletStore에서 관리.
 export interface CrashHistoryItem {
   id: string;
   multiplier: number;
@@ -163,7 +68,7 @@ export interface CrashPersisted {
   pendingAmount: number;
   pendingTarget: number;
 }
-export const crashStore = createStore<CrashPersisted>(
+export const crashStore = createGameStore<CrashPersisted>(
   "crash",
   {
     nonce: 0,
@@ -173,4 +78,41 @@ export const crashStore = createStore<CrashPersisted>(
     pendingTarget: 2.0,
   },
   2,
+);
+
+// ───────── MINES ─────────
+// Mines 게임 nonce/히스토리/마지막 결과/지뢰 개수/대기 베팅 보존.
+// 본 라운드 신규(v1). 외부 시그니처는 Dice/Crash와 동일 패턴.
+export interface MinesHistoryItem {
+  id: string;
+  mineCount: number;
+  revealed: number;
+  multiplier: number;
+  win: boolean;
+}
+export interface MinesOutcome {
+  outcome: "win" | "loss";
+  profit: number;
+  nonce: number;
+  mineCount: number;
+  revealed: number;
+  multiplier: number;
+}
+export interface MinesPersisted {
+  nonce: number;
+  history: MinesHistoryItem[];
+  lastOutcome: MinesOutcome | null;
+  mineCount: number;
+  pendingAmount: number;
+}
+export const minesStore = createGameStore<MinesPersisted>(
+  "mines",
+  {
+    nonce: 0,
+    history: [],
+    lastOutcome: null,
+    mineCount: 3,
+    pendingAmount: 10,
+  },
+  1,
 );

@@ -1,74 +1,68 @@
-## 작업 계획 (3건)
 
-### 1) `src/shared/layout/LiveCashoutStrip.tsx` — 실시간 캐시아웃 라벨 단위 변경
-- 현재: `실시간 캐시아웃 · 5,290,000원 완료!`
-- 변경: `실시간 캐시아웃 · {PHON 금액} PHON / {USDT 금액} USDT 완료!`
-- 두 개의 `LiveNumber`를 한 줄에 배치 (자연스럽게 ↑↓ 미세 변동 유지)
-  - PHON: `base=5_290_000, amplitudeRatio=0.015, bias=0.5, intervalMs=3000`, format `{KO.format(round(n))} PHON`
-  - USDT: `base=3_950, amplitudeRatio=0.02, bias=0.5, intervalMs=3500`, format `{n.toFixed(2)} USDT`
-- `src/mocks/fomo.ts`에 `MOCK_REALTIME_CASHOUT_USDT = 3_950` 추가 (PHON 상수는 기존 재사용)
+# 최종 P1 플랜 (승인본)
 
-### 2) `src/features/landing/Landing.tsx` — 통화 표기 통일
-- 본문 `"...KRW/USDE로 인출합니다..."` → `"...KRW/USDT로 인출합니다..."`
-- 그 외 `USDE` 잔존 표기 grep으로 일괄 `USDT`로 정정 (Landing, 그리고 발견되는 다른 파일 모두)
+Crash·Dice 회귀 0 + GameShell 추상화 실구현 + Mines 1종(multi-step)으로 검증 + vitest 게이트 정상화.
 
-### 3) 전체 ESLint = 0 + 렉 제거 (stake.com / rollbit 수준 부드러움)
+---
 
-#### 3-A. ESLint 0건 만들기
-- `bunx eslint . --max-warnings=0`로 현재 에러/경고 전수 조사
-- 카테고리별 일괄 수정:
-  - `@typescript-eslint/no-unused-vars`, `no-empty`, `prefer-const` 등 단순 정리
-  - `react-hooks/exhaustive-deps` 누락 디펜던시 보강 (의도적 무시는 주석 + eslint-disable-next-line)
-  - `react-refresh/only-export-components` 위반 파일은 export 분리
-- 룰 약화 금지 — 코드 수정으로 0건 달성
+## 작업 순서 (엄격)
 
-#### 3-B. 렉 원인 제거 (현재 화면 기준 핫스팟)
-체감 렉의 주범은 동시 다발 jitter 타이머 + 매 tick마다 전역 re-render. 다음을 적용:
+### 0. 사전 게이트 — 테스트 인프라 신규 생성
+- `package.json`: `"test": "vitest run"`, `"test:watch": "vitest"` 추가
+- **`vitest.config.ts` 신규 생성** (`environment: 'jsdom'`, `setupFiles: ['./src/test/setup.ts']`, alias `@`)
+- **`src/test/setup.ts` 신규 생성** (`@testing-library/jest-dom`, localStorage cleanup)
+- 의존성 추가: `@testing-library/react`, `@testing-library/jest-dom`, `jsdom`
+- 베이스라인: `bunx vitest run` — 기존 5 spec 파일 전체(~38 tests) GREEN, `bunx eslint . --max-warnings=0` GREEN
 
-1. **타이머 통합 (가장 큰 효과)**
-   - `LiveNumber` 컴포넌트마다 개별 `setTimeout` 루프 → 단일 `requestAnimationFrame` 기반 글로벌 스케줄러 (`src/shared/motion/liveTickScheduler.ts` 신규)로 일원화. 모든 LiveNumber/`liveOnlineStore` 인스턴스가 동일 프레임에 묶여 갱신.
-   - `setTimeout` 폭주 제거 → CPU/GC 압력 감소.
+### 1. 게임 셸 추출 (`src/shared/games/shell/`)
 
-2. **CountUp 보간 비용 절감**
-   - `CountUp` 매 프레임 `setState` → `useRef` + 직접 DOM 텍스트 갱신(`ref.current.textContent`)으로 전환. React 리렌더 0회.
-   - `prefers-reduced-motion` 외에 `document.hidden`일 때도 RAF 중단.
+신규:
+- `createGameStore.ts` — `persistedGameState.ts` L76~108 `createStore`를 외부화. `Store<T>`·80ms debounce·`useSyncExternalStore`·hydrate 머지 100% 보존. dice/crash의 use/set/get 시그니처·**v2 localStorage key 불변**.
+- `useGameRound.ts` — single-step + **multi-step (`isMultiStep=true`, 외부 `settle()`)** 분기. `phase`는 훅 내부 `useState`, 영속 데이터만 store.
+- `GameShell.tsx` — 순수 레이아웃. `betPanel`/`displayArea`/`summaryPanel`/`rulesCard` ReactNode 주입. 비즈 로직 0.
+- `__tests__/createGameStore.spec.ts` (3 케이스)
+- `__tests__/useGameRound.spec.ts` (4 케이스: single happy/loss, multi settle, reset)
 
-3. **Marquee/Strip 무한 스크롤 GPU 가속**
-   - `animate-marquee` 키프레임을 `transform: translate3d(...)`로 강제, `will-change: transform`, 컨테이너에 `contain: layout paint style`, `content-visibility: auto` 적용.
-   - `LiveCashoutStrip`과 `FomoMarquee` 모두 동일 처리.
+수정:
+- `src/shared/games/state/persistedGameState.ts` — 내부 `createStore` 제거, `createGameStore` import 교체. **export·key·initial shape 불변. Dice/Crash Screen 0줄 수정.**
 
-4. **FloatingOrbs / 그라데이션 비용 절감**
-   - `FloatingOrbs`의 blur+animate를 `will-change: transform, opacity`로 한정, 모바일(`max-width: 480px`)에서 orb 수 절반으로 자동 감소.
-   - 큰 `backdrop-filter`/`blur(>40px)` 사용처를 `glass-1`/`glass-2` 토큰으로 통일하고 blur 반경을 24px로 캡.
+### 2. Mines 1종 (multi-step)
 
-5. **메모이즈 & 리스트 안정화**
-   - `MOCK_*` 배열을 매핑하는 곳에 `useMemo` 적용, 핸들러는 `useCallback`.
-   - `Landing` hero stats `.map`은 컴포넌트로 분리 + `React.memo`.
+**`useGameRound({ isMultiStep: true })` 사용.** 베팅 시 PF로 전체 지뢰 배치 확정, reveal은 엔진 순수함수, cashout/mine-hit 시 `settle()`.
 
-6. **이미지/폰트**
-   - `src/styles.css`의 웹폰트에 `font-display: swap` 보장.
-   - 큰 PNG/JPG가 import된 경우 `?format=webp&quality=80` 쿼리로 전환 (vite-imagetools 사용 가능 여부 확인 후).
+신규:
+- `src/shared/games/mines/MinesEngine.ts` — 5×5, 지뢰 1~24, `placeMines(pf, mineCount)`, `nextMultiplier(revealed, mines)`, RTP 99% + `houseEdge.profitOf` (이중 구조 주석 명시, `bytesGenerator` 재사용)
+- `src/shared/games/mines/__tests__/minesEngine.spec.ts` (6 케이스)
+- `src/features/games/mines/MinesScreen.tsx` — GameShell + StakeBetPanel + BetSummaryPanel. **120~180줄.** LiveBetsFeed는 **GameShell 바깥**(DiceScreen 패턴). `liveBetsStore.push` (베팅) / `update` (cashout·hit) 연동. **Provably Fair 모달**(ShieldCheck + commit hash + seeds, Dice/Crash와 동일 UX).
+- `src/routes/_app/games.mines.tsx` — `createFileRoute("/_app/games/mines")`
 
-7. **모션 감속 옵션 존중**
-   - 모든 jitter/marquee에서 `prefers-reduced-motion: reduce` → 정적 렌더.
+수정:
+- `persistedGameState.ts` — `minesStore = createGameStore("mines", {...}, 1)` 추가. shape: `{ nonce, history, lastOutcome, mineCount: 3, pendingAmount }`
+- `src/shared/games/rules/gameRules.ts` — `MINES_RULES` + `RULES_BY_GAME` 등록
+- `src/features/games/GameLobby.tsx` — `GameId` union `"mines"` 추가, GameTile Link 분기, Mines 카드 1개 추가 (아이콘 자율: Bomb/Grid3x3)
+- `package.json` — test 스크립트 + devDeps
+- `LiveBetsStore.ts` — `"mines"` 타입 이미 존재, 작업 불필요
 
-#### 3-C. 검증
-- `bunx eslint . --max-warnings=0` → 0/0
-- `bun run build` 통과
-- 브라우저 performance profile로 long task / FPS 확인 (목표: 데스크톱 60fps 안정, Long task < 50ms)
+### 3. 검증 게이트 (전부 GREEN)
+- `bunx eslint . --max-warnings=0`
+- `bunx vitest run` — 기존 ~38 + 신규 13 = **최소 51 tests GREEN**
+- `bun run build` GREEN
+- Crash·Dice 수동 회귀: nonce·히스토리·잔액·새로고침 복원
+- Mines 수동: 베팅→reveal 반복→cashout/hit settle→새로고침 복원(nonce/history/mineCount)
 
-### 변경 없음
-- 게임 로직(RTP/지갑/엔진), 라우팅, 디자인 토큰, 150% 보너스, hero stat 3카드 구조.
+---
 
-### 영향 파일 (예상)
-- `src/shared/layout/LiveCashoutStrip.tsx`
-- `src/mocks/fomo.ts`
-- `src/features/landing/Landing.tsx` (+ USDE→USDT grep 결과 파일들)
-- `src/shared/motion/LiveNumber.tsx`, `src/shared/motion/CountUp.tsx`, `src/shared/motion/liveOnlineStore.ts`
-- `src/shared/motion/liveTickScheduler.ts` (신규)
-- `src/shared/motion/FomoMarquee.tsx`, `src/shared/layout/FloatingOrbs.tsx`, `src/styles.css`
-- ESLint 결과에 따라 추가 파일
+## 비대상 (이번 라운드 안 함)
+Limbo/HiLo/Wheel/Keno/Roulette, Live Feed 개편, botGenerator RAF, Race/Drops/Raffle, walletStore xp/vip/rakeback, Bet Slip/Hotkey/Sound/Haptic, Web Worker PF, react-window, Plinko 정렬.
 
-### 기술 메모 (개발자용)
-- 글로벌 RAF 스케줄러: `subscribe(cb, intervalMs)` → 내부에서 `performance.now()` 기반 다음 실행 시각 큐, `document.hidden`이면 pause, `visibilitychange`로 resume.
-- CountUp DOM 직접 갱신: `useLayoutEffect`에서 ref 확보, RAF로 `ref.current.textContent = format(value)`. 부모 리렌더 없이도 숫자 업데이트 동작.
+## 규칙
+LOVABLE_WORK_RULES §3(zustand 금지)/§5(셸 순수)/§6(금전 보수)/§7(파일 상단 주석+`TODO:`)/§8(컴포넌트 비즈 금지) + ROUND_G_PART1_PLAN.md 준수.
+
+## 영향 파일 (신규 11, 수정 5)
+
+**신규 11:** `vitest.config.ts`, `src/test/setup.ts`, `shell/createGameStore.ts`, `shell/useGameRound.ts`, `shell/GameShell.tsx`, `shell/__tests__/createGameStore.spec.ts`, `shell/__tests__/useGameRound.spec.ts`, `mines/MinesEngine.ts`, `mines/__tests__/minesEngine.spec.ts`, `features/games/mines/MinesScreen.tsx`, `routes/_app/games.mines.tsx`
+
+**수정 5:** `package.json`, `persistedGameState.ts`, `gameRules.ts`, `GameLobby.tsx`, (+ 필요 시 `ROUND_G_PART1_PLAN.md` 문서의 Mines single→multi 정정은 다음 라운드)
+
+## 다음 라운드 보관 결정
+- Race 단위: **PHON** · 사운드 기본 **OFF + 토글** (`localStorage.phonara.audio.enabled`)
