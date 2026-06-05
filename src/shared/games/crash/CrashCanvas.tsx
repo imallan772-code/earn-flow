@@ -58,7 +58,9 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
     // background radial wash
     const wash = ctx.createRadialGradient(cssW / 2, cssH * 0.85, 0, cssW / 2, cssH * 0.85, cssH);
     if (ph === "crashed") {
-      wash.addColorStop(0, "oklch(0.68 0.22 25 / 0.18)");
+      // ROUND L-1: rose wash 강화. animate-crash-shake와 동기.
+      wash.addColorStop(0, "oklch(0.68 0.24 25 / 0.28)");
+      wash.addColorStop(0.55, "oklch(0.55 0.20 18 / 0.12)");
       wash.addColorStop(1, "oklch(0.18 0.05 282 / 0)");
     } else {
       wash.addColorStop(0, "oklch(0.85 0.18 200 / 0.14)");
