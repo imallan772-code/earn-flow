@@ -130,8 +130,7 @@ export const WheelDisplay = memo(function WheelDisplay({
   // 라벨 폰트 사이즈 (10→11px / 20→9px / 30→7px).
   const labelSize = segments === 10 ? 11 : segments === 20 ? 9 : 7;
 
-  const isJackpot =
-    resultMultiplier != null && resultMultiplier >= 9.0 && phase !== "rolling";
+  const isJackpot = resultMultiplier != null && resultMultiplier >= 9.0 && phase !== "rolling";
 
   // 결과 색
   const counterColor =
@@ -150,7 +149,10 @@ export const WheelDisplay = memo(function WheelDisplay({
       }}
     >
       {/* 포인터(12시) — 골드 헤일로 + 테이퍼 */}
-      <div className="pointer-events-none absolute left-1/2 top-2 z-20 -translate-x-1/2" aria-hidden>
+      <div
+        className="pointer-events-none absolute left-1/2 top-2 z-20 -translate-x-1/2"
+        aria-hidden
+      >
         <div
           className="h-4 w-4 rounded-full bg-(--color-gold) shadow-glow-gold ring-2 ring-(--color-bg-0)"
           style={{

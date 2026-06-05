@@ -31,9 +31,7 @@ describe("wheelStore — v1 hydrate merges new ROUND J fields", () => {
   it("기존 v1 저장본에 신규 필드 없으면 기본값으로 채워서 로드", async () => {
     const legacy = {
       nonce: 7,
-      history: [
-        { id: "n0", risk: "medium", segments: 20, index: 3, multiplier: 1.8, win: true },
-      ],
+      history: [{ id: "n0", risk: "medium", segments: 20, index: 3, multiplier: 1.8, win: true }],
       lastOutcome: null,
       risk: "high",
       segments: 30,
