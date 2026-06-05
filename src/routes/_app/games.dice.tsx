@@ -5,7 +5,7 @@ export const Route = createFileRoute("/_app/games/dice")({
   head: () => ({
     meta: [
       { title: "Dice · PHONARA" },
-      { name: "description", content: "결정론적 Provably Fair Dice 게임. 99% RTP." },
+      { name: "description", content: "결정론적 Provably Fair Dice 게임. 97% RTP." },
     ],
   }),
   component: DiceScreen,
