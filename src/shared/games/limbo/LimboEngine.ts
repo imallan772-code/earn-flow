@@ -1,18 +1,20 @@
 /**
  * LimboEngine — Stake-style Limbo. RTP 99%, single-step.
  *
- * 수식 (Stake 공식 1:1)
+ * 수식 (Stake 공개 공식과 수학적으로 동치, RTP 99%)
  *  - u = floatFromBytes(bytes, 0) ∈ [0, 1)
- *  - rawCrash = 99 / (1 - u)  → 끝없이 커질 수 있음
- *  - crashPoint = max(1.00, floor(rawCrash * 100) / 100)
+ *  - rawCrash = (100 - u) / (1 - u)   → [100, ∞)
+ *  - crashPoint = max(1.00, floor(rawCrash) / 100)
+ *  - 결과적으로 약 1%의 u값(0 ≤ u < ~0.01)이 crashPoint = 1.00을 만들어
+ *    엔진 RTP 99%가 자연스럽게 내장된다.
  *  - isWin(target): crashPoint >= target (경계 포함)
- *  - winChance(target)% = 99 / target
+ *  - winChance(target)% ≈ 99 / target  (target >= 1.01)
  *  - payoutMultiplier(target) = target  (모드 0.97은 호출부 `houseEdge.profitOf`)
  *
  * 결정 이유
- *  - PF 스택은 Dice와 동일 `bytesGenerator`(1바이트 stream) 재사용 → 셸·엔진 패턴 통일.
+ *  - PF 스택은 Dice와 동일 `bytesGenerator`(1 stream) 재사용 → 셸·엔진 패턴 통일.
  *  - 엔진 RTP 99% 내장 + 모드 RTP 0.97 이중 구조 → Crash/Dice/Mines와 동일.
- *  - u=1 미발생 가정. 안전을 위해 1e-12로 클램프하여 무한대 방지.
+ *  - (1 - u)는 1e-12로 클램프하여 div-by-zero 방지.
  *
  * TODO(real-money): `computeCrashPoint`는 Edge Function 위임. 본 엔진은 검증용으로 재사용.
  */
@@ -27,10 +29,9 @@ export const MIN_CRASH = 1.0;
 export async function computeCrashPoint(input: ProvablyFairInput): Promise<number> {
   const bytes = await bytesGenerator(input, 0);
   const u = floatFromBytes(bytes, 0);
-  // 1 - u 를 1e-12로 클램프하여 div-by-zero 방지.
   const denom = Math.max(1e-12, 1 - u);
-  const raw = (LIMBO_RTP * 100) / denom; // 99 / (1 - u)
-  const crash = Math.floor(raw * 100) / 100;
+  const raw = (100 - u) / denom; // Stake-style RTP 99% formula
+  const crash = Math.floor(raw) / 100;
   return Math.max(MIN_CRASH, Math.min(MAX_TARGET, crash));
 }
 
