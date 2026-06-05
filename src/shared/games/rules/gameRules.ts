@@ -155,6 +155,10 @@ export const LIMBO_RULES: GameRules = {
       body: "• 데모: 1회 체험 크레딧 ₩10,000, 추가 리필 없음. RTP 97% (리얼과 동일).\n• 리얼: 실제 입금/출금. RTP 97% (3% 하우스 엣지).",
     },
     {
+      title: "키보드 단축키",
+      body: "• Space: 활성 슬롯 베팅. • ↑/↓: 목표 배수 ±0.1. • Shift+↑/↓: ±1.0. • 1/2: 활성 슬롯 전환. • P: 공정성. • M: 음소거.",
+    },
+    {
       title: "공정성 (Provably Fair)",
       body: "결과 배수 = floor((100 - u) / (1 - u)) / 100, u = floatFromBytes(HMAC-SHA256(serverSeed, clientSeed:nonce:0)). 동일 시드/라운드는 항상 같은 결과를 만듭니다.",
     },

@@ -2,10 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import {
-  cleanupE2eArtifacts,
-  shouldKeepE2eArtifacts,
-} from "./cleanup-artifacts";
+import { cleanupE2eArtifacts, shouldKeepE2eArtifacts } from "./cleanup-artifacts";
 
 describe("cleanup-artifacts", () => {
   const prevCi = process.env.CI;
