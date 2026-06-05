@@ -31,8 +31,10 @@ import { Route as AppFeedRouteImport } from './routes/_app/feed'
 import { Route as AppEventRouteImport } from './routes/_app/event'
 import { Route as AppEarnRouteImport } from './routes/_app/earn'
 import { Route as AppNoticeIdRouteImport } from './routes/_app/notice.$id'
+import { Route as AppGamesWheelRouteImport } from './routes/_app/games.wheel'
 import { Route as AppGamesPlinkoRouteImport } from './routes/_app/games.plinko'
 import { Route as AppGamesMinesRouteImport } from './routes/_app/games.mines'
+import { Route as AppGamesLimboRouteImport } from './routes/_app/games.limbo'
 import { Route as AppGamesDiceRouteImport } from './routes/_app/games.dice'
 import { Route as AppGamesCrashRouteImport } from './routes/_app/games.crash'
 import { Route as AppExchangeSymbolRouteImport } from './routes/_app/exchange.$symbol'
@@ -147,6 +149,11 @@ const AppNoticeIdRoute = AppNoticeIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppNoticeRoute,
 } as any)
+const AppGamesWheelRoute = AppGamesWheelRouteImport.update({
+  id: '/games/wheel',
+  path: '/games/wheel',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppGamesPlinkoRoute = AppGamesPlinkoRouteImport.update({
   id: '/games/plinko',
   path: '/games/plinko',
@@ -155,6 +162,11 @@ const AppGamesPlinkoRoute = AppGamesPlinkoRouteImport.update({
 const AppGamesMinesRoute = AppGamesMinesRouteImport.update({
   id: '/games/mines',
   path: '/games/mines',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppGamesLimboRoute = AppGamesLimboRouteImport.update({
+  id: '/games/limbo',
+  path: '/games/limbo',
   getParentRoute: () => AppRouteRoute,
 } as any)
 const AppGamesDiceRoute = AppGamesDiceRouteImport.update({
@@ -203,8 +215,10 @@ export interface FileRoutesByFullPath {
   '/exchange/$symbol': typeof AppExchangeSymbolRoute
   '/games/crash': typeof AppGamesCrashRoute
   '/games/dice': typeof AppGamesDiceRoute
+  '/games/limbo': typeof AppGamesLimboRoute
   '/games/mines': typeof AppGamesMinesRoute
   '/games/plinko': typeof AppGamesPlinkoRoute
+  '/games/wheel': typeof AppGamesWheelRoute
   '/notice/$id': typeof AppNoticeIdRoute
 }
 export interface FileRoutesByTo {
@@ -232,8 +246,10 @@ export interface FileRoutesByTo {
   '/exchange/$symbol': typeof AppExchangeSymbolRoute
   '/games/crash': typeof AppGamesCrashRoute
   '/games/dice': typeof AppGamesDiceRoute
+  '/games/limbo': typeof AppGamesLimboRoute
   '/games/mines': typeof AppGamesMinesRoute
   '/games/plinko': typeof AppGamesPlinkoRoute
+  '/games/wheel': typeof AppGamesWheelRoute
   '/notice/$id': typeof AppNoticeIdRoute
 }
 export interface FileRoutesById {
@@ -263,8 +279,10 @@ export interface FileRoutesById {
   '/_app/exchange/$symbol': typeof AppExchangeSymbolRoute
   '/_app/games/crash': typeof AppGamesCrashRoute
   '/_app/games/dice': typeof AppGamesDiceRoute
+  '/_app/games/limbo': typeof AppGamesLimboRoute
   '/_app/games/mines': typeof AppGamesMinesRoute
   '/_app/games/plinko': typeof AppGamesPlinkoRoute
+  '/_app/games/wheel': typeof AppGamesWheelRoute
   '/_app/notice/$id': typeof AppNoticeIdRoute
 }
 export interface FileRouteTypes {
@@ -294,8 +312,10 @@ export interface FileRouteTypes {
     | '/exchange/$symbol'
     | '/games/crash'
     | '/games/dice'
+    | '/games/limbo'
     | '/games/mines'
     | '/games/plinko'
+    | '/games/wheel'
     | '/notice/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -323,8 +343,10 @@ export interface FileRouteTypes {
     | '/exchange/$symbol'
     | '/games/crash'
     | '/games/dice'
+    | '/games/limbo'
     | '/games/mines'
     | '/games/plinko'
+    | '/games/wheel'
     | '/notice/$id'
   id:
     | '__root__'
@@ -353,8 +375,10 @@ export interface FileRouteTypes {
     | '/_app/exchange/$symbol'
     | '/_app/games/crash'
     | '/_app/games/dice'
+    | '/_app/games/limbo'
     | '/_app/games/mines'
     | '/_app/games/plinko'
+    | '/_app/games/wheel'
     | '/_app/notice/$id'
   fileRoutesById: FileRoutesById
 }
@@ -533,6 +557,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNoticeIdRouteImport
       parentRoute: typeof AppNoticeRoute
     }
+    '/_app/games/wheel': {
+      id: '/_app/games/wheel'
+      path: '/games/wheel'
+      fullPath: '/games/wheel'
+      preLoaderRoute: typeof AppGamesWheelRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/_app/games/plinko': {
       id: '/_app/games/plinko'
       path: '/games/plinko'
@@ -545,6 +576,13 @@ declare module '@tanstack/react-router' {
       path: '/games/mines'
       fullPath: '/games/mines'
       preLoaderRoute: typeof AppGamesMinesRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/_app/games/limbo': {
+      id: '/_app/games/limbo'
+      path: '/games/limbo'
+      fullPath: '/games/limbo'
+      preLoaderRoute: typeof AppGamesLimboRouteImport
       parentRoute: typeof AppRouteRoute
     }
     '/_app/games/dice': {
@@ -611,8 +649,10 @@ interface AppRouteRouteChildren {
   AppExchangeSymbolRoute: typeof AppExchangeSymbolRoute
   AppGamesCrashRoute: typeof AppGamesCrashRoute
   AppGamesDiceRoute: typeof AppGamesDiceRoute
+  AppGamesLimboRoute: typeof AppGamesLimboRoute
   AppGamesMinesRoute: typeof AppGamesMinesRoute
   AppGamesPlinkoRoute: typeof AppGamesPlinkoRoute
+  AppGamesWheelRoute: typeof AppGamesWheelRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
@@ -624,8 +664,10 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppExchangeSymbolRoute: AppExchangeSymbolRoute,
   AppGamesCrashRoute: AppGamesCrashRoute,
   AppGamesDiceRoute: AppGamesDiceRoute,
+  AppGamesLimboRoute: AppGamesLimboRoute,
   AppGamesMinesRoute: AppGamesMinesRoute,
   AppGamesPlinkoRoute: AppGamesPlinkoRoute,
+  AppGamesWheelRoute: AppGamesWheelRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
