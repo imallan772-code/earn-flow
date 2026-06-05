@@ -31,6 +31,7 @@ import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { cn } from "@/lib/utils";
 import { appToast } from "@/shared/ui/toast";
 import { formatPHON } from "@/lib/format";
+import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
 
 const SERVER_SEED = "phonara-crash-demo-server-seed-v1";
 const CLIENT_SEED = "phonara-player-001";
@@ -45,6 +46,7 @@ interface ActiveBet {
 }
 
 export function CrashScreen() {
+  useRegisterMainMode("game");
   const { mode, balance, tryDebit, credit, refund } = useGameWallet();
 
   // Persisted
@@ -391,7 +393,7 @@ export function CrashScreen() {
                 </code>
               </Row>
             </dl>
-            <p className="mt-4 text-[10px] leading-relaxed text-(--color-muted)">
+            <p className="mt-4 type-caption leading-relaxed">
               라운드 종료 후 서버 시드가 공개되면 위 해시를 직접 SHA-256으로 검증할 수 있습니다.
               모든 라운드는 HMAC-SHA256(serverSeed, &quot;clientSeed:nonce:0&quot;)으로 결정됩니다.
             </p>

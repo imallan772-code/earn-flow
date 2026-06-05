@@ -28,6 +28,7 @@ import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { cn } from "@/lib/utils";
 import { appToast } from "@/shared/ui/toast";
 import { formatPHON } from "@/lib/format";
+import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
 
 const SERVER_SEED = "phonara-dice-demo-server-seed-v1";
 const CLIENT_SEED = "phonara-player-001";
@@ -35,6 +36,7 @@ const ROLLING_MS = 800;
 const SETTLED_MS = 800;
 
 export function DiceScreen() {
+  useRegisterMainMode("game");
   const { mode, balance, tryDebit, credit } = useGameWallet();
   const [phase, setPhase] = useState<DicePhase>("idle");
 
@@ -192,7 +194,7 @@ export function DiceScreen() {
             {h.roll.toFixed(2)}
           </li>
         ))}
-        {history.length === 0 && <li className="text-[11px] text-muted-2">아직 라운드 없음</li>}
+        {history.length === 0 && <li className="type-caption">아직 라운드 없음</li>}
       </ul>
 
       <DiceResultDisplay
@@ -272,7 +274,7 @@ export function DiceScreen() {
                 </code>
               </Row>
             </dl>
-            <p className="mt-4 text-[10px] leading-relaxed text-(--color-muted)">
+            <p className="mt-4 type-caption leading-relaxed">
               결과 = floor(floatFromBytes(HMAC-SHA256(serverSeed, &quot;clientSeed:nonce:0&quot;)) ×
               10000) / 100
             </p>

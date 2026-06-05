@@ -10,8 +10,10 @@ import { PlinkoBoard } from "@/shared/games/plinko/PlinkoBoard";
 import { GameRulesCard } from "@/shared/games/ui/GameRulesCard";
 import { PLINKO_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
+import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
 
 export function PlinkoScreen() {
+  useRegisterMainMode("game");
   const { mode } = useMode();
   const [showFair, setShowFair] = useState(false);
 
@@ -66,7 +68,7 @@ export function PlinkoScreen() {
               결과 슬롯은 시드만으로 사전에 결정되어 있어 누구나 동일한 시드로 재현·검증할 수
               있습니다.
             </p>
-            <p className="mt-3 text-[10px] leading-relaxed text-muted-2">
+            <p className="mt-3 type-caption leading-relaxed">
               ※ 정식 출시 시 server seed commit/reveal 방식으로 전환 예정.
             </p>
           </div>

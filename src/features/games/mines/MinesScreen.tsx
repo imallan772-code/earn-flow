@@ -44,6 +44,7 @@ import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { cn } from "@/lib/utils";
 import { appToast } from "@/shared/ui/toast";
 import { formatPHON } from "@/lib/format";
+import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
 import { MinesTile } from "./MinesTile";
 
 const SERVER_SEED = "phonara-mines-demo-server-seed-v1";
@@ -65,6 +66,7 @@ function vibrate(ms: number) {
 }
 
 export function MinesScreen() {
+  useRegisterMainMode("game");
   const { mode, balance, tryDebit, credit } = useGameWallet();
   const nonce = minesStore.use((s) => s.nonce);
   const history = minesStore.use((s) => s.history);
@@ -432,7 +434,7 @@ export function MinesScreen() {
                 {h.multiplier.toFixed(2)}x
               </li>
             ))}
-            {history.length === 0 && <li className="text-[11px] text-muted-2">아직 라운드 없음</li>}
+            {history.length === 0 && <li className="type-caption">아직 라운드 없음</li>}
           </ul>
         }
         displayArea={
@@ -527,7 +529,7 @@ export function MinesScreen() {
                   "mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-extrabold transition active:scale-[0.98]",
                   revealed.length > 0 && hitTile == null
                     ? "bg-warning text-(--color-bg-0) shadow-glow-gold"
-                    : "bg-(--color-surface-hi) text-muted-2",
+                    : "bg-(--color-surface-hi) text-(--color-muted)",
                 )}
               >
                 <Zap size={14} />
@@ -536,9 +538,7 @@ export function MinesScreen() {
             )}
 
             {/* Hotkey hint */}
-            <p className="mt-2 text-center text-[10px] text-muted-2">
-              1–0 = 상단 10칸 / R 랜덤 / C 캐쉬아웃
-            </p>
+            <p className="mt-2 text-center type-caption">1–0 = 상단 10칸 / R 랜덤 / C 캐쉬아웃</p>
 
             {/* aria-live announcer */}
             <span id={liveRegionId} aria-live="polite" className="sr-only">
@@ -549,9 +549,7 @@ export function MinesScreen() {
         controls={
           <div className="glass-2 flex flex-col gap-2 rounded-2xl p-3">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-(--color-muted)">
-                지뢰 수
-              </span>
+              <span className="type-label">지뢰 수</span>
               <button
                 onClick={() => setMineCount(mineCount - 1)}
                 disabled={!round.isIdle || mineCount <= MIN_MINES}
@@ -794,7 +792,7 @@ await placeMines(input, ${mineCount});`;
             시드 적용
           </button>
         </div>
-        <p className="mt-3 text-[10px] leading-relaxed text-(--color-muted)">
+        <p className="mt-3 type-caption leading-relaxed">
           <Bomb size={10} className="mr-1 inline" />
           시드 변경 시 nonce 0 리셋 + 진행 중 라운드 폐기. 동일 시드/라운드는 항상 같은 배치를
           만듭니다.

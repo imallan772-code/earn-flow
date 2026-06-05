@@ -53,6 +53,7 @@ import {
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { useHotkeys, type HotkeyMap } from "@/shared/hooks/useHotkeys";
+import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
 import { useSfx } from "@/shared/sfx/useSfx";
 import { appToast } from "@/shared/ui/toast";
 import { WheelDisplay } from "./WheelDisplay";
@@ -67,6 +68,7 @@ const DEFAULT_CLIENT_SEED = "phonara-player-001";
 const RISK_ORDER: readonly WheelRisk[] = ["low", "medium", "high"];
 
 export function WheelScreen() {
+  useRegisterMainMode("game");
   const { mode, balance, tryDebit, credit } = useGameWallet();
   const nonce = wheelStore.use((s) => s.nonce);
   const history = wheelStore.use((s) => s.history);

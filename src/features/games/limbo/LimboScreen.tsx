@@ -1,27 +1,27 @@
 /**
- * LimboScreen — ROUND I 끝판왕. Manual×2 슬롯 + active 슬롯 auto, useGameRound × 2,
- * ROUND 0 공통 인프라 wiring (SFX, HistoryPillStrip, ProvablyFairModal, RoundResultCard,
+ * LimboScreen ? ROUND I ???. Manual?2 ?? + active ?? auto, useGameRound ? 2,
+ * ROUND 0 ?? ??? wiring (SFX, HistoryPillStrip, ProvablyFairModal, RoundResultCard,
  * ShareResultButton, SessionStatsBar, recordSessionOutcome, useHotkeys).
  *
- * 불변
+ * ??
  *  - LimboEngine.ts 0 diff
- *  - StakeBetPanel props 계약 변경 0
+ *  - StakeBetPanel props ?? ?? 0
  *  - useAutoBetController 0 diff
- *  - localStorage key = phonara.gamestate.limbo.v1 (version 유지)
+ *  - localStorage key = phonara.gamestate.limbo.v1 (version ??)
  *
- * 멀티슬롯 정책
- *  - 슬롯 2개 = manual 전용. Auto 탭은 activeSlot 1개에서만 (full panel) 노출.
- *  - 슬롯 전환 = panel key remount → auto 자동 정지.
+ * ???? ??
+ *  - ?? 2? = manual ??. Auto ?? activeSlot 1???? (full panel) ??.
+ *  - ?? ?? = panel key remount ? auto ?? ??.
  *
  * nonce
- *  - place(slot) 성공 시 global nonce++. ActiveLimboRound.nonce 에 스냅샷.
- *  - idle 복귀 시 nonce 변경 없음 (두 슬롯 동시 진행 시 nonce 중복 방지).
+ *  - place(slot) ?? ? global nonce++. ActiveLimboRound.nonce ? ???.
+ *  - idle ?? ? nonce ?? ?? (? ?? ?? ?? ? nonce ?? ??).
  *
- * 복원 (이중 차감 절대 금지)
- *  - 마운트 시 activeRounds[i] != null → rounds[i].place() (state hydrate만).
- *    tryDebit / liveBetsStore.push 0회.
+ * ?? (?? ?? ?? ??)
+ *  - ??? ? activeRounds[i] != null ? rounds[i].place() (state hydrate?).
+ *    tryDebit / liveBetsStore.push 0?.
  *
- * TODO(real-money): computeCrashPoint는 Edge Function 위임.
+ * TODO(real-money): computeCrashPoint? Edge Function ??.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -55,6 +55,7 @@ import {
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { useHotkeys, type HotkeyMap } from "@/shared/hooks/useHotkeys";
+import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
 import { useSfx } from "@/shared/sfx/useSfx";
 import { appToast } from "@/shared/ui/toast";
 import { formatPHON } from "@/lib/format";
@@ -72,6 +73,7 @@ interface SlotResult {
 }
 
 export function LimboScreen() {
+  useRegisterMainMode("game");
   const { mode, balance, tryDebit, credit } = useGameWallet();
   const nonce = limboStore.use((s) => s.nonce);
   const history = limboStore.use((s) => s.history);
@@ -116,7 +118,7 @@ export function LimboScreen() {
     const ars = limboStore.get().activeRounds;
     if (ars[0]) round0.place();
     if (ars[1]) round1.place();
-    // No tryDebit / liveBetsStore.push — pure state hydrate.
+    // No tryDebit / liveBetsStore.push ? pure state hydrate.
   }, [round0, round1]);
 
   const settleSlot = useCallback(
@@ -184,7 +186,7 @@ export function LimboScreen() {
     [mode, credit, sfx],
   );
 
-  // rolling → compute & settle (per slot)
+  // rolling ? compute & settle (per slot)
   useEffect(() => {
     if (round0.phase !== "rolling") return;
     sfx.play("tick");
@@ -196,7 +198,7 @@ export function LimboScreen() {
     void settleSlot(1);
   }, [round1.phase, settleSlot, sfx]);
 
-  // back to idle → clear resultCrash per slot
+  // back to idle ? clear resultCrash per slot
   useEffect(() => {
     if (round0.phase !== "idle" || !settledRefs[0].current) return;
     settledRefs[0].current = false;
@@ -218,7 +220,7 @@ export function LimboScreen() {
       if (!ok) return;
       const slotTarget = limboStore.get().target;
       const liveBetId = liveBetsStore.push({
-        user: "나의_베팅",
+        user: "??_??",
         game: "limbo",
         amount,
         multiplier: null,
@@ -289,7 +291,7 @@ export function LimboScreen() {
     setResultCrash([null, null]);
     settledRefs[0].current = false;
     settledRefs[1].current = false;
-    appToast.game.bet({ amount: "시드 변경됨 · nonce 0 리셋" });
+    appToast.game.bet({ amount: "?? ??? ? nonce 0 ??" });
     setShowFair(false);
   }, [seedDraft, clientSeed, settledRefs]);
 
@@ -361,14 +363,14 @@ export function LimboScreen() {
   const winPct = winChance(target);
   const fairRows: ProvablyFairRow[] = [
     {
-      label: "서버 시드 (해시)",
+      label: "?? ?? (??)",
       content: (
-        <code className="break-all text-[10px] text-(--color-cyan)">{commit || "로딩 중..."}</code>
+        <code className="break-all text-[10px] text-(--color-cyan)">{commit || "?? ?..."}</code>
       ),
       copyText: commit || undefined,
     },
     {
-      label: "클라이언트 시드",
+      label: "????? ??",
       content: (
         <input
           value={seedDraft}
@@ -379,13 +381,13 @@ export function LimboScreen() {
         />
       ),
     },
-    { label: "다음 라운드 번호", content: <code className="font-numeric">{nonce}</code> },
+    { label: "?? ??? ??", content: <code className="font-numeric">{nonce}</code> },
     {
-      label: "현재 목표 배수",
+      label: "?? ?? ??",
       content: <code className="font-numeric text-gold">{target.toFixed(2)}x</code>,
     },
     {
-      label: "다음 픽 승률",
+      label: "?? ? ??",
       content: <code className="font-numeric text-(--color-cyan)">{winPct.toFixed(2)}%</code>,
     },
   ];
@@ -398,7 +400,7 @@ export function LimboScreen() {
             <Link
               to="/earn"
               className="glass-1 grid h-9 w-9 place-items-center rounded-full"
-              aria-label="뒤로"
+              aria-label="??"
             >
               <ArrowLeft size={16} />
             </Link>
@@ -414,7 +416,7 @@ export function LimboScreen() {
               className="glass-1 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold"
             >
               <ShieldCheck size={12} className="text-emerald" />
-              공정성
+              ???
             </button>
           </header>
         }
@@ -489,7 +491,7 @@ export function LimboScreen() {
         onClose={() => setShowFair(false)}
         rows={fairRows}
         onApply={applySeed}
-        footer="시드 변경 시 nonce 0 리셋 + 진행 중 라운드 폐기. 동일 시드/라운드는 항상 같은 결과를 만듭니다."
+        footer="?? ?? ? nonce 0 ?? + ?? ? ??? ??. ?? ??/???? ?? ?? ??? ????."
       />
     </div>
   );
