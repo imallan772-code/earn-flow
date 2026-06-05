@@ -32,6 +32,7 @@ function formatEok(n: number, suffix = "") {
 }
 
 export function Landing() {
+  const liveOnline = useLiveOnline();
   return (
     <div className="relative min-h-dvh w-full overflow-hidden bg-cosmic">
       <FloatingOrbs />
