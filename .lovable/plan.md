@@ -1,91 +1,139 @@
+# ROUND L-1 — Crash 비주얼 · 공통 폴리시 (단일 슬롯) · 1 PR
 
-## ROUND K — Dice 끝판왕 (1 PR)
+## 목표
+- `CrashScreen.tsx` ~413줄 → ≤250줄 목표 (Wheel 445 / Dice 370 선례 — 미달 시 종료 보고에 delta 명시, 300줄대 예상)
+- Canvas particle/wash 비주얼 강화 + ROUND 0/K 공통 SSOT 정렬
+- 새로고침 복원(`activeRound`) + hold-to-confirm cashout(150ms) + PF 시드 변경 시 refund 도입
+- 단일 슬롯 ONLY. 멀티 슬롯 3(L-2) 금지.
 
-목표: `DiceScreen` 267 → ≤210줄. Wheel(ROUND J) 수준의 공통 인프라 정렬. **DiceEngine·StakeBetPanel 계약·Supabase/lib/api/walletStore 0-diff.**
+## 0-diff 보호 (절대 금지)
+- `src/shared/games/crash/CrashEngine.ts` — 수학/상수/export 전부
+- `src/shared/games/ui/StakeBetPanel.tsx` — props·`onPlace`·`onCashout`·`bettingRoundKey` 계약
+- `src/shared/wallet/useGameWallet.ts`, `walletStore.ts`
+- `supabase/`, `src/lib/api/`, `vite.config.ts`
+- `crashStore` version=2, key `phonara.gamestate.crash.v2`
+- Crash 외 5게임(Dice/Wheel/Mines/Limbo/Plinko) Screen
+- 4-phase 머신: `betting | running | crashed | cooldown` 유지
+- `useGameRound` 도입 금지 (4-phase + betting timer + sharedTickLoop 매핑 불완전)
 
 ## 수정 파일
 
-### 1. `src/shared/games/state/persistedGameState.ts` — diceStore 확장
-- `DicePersisted`에 `clientSeed: string` 추가.
-- `createGameStore("dice", initial, 2)` — **version=2 그대로**. localStorage key `phonara.gamestate.dice.v2` 불변.
-- 머지 규칙 `{ ...initial, ...parsed }`로 기존 v2 저장본은 `clientSeed` 기본값만 주입 → migrate 불필요.
-- 기본 `clientSeed = "phonara-player-001"` (기존 상수와 동일).
+### 1. `src/shared/games/state/persistedGameState.ts`
+- `ActiveCrashRound` interface 신규:
+  - `nonce, amount, autoTarget, cashedAt(null), liveBetId, placedAt, crashPoint`
+  - `startedAt: number` — running 진입 시 `performance.now()` 스냅샷 (0 = 아직 betting)
+  - **`bettingStartedAt: number`** — **betting phase 진입 시점(라운드 타이머 시작)의 `performance.now()` 스냅샷**. place 시 `activeRound`에 그 값을 복사. **`placedAt`(베팅 클릭 시각)과 혼동 금지** — place 시각을 넣으면 refresh 후 betting 타이머가 어긋남.
+- `CrashPersisted`에 `clientSeed: string` + `activeRound: ActiveCrashRound | null` 추가
+- `createGameStore("crash", initial, 2)` — version=2 유지, 머지 `{ ...initial, ...parsed }` 로 legacy v2 호환
 
-### 2. `src/shared/games/rules/gameRules.ts` — DICE_RULES
-- "단축키" 섹션 추가 (Wheel과 동일 톤): Space 베팅 / ↑↓ target ±1 / Shift+↑↓ ±10 / O·U over/under / P 공정성 / M 음소거.
-- 기존 5섹션 본문 0-diff.
+### 2. `src/shared/games/rules/gameRules.ts`
+- `CRASH_RULES` 본문 0-diff
+- 「단축키」섹션 추가: Space(betting 베팅) / C·Enter(캐쉬아웃 150ms 홀드) / P(공정성) / M(음소거)
 
-### 3. `src/shared/games/dice/DiceSlider.tsx` — 햅틱 + SFX
-- `onTargetChange` 래핑 시점에 `navigator.vibrate?.(8)` (SSR 가드: `typeof navigator !== "undefined" && "vibrate" in navigator`).
-- `useSfx` 주입은 호출측(Screen)에서 prop `onTick?: () => void`로 전달 (Slider는 pure UI 유지). target 변경 시 호출.
-- 모드 토글 클릭 시 `onModeChangeSfx?.()` 동일 패턴.
-- 기존 마크업/토큰/접근성 0-diff.
+### 3. `src/shared/games/crash/CrashCanvas.tsx`
+- `sharedTickLoop` 단일 RAF 유지 (직접 rAF 금지)
+- running: 곡선 헤드 particle trail 강화 (oklch 토큰 only, raw hex 0)
+- crashed: rose radial wash 강화 (Screen `animate-crash-shake`와 시각 동기)
+- `useReducedMotion()` ON → trail/particle 밀도 축소 또는 off
+- Props 시그니처·수학·`CrashEngine` import 0-diff
 
-### 4. `src/shared/games/dice/DiceResultDisplay.tsx` — bounce + reduced-motion
-- `LazyMotion` + `domAnimation` + `m.div` 사용, `useReducedMotion()`로 settled bounce(`scale 1 → 1.08 → 1`, 360ms) 토글.
-- 기존 `animate-result-pop` 클래스는 reduced-motion 시 폴백으로 유지.
-- 색·레이아웃·MetaRow 0-diff.
+### 4. `src/features/games/crash/CrashScreen.tsx` (≤250줄 목표 / 300줄대 예상)
 
-### 5. `src/features/games/dice/DiceScreen.tsx` — ≤210줄, Wheel SSOT 정렬
-
-채택할 공통 인프라 (Wheel과 동일):
-- `GameShell` + `useGameRound({ rollingMs: 800, settledMs: 800 })`
-- `HistoryPillStrip` (기존 인라인 `<ul>` 교체)
-- `ProvablyFairModal` + `ProvablyFairRow[]` (인라인 bottom sheet + Row 헬퍼 삭제)
-- `SessionStatsBar` + `recordSessionOutcome({ outcome, profit, multiplier })`
-- `useHotkeys` 맵: Space=place, ArrowUp/Down=target±1 (Shift=±10), o/u=mode, p=PF, m=mute
-- `useSfx`: `bet` / `win` / `loss` / `tick`(roll 중 200ms 인터벌) — Wheel 패턴
+공통 인프라 정렬:
+- `GameShell` 슬롯 분리 — 4-phase 깨지면 outer layout만 유지하고 나머지 인프라는 필수
+- `HistoryPillStrip` — 인라인 `<ul>` 교체 (`{ id, multiplier }` 네이티브)
+- `ProvablyFairModal` + `ProvablyFairRow[]` — 인라인 sheet + `Row` 헬퍼 삭제
+- `SessionStatsBar` + `recordSessionOutcome` — cashout=win, bust=loss
+- `useHotkeys` — Space / C / Enter / P / M (input focus 시 무시)
+- `useSfx` — bet / cashout / loss(bust) / tick(running 200ms interval)
 - `useRegisterMainMode('game')` 유지
-- 일반 win/loss/bet `appToast` 호출 제거 (Wheel/Limbo 정렬). 시드 변경 토스트만 유지.
 
-**HistoryPillStrip 매핑 (의도된 trade-off):**
-- Dice history는 `roll` 값(0~99.99)이라 `multiplier`가 아님. Limbo가 `crashPoint`를 `multiplier` 필드에 넣는 패턴과 동일하게 `roll`을 `multiplier` 슬롯에 매핑:
-  ```ts
-  items={history.map(h => ({ id: h.id, multiplier: h.roll }))}
-  ```
-- pill 표시는 `xx.xx` + `x` suffix 형태로 노출됨 (수용). win/loss 색 분기는 strip 내장 tier 색으로 대체 — 의도된 trade-off.
+PF 정책 (K/J 정렬):
+- `SERVER_SEED` 상수 유지, 하드코드 `CLIENT_SEED` 삭제
+- `computeCrashPoint({ serverSeed, clientSeed: crashStore.get().clientSeed || "phonara-player-001", nonce })`
+- **PF apply 시:**
+  1. `activeRound != null && cashedAt === null` → `refund(activeRound.amount)` 1회 (unmount refund와 동일 정책 — Crash는 place 시 즉시 debit이라 seed reset만 하면 돈이 샘)
+  2. 그다음 `clientSeed` 갱신 + `nonce=0` + `activeRound=null` + `lastOutcome=null` + 진행 bet/phase 리셋
+- 시드 변경 toast만 유지. 일반 bet/bust/cashout `appToast` 제거
 
-**useGameRound nonce 정책 (Wheel과 다름 — 현행 유지):**
-- Wheel: `place()` 성공 시 `nonce++`, idle 복귀 시 증가 없음.
-- **Dice: idle 복귀 시 `nonce++` 현행 유지** (settled→idle effect 내부). Wheel 패턴을 그대로 복사하지 말 것. `useGameRound` 도입은 phase/effect 통합 용도만이며 nonce 증가 시점은 변경 없음.
-- `activeBet.nonce`는 place 시점의 `diceStore.get().nonce` 스냅샷.
+hold-to-confirm cashout (150ms):
+- `BetSummaryPanel`에 `holdConfirmMs?: number` optional prop 추가
+- **적용 조건:** `variant==="live" && onCashout` 있을 때만. static/Dice 사용 경로는 prop 미전달 → 기존 onClick 100% 동일. 시그니처 호환성 보존.
+- 터치/마우스: pointerdown 타이머 → pointerup <150ms cancel, ≥150ms fire
+- 키보드: C/Enter `keydown` hold 타이머 → `keyup` <150ms cancel (instant cashout과 혼동 금지)
+- cancel 시 SFX 없음
+- `StakeBetPanel` 미수정
 
-PF 정책:
-- `SERVER_SEED` 상수 유지. 하드코드 `CLIENT_SEED` 상수 제거.
-- `computeRoll`에 Wheel 패턴대로 `diceStore.get().clientSeed || "phonara-player-001"` 사용.
-- PF 모달 적용 시: `clientSeed` 갱신 + `nonce=0` 리셋 + 진행중 베팅 폐기(`activeBet=null`, lastOutcome 클리어).
+activeRound 영속 + 복원 (이중 차감 절대 금지):
+- **betting 진입 effect:** `bettingStartedAt = performance.now()` 스냅샷을 별도 ref/state로 보관 (라운드 시작 시각, place 여부 무관)
+- place 성공: `activeRound = { nonce, amount, autoTarget, cashedAt:null, liveBetId, placedAt: now, crashPoint, startedAt: 0, bettingStartedAt: <위 스냅샷> }`
+- running 진입: `startedAt` 스냅샷 store 반영
+- manual/auto cashout: `activeRound.cashedAt` 갱신 (store + local 동시)
+- crashed settle 완료: `activeRound=null` (`settledRef` 가드)
+- **마운트 복원 (1회, `restoredRef`):**
+  - `activeRound != null && 미settle`
+  - `startedAt > 0` → running 복원 (`elapsed = now - startedAt`, tick loop 재구독)
+  - `startedAt === 0 && bettingStartedAt > 0` → betting 복원 (`bettingMsLeft = BETTING_MS - (now - bettingStartedAt)`, ≤0이면 즉시 running 전환)
+  - `tryDebit`/`liveBetsStore.push` **0회** (store/local 동기화만)
+- unmount refund (`betRef + refund() if cashedAt===null`) 100% 보존
+- **Screen 상단 주석:** place/cashout/settle/restore 시 store↔local 동기화 규칙 + `bettingStartedAt vs placedAt` 의미 차이 명시
 
-비대상(P-3): Desktop RightRail / `useRegisterRightRail` / `useDesktopLayout` — 도입 X. `LiveBetsFeed`는 현재 그대로 페이지 하단 유지.
+계약 0-diff (재확인):
+```
+canPlace={phase === "betting"}
+hasActiveBet={!!bet && bet.cashedAt === null && phase === "running"}
+bettingRoundKey={nonce}                 // 문자 그대로
+bettingProgress={bettingProgress}
+suppressCashoutButton
+onPlace={onStakePlace}
+onCashout={handleCashout}
+```
+- `settledRef` 1회 settle 가드, crashed effect deps에 `bet` 없음
+- `BETTING_MS` / `COOLDOWN_MS` / `multiplierAt` / `multiplierAt6` 그대로
+
+### P-3 비대상
+- `useRegisterRightRail` / `useDesktopLayout` / `CrashRightRail` 도입 X
+- `LiveBetsFeed` — Screen 하단 항상 렌더 (desktop 분기 X)
 
 ## 신규 파일
 
-### `src/shared/games/state/__tests__/dice.persist.spec.ts`
-`wheelStore.persist.spec.ts` 패턴 그대로:
-1. localStorage key `phonara.gamestate.dice.v2` 그대로 (v3 없음).
-2. 기존 v2 저장본(`clientSeed` 없음) → 기본값 `"phonara-player-001"` 머지, 기존 필드(nonce/history/target/diceMode 등) 보존.
-3. 신규 필드 포함 저장본은 그대로 로드 (`clientSeed: "custom-seed"`).
+### `src/features/games/crash/CrashMultiplierBadge.tsx`
+- running/crashed 시 Canvas 위 live multiplier 오버레이 (font-numeric, tier 색)
+- `getCurrentMultiplier()` 또는 props 수신
+- `React.memo`, reduced-motion 시 pulse off
+- Screen `displayArea` 내부 배치
 
-## 0-diff 보호 (절대 금지)
+### `src/shared/games/state/__tests__/crashStore.persist.spec.ts`
+- key `phonara.gamestate.crash.v2` 불변 (v3 없음)
+- legacy v2 (clientSeed/activeRound 없음) → 기본값 머지
+- custom clientSeed + activeRound 저장본 그대로 로드
 
-- `src/shared/games/dice/DiceEngine.ts`
-- `StakeBetPanel` props / `onPlace` / `lastOutcome` / `bettingRoundKey` 계약
-- `supabase/`, `src/lib/api/`, `src/shared/wallet/walletStore.ts`
-- `vite.config.ts`
-- diceStore version (2 유지) / localStorage key
-- 6 게임 중 Dice 외 0-diff
+### `src/shared/games/state/__tests__/crashStore.restore.spec.ts`
+- place → `activeRound` 세팅 + `bettingStartedAt`(`!== placedAt`) 포함 필드 검증
+- cashout → `activeRound.cashedAt` 갱신
+- settle(crashed) → `activeRound=null` + `lastOutcome` + `history`
+- **PF seed 변경 (미정산 베팅): `refund` 호출 + `nonce=0` + `activeRound=null` + `lastOutcome=null`**
+- (주석) 복원 hydrate 시 `tryDebit`/`liveBetsStore.push` 0회
+
+## TODO 주석
+```ts
+// TODO(real-money): crash round settle via Edge Function + debit_phon_for_bet_v2 (Cursor)
+```
+
+## 기능 체크리스트
+- Canvas particle trail + crashed rose wash
+- hold-to-confirm cashout 150ms (touch + keyboard)
+- SFX: bet / cashout / loss / tick(running)
+- `HistoryPillStrip` + `SessionStatsBar`
+- `ProvablyFairModal` (editable clientSeed) + 미정산 베팅 refund
+- `activeRound` 영속 + betting/running 양쪽 refresh 복원 (이중 debit 0)
+- `settledRef` + `betRef` + refund-on-unmount 보존
+- auto-cashout (`reachedTarget` + `multiplierAt6`) 0-regression
 
 ## 종료 게이트
-
-1. `bun run lint:strict` — 0 warn
-2. `bun run check` — 111+ tests GREEN
-3. 수동 QA 6항목 (로드맵 § 종료 게이트)
-4. Dice auto 3라운드 — 잔액/nonce 회귀 0
-5. **종료 보고: `docs/lovable/ROUND_REPORT_TEMPLATE.md` 필수** — 변경 파일·라인 수·QA 결과·0-diff 확인 기록.
-
-## 기술 메모
-
-- DiceScreen 라인 절감 경로: PF 인라인 sheet(~40줄) + `Row` 헬퍼(~8줄) + 인라인 history `<ul>`(~16줄) + 중복 토스트(~6줄) 제거 → GameShell wrapping(~20줄 추가) 감안 순감 ≥57줄 → ≤210줄 도달.
-- `useGameRound` 도입으로 `phase` 로컬 useState + rolling/settled useEffect 두 개를 `round.phase` / `round.place()` 한 흐름으로 통합. **단 nonce 증가 시점은 idle 복귀 시(Dice 현행) 유지.**
-- Dice는 Wheel과 달리 `activeRound` 영속화 미도입 (라운드 길이 800ms, 새로고침 복원 가치 낮음). `activeBet`는 컴포넌트 로컬 상태 유지.
-
-승인하면 build 모드 전환 후 위 순서대로 작업.
+- `bun run lint:strict` — 0 warn
+- `bun run check` — 114 → 116+ GREEN
+- 수동 QA 6항목: betting→cashout(win) / betting→bust(loss) / auto-cashout / 새로고침(betting·running) 복원·잔액 불변 / PF seed 변화·미정산 refund / hotkeys+reduced-motion+타 게임 회귀 0
+- Crash auto 3라운드 — 잔액·nonce 회귀 0
+- `docs/lovable/ROUND_REPORT_TEMPLATE.md` 형식 종료 보고
+- ≤250줄 미달 시: 현재 줄 수·원인·Wheel/Dice 대비 delta 명시
