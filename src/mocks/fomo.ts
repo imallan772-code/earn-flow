@@ -4,7 +4,10 @@ export const MOCK_ONLINE_BASE = 10_048_293;
 export const MOCK_CONCURRENT_PEAK = 327_412; // 32만 명 동시 접속
 export const MOCK_EVENT_BONUS_PERCENT = 150;
 export const MOCK_TOTAL_PAID_TODAY_PHON = 1_240_000_000;
-export const MOCK_REALTIME_CASHOUT_KRW = 5_290_000;
+export const MOCK_REALTIME_CASHOUT_PHON = 5_290_000;
+export const MOCK_REALTIME_CASHOUT_USDT = 3_950;
+/** @deprecated use MOCK_REALTIME_CASHOUT_PHON */
+export const MOCK_REALTIME_CASHOUT_KRW = MOCK_REALTIME_CASHOUT_PHON;
 
 export interface MarqueeRow {
   id: string;
