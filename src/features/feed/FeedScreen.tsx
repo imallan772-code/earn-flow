@@ -10,8 +10,16 @@ import { MOCK_FEED_HOT } from "@/mocks/missions";
 import { formatPHON } from "@/lib/format";
 import { ModeToggle } from "@/shared/mode/ModeToggle";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
+import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
+import { useDesktopLayout } from "@/shared/hooks/useDesktopLayout";
+import { FeedRightRail } from "./FeedRightRail";
 
 export function FeedScreen() {
+  // P-1 Phase 2: DesktopShell <main>을 lg:max-w-2xl (≈672px)로 모드 전환.
+  useRegisterMainMode("feed");
+  // DOM singleton 분기 — CSS `hidden lg:` 토글이 아닌 조건부 마운트로 중복 렌더 방지.
+  const isDesktop = useDesktopLayout();
+
   return (
     <div className="flex flex-col gap-4">
       <PremiumPageHeader
@@ -26,8 +34,13 @@ export function FeedScreen() {
       <NoticeBar />
       <EventHero />
       <FomoMarquee />
-      <LiveCashoutStrip />
-      <LiveBetsFeed limit={10} />
+      {/* 모바일에서만 Center에 렌더 — 데스크탑은 FeedRightRail 경유 RightRail로 이동 */}
+      {!isDesktop && <LiveCashoutStrip />}
+      {!isDesktop && <LiveBetsFeed limit={10} />}
+
+      {/* 데스크탑 RightRail 등록 (Rail 내부 useRegisterRightRail 단일 호출, 모바일 자동 미등록) */}
+      <FeedRightRail />
+
 
       {/* Hot strip */}
       <section>
