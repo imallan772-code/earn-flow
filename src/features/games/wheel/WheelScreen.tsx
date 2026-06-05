@@ -57,6 +57,7 @@ import { useSfx } from "@/shared/sfx/useSfx";
 import { appToast } from "@/shared/ui/toast";
 import { WheelDisplay } from "./WheelDisplay";
 import { WheelControls } from "./WheelControls";
+import { WheelLegend } from "./WheelLegend";
 
 const SERVER_SEED = "phonara-wheel-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
@@ -367,14 +368,17 @@ export function WheelScreen() {
           </div>
         }
         displayArea={
-          <WheelDisplay
-            risk={displayRisk}
-            segments={displaySegments}
-            phase={round.phase as "idle" | "rolling" | "settled"}
-            resultIndex={resultIndex}
-            resultMultiplier={resultMult}
-            jackpotTrigger={jackpotTrigger}
-          />
+          <div className="flex flex-col gap-3">
+            <WheelDisplay
+              risk={displayRisk}
+              segments={displaySegments}
+              phase={round.phase as "idle" | "rolling" | "settled"}
+              resultIndex={resultIndex}
+              resultMultiplier={resultMult}
+              jackpotTrigger={jackpotTrigger}
+            />
+            <WheelLegend risk={displayRisk} segments={displaySegments} />
+          </div>
         }
         controls={
           <WheelControls
