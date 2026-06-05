@@ -19,10 +19,7 @@ beforeEach(() => {
 
 describe("createGameStore", () => {
   it("hydrates from existing localStorage and merges with initial", () => {
-    window.localStorage.setItem(
-      "phonara.gamestate.foo.v1",
-      JSON.stringify({ count: 42 }),
-    );
+    window.localStorage.setItem("phonara.gamestate.foo.v1", JSON.stringify({ count: 42 }));
     const store = createGameStore<FooState>("foo", INITIAL, 1);
     expect(store.get()).toEqual({ count: 42, label: "init" });
   });

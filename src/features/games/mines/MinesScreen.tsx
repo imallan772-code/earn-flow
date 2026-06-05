@@ -253,7 +253,9 @@ export function MinesScreen() {
             <div className="mb-2 flex items-center justify-between text-[11px]">
               <span className="font-bold text-[var(--color-muted)]">
                 지뢰{" "}
-                <span className="font-numeric text-[var(--color-rose)]">{active?.mineCount ?? mineCount}</span>
+                <span className="font-numeric text-[var(--color-rose)]">
+                  {active?.mineCount ?? mineCount}
+                </span>
                 {" · "}
                 보석{" "}
                 <span className="font-numeric text-[var(--color-emerald)]">
@@ -277,14 +279,31 @@ export function MinesScreen() {
                     disabled={round.phase !== "playing" || isRevealed || hitTile != null}
                     className={cn(
                       "aspect-square rounded-lg text-xs font-extrabold transition active:scale-95",
-                      isRevealed && "bg-[color-mix(in_oklab,var(--color-emerald)_25%,transparent)] text-[var(--color-emerald)]",
-                      isHit && "bg-[color-mix(in_oklab,var(--color-rose)_35%,transparent)] text-[var(--color-rose)]",
-                      !isRevealed && !isHit && isMineRevealed && "bg-[color-mix(in_oklab,var(--color-rose)_18%,transparent)] text-[var(--color-rose)] opacity-70",
-                      !isRevealed && !isHit && !isMineRevealed && "bg-[var(--color-surface-hi)] text-[var(--color-muted)]",
-                      round.phase === "playing" && !isRevealed && hitTile == null && "hover:bg-[var(--color-surface-2)]",
+                      isRevealed &&
+                        "bg-[color-mix(in_oklab,var(--color-emerald)_25%,transparent)] text-[var(--color-emerald)]",
+                      isHit &&
+                        "bg-[color-mix(in_oklab,var(--color-rose)_35%,transparent)] text-[var(--color-rose)]",
+                      !isRevealed &&
+                        !isHit &&
+                        isMineRevealed &&
+                        "bg-[color-mix(in_oklab,var(--color-rose)_18%,transparent)] text-[var(--color-rose)] opacity-70",
+                      !isRevealed &&
+                        !isHit &&
+                        !isMineRevealed &&
+                        "bg-[var(--color-surface-hi)] text-[var(--color-muted)]",
+                      round.phase === "playing" &&
+                        !isRevealed &&
+                        hitTile == null &&
+                        "hover:bg-[var(--color-surface-2)]",
                     )}
                   >
-                    {isRevealed ? <Gem size={16} className="mx-auto" /> : isHit || isMineRevealed ? <Bomb size={16} className="mx-auto" /> : ""}
+                    {isRevealed ? (
+                      <Gem size={16} className="mx-auto" />
+                    ) : isHit || isMineRevealed ? (
+                      <Bomb size={16} className="mx-auto" />
+                    ) : (
+                      ""
+                    )}
                   </button>
                 );
               })}
@@ -345,7 +364,11 @@ export function MinesScreen() {
             balance={balance}
             lastOutcome={
               lastOutcome
-                ? { outcome: lastOutcome.outcome, profit: lastOutcome.profit, nonce: lastOutcome.nonce }
+                ? {
+                    outcome: lastOutcome.outcome,
+                    profit: lastOutcome.profit,
+                    nonce: lastOutcome.nonce,
+                  }
                 : null
             }
             variant="compact"
@@ -394,9 +417,8 @@ export function MinesScreen() {
               </FairRow>
             </dl>
             <p className="mt-4 text-[10px] leading-relaxed text-[var(--color-muted)]">
-              지뢰 배치 = Fisher-Yates(HMAC-SHA256(serverSeed,
-              &quot;clientSeed:nonce:cursor&quot;)) → 첫 {mineCount}개 인덱스. 동일 시드/라운드에
-              대해 항상 같은 배치가 나옵니다.
+              지뢰 배치 = Fisher-Yates(HMAC-SHA256(serverSeed, &quot;clientSeed:nonce:cursor&quot;))
+              → 첫 {mineCount}개 인덱스. 동일 시드/라운드에 대해 항상 같은 배치가 나옵니다.
             </p>
           </div>
         </div>

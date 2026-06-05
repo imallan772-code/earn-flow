@@ -14,9 +14,7 @@ afterEach(() => {
 
 describe("useGameRound — single-step", () => {
   it("place() → rolling → settled → idle (happy path)", () => {
-    const { result } = renderHook(() =>
-      useGameRound({ rollingMs: 100, settledMs: 100 }),
-    );
+    const { result } = renderHook(() => useGameRound({ rollingMs: 100, settledMs: 100 }));
     expect(result.current.phase).toBe("idle");
 
     act(() => {
@@ -40,9 +38,7 @@ describe("useGameRound — single-step", () => {
   });
 
   it("place() while not idle returns false (loss path = same transitions)", () => {
-    const { result } = renderHook(() =>
-      useGameRound({ rollingMs: 100, settledMs: 100 }),
-    );
+    const { result } = renderHook(() => useGameRound({ rollingMs: 100, settledMs: 100 }));
     act(() => {
       result.current.place();
     });
@@ -64,9 +60,7 @@ describe("useGameRound — single-step", () => {
 
 describe("useGameRound — multi-step", () => {
   it("place() → playing → settle() → settled → idle", () => {
-    const { result } = renderHook(() =>
-      useGameRound({ isMultiStep: true, settledMs: 100 }),
-    );
+    const { result } = renderHook(() => useGameRound({ isMultiStep: true, settledMs: 100 }));
 
     act(() => {
       result.current.place();
@@ -91,9 +85,7 @@ describe("useGameRound — multi-step", () => {
   });
 
   it("reset() returns to idle from any phase", () => {
-    const { result } = renderHook(() =>
-      useGameRound({ isMultiStep: true, settledMs: 100 }),
-    );
+    const { result } = renderHook(() => useGameRound({ isMultiStep: true, settledMs: 100 }));
     act(() => {
       result.current.place();
     });

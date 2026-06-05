@@ -136,4 +136,3 @@ export const RULES_BY_GAME: Record<string, GameRules> = {
   plinko: PLINKO_RULES,
   mines: MINES_RULES,
 };
-

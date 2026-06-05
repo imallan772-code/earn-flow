@@ -32,7 +32,6 @@ type GameId =
   | "cardflip"
   | "keepy";
 
-
 interface GameCard {
   id: GameId;
   name: string;
@@ -211,4 +210,3 @@ function GameTile({ card }: { card: GameCard }) {
     );
   return inner;
 }
-

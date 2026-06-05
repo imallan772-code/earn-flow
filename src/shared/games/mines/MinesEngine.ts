@@ -47,10 +47,7 @@ export function clampMines(mineCount: number): number {
  *
  * Fisher-Yates: 24회 스왑이면 충분(마지막 i=0은 자기 자신과 스왑).
  */
-export async function placeMines(
-  input: ProvablyFairInput,
-  mineCount: number,
-): Promise<number[]> {
+export async function placeMines(input: ProvablyFairInput, mineCount: number): Promise<number[]> {
   const m = clampMines(mineCount);
   const floats = await drawFloats(input, TOTAL_TILES - 1);
   const tiles = Array.from({ length: TOTAL_TILES }, (_, i) => i);
