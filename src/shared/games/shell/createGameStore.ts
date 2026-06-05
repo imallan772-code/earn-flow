@@ -26,13 +26,24 @@ export interface Store<T> {
 /**
  * SSR-safe 초기 로드. 서버에서는 initial을, 브라우저에서는 localStorage 머지본을
  * 반환. parse 실패/쿼터 등 모든 예외는 무시하고 initial로 폴백.
+ *
+ * ROUND L-2-pre: optional `migrate`로 게임별 변환 훅 추가.
+ *  - 기본 동작: `{ ...initial, ...parsed }` (기존 호환, 다른 게임 0-diff)
+ *  - migrate를 넘기면 raw localStorage payload(없으면 `null`)와 initial을 받아 최종 state를 반환.
+ *    limbo v1 → v2 변환처럼 키 변경/legacy fallback 시에 사용.
  */
-function hydrate<T extends object>(storageKey: string, initial: T): T {
+function hydrate<T extends object>(
+  storageKey: string,
+  initial: T,
+  migrate?: (parsed: unknown, initial: T) => T,
+): T {
   if (typeof window === "undefined") return initial;
   try {
     const raw = window.localStorage.getItem(storageKey);
-    if (!raw) return initial;
-    return { ...initial, ...JSON.parse(raw) } as T;
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    if (migrate) return migrate(parsed, initial);
+    if (parsed == null) return initial;
+    return { ...initial, ...(parsed as object) } as T;
   } catch {
     return initial;
   }
