@@ -148,30 +148,49 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
       ctx.stroke();
       const hx = toX(elapsed);
       const hy = toY(liveM);
+      // glow ring under the head — denser visual weight
+      if (!reducedRef.current) {
+        ctx.shadowColor = accent;
+        ctx.shadowBlur = 18;
+      }
       ctx.fillStyle = accent;
       ctx.beginPath();
       ctx.arc(hx, hy, 6, 0, Math.PI * 2);
       ctx.fill();
+      ctx.shadowBlur = 0;
 
-      // particles — spawn while running
+      // particles — spawn while running. reduced-motion → off.
+      const reducedM = reducedRef.current;
+      const maxParticles = reducedM ? 0 : 22;
+      const spawnChance = reducedM ? 0 : 0.55;
       const now = performance.now();
-      if (ph === "running" && particlesRef.current.length < 14 && Math.random() < 0.35) {
+      if (
+        ph === "running" &&
+        particlesRef.current.length < maxParticles &&
+        Math.random() < spawnChance
+      ) {
         particlesRef.current.push({
           t0: now,
-          ox: hx + (Math.random() - 0.5) * 16,
-          oy: hy + (Math.random() - 0.5) * 6,
+          ox: hx + (Math.random() - 0.5) * 20,
+          oy: hy + (Math.random() - 0.5) * 8,
         });
       }
-      particlesRef.current = particlesRef.current.filter((p) => now - p.t0 < 1200);
+      particlesRef.current = particlesRef.current.filter((p) => now - p.t0 < 1400);
       for (const p of particlesRef.current) {
-        const age = (now - p.t0) / 1200;
+        const age = (now - p.t0) / 1400;
         const a = 1 - age;
-        ctx.fillStyle = `oklch(0.85 0.18 200 / ${(a * 0.7).toFixed(3)})`;
+        // dual-tone trail: cyan core + purple outer halo
+        ctx.fillStyle = `oklch(0.78 0.22 295 / ${(a * 0.35).toFixed(3)})`;
         ctx.beginPath();
-        ctx.arc(p.ox, p.oy - age * 30, 2 + a * 1.5, 0, Math.PI * 2);
+        ctx.arc(p.ox, p.oy - age * 36, 3.5 + a * 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = `oklch(0.88 0.18 200 / ${(a * 0.85).toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(p.ox, p.oy - age * 36, 1.8 + a * 1.2, 0, Math.PI * 2);
         ctx.fill();
       }
     }
+
 
     // text overlays
     ctx.textAlign = "center";
