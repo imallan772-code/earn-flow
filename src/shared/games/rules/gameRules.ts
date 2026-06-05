@@ -99,8 +99,41 @@ export const PLINKO_RULES: GameRules = {
   ],
 };
 
+export const MINES_RULES: GameRules = {
+  id: "mines",
+  name: "Mines",
+  sections: [
+    {
+      title: "기본 규칙",
+      body: "5×5(25칸) 보드에서 지뢰 개수를 직접 설정합니다(1~24). 베팅 후 안전 타일을 한 칸씩 깔수록 캐쉬아웃 배수가 올라갑니다. 지뢰를 밟으면 베팅액 전액을 잃습니다.",
+    },
+    {
+      title: "승리 조건",
+      body: "지뢰를 피해 안전 타일을 깐 직후 언제든 캐쉬아웃 가능합니다. 더 많이 깔수록 배수는 커지지만, 다음 칸에서 지뢰를 밟을 확률도 올라갑니다.",
+    },
+    {
+      title: "배당 계산",
+      body: "배수(r 안전 타일 후) = 0.99 × ∏(25-i)/(25-M-i) (i=0..r-1, M=지뢰 수). 정산은 모드 RTP 97%를 한 번 더 적용합니다(엔진 RTP 99% × 모드 0.97 = 96.03% 실효 RTP).",
+    },
+    {
+      title: "지뢰 수 선택",
+      body: "• 1~3개: 안전 위주, 잦은 소액 회수.\n• 5~10개: 균형형.\n• 12개 이상: 한방 노림수, 첫 칸부터 큰 배수.",
+    },
+    {
+      title: "데모 vs 리얼",
+      body: "• 데모: 1회 체험 크레딧 ₩10,000, 추가 리필 없음. RTP 97% (리얼과 동일).\n• 리얼: 실제 입금/출금. RTP 97% (3% 하우스 엣지).",
+    },
+    {
+      title: "공정성 (Provably Fair)",
+      body: "라운드 시작 전 서버 시드 해시를 공개합니다. 지뢰 배치 = Fisher-Yates 셔플(HMAC-SHA256(serverSeed, clientSeed:nonce:cursor))의 첫 M개 인덱스. 라운드 종료 후 서버 시드가 공개되어 누구나 재현 검증할 수 있습니다.",
+    },
+  ],
+};
+
 export const RULES_BY_GAME: Record<string, GameRules> = {
   crash: CRASH_RULES,
   dice: DICE_RULES,
   plinko: PLINKO_RULES,
+  mines: MINES_RULES,
 };
+
