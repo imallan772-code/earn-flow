@@ -1,9 +1,12 @@
 /**
- * 전역 "실시간 접속자" 숫자 스토어.
- * 칩과 히어로 stat이 동일한 값을 구독하도록 단일 jitter 루프를 운영한다.
+ * Shared "live online users" store.
+ *
+ * Single source of truth so chip + hero stat tick in sync. Uses the global
+ * RAF scheduler (`liveTickScheduler`) instead of its own setTimeout loop.
  */
 import { useSyncExternalStore } from "react";
 import { MOCK_ONLINE_BASE } from "@/mocks/fomo";
+import { subscribeLiveTick } from "./liveTickScheduler";
 
 const BASE = MOCK_ONLINE_BASE;
 const AMP = 0.003;
@@ -12,7 +15,7 @@ const INTERVAL = 2800;
 
 let current = BASE;
 const listeners = new Set<() => void>();
-let timer: ReturnType<typeof setTimeout> | null = null;
+let unsubscribe: (() => void) | null = null;
 
 function gaussian() {
   const u = Math.random() || 1e-9;
@@ -22,42 +25,29 @@ function gaussian() {
 }
 
 function tick() {
-  if (typeof document === "undefined" || !document.hidden) {
-    const dir = Math.random() < BIAS ? 1 : -1;
-    const stepRatio = 0.0002 + Math.abs(gaussian()) * 0.0006;
-    const delta = BASE * stepRatio * dir;
-    let next = current + delta;
-    const lo = BASE * (1 - AMP);
-    const hi = BASE * (1 + AMP);
-    if (next < lo) next = current + Math.abs(delta);
-    if (next > hi) next = current - Math.abs(delta);
-    current = next;
-    listeners.forEach((l) => l());
-  }
-  const jitter = INTERVAL * (0.6 + Math.random() * 0.8);
-  timer = setTimeout(tick, jitter);
-}
-
-function start() {
-  if (timer != null || typeof window === "undefined") return;
-  const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  if (reduced) return;
-  timer = setTimeout(tick, INTERVAL);
-}
-
-function stop() {
-  if (timer != null) {
-    clearTimeout(timer);
-    timer = null;
-  }
+  const dir = Math.random() < BIAS ? 1 : -1;
+  const stepRatio = 0.0002 + Math.abs(gaussian()) * 0.0006;
+  const delta = BASE * stepRatio * dir;
+  let next = current + delta;
+  const lo = BASE * (1 - AMP);
+  const hi = BASE * (1 + AMP);
+  if (next < lo) next = current + Math.abs(delta);
+  if (next > hi) next = current - Math.abs(delta);
+  current = next;
+  listeners.forEach((l) => l());
 }
 
 function subscribe(cb: () => void) {
   listeners.add(cb);
-  if (listeners.size === 1) start();
+  if (listeners.size === 1) {
+    unsubscribe = subscribeLiveTick(tick, INTERVAL);
+  }
   return () => {
     listeners.delete(cb);
-    if (listeners.size === 0) stop();
+    if (listeners.size === 0 && unsubscribe) {
+      unsubscribe();
+      unsubscribe = null;
+    }
   };
 }
 
