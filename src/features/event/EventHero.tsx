@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Trophy, Sparkles } from "lucide-react";
-import { EVENTS } from "@/mocks/event";
+import { useActiveEvents } from "@/shared/events/useEvents";
 
 export function EventHero() {
-  const list = EVENTS.filter((e) => e.status === "진행중").slice(0, 3);
+  const list = useActiveEvents(3);
   const [i, setI] = useState(0);
   const ref = useRef<HTMLDivElement | null>(null);
   useEffect(() => {

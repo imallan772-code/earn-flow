@@ -11,6 +11,12 @@ Full SSOT: `docs/TECH_STACK.md`
 
 Lovable 생성 → GitHub export → Cursor pull → 최적화/감사 → `bun run check` GREEN
 
+## State Management
+
+- **Server State**: TanStack Query + Supabase Realtime (profile, wallet, missions, events, trading)
+- **UI / Game State**: `walletStore` (useSyncExternalStore), `createGameStore`, `plinkoStore` 등 기존 구조 유지
+- **Zustand 도입 금지** — Phase 3 트레이딩 엔진 단계에서 재검토
+
 ## Frontend
 
 - TanStack Start **v1** + TanStack Router (`src/routes/` only)
@@ -18,6 +24,11 @@ Lovable 생성 → GitHub export → Cursor pull → 최적화/감사 → `bun r
 - **Tailwind v4** CSS-first — `src/styles.css` `@theme` SSOT, no raw hex
 - **Framer Motion** — `LazyMotion` + `domAnimation` only (no full `motion` import tree)
 - `vite.config.ts` — @lovable.dev/vite-tanstack-config only; **no manual plugins** (PWA = Cursor)
+
+## Validation
+
+- **Zod** — Money Layer, Onboarding, Withdrawal, missions/events/trading RPC 응답 검증의 SSOT
+- 스키마 위치: `lib/{domain}/schemas.ts` → `lib/api/*.ts`에서 parse
 
 ## Monorepo (target)
 
@@ -31,11 +42,23 @@ Current root is transitional (bun) until split.
 - Realtime + Edge Functions: Cursor only
 - NEVER: phonara-world-main, phonetok
 
-## Charts & rendering
+## Charts & Performance
 
-- Exchange: `@tradingview/lightweight-charts`
+- Exchange: `lightweight-charts` (npm package)
 - Games: Canvas2D (visual) separated from wallet/settlement
-- Heavy compute: Web Workers (never block main thread)
+- Heavy compute: **Web Workers** — RNG, 물리 연산 등 메인 스레드 분리; 60fps 목표
+- Worker SSOT: `src/shared/workers/`
+
+## Testing
+
+- **vitest** + jsdom + `@testing-library/react` — 기본 테스트 스택 (유지)
+- Money 핵심 경로(bet, payout, withdrawal, mission claim)는 테스트 필수
+- 순수 계산 로직(Engine, `lib/*/progress.ts` 등)은 vitest 우선; bun test 별도 허용
+
+## Future Preparation
+
+- `@types/bun` — devDependency로 설치 (Bun 확장 대비)
+- `lib/bun-trading/`, Elysia / Hono / Drizzle — **Phase 3**에서 검토 (현재 미도입)
 
 ## Lovable must NOT
 

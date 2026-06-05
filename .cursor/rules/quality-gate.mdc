@@ -1,5 +1,5 @@
 ---
-description: Quality gate — bun run check before round complete
+description: Quality gate — bun run check before round complete; money path testing
 alwaysApply: true
 ---
 
@@ -11,9 +11,41 @@ Before declaring work complete:
 bun run check
 ```
 
-= `lint` + `test` + `build`
+= `typecheck` + `test` + `build`
 
-Lovable round end: report eslint/vitest/build results.
-Cursor after pull: CURSOR_SANITATION_CHECKLIST + check.
+Strict lint (when auditing):
 
-Supabase changes: get_advisors + types regen.
+```bash
+bun run lint:strict
+```
+
+Lovable round end: report eslint/vitest/build results.  
+Cursor after pull: `docs/CURSOR_SANITATION_CHECKLIST.md` + check.
+
+Supabase changes: `get_advisors` + `types.ts` regen.
+
+## Money Path Testing
+
+Money 관련 변경이 포함된 PR/라운드는 반드시:
+
+- 해당 Atomic RPC 또는 `lib/api/` wrapper 테스트 존재
+- Idempotency 시나리오 (`round_id` 중복 등) 고려
+- RLS 우회 시도에 대한 부정 테스트 (클라이언트 직접 UPDATE 불가)
+
+현재 구현 수준: Engine/lib pure 함수는 vitest; RPC 통합 테스트는 Phase 2+.
+
+## General Rules
+
+- Money Layer 변경 시 `money-safety.mdc` 위반 여부 확인
+- Demo/Mock(`mocks/`)은 FOMO 표시만 — 실제 잔고·payout 로직에 영향 금지
+- Features → `shared/*/use*.ts` → `lib/api/` import 체인 준수
+
+## Merge Checklist
+
+병합 전 확인:
+
+- [ ] Money 변경 시 Atomic RPC 사용 (client 직접 mutation 없음)
+- [ ] Client에서 balance 발행/수정 코드 없음
+- [ ] 해당 경로 테스트 작성 (또는 TODO + 이슈 명시)
+- [ ] `bun run check` GREEN
+- [ ] Supabase migration 시 advisors 통과

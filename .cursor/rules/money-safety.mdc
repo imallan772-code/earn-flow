@@ -1,24 +1,65 @@
 ---
-description: Money SSOT — useGameWallet, no client real-mode issuance
+description: Money SSOT — useGameWallet, Atomic RPC, no client real-mode issuance
 alwaysApply: true
 ---
 
 # Money Safety
 
+## Core Principles
+
+- 모든 금전 이동(베팅, 지급, 출금, 입금, 미션 보상, USDT 거래)은 **Atomic RPC**를 통해서만 수행한다.
+- 클라이언트에서 balance를 직접 생성·수정하는 행위(money fallback, client balance 발행)는 **절대 금지**.
+- **RLS + SECURITY DEFINER RPC** 조합이 Money Layer의 기본 보안 모델이다.
+
 ## SSOT
 
-- demo: walletStore (localStorage)
-- real: Supabase wallet_balances via RPC
-- display FOMO: mocks/ only — NOT money UI fallback
+- demo: walletStore (localStorage) — FOMO/게임 UX only
+- real: Supabase `wallet_balances` via RPC
+- display FOMO: `mocks/` only — NOT money UI fallback
 
-## Rules
+## Atomic RPC (필수)
+
+Money 관련 변경은 반드시 Atomic 함수를 사용한다. Client 진입점: `src/lib/api/` wrappers only.
+
+| RPC | 용도 |
+|-----|------|
+| `debit_phon_for_bet` | real-mode 베팅 차감 (v1 legacy) |
+| `credit_phon_for_payout` | real-mode 정산 지급 (v1 legacy) |
+| `debit_phon_for_bet_v2` | idempotent + audited 베팅 (권장) |
+| `credit_phon_for_payout_v2` | idempotent + audited 정산 (권장) |
+| `claim_mission_reward` | 미션 PHON 보상 |
+| `place_market_order` | USDT 시장가 거래 |
+| `complete_onboarding_step` | 온보딩 보상 |
+
+신규 money RPC 작성 시 포함 목표:
+
+- Idempotency 키 검증 (`round_id`, `mission_id` 등)
+- Audit log 기록 (`game_rounds` 또는 `audit_logs`)
+- Rollback 안전성 (단일 트랜잭션 내 debit/credit)
+
+Migration SSOT: `supabase/migrations/` — `SECURITY DEFINER` + `search_path` + `auth.uid()`
+
+## RLS 정책
+
+Money 관련 테이블은 RLS 활성화 + authenticated 직접 INSERT/UPDATE/DELETE 금지:
+
+- `wallet_balances` — SELECT own only; mutation = RPC only
+- `trading_orders`, `trading_positions` — SELECT own only
+- `user_missions` — SELECT own only; progress/claim = RPC only
+
+민감 컬럼(`phon`, `usdt`, `krw`)은 클라이언트 UPDATE 정책 없음.
+
+## Client Trust 금지
 
 - Games use `useGameWallet`, not raw walletStore in new code
-- No wallet.credit/tryDebit in mocks or useEffect
+- walletStore/game store balance를 real 모드 진실로 **신뢰하지 않음**
+- real 잔액은 Supabase RPC + TanStack Query(`useProfile`) + Realtime sync
+- No `wallet.credit`/`tryDebit` in mocks or useEffect
 - real mode betting blocked until RPC exists
-- VIP from useProfile only — no hardcoded tier strings
+- VIP from `useProfile` only — no hardcoded tier strings
+- Demo(mock)는 FOMO 표시 목적만 — real money path에 영향 없음
 
-## Future RPC
+## Audit & Logging
 
-All balance mutations via SECURITY DEFINER RPC in supabase/migrations/.
-Client: src/lib/api/ wrappers only.
+- real-mode 게임 라운드: `log_game_round` RPC (`game_rounds` 테이블)
+- 신규 money RPC: audit 기록을 함수 내부에서 강제 (향후 `audit_logs` 테이블 확장)

@@ -4,6 +4,7 @@ import { useMode } from "@/shared/mode/ModeContext";
 import { useProfile } from "@/features/profile/useProfile";
 import { useAuth } from "@/features/auth/AuthContext";
 import { creditPhonForPayout, debitPhonForBet } from "@/lib/api/wallet";
+import { logGameRound } from "@/lib/api/trading";
 import { appToast } from "@/shared/ui/toast";
 
 export interface GameWalletMeta {
@@ -46,8 +47,10 @@ export function useGameWallet() {
 
       try {
         const roundId = meta?.roundId ?? crypto.randomUUID();
-        const { balance: row } = await debitPhonForBet(amount, meta?.game ?? "game", roundId);
+        const game = meta?.game ?? "game";
+        const { balance: row } = await debitPhonForBet(amount, game, roundId);
         if (row?.phon != null) syncRealBalance(row.phon);
+        void logGameRound(game, roundId, amount, 0).catch(() => undefined);
         return true;
       } catch {
         appToast.raw.error("베팅에 실패했습니다 (잔액 부족 또는 네트워크)");
@@ -67,8 +70,10 @@ export function useGameWallet() {
       if (!isConfigured || status !== "authenticated") return;
       try {
         const roundId = meta?.roundId ?? crypto.randomUUID();
-        const { balance: row } = await creditPhonForPayout(amount, meta?.game ?? "game", roundId);
+        const game = meta?.game ?? "game";
+        const { balance: row } = await creditPhonForPayout(amount, game, roundId);
         if (row?.phon != null) syncRealBalance(row.phon);
+        void logGameRound(game, roundId, 0, amount).catch(() => undefined);
       } catch {
         appToast.raw.error("정산 동기화에 실패했습니다");
       }

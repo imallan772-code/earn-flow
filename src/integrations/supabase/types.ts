@@ -69,6 +69,165 @@ export type Database = {
         };
         Relationships: [];
       };
+      mission_templates: {
+        Row: {
+          id: string;
+          title: string;
+          reward: number;
+          kind: string;
+          urgency: string | null;
+          total: number;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      user_missions: {
+        Row: {
+          user_id: string;
+          mission_id: string;
+          period_key: string;
+          progress: number;
+          claimed_at: string | null;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      events: {
+        Row: {
+          id: string;
+          status: string;
+          title: string;
+          tagline: string;
+          body: string;
+          reward_preview: string;
+          starts_at: string;
+          ends_at: string;
+          participants: number;
+          cap: number | null;
+          cta_label: string;
+          terms: Json;
+          bg_from: string;
+          bg_to: string;
+          progress: number;
+          is_published: boolean;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      event_leaderboard: {
+        Row: {
+          event_id: string;
+          rank: number;
+          nickname: string;
+          score: number;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      money_idempotency_ledger: {
+        Row: {
+          user_id: string;
+          operation: string;
+          idempotency_key: string;
+          amount: number;
+          response: Json;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          operation: string;
+          idempotency_key: string;
+          amount: number;
+          response: Json;
+          created_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          operation?: string;
+          idempotency_key?: string;
+          amount?: number;
+          response?: Json;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      markets: {
+        Row: {
+          symbol: string;
+          base_asset: string;
+          quote_asset: string;
+          tick_size: number;
+          min_qty: number;
+          is_active: boolean;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      market_candles: {
+        Row: {
+          symbol: string;
+          time: number;
+          open: number;
+          high: number;
+          low: number;
+          close: number;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      trading_orders: {
+        Row: {
+          id: string;
+          user_id: string;
+          symbol: string;
+          side: string;
+          qty: number;
+          fill_price: number;
+          notional: number;
+          status: string;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      trading_positions: {
+        Row: {
+          user_id: string;
+          symbol: string;
+          qty: number;
+          avg_price: number;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      game_rounds: {
+        Row: {
+          id: string;
+          user_id: string;
+          game: string;
+          round_id: string;
+          bet_amount: number;
+          payout_amount: number;
+          created_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -86,6 +245,45 @@ export type Database = {
       credit_phon_for_payout: {
         Args: { p_amount: number; p_game: string; p_round_id: string };
         Returns: Json;
+      };
+      debit_phon_for_bet_v2: {
+        Args: { p_amount: number; p_game: string; p_round_id: string };
+        Returns: Json;
+      };
+      credit_phon_for_payout_v2: {
+        Args: { p_amount: number; p_game: string; p_round_id: string };
+        Returns: Json;
+      };
+      list_user_missions: { Args: never; Returns: Json };
+      record_mission_progress: {
+        Args: { p_mission_id: string; p_delta?: number };
+        Returns: Json;
+      };
+      claim_mission_reward: { Args: { p_mission_id: string }; Returns: Json };
+      list_events: { Args: never; Returns: Json };
+      join_event: { Args: { p_event_id: string }; Returns: Json };
+      get_event_leaderboard: { Args: { p_event_id: string }; Returns: Json };
+      fetch_market_candles: {
+        Args: { p_symbol: string; p_limit?: number };
+        Returns: Json;
+      };
+      list_user_positions: { Args: never; Returns: Json };
+      place_market_order: {
+        Args: { p_symbol: string; p_side: string; p_qty: number };
+        Returns: Json;
+      };
+      log_game_round: {
+        Args: {
+          p_game: string;
+          p_round_id: string;
+          p_bet_amount?: number;
+          p_payout_amount?: number;
+        };
+        Returns: Json;
+      };
+      money_validate_bet_input: {
+        Args: { p_amount: number; p_game: string; p_round_id: string };
+        Returns: undefined;
       };
     };
     Enums: {

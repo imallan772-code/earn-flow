@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Trophy, Users, Clock, Crown } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getEventById } from "@/mocks/event";
+import { countdownTo, countdownTargetForEvent } from "@/lib/events/countdown";
+import { useEventDetail, useJoinEvent } from "@/shared/events/useEvents";
+import { appToast } from "@/shared/ui/toast";
 
 function useCountdown(target: string) {
   const [now, setNow] = useState(() => Date.now());
@@ -9,20 +11,14 @@ function useCountdown(target: string) {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
-  const diff = Math.max(0, new Date(target).getTime() - now);
-  return {
-    d: Math.floor(diff / 86_400_000),
-    h: Math.floor((diff % 86_400_000) / 3_600_000),
-    m: Math.floor((diff % 3_600_000) / 60_000),
-    s: Math.floor((diff % 60_000) / 1000),
-    done: diff <= 0,
-  };
+  return countdownTo(target, now);
 }
 
 export function EventDetail({ id }: { id: string }) {
-  const e = getEventById(id);
+  const { event: e, leaderboard } = useEventDetail(id);
+  const join = useJoinEvent();
   const cd = useCountdown(
-    e?.status === "예정" ? e.startsAt : (e?.endsAt ?? new Date().toISOString()),
+    e ? countdownTargetForEvent(e.status, e.startsAt, e.endsAt) : new Date().toISOString(),
   );
 
   if (!e) {
@@ -39,6 +35,16 @@ export function EventDetail({ id }: { id: string }) {
   }
 
   const pct = Math.round(e.progress * 100);
+
+  async function handleJoin() {
+    try {
+      const result = await join.mutateAsync(id);
+      if (result.joined) appToast.raw.success("이벤트 참여 완료");
+      else appToast.raw.info("이미 참여 중입니다");
+    } catch {
+      appToast.raw.error("참여에 실패했습니다");
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -109,13 +115,13 @@ export function EventDetail({ id }: { id: string }) {
         </p>
       </div>
 
-      {e.leaderboard && e.leaderboard.length > 0 && (
+      {leaderboard.length > 0 && (
         <div className="glass-2 rounded-2xl p-4">
           <h2 className="mb-3 flex items-center gap-1 text-sm font-bold">
             <Crown size={14} className="text-[var(--color-gold)]" /> 실시간 리더보드
           </h2>
           <ul className="flex flex-col gap-1.5">
-            {e.leaderboard.map((row) => (
+            {leaderboard.map((row) => (
               <li
                 key={row.rank}
                 className="flex items-center gap-2 rounded-xl bg-black/25 px-3 py-2 text-sm"
@@ -152,8 +158,9 @@ export function EventDetail({ id }: { id: string }) {
       </div>
 
       <button
-        className="sticky bottom-20 z-10 flex h-12 items-center justify-center gap-2 rounded-2xl bg-holographic text-sm font-bold text-[var(--color-bg-0)] shadow-glow-purple"
-        disabled={e.status === "종료"}
+        onClick={() => void handleJoin()}
+        disabled={e.status === "종료" || join.isPending}
+        className="sticky bottom-20 z-10 flex h-12 items-center justify-center gap-2 rounded-2xl bg-holographic text-sm font-bold text-[var(--color-bg-0)] shadow-glow-purple disabled:opacity-50"
       >
         <Clock size={14} />
         {e.ctaLabel}

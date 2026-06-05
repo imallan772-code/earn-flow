@@ -1,7 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Trophy, Users, Clock } from "lucide-react";
-import { EVENTS, type AppEvent, type EventStatus } from "@/mocks/event";
+import type { AppEventView } from "@/lib/api/events";
+import type { EventStatus } from "@/lib/events/schemas";
+import { countdownTo, countdownTargetForEvent } from "@/lib/events/countdown";
+import { useEvents } from "@/shared/events/useEvents";
 import { cn } from "@/lib/utils";
 
 const TABS: EventStatus[] = ["진행중", "예정", "종료"];
@@ -12,17 +15,13 @@ function useCountdown(target: string) {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
-  const diff = Math.max(0, new Date(target).getTime() - now);
-  const d = Math.floor(diff / 86_400_000);
-  const h = Math.floor((diff % 86_400_000) / 3_600_000);
-  const m = Math.floor((diff % 3_600_000) / 60_000);
-  const s = Math.floor((diff % 60_000) / 1000);
-  return { d, h, m, s, done: diff <= 0 };
+  return countdownTo(target, now);
 }
 
 export function EventScreen() {
   const [tab, setTab] = useState<EventStatus>("진행중");
-  const list = useMemo(() => EVENTS.filter((e) => e.status === tab), [tab]);
+  const { events } = useEvents();
+  const list = useMemo(() => events.filter((e) => e.status === tab), [events, tab]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -43,7 +42,7 @@ export function EventScreen() {
           >
             {t}
             <span className="ml-1.5 text-[10px] opacity-70">
-              {EVENTS.filter((e) => e.status === t).length}
+              {events.filter((e) => e.status === t).length}
             </span>
           </button>
         ))}
@@ -63,8 +62,8 @@ export function EventScreen() {
   );
 }
 
-export function EventCard({ e }: { e: AppEvent }) {
-  const cd = useCountdown(e.status === "예정" ? e.startsAt : e.endsAt);
+export function EventCard({ e }: { e: AppEventView }) {
+  const cd = useCountdown(countdownTargetForEvent(e.status, e.startsAt, e.endsAt));
   const pct = Math.round(e.progress * 100);
 
   return (

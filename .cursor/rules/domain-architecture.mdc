@@ -1,0 +1,38 @@
+---
+description: Domain layer — missions, events, trading, games audit (Cursor SSOT)
+alwaysApply: true
+---
+
+# Domain Architecture
+
+## Layering (no zustand)
+
+```
+features/*  →  shared/{missions,events,trading}/use*.ts  →  lib/api/*.ts  →  supabase RPC
+features/*  →  lib/{missions,events,trading}/*.ts (pure + zod only)
+```
+
+## Supabase domains (phonara-gb)
+
+| Domain | Tables | RPCs |
+|--------|--------|------|
+| Missions | mission_templates, user_missions | list_user_missions, record_mission_progress, claim_mission_reward |
+| Events | events, event_participants, event_leaderboard | list_events, join_event, get_event_leaderboard |
+| Trading | markets, market_candles, trading_orders, trading_positions | fetch_market_candles, place_market_order, list_user_positions |
+| Games audit | game_rounds | log_game_round |
+
+## Money
+
+- PHON missions/games: wallet_balances via RPC only
+- USDT trading: place_market_order RPC only — no client balance mutation
+- Demo/unauth: mocks/ display fallback — NOT money issuance
+
+## Validation
+
+- Zod schemas in `lib/{domain}/schemas.ts`
+- Parse all RPC responses in `lib/api/*.ts`
+
+## Lovable
+
+- UI in `features/` only
+- Never edit supabase/, types.ts, lib/api/ directly

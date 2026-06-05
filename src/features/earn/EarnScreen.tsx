@@ -7,10 +7,11 @@ import { StreakFlame } from "@/shared/motion/StreakFlame";
 import { OnlineCounterChip } from "@/shared/layout/OnlineCounterChip";
 import { SegmentedTabs } from "@/shared/ui/SegmentedTabs";
 import { GameLobby } from "@/features/games/GameLobby";
-import { MOCK_MISSIONS } from "@/mocks/missions";
 import { useProfile } from "@/features/profile/useProfile";
 import { resolveBalanceView } from "@/features/profile/balanceView";
 import { useAuth } from "@/features/auth/AuthContext";
+import { useMissions } from "@/shared/missions/useMissions";
+import { canClaimMission, isMissionClaimed, missionProgressPct } from "@/lib/missions/progress";
 import { formatPHON } from "@/lib/format";
 import { t } from "@/shared/i18n";
 import { appToast } from "@/shared/ui/toast";
@@ -22,6 +23,16 @@ export function EarnScreen() {
   const { balance, isLoading } = useProfile();
   const { isConfigured } = useAuth();
   const { view: userBalance } = resolveBalanceView(balance, { isLoading, isConfigured });
+  const { missions, isLive, claimMission, isClaiming, recordProgress } = useMissions();
+
+  async function handleClaim(missionId: string) {
+    try {
+      const result = await claimMission(missionId);
+      appToast.raw.success(`+${formatPHON(result.reward)} PHON 수령 완료`);
+    } catch {
+      appToast.raw.error("미션 보상 수령에 실패했습니다");
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -54,7 +65,6 @@ export function EarnScreen() {
 
       {tab === "missions" && (
         <>
-          {/* Streak + VIP banner */}
           <Premium3DCard className="flex items-center gap-4 p-4" glow="gold">
             <StreakFlame days={userBalance.streakDays} />
             <div className="flex-1">
@@ -67,57 +77,73 @@ export function EarnScreen() {
             <UrgencyBadge text="TOP 0.01%" variant="hot" />
           </Premium3DCard>
 
-          {/* Mission list */}
           <section className="space-y-2.5">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-cyan)]">
                 데일리 · 한정 미션
               </h2>
               <span className="text-[11px] text-[var(--color-muted)]">
-                총 {MOCK_MISSIONS.length}개
+                총 {missions.length}개{isLive ? " · 실시간" : " · 데모"}
               </span>
             </div>
-            {MOCK_MISSIONS.map((m) => (
-              <Premium3DCard key={m.id} className="flex items-center gap-3 p-3.5">
-                <div
-                  className="flex h-11 w-11 items-center justify-center rounded-xl"
-                  style={{
-                    background: "color-mix(in oklab, var(--color-purple) 14%, transparent)",
-                    color: "var(--color-purple)",
-                  }}
-                >
-                  <Sparkles size={20} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <div className="text-sm font-semibold">{m.title}</div>
-                    {m.urgency && (
-                      <UrgencyBadge
-                        text={m.urgency}
-                        variant={m.kind === "viral" ? "seats" : "deadline"}
-                      />
+            {missions.map((m) => {
+              const claimed = isMissionClaimed(m);
+              const claimable = canClaimMission(m);
+              return (
+                <Premium3DCard key={m.id} className="flex items-center gap-3 p-3.5">
+                  <div
+                    className="flex h-11 w-11 items-center justify-center rounded-xl"
+                    style={{
+                      background: "color-mix(in oklab, var(--color-purple) 14%, transparent)",
+                      color: "var(--color-purple)",
+                    }}
+                  >
+                    <Sparkles size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <div className="text-sm font-semibold">{m.title}</div>
+                      {m.urgency && (
+                        <UrgencyBadge
+                          text={m.urgency}
+                          variant={m.kind === "viral" ? "seats" : "deadline"}
+                        />
+                      )}
+                    </div>
+                    {m.total > 1 && (
+                      <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/8">
+                        <div
+                          className="h-full rounded-full bg-holographic"
+                          style={{ width: `${missionProgressPct(m)}%` }}
+                        />
+                      </div>
                     )}
                   </div>
-                  {m.progress != null && m.total != null && (
-                    <div className="mt-1.5 h-1 w-full rounded-full bg-white/8 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-holographic"
-                        style={{ width: `${Math.min(100, (m.progress / m.total) * 100)}%` }}
-                      />
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="text-right">
+                      <div className="font-numeric text-sm font-extrabold text-[var(--color-gold)]">
+                        +{formatPHON(m.reward)}
+                      </div>
+                      <div className="text-[10px] text-[var(--color-muted)]">PHON</div>
                     </div>
-                  )}
-                </div>
-                <div className="text-right">
-                  <div className="font-numeric text-sm font-extrabold text-[var(--color-gold)]">
-                    +{formatPHON(m.reward)}
+                    {isLive && claimable && (
+                      <button
+                        disabled={isClaiming}
+                        onClick={() => void handleClaim(m.id)}
+                        className="rounded-lg bg-holographic px-2 py-1 text-[10px] font-bold text-[var(--color-bg-0)]"
+                      >
+                        받기
+                      </button>
+                    )}
+                    {claimed && (
+                      <span className="text-[10px] text-[var(--color-emerald)]">수령 완료</span>
+                    )}
                   </div>
-                  <div className="text-[10px] text-[var(--color-muted)]">PHON</div>
-                </div>
-              </Premium3DCard>
-            ))}
+                </Premium3DCard>
+              );
+            })}
           </section>
 
-          {/* Mystery box (보너스성 → 미션 탭에 흡수) */}
           <Premium3DCard className="flex items-center gap-3 p-4" glow="purple">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-holographic shadow-glow-purple">
               <Gift size={22} className="text-[var(--color-bg-0)]" />
@@ -129,7 +155,10 @@ export function EarnScreen() {
               </div>
             </div>
             <button
-              onClick={() => appToast.box.opened({ amount: formatPHON(1_250_000) })}
+              onClick={() => {
+                if (isLive) void recordProgress({ missionId: "m-lim-1" });
+                appToast.box.opened({ amount: formatPHON(1_250_000) });
+              }}
               className="rounded-xl bg-holographic px-4 py-2 text-xs font-bold text-[var(--color-bg-0)]"
             >
               열기

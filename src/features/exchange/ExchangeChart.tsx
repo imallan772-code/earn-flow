@@ -1,25 +1,6 @@
 import { useEffect, useRef } from "react";
-import {
-  CandlestickSeries,
-  ColorType,
-  createChart,
-  type IChartApi,
-  type UTCTimestamp,
-} from "lightweight-charts";
-
-function buildDemoCandles(symbol: string) {
-  const seed = symbol.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  const base = 40_000 + (seed % 5_000);
-  const now = Math.floor(Date.now() / 1000);
-  return Array.from({ length: 48 }, (_, i) => {
-    const t = now - (47 - i) * 300;
-    const open = base + Math.sin(i / 3 + seed) * 120 + i * 2;
-    const close = open + Math.cos(i / 2 + seed) * 80;
-    const high = Math.max(open, close) + 40;
-    const low = Math.min(open, close) - 40;
-    return { time: t as UTCTimestamp, open, high, low, close };
-  });
-}
+import { CandlestickSeries, ColorType, createChart, type IChartApi } from "lightweight-charts";
+import { useMarketCandles } from "@/shared/trading/useMarketCandles";
 
 interface ExchangeChartProps {
   symbol: string;
@@ -29,6 +10,8 @@ interface ExchangeChartProps {
 export function ExchangeChart({ symbol, className }: ExchangeChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const seriesRef = useRef<ReturnType<IChartApi["addSeries"]> | null>(null);
+  const { candles, isLive } = useMarketCandles(symbol);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -56,7 +39,7 @@ export function ExchangeChart({ symbol, className }: ExchangeChartProps) {
       wickUpColor: "oklch(0.72 0.17 155)",
       wickDownColor: "oklch(0.65 0.2 25)",
     });
-    series.setData(buildDemoCandles(symbol));
+    seriesRef.current = series;
 
     const ro = new ResizeObserver(() => {
       chart.applyOptions({ width: el.clientWidth, height: el.clientHeight });
@@ -68,15 +51,25 @@ export function ExchangeChart({ symbol, className }: ExchangeChartProps) {
       ro.disconnect();
       chart.remove();
       chartRef.current = null;
+      seriesRef.current = null;
     };
   }, [symbol]);
 
+  useEffect(() => {
+    seriesRef.current?.setData(candles);
+  }, [candles]);
+
   return (
-    <div
-      ref={containerRef}
-      className={className}
-      role="img"
-      aria-label={`${symbol} candlestick chart`}
-    />
+    <div className="relative">
+      <div
+        ref={containerRef}
+        className={className}
+        role="img"
+        aria-label={`${symbol} candlestick chart`}
+      />
+      <span className="pointer-events-none absolute right-2 top-2 rounded-full bg-black/40 px-2 py-0.5 text-[10px] text-[var(--color-muted)]">
+        {isLive ? "Supabase" : "fallback"}
+      </span>
+    </div>
   );
 }
