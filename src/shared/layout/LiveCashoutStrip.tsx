@@ -1,4 +1,4 @@
-import { MOCK_CASHOUT_FEED, MOCK_CONCURRENT_PEAK } from "@/mocks/fomo";
+import { MOCK_CASHOUT_FEED, MOCK_REALTIME_CASHOUT_KRW } from "@/mocks/fomo";
 import { formatPHON } from "@/lib/format";
 import { TrendingUp } from "lucide-react";
 import { LiveNumber } from "../motion/LiveNumber";
@@ -14,11 +14,11 @@ export function LiveCashoutStrip() {
         <span className="text-xs font-semibold text-[var(--color-muted)]">
           실시간 캐시아웃 ·{" "}
           <LiveNumber
-            base={MOCK_CONCURRENT_PEAK}
-            amplitudeRatio={0.012}
+            base={MOCK_REALTIME_CASHOUT_KRW}
+            amplitudeRatio={0.015}
             bias={0.5}
-            intervalMs={3200}
-            format={(n) => `${KO.format(Math.round(n / 1000))}천 명 접속 중`}
+            intervalMs={3000}
+            format={(n) => `${KO.format(Math.round(n))}원 완료!`}
           />
         </span>
       </div>
