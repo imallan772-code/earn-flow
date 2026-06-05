@@ -81,8 +81,9 @@ export const crashStore = createGameStore<CrashPersisted>(
 );
 
 // ───────── MINES ─────────
-// Mines 게임 nonce/히스토리/마지막 결과/지뢰 개수/대기 베팅 보존.
-// 본 라운드 신규(v1). 외부 시그니처는 Dice/Crash와 동일 패턴.
+// Mines 게임 nonce/히스토리/마지막 결과/지뢰 개수/대기 베팅 + 진행중 라운드/클라이언트 시드.
+// ROUND H: activeRound + clientSeed 추가. version=1 유지 (createGameStore 머지 규칙
+// `{ ...initial, ...parsed }`로 기존 저장본은 신규 필드만 기본값으로 주입됨 — migrate 불필요).
 export interface MinesHistoryItem {
   id: string;
   mineCount: number;
@@ -98,12 +99,30 @@ export interface MinesOutcome {
   revealed: number;
   multiplier: number;
 }
+/**
+ * 진행 중 라운드 스냅샷. 새로고침 복원용.
+ *  - `liveBetId`는 LiveBetsFeed의 동일 베팅 카드를 update할 수 있도록 보존.
+ *  - bomb hit / cashout 시점에 같은 tick으로 `null` 처리 → 새로고침 시 bomb 상태 미복원.
+ */
+export interface ActiveMinesRound {
+  nonce: number;
+  amount: number;
+  mineCount: number;
+  mines: number[];
+  revealed: number[];
+  liveBetId: string;
+  placedAt: number;
+}
 export interface MinesPersisted {
   nonce: number;
   history: MinesHistoryItem[];
   lastOutcome: MinesOutcome | null;
   mineCount: number;
   pendingAmount: number;
+  /** 진행 중 라운드 (없으면 null). */
+  activeRound: ActiveMinesRound | null;
+  /** PF 클라이언트 시드. 사용자가 PF 모달에서 변경 가능. 기본 = 기존 상수와 동일. */
+  clientSeed: string;
 }
 export const minesStore = createGameStore<MinesPersisted>(
   "mines",
@@ -113,6 +132,8 @@ export const minesStore = createGameStore<MinesPersisted>(
     lastOutcome: null,
     mineCount: 3,
     pendingAmount: 10,
+    activeRound: null,
+    clientSeed: "phonara-player-001",
   },
   1,
 );

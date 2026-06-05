@@ -124,6 +124,10 @@ export const MINES_RULES: GameRules = {
       body: "• 데모: 1회 체험 크레딧 ₩10,000, 추가 리필 없음. RTP 97% (리얼과 동일).\n• 리얼: 실제 입금/출금. RTP 97% (3% 하우스 엣지).",
     },
     {
+      title: "키보드 단축키",
+      body: "• 1–0 키: 상단 10칸(0~9번 타일) 즉시 깔기.\n• R: 남은 안전 타일 중 랜덤 1개 깔기.\n• C: 캐쉬아웃. ESC: 공정성 모달 닫기.",
+    },
+    {
       title: "공정성 (Provably Fair)",
       body: "라운드 시작 전 서버 시드 해시를 공개합니다. 지뢰 배치 = Fisher-Yates 셔플(HMAC-SHA256(serverSeed, clientSeed:nonce:cursor))의 첫 M개 인덱스. 라운드 종료 후 서버 시드가 공개되어 누구나 재현 검증할 수 있습니다.",
     },
