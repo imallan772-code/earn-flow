@@ -63,6 +63,10 @@ docs/lovable/   Lovable SSOT
 | `/my`                                  | 프로필             |
 | `/deposit`, `/withdrawal`, `/transfer` | 입출금             |
 
+## 백로그 (나중에 할 일)
+
+`docs/backlog/` — 지금 당장 하지 않는 작업을 잊지 않기 위한 리스트. 마스터: `docs/backlog/LATER.md`
+
 ## 레거시 문서
 
 `docs/CURSOR-MERGE-MAP.md` — **폐기**. phonara-world-main 이식 가이드였으나 더 이상 사용하지 않음.
