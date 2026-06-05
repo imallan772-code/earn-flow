@@ -1,0 +1,41 @@
+---
+description: E2E env secrets — never read E2E_USER_* or Supabase keys from process.env in e2e/
+globs: e2e/**,playwright.config.ts,scripts/verify-e2e-creds.ts
+alwaysApply: false
+---
+
+# E2E Environment Secrets
+
+## Rule (mandatory)
+
+In `e2e/**`, Playwright config, and E2E scripts:
+
+- **NEVER** read `process.env.E2E_USER_EMAIL`, `process.env.E2E_USER_PASSWORD`, or Supabase keys from `process.env` alone.
+- **ALWAYS** use `getEnv()`, `getE2eCredentials()`, or `requireEnv()` from `e2e/utils/env.ts`.
+
+## Why
+
+Bun pre-loads `.env` into `process.env` and **mangles values containing `$`** (e.g. `KBKB123!!@@##$$%%` loses `$$` → wrong password → `Invalid login credentials`).
+
+`dotenv.parse(fs.readFileSync(".env"))` preserves the full value. Web login works (browser types password); broken ad-hoc scripts used `process.env` and looked like "wrong password".
+
+## .env format
+
+```env
+E2E_USER_EMAIL=you@example.com
+E2E_USER_PASSWORD="password-with-$-or-%-chars"
+```
+
+Wrap passwords with `$`, `%`, or spaces in **double quotes**.
+
+## Verify (official)
+
+```bash
+bun run test:e2e:verify-creds
+```
+
+Do **not** use `process.env.E2E_USER_PASSWORD` in one-liner diagnostics.
+
+## ESLint
+
+`eslint.config.js` forbids `process.env.E2E_*` / `process.env.VITE_SUPABASE_*` under `e2e/**`.

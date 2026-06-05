@@ -48,9 +48,11 @@ export function useGameWallet() {
       try {
         const roundId = meta?.roundId ?? crypto.randomUUID();
         const game = meta?.game ?? "game";
-        const { balance: row } = await debitPhonForBet(amount, game, roundId);
+        const betAmount = Math.round(amount);
+        if (betAmount <= 0) return false;
+        const { balance: row } = await debitPhonForBet(betAmount, game, roundId);
         if (row?.phon != null) syncRealBalance(row.phon);
-        void logGameRound(game, roundId, amount, 0).catch(() => undefined);
+        void logGameRound(game, roundId, betAmount, 0).catch(() => undefined);
         return true;
       } catch {
         appToast.raw.error("베팅에 실패했습니다 (잔액 부족 또는 네트워크)");
@@ -71,9 +73,11 @@ export function useGameWallet() {
       try {
         const roundId = meta?.roundId ?? crypto.randomUUID();
         const game = meta?.game ?? "game";
-        const { balance: row } = await creditPhonForPayout(amount, game, roundId);
+        const payoutAmount = Math.round(amount);
+        if (payoutAmount <= 0) return;
+        const { balance: row } = await creditPhonForPayout(payoutAmount, game, roundId);
         if (row?.phon != null) syncRealBalance(row.phon);
-        void logGameRound(game, roundId, 0, amount).catch(() => undefined);
+        void logGameRound(game, roundId, 0, payoutAmount).catch(() => undefined);
       } catch {
         appToast.raw.error("정산 동기화에 실패했습니다");
       }

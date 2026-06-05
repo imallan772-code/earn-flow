@@ -145,40 +145,40 @@ SUPABASE_SERVICE_ROLE_KEY=...
 
 ## 8. 출시 직전 QA (Auth)
 
-| 시나리오 | 확인 |
-| -------- | ---- |
-| 이메일 가입 → 온보딩 → 10,000 PHON | ⬜ |
-| 이메일 로그인 / 로그아웃 | ⬜ |
-| 비밀번호 재설정 메일 → 링크 → 로그인 | ⬜ |
-| 프로필에서 패스키 등록 → 패스키 로그인 | ⬜ |
-| 구글 로그인 (Provider ON 후) | ⬜ |
-| Admin — `admin_users`만 `/admin` 접근 | ⬜ |
+| 시나리오                               | 확인 |
+| -------------------------------------- | ---- |
+| 이메일 가입 → 온보딩 → 10,000 PHON     | ⬜   |
+| 이메일 로그인 / 로그아웃               | ⬜   |
+| 비밀번호 재설정 메일 → 링크 → 로그인   | ⬜   |
+| 프로필에서 패스키 등록 → 패스키 로그인 | ⬜   |
+| 구글 로그인 (Provider ON 후)           | ⬜   |
+| Admin — `admin_users`만 `/admin` 접근  | ⬜   |
 
 ---
 
 ## 9. 출시 당일 순서 (권장)
 
-1. 도메인 DNS + HTTPS LIVE  
-2. `config.toml` + `push-supabase-auth-config.ts` 프로덕션 값으로 수정  
-3. `bun run supabase:config:push`  
-4. 배포 env 설정 후 프로덕션 빌드·배포  
-5. 위 QA 표 전부 GREEN  
-6. (선택) 스테이징에서 먼저 1~5 반복  
+1. 도메인 DNS + HTTPS LIVE
+2. `config.toml` + `push-supabase-auth-config.ts` 프로덕션 값으로 수정
+3. `bun run supabase:config:push`
+4. 배포 env 설정 후 프로덕션 빌드·배포
+5. 위 QA 표 전부 GREEN
+6. (선택) 스테이징에서 먼저 1~5 반복
 
 ---
 
 ## 관련 파일
 
-| 파일 | 역할 |
-| ---- | ---- |
-| `supabase/config.toml` | Auth URL · Passkeys · Providers SSOT (로컬 편집) |
-| `scripts/push-supabase-auth-config.ts` | 원격 phonara-gb에 auth 설정 푸시 |
-| `src/lib/auth/redirect.ts` | `emailRedirectTo` / OAuth `redirectTo` |
-| `src/integrations/supabase/client.ts` | Passkey experimental opt-in |
-| `src/features/auth/AuthShell.tsx` | 로그인 UI |
-| `src/features/auth/PasskeySettings.tsx` | 프로필 패스키 등록/삭제 |
-| `src/integrations/supabase/README.md` | 로컬 Supabase 연동 요약 |
-| `docs/SUPABASE-PROJECT-LOCK.md` | phonara-gb only |
+| 파일                                    | 역할                                             |
+| --------------------------------------- | ------------------------------------------------ |
+| `supabase/config.toml`                  | Auth URL · Passkeys · Providers SSOT (로컬 편집) |
+| `scripts/push-supabase-auth-config.ts`  | 원격 phonara-gb에 auth 설정 푸시                 |
+| `src/lib/auth/redirect.ts`              | `emailRedirectTo` / OAuth `redirectTo`           |
+| `src/integrations/supabase/client.ts`   | Passkey experimental opt-in                      |
+| `src/features/auth/AuthShell.tsx`       | 로그인 UI                                        |
+| `src/features/auth/PasskeySettings.tsx` | 프로필 패스키 등록/삭제                          |
+| `src/integrations/supabase/README.md`   | 로컬 Supabase 연동 요약                          |
+| `docs/SUPABASE-PROJECT-LOCK.md`         | phonara-gb only                                  |
 
 ---
 

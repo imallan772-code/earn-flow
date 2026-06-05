@@ -16,6 +16,13 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    server: {
+      port: 8080,
+      strictPort: true,
+    },
+    resolve: {
+      dedupe: ["react", "react-dom"],
+    },
     plugins: [
       VitePWA({
         registerType: "autoUpdate",

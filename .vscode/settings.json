@@ -7,12 +7,30 @@
   "files.exclude": {
     "**/.git": true,
     "**/node_modules": true,
-    "**/dist": true
+    "**/dist": true,
+    "**/dist-ssr": true,
+    "**/playwright-report": true,
+    "**/test-results": true,
+    "**/blob-report": true,
+    "**/.output": true,
+    "**/.vinxi": true,
+    "**/.tanstack": true
   },
   "search.exclude": {
     "**/node_modules": true,
     "**/dist": true,
+    "**/dist-ssr": true,
+    "**/playwright-report": true,
+    "**/test-results": true,
+    "**/blob-report": true,
     "**/bun.lock": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/playwright-report/**": true,
+    "**/test-results/**": true,
+    "**/.tanstack/**": true
   },
   "cSpell.enabled": false
 }

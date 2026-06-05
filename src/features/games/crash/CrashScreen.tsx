@@ -3,7 +3,7 @@
  * Cashout button unified to the BetSummaryPanel (top); StakeBetPanel
  * shows a disabled placeholder during active rounds.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ShieldCheck, X } from "lucide-react";
 import { CrashCanvas } from "@/shared/games/crash/CrashCanvas";
@@ -14,6 +14,7 @@ import {
   multiplierAt,
   multiplierAt6,
 } from "@/shared/games/crash/CrashEngine";
+import { sharedTickLoop } from "@/shared/games/engine/tickLoop";
 import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
 import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
 import { GameRulesCard } from "@/shared/games/ui/GameRulesCard";
@@ -21,7 +22,7 @@ import { CRASH_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
-import { profitOf } from "@/shared/games/engine/houseEdge";
+import { profitOf, payoutOf } from "@/shared/games/engine/houseEdge";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
 import { reachedTarget } from "@/shared/games/engine/clamp";
 import { crashStore } from "@/shared/games/state/persistedGameState";
@@ -57,7 +58,6 @@ export function CrashScreen() {
   const [crashPoint, setCrashPoint] = useState(1.0);
   const [startedAt, setStartedAt] = useState(0);
   const [bettingMsLeft, setBettingMsLeft] = useState(BETTING_MS);
-  const [, force] = useState(0);
   const tickHandle = useRef<number | null>(null);
   const [bet, setBet] = useState<ActiveBet | null>(null);
   const [showFair, setShowFair] = useState(false);
@@ -66,6 +66,8 @@ export function CrashScreen() {
   const startedAtRef = useRef(0);
   const betRef = useRef<ActiveBet | null>(null);
   betRef.current = bet;
+  const settledRef = useRef(false);
+  const roundTimerRef = useRef<number | null>(null);
 
   // commit hash
   useEffect(() => {
@@ -114,40 +116,45 @@ export function CrashScreen() {
     };
   }, [phase, nonce]);
 
-  // Running
+  // Running — logic on shared RAF (CrashCanvas already redraws each frame)
   useEffect(() => {
     if (phase !== "running") return;
-    const id = window.setInterval(() => {
-      const elapsed = performance.now() - startedAt;
+    const loop = sharedTickLoop();
+    const unsub = loop.subscribe(() => {
+      const elapsed = performance.now() - startedAtRef.current;
       const m = multiplierAt6(elapsed);
-      if (
-        bet &&
-        bet.cashedAt === null &&
-        reachedTarget(m, bet.autoTarget) &&
-        bet.autoTarget < crashPoint
-      ) {
-        setBet({ ...bet, cashedAt: bet.autoTarget });
-      }
+      setBet((prev) => {
+        if (!prev || prev.cashedAt !== null) return prev;
+        if (reachedTarget(m, prev.autoTarget) && prev.autoTarget < crashPoint) {
+          return { ...prev, cashedAt: prev.autoTarget };
+        }
+        return prev;
+      });
       if (m >= crashPoint) setPhase("crashed");
-      force((x) => x + 1);
-    }, 50);
-    return () => window.clearInterval(id);
-  }, [phase, startedAt, crashPoint, bet]);
+    });
+    return () => unsub();
+  }, [phase, crashPoint]);
 
-  // Crashed → settle
+  // Crashed → settle once per round (do NOT list `bet` in deps — setBet(null) would cancel timers)
   useEffect(() => {
     if (phase !== "crashed") return;
-    if (bet) {
-      const cashed = bet.cashedAt;
+    if (settledRef.current) return;
+    settledRef.current = true;
+
+    const activeBet = betRef.current;
+    const roundId = `n${nonce}`;
+    if (activeBet) {
+      const cashed = activeBet.cashedAt;
       if (cashed !== null) {
-        const profit = profitOf(bet.amount, cashed, mode);
-        void credit(bet.amount + profit, cashed, { game: "crash", roundId: `n${nonce}` });
+        const profit = profitOf(activeBet.amount, cashed, mode);
+        const payout = Math.round(payoutOf(activeBet.amount, cashed, mode));
+        void credit(payout, cashed, { game: "crash", roundId });
         crashStore.set((s) => ({
           ...s,
           lastOutcome: { outcome: "win", profit, nonce },
         }));
         appToast.game.cashout({ mult: cashed.toFixed(2), amount: formatPHON(profit) });
-        liveBetsStore.update(bet.liveBetId, {
+        liveBetsStore.update(activeBet.liveBetId, {
           multiplier: cashed,
           profit: +profit.toFixed(2),
           status: "cashout",
@@ -155,39 +162,47 @@ export function CrashScreen() {
       } else {
         crashStore.set((s) => ({
           ...s,
-          lastOutcome: { outcome: "loss", profit: -bet.amount, nonce },
+          lastOutcome: { outcome: "loss", profit: -activeBet.amount, nonce },
         }));
-        appToast.game.bust({ amount: formatPHON(bet.amount) });
+        appToast.game.bust({ amount: formatPHON(activeBet.amount) });
         setFlashKey((k) => k + 1);
-        liveBetsStore.update(bet.liveBetId, {
+        liveBetsStore.update(activeBet.liveBetId, {
           multiplier: null,
-          profit: -bet.amount,
+          profit: -activeBet.amount,
           status: "bust",
         });
       }
     }
     crashStore.set((s) => ({
       ...s,
-      history: [{ id: `n${nonce}`, multiplier: crashPoint }, ...s.history].slice(0, 30),
+      history: [
+        { id: roundId, multiplier: crashPoint },
+        ...s.history.filter((h) => h.id !== roundId),
+      ].slice(0, 30),
     }));
     setBet(null);
 
-    const t = window.setTimeout(() => {
+    roundTimerRef.current = window.setTimeout(() => {
       setPhase("cooldown");
       window.setTimeout(() => {
+        settledRef.current = false;
         crashStore.set((s) => ({ ...s, nonce: s.nonce + 1 }));
         setBettingMsLeft(BETTING_MS);
         setPhase("betting");
       }, COOLDOWN_MS - 1200);
     }, 1200);
-    return () => window.clearTimeout(t);
-  }, [phase, bet, crashPoint, nonce, mode, credit]);
+
+    return () => {
+      if (roundTimerRef.current != null) window.clearTimeout(roundTimerRef.current);
+      roundTimerRef.current = null;
+    };
+  }, [phase, crashPoint, nonce, mode, credit]);
 
   const handlePlace = useCallback(
-    async (amount: number, autoTarget: number) => {
-      if (phase !== "betting" || bet || amount <= 0) return;
+    async (amount: number, autoTarget: number): Promise<boolean> => {
+      if (phase !== "betting" || bet || amount <= 0) return false;
       const ok = await tryDebit(amount, { game: "crash", roundId: `n${nonce}` });
-      if (!ok) return;
+      if (!ok) return false;
       crashStore.set((s) => ({
         ...s,
         pendingAmount: amount,
@@ -205,8 +220,21 @@ export function CrashScreen() {
       });
       setBet({ amount, autoTarget, cashedAt: null, liveBetId });
       appToast.game.bet({ amount: formatPHON(amount) });
+      return true;
     },
     [phase, bet, mode, tryDebit, nonce],
+  );
+
+  const onStakePlace = useCallback(
+    (amount: number, autoTarget: number) => {
+      crashStore.set((s) => ({
+        ...s,
+        pendingAmount: amount,
+        pendingTarget: autoTarget,
+      }));
+      return handlePlace(amount, autoTarget);
+    },
+    [handlePlace],
   );
 
   const handleCashout = useCallback(() => {
@@ -221,6 +249,15 @@ export function CrashScreen() {
   }, [phase, bet?.cashedAt]);
 
   const bettingProgress = phase === "betting" ? 1 - bettingMsLeft / BETTING_MS : undefined;
+
+  const displayHistory = useMemo(() => {
+    const seen = new Set<string>();
+    return history.filter((h) => {
+      if (seen.has(h.id)) return false;
+      seen.add(h.id);
+      return true;
+    });
+  }, [history]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -251,7 +288,7 @@ export function CrashScreen() {
       <GameRulesCard rules={CRASH_RULES} onVerify={() => setShowFair(true)} />
 
       <ul className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 scrollbar-none">
-        {history.map((h) => (
+        {displayHistory.map((h) => (
           <li
             key={h.id}
             className={cn(
@@ -310,16 +347,10 @@ export function CrashScreen() {
         hasActiveBet={!!bet && bet.cashedAt === null && phase === "running"}
         balance={balance}
         lastOutcome={lastOutcome}
+        bettingRoundKey={nonce}
         bettingProgress={bettingProgress}
         suppressCashoutButton
-        onPlace={(amount, autoTarget) => {
-          crashStore.set((s) => ({
-            ...s,
-            pendingAmount: amount,
-            pendingTarget: autoTarget,
-          }));
-          handlePlace(amount, autoTarget);
-        }}
+        onPlace={onStakePlace}
         onCashout={handleCashout}
       />
 

@@ -272,6 +272,7 @@ function AuthShellForm({ mode }: Props) {
           <div className="space-y-4">
             <Field label="이메일">
               <input
+                data-testid="auth-email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@phonara.app"
@@ -282,6 +283,7 @@ function AuthShellForm({ mode }: Props) {
             </Field>
             <Field label="비밀번호">
               <input
+                data-testid="auth-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -330,6 +332,7 @@ function AuthShellForm({ mode }: Props) {
       </div>
 
       <button
+        data-testid="auth-submit"
         onClick={() => void handleSubmit()}
         disabled={submitting || (tab === "passkey" && isSignup)}
         className="mt-5 flex h-14 w-full items-center justify-center rounded-2xl bg-holographic text-base font-extrabold text-bg-0 shadow-glow-purple disabled:opacity-60"

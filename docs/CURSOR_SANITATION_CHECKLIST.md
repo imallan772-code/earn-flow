@@ -11,6 +11,8 @@ bun run check
 ## 2. grep 감사
 
 ```bash
+rg "process\.env\.(E2E_USER|VITE_SUPABASE)" e2e/
+bun run test:e2e:verify-creds
 rg "wallet\.(credit|tryDebit)" src/mocks src/features --glob "!*Screen*"
 rg "MOCK_BALANCE" src/features
 rg "\.rpc\(" src/features

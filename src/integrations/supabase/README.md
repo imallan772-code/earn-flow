@@ -18,12 +18,12 @@ Connected project: **phonara-gb** (`https://kanftnqenuzverroodev.supabase.co`)
 
 ## Auth features (client)
 
-| Method | Status |
-| ------ | ------ |
-| Email / password | Live |
-| Passkey sign-in + profile registration | Live (Dashboard Passkeys must be enabled) |
-| Google OAuth | Client ready — enable provider + push config |
-| Phone OTP | UI placeholder |
+| Method                                 | Status                                       |
+| -------------------------------------- | -------------------------------------------- |
+| Email / password                       | Live                                         |
+| Passkey sign-in + profile registration | Live (Dashboard Passkeys must be enabled)    |
+| Google OAuth                           | Client ready — enable provider + push config |
+| Phone OTP                              | UI placeholder                               |
 
 Passkeys require `@supabase/supabase-js` ≥ 2.105 and `experimental.passkey` in `client.ts`.
 

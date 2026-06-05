@@ -18,7 +18,7 @@ export function usePlinkoRound(
   ) => void,
   onOutcome?: (o: { outcome: "win" | "loss"; profit: number; nonce: number }) => void,
 ) {
-  const { tryDebit, credit } = useGameWallet();
+  const { balance, tryDebit, credit } = useGameWallet();
   const [phase, setPhase] = useState<PlinkoPhase>("idle");
   const [jackpot, setJackpot] = useState<PlinkoOutcome | null>(null);
   const placingRef = useRef(false);
@@ -129,6 +129,7 @@ export function usePlinkoRound(
     nonce,
     rows,
     risk,
+    balance,
     handlePlace,
     canPlace: phase === "idle",
   };

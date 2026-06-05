@@ -120,7 +120,7 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
       }
       ctx.fillStyle = grad;
 
-      const steps = 72;
+      const steps = 48;
       ctx.beginPath();
       ctx.moveTo(toX(0), toY(1));
       for (let i = 0; i <= steps; i++) {
@@ -135,8 +135,6 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
       // stroke
       ctx.strokeStyle = accent;
       ctx.lineWidth = 3;
-      ctx.shadowColor = accent;
-      ctx.shadowBlur = 18;
       ctx.beginPath();
       ctx.moveTo(toX(0), toY(1));
       for (let i = 0; i <= steps; i++) {
@@ -144,18 +142,12 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
         ctx.lineTo(toX(t), toY(Math.min(multiplierAt(t), cp)));
       }
       ctx.stroke();
-      ctx.shadowBlur = 0;
-
-      // head dot with halo
       const hx = toX(elapsed);
       const hy = toY(liveM);
       ctx.fillStyle = accent;
-      ctx.shadowColor = accent;
-      ctx.shadowBlur = 24;
       ctx.beginPath();
       ctx.arc(hx, hy, 6, 0, Math.PI * 2);
       ctx.fill();
-      ctx.shadowBlur = 0;
 
       // particles — spawn while running
       const now = performance.now();

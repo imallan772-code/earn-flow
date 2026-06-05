@@ -11,7 +11,6 @@ import { usePlinkoRound } from "./usePlinkoRound";
 import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
 import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
 import { plinkoStore } from "@/shared/games/state/persistedGameState";
-import { useGameWallet } from "@/shared/wallet/useGameWallet";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { cn } from "@/lib/utils";
 import { Volume2, VolumeX } from "lucide-react";
@@ -34,7 +33,6 @@ function slotTint(mult: number): string {
 }
 
 export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
-  const { balance } = useGameWallet();
   const history = plinkoStore.use((s) => s.history);
   const pendingAmount = plinkoStore.use((s) => s.pendingAmount);
   const [muted, setMuted] = useState(false);
@@ -59,12 +57,8 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
     [],
   );
 
-  const { phase, jackpot, setJackpot, lastOutcome, nonce, handlePlace, canPlace } = usePlinkoRound(
-    mode,
-    engineRef,
-    playDrop,
-    onOutcome,
-  );
+  const { phase, jackpot, setJackpot, lastOutcome, nonce, balance, handlePlace, canPlace } =
+    usePlinkoRound(mode, engineRef, playDrop, onOutcome);
 
   useEffect(() => {
     try {

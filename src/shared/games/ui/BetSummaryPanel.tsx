@@ -141,7 +141,10 @@ function LivePanel({
 
   useEffect(() => {
     const loop = sharedTickLoop();
-    const unsub = loop.subscribe(() => {
+    let lastPaint = 0;
+    const unsub = loop.subscribe((_dt, ts) => {
+      if (ts - lastPaint < 66) return;
+      lastPaint = ts;
       const m = getCurrentMultiplier();
       setLiveM((prev) => (Math.abs(prev - m) > 0.001 ? m : prev));
     });

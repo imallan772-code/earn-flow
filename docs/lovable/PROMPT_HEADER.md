@@ -8,6 +8,7 @@
 2. docs/lovable/BOUNDARIES.md
 3. docs/LOVABLE_WORK_RULES.md
 4. docs/TECH_STACK.md
+5. (게임 UX 로드맵 라운드 시) docs/backlog/rounds/GAMES-ROADMAP-v2.1.md — 해당 ROUND 섹션만
 
 【워크플로】
 Lovable 생성 → GitHub export → Cursor pull → 최적화·감사·수리

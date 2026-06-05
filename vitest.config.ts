@@ -7,7 +7,9 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "jsdom",
-    include: ["src/**/*.spec.ts"],
+    // Playwright E2E lives in e2e/tests/ — run via `bun run test:e2e`, not vitest.
+    include: ["src/**/*.spec.{ts,tsx}", "e2e/utils/**/*.spec.ts"],
+    environmentMatchGlobs: [["e2e/utils/**", "node"]],
     setupFiles: ["./src/test/setup.ts"],
     globals: false,
     css: false,

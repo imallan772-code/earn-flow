@@ -18,6 +18,10 @@ export default tseslint.config(
       "bun.lock",
       "apps/admin/dist",
       "src/routeTree.gen.ts",
+      "playwright-report",
+      "test-results",
+      "blob-report",
+      "e2e/.auth",
     ],
   },
   {
@@ -63,4 +67,21 @@ export default tseslint.config(
     },
   },
   eslintPluginPrettier,
+  {
+    files: ["e2e/**/*.{ts,tsx}", "scripts/verify-e2e-creds.ts"],
+    languageOptions: {
+      globals: globals.node,
+    },
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "MemberExpression[object.object.name='process'][object.property.name='env'][property.name=/^(E2E_USER_EMAIL|E2E_USER_PASSWORD|VITE_SUPABASE_URL|VITE_SUPABASE_ANON_KEY)$/]",
+          message:
+            "Use getEnv(), getE2eCredentials(), or requireEnv() from e2e/utils/env.ts — Bun mangles $ in process.env.",
+        },
+      ],
+    },
+  },
 );

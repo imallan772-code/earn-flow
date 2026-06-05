@@ -71,6 +71,13 @@
   --color-sidebar-accent-foreground: var(--color-foreground);
   --color-sidebar-border: var(--color-border);
   --color-sidebar-ring: var(--color-cyan);
+
+  /* ROUND 0 — SFX + multiplier pill tiers */
+  --sfx-volume: 0.7;
+  --mult-tier-muted-bg: color-mix(in oklab, var(--color-muted) 22%, transparent);
+  --mult-tier-cyan-bg: color-mix(in oklab, var(--color-cyan) 22%, transparent);
+  --mult-tier-gold-bg: color-mix(in oklab, var(--color-gold) 22%, transparent);
+  --mult-tier-rose-bg: color-mix(in oklab, var(--color-rose) 22%, transparent);
 }
 
 @layer base {
@@ -335,6 +342,23 @@
     to {
       transform: rotateX(360deg) rotateY(360deg);
     }
+  }
+
+  .mult-tier-muted {
+    background: var(--mult-tier-muted-bg);
+    color: var(--color-muted);
+  }
+  .mult-tier-cyan {
+    background: var(--mult-tier-cyan-bg);
+    color: var(--color-cyan);
+  }
+  .mult-tier-gold {
+    background: var(--mult-tier-gold-bg);
+    color: var(--color-gold);
+  }
+  .mult-tier-rose {
+    background: var(--mult-tier-rose-bg);
+    color: var(--color-rose);
   }
 
   @media (prefers-reduced-motion: reduce) {

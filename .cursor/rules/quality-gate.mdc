@@ -24,6 +24,12 @@ Cursor after pull: `docs/CURSOR_SANITATION_CHECKLIST.md` + check.
 
 Supabase changes: `get_advisors` + `types.ts` regen.
 
+## E2E credentials
+
+- Secrets: `getEnv()` / `getE2eCredentials()` from `e2e/utils/env.ts` — **never** `process.env.E2E_USER_*` (Bun mangles `$`).
+- Verify: `bun run test:e2e:verify-creds` before `bun run test:e2e`.
+- Rule file: `.cursor/rules/e2e-env.mdc`
+
 ## Money Path Testing
 
 Money 관련 변경이 포함된 PR/라운드는 반드시:

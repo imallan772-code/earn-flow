@@ -21,3 +21,12 @@ src/routeTree.gen.ts
 
 # Lovable sandbox metadata
 .lovable/
+
+# Test artifacts (large; slow Cursor indexing)
+playwright-report/
+test-results/
+blob-report/
+e2e/.auth/
+
+# Supabase CLI cache
+supabase/.temp/

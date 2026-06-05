@@ -34,15 +34,12 @@ export function createTickLoop(opts: CreateOpts = {}): TickLoop {
   let running = false;
   let lastTs = 0;
 
+  let lastWarnAt = 0;
+
   function frame(ts: number) {
     if (!running) return;
     const dt = lastTs === 0 ? 0 : ts - lastTs;
     lastTs = ts;
-
-    if (IS_DEV && dt > budget && dt < 1000) {
-      // Single line, structured — easy to grep in devtools.
-      console.warn(`[tickLoop:${label}] frame dropped: ${dt.toFixed(2)}ms (budget ${budget}ms)`);
-    }
 
     for (const fn of subs) {
       try {
@@ -51,6 +48,13 @@ export function createTickLoop(opts: CreateOpts = {}): TickLoop {
         console.error(`[tickLoop:${label}] subscriber threw`, err);
       }
     }
+
+    // Dev-only: log severe jank (not every 20–40ms gap — canvas games rarely hit 60fps).
+    if (IS_DEV && dt > 100 && dt < 1000 && ts - lastWarnAt > 5000) {
+      lastWarnAt = ts;
+      console.warn(`[tickLoop:${label}] severe frame drop: ${dt.toFixed(0)}ms`);
+    }
+
     rafId = requestAnimationFrame(frame);
   }
 

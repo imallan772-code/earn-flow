@@ -4,7 +4,7 @@ GitHub export 직전에 아래 항목을 모두 확인:
 
 - [ ] Lovable preview URL 정상 동작 (모바일 viewport **390×844**에서 주요 화면 시각 확인 — `docs/LOVABLE_WORK_RULES.md`)
 - [ ] `src/styles.css` — `@theme` 토큰만 사용, raw hex 0건
-- [ ] `src/features/` — auth, landing, onboarding, feed, earn, profile, games/*, money-*, admin, exchange, event, notice 등 **라운드 범위** 화면 존재
+- [ ] `src/features/` — auth, landing, onboarding, feed, earn, profile, games/_, money-_, admin, exchange, event, notice 등 **라운드 범위** 화면 존재
 - [ ] `src/shared/` — games, wallet, motion, layout, ui 등 라운드에서 건드린 경로만 깨지지 않았는지
 - [ ] `src/mocks/` — 표시용 mock만 (`fomo`, `balance`, `missions`, `gameLobby`, …). **머니/DB 진실 아님**
 - [ ] 게임: `GameShell` + `gameRegistry` 패턴, 라우트 `src/routes/_app/games.*.tsx` thin mount

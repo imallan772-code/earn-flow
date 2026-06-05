@@ -247,3 +247,18 @@ export const wheelStore = createGameStore<WheelPersisted>(
   },
   1,
 );
+
+// ───────── SFX (ROUND 0) ─────────
+// UI sound prefs only — not wallet. Key: phonara.gamestate.sfx.v1
+export interface SfxPersisted {
+  enabled: boolean;
+  volume: number;
+}
+export const sfxStore = createGameStore<SfxPersisted>(
+  "sfx",
+  {
+    enabled: true,
+    volume: 0.7,
+  },
+  1,
+);
