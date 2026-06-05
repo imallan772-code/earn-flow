@@ -1,5 +1,15 @@
 import { Link } from "@tanstack/react-router";
-import { Copy, LogOut, Settings, Crown, Wallet, ChevronRight, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight } from "lucide-react";
+import {
+  Copy,
+  LogOut,
+  Settings,
+  Crown,
+  Wallet,
+  ChevronRight,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  ArrowLeftRight,
+} from "lucide-react";
 import { appToast } from "@/shared/ui/toast";
 import { PremiumPageHeader } from "@/shared/ui/PremiumPageHeader";
 import { Premium3DCard } from "@/shared/ui/Premium3DCard";
@@ -10,7 +20,11 @@ import { formatPHON, formatUSDT, formatKRW } from "@/lib/format";
 export function ProfileScreen() {
   return (
     <div className="flex flex-col gap-4">
-      <PremiumPageHeader eyebrow="👤 MY" title={MOCK_BALANCE.nickname} description="포나라 우주의 일원" />
+      <PremiumPageHeader
+        eyebrow="👤 MY"
+        title={MOCK_BALANCE.nickname}
+        description="포나라 우주의 일원"
+      />
 
       {/* VIP banner */}
       <Premium3DCard className="p-4" glow="gold">
@@ -21,9 +35,14 @@ export function ProfileScreen() {
           <div className="flex-1">
             <div className="text-sm font-semibold">{MOCK_BALANCE.vipTier} · VIP 승급 폭주</div>
             <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/8">
-              <div className="h-full bg-holographic" style={{ width: `${MOCK_BALANCE.vipProgress * 100}%` }} />
+              <div
+                className="h-full bg-holographic"
+                style={{ width: `${MOCK_BALANCE.vipProgress * 100}%` }}
+              />
             </div>
-            <div className="mt-1 text-[11px] text-[var(--color-muted)]">다음 등급까지 38% — TOP 0.01% 도전</div>
+            <div className="mt-1 text-[11px] text-[var(--color-muted)]">
+              다음 등급까지 38% — TOP 0.01% 도전
+            </div>
           </div>
         </div>
       </Premium3DCard>
@@ -37,7 +56,9 @@ export function ProfileScreen() {
         ].map((b) => (
           <Premium3DCard key={b.label} className="p-3 text-center">
             <div className="text-[10px] text-[var(--color-muted)]">{b.label}</div>
-            <div className="mt-1 font-numeric text-base font-extrabold" style={{ color: b.color }}>{b.value}</div>
+            <div className="mt-1 font-numeric text-base font-extrabold" style={{ color: b.color }}>
+              {b.value}
+            </div>
           </Premium3DCard>
         ))}
       </div>
@@ -62,7 +83,9 @@ export function ProfileScreen() {
       <Premium3DCard className="p-4">
         <div className="text-xs text-[var(--color-muted)]">내 추천코드</div>
         <div className="mt-1 flex items-center justify-between">
-          <div className="font-numeric text-2xl font-extrabold text-holographic">{MOCK_BALANCE.referralCode}</div>
+          <div className="font-numeric text-2xl font-extrabold text-holographic">
+            {MOCK_BALANCE.referralCode}
+          </div>
           <button
             onClick={() => {
               navigator.clipboard?.writeText(MOCK_BALANCE.referralCode).catch(() => {});
@@ -79,11 +102,18 @@ export function ProfileScreen() {
       {/* Settings list */}
       <div className="space-y-2">
         {[
-          { Icon: Wallet, label: "지갑 관리", note: <CountUp value={MOCK_BALANCE.phon} className="font-numeric" /> },
+          {
+            Icon: Wallet,
+            label: "지갑 관리",
+            note: <CountUp value={MOCK_BALANCE.phon} className="font-numeric" />,
+          },
           { Icon: Settings, label: "설정", note: "한국어" },
           { Icon: LogOut, label: "로그아웃", note: "mock" },
         ].map((row) => (
-          <button key={row.label} className="glass-2 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left">
+          <button
+            key={row.label}
+            className="glass-2 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left"
+          >
             <row.Icon size={18} style={{ color: "var(--color-muted)" }} />
             <span className="flex-1 text-sm font-semibold">{row.label}</span>
             <span className="text-xs text-[var(--color-muted)]">{row.note}</span>

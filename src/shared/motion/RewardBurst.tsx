@@ -7,7 +7,9 @@ interface Props {
 }
 
 export function RewardBurst({ trigger, count = 10 }: Props) {
-  const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const reduced =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const particles = useMemo(() => {
     const n = reduced ? 0 : Math.min(12, count);
     return Array.from({ length: n }, (_, i) => ({

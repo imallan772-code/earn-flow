@@ -49,15 +49,11 @@ export function LiveBetsFeed({ limit = 12, showHeader = true, game, className }:
     };
   }, []);
 
-  const bets = useSyncExternalStore(
-    liveBetsStore.subscribe,
-    liveBetsStore.getSnapshot,
-    () => liveBetsStore.getSnapshot(),
+  const bets = useSyncExternalStore(liveBetsStore.subscribe, liveBetsStore.getSnapshot, () =>
+    liveBetsStore.getSnapshot(),
   );
-  const total = useSyncExternalStore(
-    liveBetsStore.subscribe,
-    liveBetsStore.getTotalVolume,
-    () => liveBetsStore.getTotalVolume(),
+  const total = useSyncExternalStore(liveBetsStore.subscribe, liveBetsStore.getTotalVolume, () =>
+    liveBetsStore.getTotalVolume(),
   );
 
   const filtered = game ? bets.filter((b) => b.game === game) : bets;
@@ -145,9 +141,7 @@ function LiveBetRow({ bet }: { bet: LiveBet }) {
           {bet.mode === "demo" ? "·데모" : ""}
         </span>
       </span>
-      <span className="font-numeric w-16 text-right tabular-nums">
-        {bet.amount.toFixed(2)}
-      </span>
+      <span className="font-numeric w-16 text-right tabular-nums">{bet.amount.toFixed(2)}</span>
       <span
         className={cn(
           "font-numeric w-14 text-right tabular-nums",
@@ -156,7 +150,10 @@ function LiveBetRow({ bet }: { bet: LiveBet }) {
       >
         {multText}
       </span>
-      <span className="font-numeric w-16 text-right font-bold tabular-nums" style={{ color: profitColor }}>
+      <span
+        className="font-numeric w-16 text-right font-bold tabular-nums"
+        style={{ color: profitColor }}
+      >
         {profitText}
       </span>
     </li>

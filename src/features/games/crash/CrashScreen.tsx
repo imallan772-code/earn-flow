@@ -226,7 +226,11 @@ export function CrashScreen() {
   return (
     <div className="flex flex-col gap-3">
       <header className="flex items-center gap-2">
-        <Link to="/earn" className="glass-1 grid h-9 w-9 place-items-center rounded-full" aria-label="뒤로">
+        <Link
+          to="/earn"
+          className="glass-1 grid h-9 w-9 place-items-center rounded-full"
+          aria-label="뒤로"
+        >
           <ArrowLeft size={16} />
         </Link>
         <div className="min-w-0">
@@ -297,11 +301,7 @@ export function CrashScreen() {
           onCashout={bet.cashedAt === null ? handleCashout : undefined}
         />
       ) : (
-        <BetSummaryPanel
-          variant="static"
-          amount={pendingAmount}
-          targetMultiplier={pendingTarget}
-        />
+        <BetSummaryPanel variant="static" amount={pendingAmount} targetMultiplier={pendingTarget} />
       )}
 
       <DemoLowBanner />
@@ -331,7 +331,10 @@ export function CrashScreen() {
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
           onClick={() => setShowFair(false)}
         >
-          <div className="glass-2 w-full max-w-md rounded-t-3xl p-5" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="glass-2 w-full max-w-md rounded-t-3xl p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-extrabold">공정성 검증</h2>
               <button onClick={() => setShowFair(false)}>

@@ -14,10 +14,14 @@ const CATEGORIES: { key: NoticeCategory | "전체"; Icon: typeof Bell }[] = [
 
 function categoryColor(c: NoticeCategory) {
   switch (c) {
-    case "공지": return "var(--color-cyan)";
-    case "업데이트": return "var(--color-purple)";
-    case "점검": return "var(--color-warning)";
-    case "보안": return "var(--color-rose)";
+    case "공지":
+      return "var(--color-cyan)";
+    case "업데이트":
+      return "var(--color-purple)";
+    case "점검":
+      return "var(--color-warning)";
+    case "보안":
+      return "var(--color-rose)";
   }
 }
 
@@ -69,7 +73,7 @@ export function NoticeScreen() {
                   "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition",
                   active
                     ? "bg-holographic text-[var(--color-bg-0)] shadow-glow-purple"
-                    : "glass-1 text-[var(--color-muted)]"
+                    : "glass-1 text-[var(--color-muted)]",
                 )}
               >
                 <c.Icon size={12} />
@@ -112,7 +116,9 @@ function NoticeRow({ n }: { n: Notice }) {
         >
           {n.category}
         </span>
-        <span className="ml-auto font-numeric text-[11px] text-[var(--color-muted)]">{fmtDate(n.publishedAt)}</span>
+        <span className="ml-auto font-numeric text-[11px] text-[var(--color-muted)]">
+          {fmtDate(n.publishedAt)}
+        </span>
       </div>
       <h3 className="text-[15px] font-bold leading-snug">{n.title}</h3>
       <p className="line-clamp-1 text-xs text-[var(--color-muted)]">{n.excerpt}</p>

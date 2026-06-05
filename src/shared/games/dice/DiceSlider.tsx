@@ -62,7 +62,7 @@ export function DiceSlider({ target, mode, onTargetChange, onModeChange, lastRol
               className="absolute top-full mt-2 -translate-x-1/2 text-[9px] font-bold text-[var(--color-muted-2)] font-numeric"
               style={{ left: `${p}%` }}
             >
-              {p === 100 ? "99.99" : (p * MAX_ROLL / 100).toFixed(0)}
+              {p === 100 ? "99.99" : ((p * MAX_ROLL) / 100).toFixed(0)}
             </span>
           ))}
           {lastPct != null && (

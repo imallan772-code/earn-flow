@@ -54,7 +54,7 @@ export const EVENTS: AppEvent[] = [
       { rank: 1, nickname: "팬텀트레이더", score: 482.31 },
       { rank: 2, nickname: "코인사신", score: 391.04 },
       { rank: 3, nickname: "롱숏의신", score: 287.55 },
-      { rank: 4, nickname: "야수의심장", score: 244.10 },
+      { rank: 4, nickname: "야수의심장", score: 244.1 },
       { rank: 5, nickname: "BTC왕", score: 211.78 },
     ],
     bgFrom: "var(--color-cyan)",

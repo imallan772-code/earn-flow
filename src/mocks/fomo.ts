@@ -50,7 +50,14 @@ export interface LandingHeroStat {
   accent: "cyan" | "gold" | "pink" | "purple";
   sub: string;
   /** Live-animated numeric value */
-  live?: { base: number; amplitudeRatio: number; bias: number; suffix?: string; prefix?: string; mode: "manlike" | "eok" | "raw" | "percent" };
+  live?: {
+    base: number;
+    amplitudeRatio: number;
+    bias: number;
+    suffix?: string;
+    prefix?: string;
+    mode: "manlike" | "eok" | "raw" | "percent";
+  };
   /** Sync with a global shared store (e.g. global online counter) */
   syncKey?: "globalOnline";
   /** Static display (when no live) */
@@ -62,7 +69,13 @@ export const MOCK_LANDING_HERO_STATS: LandingHeroStat[] = [
     label: "전 세계 실시간 접속",
     accent: "cyan",
     sub: "지금 폭주 중",
-    live: { base: MOCK_ONLINE_BASE, amplitudeRatio: 0.003, bias: 0.52, mode: "manlike", suffix: "+" },
+    live: {
+      base: MOCK_ONLINE_BASE,
+      amplitudeRatio: 0.003,
+      bias: 0.52,
+      mode: "manlike",
+      suffix: "+",
+    },
     syncKey: "globalOnline",
   },
   {
@@ -78,4 +91,3 @@ export const MOCK_LANDING_HERO_STATS: LandingHeroStat[] = [
     staticValue: `+${MOCK_EVENT_BONUS_PERCENT}%`,
   },
 ];
-

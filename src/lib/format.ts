@@ -1,6 +1,9 @@
 const krwFmt = new Intl.NumberFormat("ko-KR");
 const phonFmt = new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 0 });
-const usdtFmt = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const usdtFmt = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
 export const formatKRW = (n: number) => `₩${krwFmt.format(Math.round(n))}`;
 export const formatPHON = (n: number) => phonFmt.format(Math.round(n));

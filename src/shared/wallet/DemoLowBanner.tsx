@@ -17,7 +17,9 @@ export function DemoLowBanner() {
 
   const handle = () => {
     setMode("real");
-    navigate({ to: "/deposit" }).catch(() => { /* noop */ });
+    navigate({ to: "/deposit" }).catch(() => {
+      /* noop */
+    });
   };
 
   return (

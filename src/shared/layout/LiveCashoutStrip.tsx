@@ -9,8 +9,14 @@ export function LiveCashoutStrip() {
   const doubled = [...MOCK_CASHOUT_FEED, ...MOCK_CASHOUT_FEED];
   return (
     <div className="glass-1 overflow-hidden rounded-2xl">
-      <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: "var(--color-border)" }}>
-        <span className="inline-flex h-2 w-2 animate-phon-pulse rounded-full" style={{ background: "var(--color-emerald)" }} />
+      <div
+        className="flex items-center gap-2 px-3 py-2 border-b"
+        style={{ borderColor: "var(--color-border)" }}
+      >
+        <span
+          className="inline-flex h-2 w-2 animate-phon-pulse rounded-full"
+          style={{ background: "var(--color-emerald)" }}
+        />
         <span className="text-xs font-semibold text-[var(--color-muted)]">
           실시간 캐시아웃 ·{" "}
           <LiveNumber
@@ -29,7 +35,9 @@ export function LiveCashoutStrip() {
               <TrendingUp size={14} style={{ color: "var(--color-emerald)" }} />
               <span className="font-medium text-[var(--color-foreground)]">{t.name}</span>
               {t.multiplier && (
-                <span className="font-numeric text-xs" style={{ color: "var(--color-cyan)" }}>{t.multiplier.toFixed(1)}×</span>
+                <span className="font-numeric text-xs" style={{ color: "var(--color-cyan)" }}>
+                  {t.multiplier.toFixed(1)}×
+                </span>
               )}
               <span className="font-numeric font-semibold" style={{ color: "var(--color-gold)" }}>
                 +{formatPHON(t.amount)} PHON

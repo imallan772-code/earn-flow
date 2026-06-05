@@ -9,7 +9,16 @@ import { Rocket, Dices, Cherry, CircleDot, Hand, Gift, Layers, Trophy, Coins } f
 import { cn } from "@/lib/utils";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 
-type GameId = "crash" | "dice" | "plinko" | "slots" | "roulette" | "rps" | "luckybox" | "cardflip" | "keepy";
+type GameId =
+  | "crash"
+  | "dice"
+  | "plinko"
+  | "slots"
+  | "roulette"
+  | "rps"
+  | "luckybox"
+  | "cardflip"
+  | "keepy";
 
 interface GameCard {
   id: GameId;
@@ -22,15 +31,79 @@ interface GameCard {
 }
 
 const GAMES: GameCard[] = [
-  { id: "crash", name: "Crash", rtp: "99%", liveBets: 482, Icon: Rocket, open: true, accent: "cyan" },
-  { id: "dice", name: "Dice", rtp: "99%", liveBets: 311, Icon: Dices, open: true, accent: "emerald" },
-  { id: "plinko", name: "Plinko", rtp: "97%", liveBets: 207, Icon: Coins, open: true, accent: "purple" },
-  { id: "slots", name: "Slots", rtp: "96%", liveBets: 0, Icon: Cherry, open: false, accent: "pink" },
-  { id: "roulette", name: "Roulette", rtp: "97.3%", liveBets: 0, Icon: CircleDot, open: false, accent: "warning" },
+  {
+    id: "crash",
+    name: "Crash",
+    rtp: "99%",
+    liveBets: 482,
+    Icon: Rocket,
+    open: true,
+    accent: "cyan",
+  },
+  {
+    id: "dice",
+    name: "Dice",
+    rtp: "99%",
+    liveBets: 311,
+    Icon: Dices,
+    open: true,
+    accent: "emerald",
+  },
+  {
+    id: "plinko",
+    name: "Plinko",
+    rtp: "97%",
+    liveBets: 207,
+    Icon: Coins,
+    open: true,
+    accent: "purple",
+  },
+  {
+    id: "slots",
+    name: "Slots",
+    rtp: "96%",
+    liveBets: 0,
+    Icon: Cherry,
+    open: false,
+    accent: "pink",
+  },
+  {
+    id: "roulette",
+    name: "Roulette",
+    rtp: "97.3%",
+    liveBets: 0,
+    Icon: CircleDot,
+    open: false,
+    accent: "warning",
+  },
   { id: "rps", name: "RPS", rtp: "98%", liveBets: 0, Icon: Hand, open: false, accent: "purple" },
-  { id: "luckybox", name: "LuckyBox", rtp: "95%", liveBets: 0, Icon: Gift, open: false, accent: "gold" },
-  { id: "cardflip", name: "CardFlip", rtp: "98%", liveBets: 0, Icon: Layers, open: false, accent: "cyan" },
-  { id: "keepy", name: "Keepy-Uppy", rtp: "—", liveBets: 0, Icon: Trophy, open: false, accent: "emerald" },
+  {
+    id: "luckybox",
+    name: "LuckyBox",
+    rtp: "95%",
+    liveBets: 0,
+    Icon: Gift,
+    open: false,
+    accent: "gold",
+  },
+  {
+    id: "cardflip",
+    name: "CardFlip",
+    rtp: "98%",
+    liveBets: 0,
+    Icon: Layers,
+    open: false,
+    accent: "cyan",
+  },
+  {
+    id: "keepy",
+    name: "Keepy-Uppy",
+    rtp: "—",
+    liveBets: 0,
+    Icon: Trophy,
+    open: false,
+    accent: "emerald",
+  },
 ];
 
 export function GameLobby() {

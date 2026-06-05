@@ -3,9 +3,27 @@ import { CountUp } from "@/shared/motion/CountUp";
 
 const KPIS = [
   { label: "오늘 가입", value: 8_482, delta: "+12.4%", Icon: Users, color: "var(--color-cyan)" },
-  { label: "총 유저", value: 10_124_893, delta: "+0.8%", Icon: TrendingUp, color: "var(--color-purple)" },
-  { label: "오늘 지급 PHON", value: 1_240_000_000, delta: "+34.2%", Icon: Coins, color: "var(--color-gold)" },
-  { label: "오늘 미션 완료", value: 248_902, delta: "+18.1%", Icon: Target, color: "var(--color-pink)" },
+  {
+    label: "총 유저",
+    value: 10_124_893,
+    delta: "+0.8%",
+    Icon: TrendingUp,
+    color: "var(--color-purple)",
+  },
+  {
+    label: "오늘 지급 PHON",
+    value: 1_240_000_000,
+    delta: "+34.2%",
+    Icon: Coins,
+    color: "var(--color-gold)",
+  },
+  {
+    label: "오늘 미션 완료",
+    value: 248_902,
+    delta: "+18.1%",
+    Icon: Target,
+    color: "var(--color-pink)",
+  },
 ];
 
 export function AdminDashboard() {
@@ -53,7 +71,12 @@ export function AdminDashboard() {
                 <div className="mt-2">
                   <CountUp value={k.value} className="font-numeric text-3xl font-extrabold" />
                 </div>
-                <div className="mt-1 text-xs font-semibold" style={{ color: "var(--color-emerald)" }}>{k.delta} vs 어제</div>
+                <div
+                  className="mt-1 text-xs font-semibold"
+                  style={{ color: "var(--color-emerald)" }}
+                >
+                  {k.delta} vs 어제
+                </div>
               </div>
             ))}
           </div>
@@ -63,7 +86,10 @@ export function AdminDashboard() {
               <div className="text-sm font-semibold">최근 출금 큐 (mock)</div>
               <div className="mt-3 space-y-2 text-xs">
                 {["김** · 1,240,000 KRW", "박** · 480 USDT", "이** · 8,400,000 PHON"].map((r) => (
-                  <div key={r} className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2">
+                  <div
+                    key={r}
+                    className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2"
+                  >
                     <span>{r}</span>
                     <span className="text-[var(--color-emerald)]">승인됨</span>
                   </div>
@@ -72,7 +98,9 @@ export function AdminDashboard() {
             </div>
             <div className="glass-3 rounded-3xl p-5 shadow-depth-2">
               <div className="text-sm font-semibold">어뷰징 알림</div>
-              <div className="mt-3 text-xs text-[var(--color-muted)]">최근 24시간 이슈 없음 · 시스템 정상</div>
+              <div className="mt-3 text-xs text-[var(--color-muted)]">
+                최근 24시간 이슈 없음 · 시스템 정상
+              </div>
             </div>
           </div>
         </main>

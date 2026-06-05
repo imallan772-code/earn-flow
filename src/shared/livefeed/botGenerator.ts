@@ -6,10 +6,17 @@ import { liveBetsStore, type LiveGame } from "./LiveBetsStore";
 import { randomMaskedNick } from "./nicknames";
 
 const GAMES: LiveGame[] = [
-  "crash", "crash", "crash", "crash",
-  "dice", "dice", "dice",
-  "plinko", "plinko",
-  "slots", "slots",
+  "crash",
+  "crash",
+  "crash",
+  "crash",
+  "dice",
+  "dice",
+  "dice",
+  "plinko",
+  "plinko",
+  "slots",
+  "slots",
   "mines",
   "roulette",
 ];

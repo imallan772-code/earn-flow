@@ -27,7 +27,7 @@ export function Premium3DCard({ children, className, glow, onClick, interactive 
       className={cn(
         "glass-3 relative overflow-hidden rounded-3xl shadow-depth-2 text-left",
         glow && glowClass[glow],
-        className
+        className,
       )}
     >
       {children}

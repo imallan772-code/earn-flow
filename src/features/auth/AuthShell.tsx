@@ -52,7 +52,10 @@ export function AuthShell({ mode }: Props) {
   return (
     <AuthPageShell>
       <div className="flex items-center justify-between">
-        <Link to="/" className="glass-1 inline-flex h-10 w-10 items-center justify-center rounded-2xl">
+        <Link
+          to="/"
+          className="glass-1 inline-flex h-10 w-10 items-center justify-center rounded-2xl"
+        >
           <ArrowLeft size={18} />
         </Link>
         <OnlineCounterChip compact />
@@ -63,9 +66,25 @@ export function AuthShell({ mode }: Props) {
           {isSignup ? "🚀 1,800 PHON 첫 보상 대기 중" : "👋 다시 오신 걸 환영해요"}
         </div>
         <h1 className="mt-2 text-3xl font-extrabold leading-tight">
-          {isSignup ? <>3초 만에<br /><span className="text-holographic">PHONARA 시작</span></> : <>로그인해서<br /><span className="text-holographic">보상 이어가기</span></>}
+          {isSignup ? (
+            <>
+              3초 만에
+              <br />
+              <span className="text-holographic">PHONARA 시작</span>
+            </>
+          ) : (
+            <>
+              로그인해서
+              <br />
+              <span className="text-holographic">보상 이어가기</span>
+            </>
+          )}
         </h1>
-        <div className="mt-2 text-xs text-[var(--color-muted)]">지금 가입 중인 사용자 <span className="font-semibold text-[var(--color-foreground)]">12,482명</span> · 마감 임박 이벤트</div>
+        <div className="mt-2 text-xs text-[var(--color-muted)]">
+          지금 가입 중인 사용자{" "}
+          <span className="font-semibold text-[var(--color-foreground)]">12,482명</span> · 마감 임박
+          이벤트
+        </div>
       </div>
 
       {/* Tabs */}
@@ -76,7 +95,7 @@ export function AuthShell({ mode }: Props) {
             onClick={() => setTab(t.id)}
             className={cn(
               "relative flex h-11 items-center justify-center gap-1 rounded-xl text-xs font-semibold transition-colors",
-              tab === t.id ? "text-[var(--color-foreground)]" : "text-[var(--color-muted)]"
+              tab === t.id ? "text-[var(--color-foreground)]" : "text-[var(--color-muted)]",
             )}
           >
             {tab === t.id && (
@@ -116,7 +135,7 @@ export function AuthShell({ mode }: Props) {
                     maxLength={1}
                     className={cn(
                       "glass-2 h-14 w-full max-w-[48px] rounded-xl text-center font-numeric text-xl font-bold outline-none transition-all",
-                      d ? "ring-aurora-live text-[var(--color-cyan)]" : ""
+                      d ? "ring-aurora-live text-[var(--color-cyan)]" : "",
                     )}
                   />
                 ))}
@@ -127,10 +146,21 @@ export function AuthShell({ mode }: Props) {
         {tab === "email" && (
           <div className="space-y-4">
             <Field label="이메일">
-              <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@phonara.app" className="phon-input" />
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@phonara.app"
+                className="phon-input"
+              />
             </Field>
             <Field label="비밀번호">
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="********" className="phon-input" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="********"
+                className="phon-input"
+              />
             </Field>
           </div>
         )}
@@ -143,7 +173,9 @@ export function AuthShell({ mode }: Props) {
         )}
         {tab === "google" && (
           <div className="glass-2 rounded-2xl p-5 text-center text-sm text-[var(--color-muted)]">
-            <div className="font-semibold text-[var(--color-foreground)]">구글 계정으로 계속하기</div>
+            <div className="font-semibold text-[var(--color-foreground)]">
+              구글 계정으로 계속하기
+            </div>
             <div className="mt-1 text-xs">탭하면 mock 인증 후 다음 화면으로 이동합니다</div>
           </div>
         )}
@@ -156,7 +188,10 @@ export function AuthShell({ mode }: Props) {
         {isSignup ? "지금 시작하고 1,800 PHON 받기" : "로그인"}
       </button>
 
-      <Link to={isSignup ? "/login" : "/signup"} className="mt-4 text-center text-xs text-[var(--color-muted)]">
+      <Link
+        to={isSignup ? "/login" : "/signup"}
+        className="mt-4 text-center text-xs text-[var(--color-muted)]"
+      >
         {isSignup ? "이미 계정이 있나요? 로그인" : "처음이신가요? 가입하고 1,800 PHON"}
       </Link>
 

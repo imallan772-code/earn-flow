@@ -69,7 +69,9 @@ export function DiceResultDisplay({
     phase === "rolling"
       ? "주사위 굴리는 중"
       : phase === "settled"
-        ? outcome === "win" ? "승리" : "패배"
+        ? outcome === "win"
+          ? "승리"
+          : "패배"
         : "베팅 대기 중";
 
   return (

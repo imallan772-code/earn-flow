@@ -15,8 +15,18 @@ interface NavItem {
 const ITEMS: NavItem[] = [
   { to: "/feed", labelKey: "nav.feed", Icon: Zap, match: (p) => p === "/feed" },
   { to: "/earn", labelKey: "nav.earn", Icon: Gamepad2, match: (p) => p.startsWith("/earn") },
-  { to: "/exchange/BTCUSDT", labelKey: "nav.trade", Icon: TrendingUp, match: (p) => p.startsWith("/exchange") },
-  { to: "/notice", labelKey: "nav.notice", Icon: Bell, match: (p) => p.startsWith("/notice") || p.startsWith("/event") },
+  {
+    to: "/exchange/BTCUSDT",
+    labelKey: "nav.trade",
+    Icon: TrendingUp,
+    match: (p) => p.startsWith("/exchange"),
+  },
+  {
+    to: "/notice",
+    labelKey: "nav.notice",
+    Icon: Bell,
+    match: (p) => p.startsWith("/notice") || p.startsWith("/event"),
+  },
   { to: "/my", labelKey: "nav.my", Icon: User, match: (p) => p === "/my" },
 ];
 
@@ -33,7 +43,7 @@ export function BottomNav() {
               to={it.to}
               className={cn(
                 "relative flex min-h-[44px] min-w-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-1.5 text-xs",
-                active ? "text-[var(--color-cyan)]" : "text-[var(--color-muted)]"
+                active ? "text-[var(--color-cyan)]" : "text-[var(--color-muted)]",
               )}
             >
               {active && (

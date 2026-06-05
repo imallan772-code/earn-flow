@@ -24,7 +24,9 @@ export function AdminEvent() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold">이벤트 관리</h1>
-          <p className="text-sm text-[var(--color-muted)]">진행중 · 예정 · 종료 · 카운트다운 · 리더보드 (mock)</p>
+          <p className="text-sm text-[var(--color-muted)]">
+            진행중 · 예정 · 종료 · 카운트다운 · 리더보드 (mock)
+          </p>
         </div>
         <button
           onClick={() =>
@@ -55,7 +57,9 @@ export function AdminEvent() {
         {list.map((e) => (
           <div key={e.id} className="glass-2 flex flex-col gap-2 rounded-2xl p-4">
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-bold">{e.status}</span>
+              <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-bold">
+                {e.status}
+              </span>
               <span className="ml-auto font-numeric text-[11px] text-[var(--color-muted)]">
                 {e.startsAt.slice(0, 10)} ~ {e.endsAt.slice(0, 10)}
               </span>
@@ -92,11 +96,15 @@ export function AdminEvent() {
             <div className="grid grid-cols-2 gap-3">
               <select
                 value={editing.status}
-                onChange={(ev) => setEditing({ ...editing, status: ev.target.value as AppEvent["status"] })}
+                onChange={(ev) =>
+                  setEditing({ ...editing, status: ev.target.value as AppEvent["status"] })
+                }
                 className="glass-1 col-span-2 rounded-xl px-3 py-2 text-sm"
               >
                 {["진행중", "예정", "종료"].map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
               <input
@@ -129,7 +137,9 @@ export function AdminEvent() {
                 <input
                   type="datetime-local"
                   value={editing.startsAt.slice(0, 16)}
-                  onChange={(ev) => setEditing({ ...editing, startsAt: new Date(ev.target.value).toISOString() })}
+                  onChange={(ev) =>
+                    setEditing({ ...editing, startsAt: new Date(ev.target.value).toISOString() })
+                  }
                   className="glass-1 mt-1 w-full rounded-lg px-2 py-1 text-xs"
                 />
               </label>
@@ -138,7 +148,9 @@ export function AdminEvent() {
                 <input
                   type="datetime-local"
                   value={editing.endsAt.slice(0, 16)}
-                  onChange={(ev) => setEditing({ ...editing, endsAt: new Date(ev.target.value).toISOString() })}
+                  onChange={(ev) =>
+                    setEditing({ ...editing, endsAt: new Date(ev.target.value).toISOString() })
+                  }
                   className="glass-1 mt-1 w-full rounded-lg px-2 py-1 text-xs"
                 />
               </label>
@@ -159,14 +171,26 @@ export function AdminEvent() {
                 <input
                   type="number"
                   value={editing.participants}
-                  onChange={(ev) => setEditing({ ...editing, participants: Number(ev.target.value) })}
+                  onChange={(ev) =>
+                    setEditing({ ...editing, participants: Number(ev.target.value) })
+                  }
                   className="glass-1 mt-1 w-full rounded-lg px-2 py-1 text-xs"
                 />
               </label>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setEditing(null)} className="glass-1 rounded-xl px-4 py-2 text-sm">취소</button>
-              <button onClick={() => save(editing)} className="rounded-xl bg-holographic px-4 py-2 text-sm font-bold text-[var(--color-bg-0)]">저장</button>
+              <button
+                onClick={() => setEditing(null)}
+                className="glass-1 rounded-xl px-4 py-2 text-sm"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => save(editing)}
+                className="rounded-xl bg-holographic px-4 py-2 text-sm font-bold text-[var(--color-bg-0)]"
+              >
+                저장
+              </button>
             </div>
           </div>
         </div>

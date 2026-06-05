@@ -24,7 +24,7 @@ export function mulberry32(seed: number): () => number {
  * Returns a function that yields uniform [0, 1) floats.
  */
 export function xorshift32(seed: number): () => number {
-  let x = (seed | 0) || 1;
+  let x = seed | 0 || 1;
   return function next(): number {
     x ^= x << 13;
     x ^= x >>> 17;

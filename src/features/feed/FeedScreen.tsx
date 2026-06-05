@@ -49,12 +49,34 @@ export function FeedScreen() {
 
       {/* Stream */}
       <section className="space-y-3">
-        <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-cyan)]">실시간 스트림</div>
+        <div className="text-xs font-semibold uppercase tracking-wider text-[var(--color-cyan)]">
+          실시간 스트림
+        </div>
         {[
-          { id: "p1", who: "포나라_드림", body: "오늘 출석 12일째! 보너스 +500 받고 시작 🚀", reward: 500 },
-          { id: "p2", who: "민_차장", body: "크래시에서 18배 캐시아웃 성공 🔥 한 판 더 갑니다", reward: 940_000 },
-          { id: "p3", who: "예슬_엄마", body: "육아하면서 한 달 누적 32만 PHON 모음. 이게 됩니다", reward: 320_000 },
-          { id: "p4", who: "퇴근_요정", body: "친구 3명 초대로 즉시 15,000 PHON 입금됨", reward: 15_000 },
+          {
+            id: "p1",
+            who: "포나라_드림",
+            body: "오늘 출석 12일째! 보너스 +500 받고 시작 🚀",
+            reward: 500,
+          },
+          {
+            id: "p2",
+            who: "민_차장",
+            body: "크래시에서 18배 캐시아웃 성공 🔥 한 판 더 갑니다",
+            reward: 940_000,
+          },
+          {
+            id: "p3",
+            who: "예슬_엄마",
+            body: "육아하면서 한 달 누적 32만 PHON 모음. 이게 됩니다",
+            reward: 320_000,
+          },
+          {
+            id: "p4",
+            who: "퇴근_요정",
+            body: "친구 3명 초대로 즉시 15,000 PHON 입금됨",
+            reward: 15_000,
+          },
         ].map((p) => (
           <Premium3DCard key={p.id} className="p-4">
             <div className="flex items-center justify-between">
@@ -73,9 +95,15 @@ export function FeedScreen() {
             </div>
             <p className="mt-2.5 text-sm leading-relaxed">{p.body}</p>
             <div className="mt-3 flex items-center gap-4 text-[var(--color-muted)]">
-              <button className="inline-flex items-center gap-1 text-xs"><Heart size={14} /> 1.2K</button>
-              <button className="inline-flex items-center gap-1 text-xs"><MessageCircle size={14} /> 240</button>
-              <button className="inline-flex items-center gap-1 text-xs"><Share2 size={14} /> 공유</button>
+              <button className="inline-flex items-center gap-1 text-xs">
+                <Heart size={14} /> 1.2K
+              </button>
+              <button className="inline-flex items-center gap-1 text-xs">
+                <MessageCircle size={14} /> 240
+              </button>
+              <button className="inline-flex items-center gap-1 text-xs">
+                <Share2 size={14} /> 공유
+              </button>
             </div>
           </Premium3DCard>
         ))}

@@ -38,5 +38,9 @@ export function CountUp({ value, duration = 900, className, format = defaultFmt 
     return () => cancelAnimationFrame(raf);
   }, [value, duration]);
 
-  return <span className={className} style={{ fontVariantNumeric: "tabular-nums" }}>{format(display)}</span>;
+  return (
+    <span className={className} style={{ fontVariantNumeric: "tabular-nums" }}>
+      {format(display)}
+    </span>
+  );
 }

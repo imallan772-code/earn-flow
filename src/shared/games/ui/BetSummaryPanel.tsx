@@ -64,11 +64,7 @@ function StaticPanel({
   // win-chance color: high = cyan, mid = gold, low = rose
   const chance = winChancePct ?? Math.min(99, 100 / Math.max(1.01, targetMultiplier));
   const chanceColor =
-    chance >= 50
-      ? "var(--color-cyan)"
-      : chance >= 25
-        ? "var(--color-gold)"
-        : "var(--color-rose)";
+    chance >= 50 ? "var(--color-cyan)" : chance >= 25 ? "var(--color-gold)" : "var(--color-rose)";
 
   const barPct = Math.min(100, (Math.log(Math.max(1.01, targetMultiplier)) / Math.log(10)) * 100);
 
@@ -111,14 +107,17 @@ function StaticPanel({
 
       <div className="flex items-center justify-between text-[10px]">
         <span className="text-[var(--color-muted-2)]">
-          배당 <span className="font-numeric font-bold text-[var(--color-foreground)]">
+          배당{" "}
+          <span className="font-numeric font-bold text-[var(--color-foreground)]">
             {effectiveMult.toFixed(2)}x
           </span>
-          <span className="ml-1.5 rounded-sm px-1.5 py-0.5"
+          <span
+            className="ml-1.5 rounded-sm px-1.5 py-0.5"
             style={{
               background: `color-mix(in oklab, var(--color-${mode === "demo" ? "cyan" : "gold"}) 18%, transparent)`,
               color: `var(--color-${mode === "demo" ? "cyan" : "gold"})`,
-            }}>
+            }}
+          >
             {rtpLabel}
           </span>
         </span>
@@ -190,7 +189,8 @@ function LivePanel({
           LIVE · 라운드 진행 중
         </span>
         <span className="text-[10px] text-[var(--color-muted)]">
-          내 베팅 <span className="font-numeric font-bold text-[var(--color-foreground)]">
+          내 베팅{" "}
+          <span className="font-numeric font-bold text-[var(--color-foreground)]">
             {amount.toFixed(2)}
           </span>
         </span>
@@ -239,7 +239,8 @@ function LivePanel({
       </div>
       <div className="flex items-center justify-between text-[10px]">
         <span className="text-[var(--color-muted-2)]">
-          목표 <span className="font-numeric font-bold text-[var(--color-foreground)]">
+          목표{" "}
+          <span className="font-numeric font-bold text-[var(--color-foreground)]">
             {targetMultiplier.toFixed(2)}x
           </span>
           {reached && <span className="ml-1.5 text-[var(--color-emerald)]">✓ 도달</span>}
@@ -300,7 +301,9 @@ function Cell({
         style={{ color }}
       >
         {value}
-        {unit && <span className="ml-1 text-[9px] font-bold text-[var(--color-muted-2)]">{unit}</span>}
+        {unit && (
+          <span className="ml-1 text-[9px] font-bold text-[var(--color-muted-2)]">{unit}</span>
+        )}
       </div>
     </div>
   );

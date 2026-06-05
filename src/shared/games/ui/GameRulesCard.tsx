@@ -66,9 +66,7 @@ export function GameRulesCard({ rules, onVerify }: Props) {
             <ul className="flex flex-col gap-3">
               {rules.sections.map((s) => (
                 <li key={s.title}>
-                  <div className="text-[11px] font-bold text-[var(--color-cyan)]">
-                    ▸ {s.title}
-                  </div>
+                  <div className="text-[11px] font-bold text-[var(--color-cyan)]">▸ {s.title}</div>
                   <p className="mt-1 whitespace-pre-line text-[11px] leading-relaxed text-[var(--color-muted)]">
                     {s.body}
                   </p>

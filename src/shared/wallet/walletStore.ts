@@ -75,7 +75,9 @@ function persist() {
     flushHandle = null;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch { /* quota — ignore */ }
+    } catch {
+      /* quota — ignore */
+    }
   }, 80);
 }
 
@@ -91,7 +93,9 @@ function set(next: Partial<WalletState>) {
 
 function subscribe(cb: () => void) {
   listeners.add(cb);
-  return () => { listeners.delete(cb); };
+  return () => {
+    listeners.delete(cb);
+  };
 }
 
 // ───── Out-of-demo modal store ─────
@@ -101,7 +105,9 @@ interface OutOfDemoModalState {
 }
 let modalState: OutOfDemoModalState = { open: false, attemptedAmount: 0 };
 const modalListeners = new Set<() => void>();
-function emitModal() { modalListeners.forEach((l) => l()); }
+function emitModal() {
+  modalListeners.forEach((l) => l());
+}
 
 export function openOutOfDemoModal(attemptedAmount = 0) {
   modalState = { open: true, attemptedAmount };
@@ -115,7 +121,9 @@ export function useOutOfDemoModal(): OutOfDemoModalState {
   return useSyncExternalStore(
     (cb) => {
       modalListeners.add(cb);
-      return () => { modalListeners.delete(cb); };
+      return () => {
+        modalListeners.delete(cb);
+      };
     },
     () => modalState,
     () => modalState,
@@ -152,7 +160,8 @@ export const wallet = {
   credit(mode: GameMode, amount: number, multiplier?: number) {
     if (amount <= 0) return;
     if (mode === "demo") {
-      const nextMax = multiplier && multiplier > state.maxMultiplier ? multiplier : state.maxMultiplier;
+      const nextMax =
+        multiplier && multiplier > state.maxMultiplier ? multiplier : state.maxMultiplier;
       set({
         demoBalance: state.demoBalance + amount,
         netResult: state.netResult + amount,
@@ -203,7 +212,11 @@ export function useBalance(mode: GameMode): number {
 }
 
 export function useWalletStats(): WalletState {
-  return useSyncExternalStore(subscribe, () => state, () => state);
+  return useSyncExternalStore(
+    subscribe,
+    () => state,
+    () => state,
+  );
 }
 
 /** True when demo balance ≤ 30% of initial grant. */

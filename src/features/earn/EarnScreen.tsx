@@ -55,7 +55,9 @@ export function EarnScreen() {
             <div className="flex-1">
               <div className="text-xs text-[var(--color-muted)]">연속 출석</div>
               <div className="text-lg font-extrabold">{MOCK_BALANCE.streakDays}일 째 🔥</div>
-              <div className="mt-0.5 text-[11px] text-[var(--color-gold)]">7일마다 +500,000 PHON 보너스</div>
+              <div className="mt-0.5 text-[11px] text-[var(--color-gold)]">
+                7일마다 +500,000 PHON 보너스
+              </div>
             </div>
             <UrgencyBadge text="TOP 0.01%" variant="hot" />
           </Premium3DCard>
@@ -63,8 +65,12 @@ export function EarnScreen() {
           {/* Mission list */}
           <section className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-cyan)]">데일리 · 한정 미션</h2>
-              <span className="text-[11px] text-[var(--color-muted)]">총 {MOCK_MISSIONS.length}개</span>
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-cyan)]">
+                데일리 · 한정 미션
+              </h2>
+              <span className="text-[11px] text-[var(--color-muted)]">
+                총 {MOCK_MISSIONS.length}개
+              </span>
             </div>
             {MOCK_MISSIONS.map((m) => (
               <Premium3DCard key={m.id} className="flex items-center gap-3 p-3.5">
@@ -113,7 +119,9 @@ export function EarnScreen() {
             </div>
             <div className="flex-1">
               <div className="text-sm font-semibold">오늘의 미스터리 박스</div>
-              <div className="text-[11px] text-[var(--color-muted)]">최대 3,000,000 PHON · 일일 1회</div>
+              <div className="text-[11px] text-[var(--color-muted)]">
+                최대 3,000,000 PHON · 일일 1회
+              </div>
             </div>
             <button
               onClick={() => appToast.box.opened({ amount: formatPHON(1_250_000) })}

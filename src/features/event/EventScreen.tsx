@@ -38,7 +38,7 @@ export function EventScreen() {
             onClick={() => setTab(t)}
             className={cn(
               "flex-1 rounded-xl py-2 text-xs font-semibold transition",
-              tab === t ? "bg-holographic text-[var(--color-bg-0)]" : "text-[var(--color-muted)]"
+              tab === t ? "bg-holographic text-[var(--color-bg-0)]" : "text-[var(--color-muted)]",
             )}
           >
             {t}
@@ -76,7 +76,10 @@ export function EventCard({ e }: { e: AppEvent }) {
         background: `linear-gradient(135deg, color-mix(in oklab, ${e.bgFrom} 35%, var(--color-bg-1)) 0%, color-mix(in oklab, ${e.bgTo} 35%, var(--color-bg-1)) 100%)`,
       }}
     >
-      <div className="pointer-events-none absolute inset-0 opacity-30 mix-blend-overlay" style={{ background: "radial-gradient(ellipse at top right, white, transparent 60%)" }} />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-30 mix-blend-overlay"
+        style={{ background: "radial-gradient(ellipse at top right, white, transparent 60%)" }}
+      />
       <div className="relative flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-black/35 px-2 py-0.5 text-[10px] font-bold backdrop-blur">
@@ -100,7 +103,8 @@ export function EventCard({ e }: { e: AppEvent }) {
             </div>
             <div className="font-numeric text-sm font-bold tabular-nums">
               {cd.d > 0 && `${cd.d}일 `}
-              {String(cd.h).padStart(2, "0")}:{String(cd.m).padStart(2, "0")}:{String(cd.s).padStart(2, "0")}
+              {String(cd.h).padStart(2, "0")}:{String(cd.m).padStart(2, "0")}:
+              {String(cd.s).padStart(2, "0")}
             </div>
           </div>
         )}

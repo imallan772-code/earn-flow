@@ -61,7 +61,7 @@ export function LiveNumber({
           const b = baseRef.current;
           const dir = Math.random() < bias ? 1 : -1;
           // step: 0.02% ~ 0.15% of base
-          const stepRatio = (0.0002 + Math.abs(gaussian()) * 0.0006);
+          const stepRatio = 0.0002 + Math.abs(gaussian()) * 0.0006;
           const delta = b * stepRatio * dir;
           let next = prev + delta;
           // soft clamp into ±amplitudeRatio band; gently pull toward base if outside
@@ -79,12 +79,5 @@ export function LiveNumber({
     return () => clearTimeout(timer);
   }, [amplitudeRatio, bias, intervalMs]);
 
-  return (
-    <CountUp
-      value={value}
-      duration={duration}
-      className={className}
-      format={format}
-    />
-  );
+  return <CountUp value={value} duration={duration} className={className} format={format} />;
 }
