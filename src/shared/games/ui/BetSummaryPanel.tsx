@@ -8,7 +8,7 @@
  *
  * Used by Crash + Dice + future games. House edge baked in via useMode.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TrendingUp, Zap } from "lucide-react";
 import { useMode } from "@/shared/mode/ModeContext";
 import { applyEdge } from "@/shared/games/engine/houseEdge";
