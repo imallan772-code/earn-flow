@@ -29,7 +29,6 @@ export function CountUp({ value, duration = 900, className, format = defaultFmt 
     if (spanRef.current) {
       spanRef.current.textContent = fmtRef.current(fromRef.current);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

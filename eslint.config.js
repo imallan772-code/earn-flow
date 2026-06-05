@@ -40,10 +40,7 @@ export default tseslint.config(
     // shadcn/ui primitives and a couple of context modules export both
     // components and helpers/variants by design. Fast-refresh restriction
     // is not relevant here.
-    files: [
-      "src/components/ui/**/*.{ts,tsx}",
-      "src/shared/mode/ModeContext.tsx",
-    ],
+    files: ["src/components/ui/**/*.{ts,tsx}", "src/shared/mode/ModeContext.tsx"],
     rules: {
       "react-refresh/only-export-components": "off",
     },

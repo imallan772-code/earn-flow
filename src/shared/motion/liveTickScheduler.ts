@@ -70,10 +70,7 @@ if (typeof document !== "undefined") {
  * Subscribe to the global tick loop. Returns an unsubscribe function.
  * The callback receives the current performance.now() timestamp.
  */
-export function subscribeLiveTick(
-  cb: (now: number) => void,
-  intervalMs: number,
-): () => void {
+export function subscribeLiveTick(cb: (now: number) => void, intervalMs: number): () => void {
   const sub: Subscriber = {
     cb,
     intervalMs,
