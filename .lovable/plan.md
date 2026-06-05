@@ -1,79 +1,175 @@
-# ROUND K v1 — WheelLegend (색별 배당 범례)
+# PC Desktop 전환 v2.1 — 로드맵 + LAYOUT-L (Wheel 파일럿)
 
-## 목적
+> **v2.1 변경점**: (a) LiveBets 데스크탑 단일 인스턴스 QA, (b) RightRail register
+> 패턴 SSOT 계약, (c) P-0 착수 시점 = ROUND K(Dice) merge 직후 명시.
+> v2 본문 유지.
 
-Stake/Rollbit 휠처럼 **칸 색깔 = 배당** 매핑을 한눈에 보여주는 범례 칩 1줄을 휠 아래 추가. 사용자가 "왜 칸마다 숫자가 안 보이지?" 의문을 해소.
+## 1. 로드맵 (확정 v2.1)
 
-## 범위
+| Phase | 담당 | 범위 | 큐 |
+| --- | --- | --- | --- |
+| ROUND K | Lovable | Dice (게임 라운드, 별개 트랙) | 진행 중 |
+| **P-0** | Cursor | 데스크탑 셸 인프라 | **K merge GREEN 직후 1 PR** |
+| **LAYOUT-L** | Lovable | Wheel 데스크탑 파일럿 | P-0 merge 확인 후 |
+| P-1 | Cursor | 로비 + Landing + Money(Deposit/Withdrawal) DesktopShell + SEO | LAYOUT-L 후 |
+| P-2 | Cursor | 전역 RightRail SSOT 정리 (헤더/route default rail) | P-1 후 |
+| **P-3** | Lovable | Dice/Crash/Mines/Plinko/Limbo LAYOUT-L 패턴 일괄 복제 | P-2 후 |
 
-### 신규 파일 1개
+- Golden Loop **1 PR 원칙** → K와 P-0 병렬 금지, 순차 진행.
+- 게임 라운드 L-1(Crash) 와 LAYOUT-L 이름 분리 유지.
 
-**`src/features/games/wheel/WheelLegend.tsx`** (memo)
+---
 
-- props: `risk: WheelRisk`, `segments: WheelSegments`
-- `useMemo`: `WheelEngine`의 멀티플라이어 배열 생성 함수를 호출 → `Map<multiplier, count>` 집계 → 멀티 오름차순 정렬
-- 색 매핑 (기존 `WheelDisplay` 토큰 재사용):
-  - `0×` → `--color-muted`
-  - `low band` → `--color-cyan`
-  - `medium band` → `--color-gold`
-  - `high band (≥3×)` → `--color-rose`
-- 렌더: `flex flex-wrap gap-2`, 각 칩 = `glass-2` + 색 도트(`size-2 rounded-full`) + `{mult}× ×{count}`
-- 모바일 `flex-wrap`, 반응형 패딩
+## 2. Cursor P-0 결과물 계약 (v2.1)
 
-### 수정 1개
+### 2.1 브레이크포인트 SSOT — 1024 단일 기준
 
-**`src/features/games/wheel/WheelScreen.tsx`**
+```ts
+// src/shared/hooks/useDesktopLayout.ts  (신규)
+export function useDesktopLayout(): boolean;  // min-width 1024px
+```
 
-- `import { WheelLegend }` 추가
-- `historyStrip` 또는 `displayArea` 하단에 `<WheelLegend risk={risk} segments={segments} />` 1줄 삽입
-- 위치: `WheelDisplay` 바로 아래, `WheelControls` 위 (시각적 흐름: 휠 → 색 의미 → 조작)
-- 그 외 로직/레이아웃 0 diff
+- 앱 셸/게임 분기는 **반드시** `useDesktopLayout()` 또는 Tailwind `lg:`.
+- `useIsMobile` (768) 은 shadcn Sidebar 내부 Sheet 전환용으로 격리.
+- SSR/hydration: 초기값 `false` + `useEffect` matchMedia 구독.
+- **FOUC 완화**: 셸 마크업은 `lg:` CSS grid + `hidden lg:flex` 병행 (hook 분기 보조).
+- vitest 2개 (true/false matchMedia mock).
 
-## 절대 미접촉
+### 2.2 셸 + Sidebar (단일화)
 
-- `WheelEngine.ts` (배당 배열 생성 함수만 import, 0 diff)
-- `persistedGameState.ts`
-- `WheelDisplay.tsx`, `WheelControls.tsx` (props 변경 없음)
-- 다른 게임 화면 / `styles.css` / `gameRules.ts`
-- `supabase/` / `src/integrations/supabase/types.ts` / `src/lib/api/`
+```
+src/shared/layout/
+  DesktopShell.tsx
+  ResponsiveShell.tsx
+  AppSidebar.tsx   # shadcn primitives wrapper, SSOT 1파일 (이중화 금지)
+```
 
-## SSOT 준수
+- `@theme` 토큰: `--sidebar-width: 240px`, `--sidebar-width-icon: 60px`, `--rightrail-width: 320px`.
+- 너비 클래스 `w-[var(--sidebar-width)]` 형태 (Tailwind v4 함정).
+- `BottomNav`: `< lg` 에서만 렌더.
 
-- raw tailwind 팔레트 (`bg-cyan-400`, `text-white/40` 등) 절대 금지
-- `glass-2` + `color-mix(in oklab, var(--color-*) X%, transparent)` 만 사용
-- 색 도트는 CSS variable inline style 허용 (도트 색이 동적이므로)
+### 2.3 RightRail 주입 — Context + register SSOT (v2.1 강화)
 
-## 테스트
+```ts
+// src/shared/layout/GameLayoutContext.tsx  (신규)
+// 매 렌더 새 JSX 전달로 인한 Context update loop 방지.
+// register 패턴 SSOT — Lovable LAYOUT-L 은 이 시그니처를 그대로 사용.
+export function useRegisterRightRail(
+  key: string,                          // 게임 식별자 (e.g. "wheel")
+  render: () => ReactNode,              // 렌더 함수 (참조 안정성 책임은 호출자)
+  deps: ReadonlyArray<unknown>,         // useEffect deps 와 동일 의미
+): void;
+```
 
-신규 테스트 없음 (순수 표시 컴포넌트, 로직은 기존 엔진 재사용).
-필요 시 ROUND K+ 에서 스냅샷 1개 추가 검토.
+- 마운트 시 등록 / 언마운트 시 자동 cleanup.
+- `< lg` 에서는 no-op.
+- DesktopShell 내부 Provider 가 등록된 render() 호출 → 우측 영역 렌더.
 
-## 게이트
+### 2.4 GameViewport 최소 훅
 
-- `bun run lint:strict` → 0 warn
-- `bun run check` → **105+ GREEN 유지** (현재 baseline 105)
-- 수동 QA:
-  1. risk Low/Med/High 전환 시 범례 즉시 갱신
-  2. segments 10/20/30 전환 시 칩 개수 합 = segments
-  3. 모바일 360px 폭에서 wrap 정상
-  4. 0× 칩이 항상 좌측 (정렬 확인)
+```ts
+// src/shared/layout/useGameViewport.ts  (신규)
+export function useGameViewport(): { width: number; height: number };
+```
 
-## Cursor pull 감사 체크리스트
+- ResizeObserver 기반. Wheel 520px cap 동적 계산용.
+- P-3 canvas 게임 (Plinko/Crash) 연동은 별도 Cursor 서브태스크 예고.
 
-- [ ] `WheelEngine.ts` diff = 0
-- [ ] Dice/Crash/Mines/Plinko/Limbo/Lobby diff = 0
-- [ ] `WheelDisplay.tsx` / `WheelControls.tsx` diff = 0
-- [ ] `styles.css` diff = 0
-- [ ] `gameRules.ts` diff = 0
-- [ ] `persistedGameState.ts` diff = 0
-- [ ] raw tailwind 팔레트 0 occurrence (`rg "bg-(cyan|gold|rose)-\d"`)
-- [ ] `lint:strict` 0 + `check` 105+
+### 2.5 P-0 게이트
 
-## Files
+- vitest GREEN (useDesktopLayout 2개 + 회귀 100+).
+- `lint:strict` 0.
+- 모바일 (< 1024) 시각 회귀 0.
+- **125% OS 배율** (실효 ~819px) → 모바일 셸로 정상 폴백.
+- 게임 파일 0 diff.
 
-- **Created**: `src/features/games/wheel/WheelLegend.tsx`
-- **Modified**: `src/features/games/wheel/WheelScreen.tsx`
+---
 
-## 다음 라운드
+## 3. LAYOUT-L — Wheel 데스크탑 파일럿 (Lovable)
 
-ROUND L — 사용자 정의 (게임 폴리시 또는 신규 게임 후보).
+### 3.1 목표
+
+- `< 1024px` → `WheelScreen` 0 diff.
+- `≥ 1024px` → 3컬럼 와이드. 로직 0 diff, 표시 계층만.
+
+### 3.2 레이아웃 (≥ lg)
+
+```text
+┌─────────┬───────────────────────────────┬──────────────┐
+│ Sidebar │   Center (max-w-[860px])      │  Right Rail  │
+│ (P-0)   │  WheelHeader (PF/룰)          │  Session     │
+│         │  HistoryPillStrip             │  Stats       │
+│         │  ┌──────────┬──────────────┐  │  ──────────  │
+│         │  │ Wheel    │  Controls    │  │  Wheel       │
+│         │  │ (≤520px) │  +Legend     │  │  LiveBets    │
+│         │  │          │  +BetPanel   │  │  (FOMO,      │
+│         │  └──────────┴──────────────┘  │   sticky)    │
+│         │  DemoLowBanner                │              │
+└─────────┴───────────────────────────────┴──────────────┘
+```
+
+- Wheel 크기 = `min(520, useGameViewport().width − 컨트롤폭)`.
+- "채팅" 표현 금지 — 우측 = `SessionStatsBar` + `LiveBetsFeed (FOMO)`.
+
+### 3.3 파일
+
+**신규**
+- `src/features/games/wheel/WheelDesktopLayout.tsx` — 슬롯 grid, 비즈 로직 0.
+- `src/features/games/wheel/WheelRightRail.tsx` — SessionStatsBar + Wheel LiveBets.
+
+**수정 1개**
+- `src/features/games/wheel/WheelScreen.tsx`
+  - `useDesktopLayout()` 분기 (Tailwind `lg:` 병행).
+  - 모바일/데스크탑 셸에 **동일 slot 노드** 전달.
+  - 데스크탑 분기: `useRegisterRightRail("wheel", useCallback(() => <WheelRightRail />, []), [])`.
+  - **모바일 하단 `<LiveBetsFeed game="wheel" />` 는 `!useDesktopLayout()` 조건부 렌더** — 데스크탑 중복 금지.
+
+### 3.4 절대 미접촉
+
+- `WheelEngine.ts`, `WheelDisplay.tsx`, `WheelControls.tsx`, `WheelLegend.tsx` — 0 diff.
+- 다른 게임/로비/스토어/PF/persistedGameState — 0 diff.
+- `supabase/`, `src/integrations/supabase/types.ts`, `src/lib/api/` — 금지.
+- `styles.css` — 0 diff.
+- `useIsMobile` — 호출 금지.
+
+### 3.5 SSOT 게이트
+
+- 색/글래스 = `@theme` + `glass-2/3`. raw tailwind palette 금지.
+- 모바일 동작/시각 100% 보존.
+- 사이드바 collapse 시 휠 비율 유지 (`useGameViewport`).
+- `register` 시그니처는 P-0 SSOT 그대로. `useCallback`로 render 참조 안정화.
+- `bun run lint:strict` 0 / `bun run check` GREEN.
+
+### 3.6 수동 QA
+
+1. `< 1024px` → 모바일 UI 픽셀 동일.
+2. `≥ 1024px` → 3컬럼 정상, 휠/컨트롤/라이브베팅 표시.
+3. 사이드바 collapse → 휠 자연스럽게 확장.
+4. 라운드 진행 (베팅→스핀→정산) 모바일/데스크탑 정상.
+5. 우측 LiveBets sticky 동작.
+6. 125% OS 배율 1280 → 데스크탑 셸 유지, 깨짐 없음.
+7. **`≥ 1024px` 에서 LiveBetsFeed 1 인스턴스만 (DOM 검증)** — 중복 FOMO/성능 회귀 차단.
+
+---
+
+## 4. P-3 일괄 적용 패턴
+
+`<GameDesktopLayout>` + `useRegisterRightRail` + `LiveBets desktop 단일 인스턴스` 패턴을 5개 게임에 복제. 엔진/스토어 0 diff. Canvas 게임(Plinko/Crash)은 P-3 직전 Cursor의 `useGameViewport ↔ canvas` 서브태스크 선행.
+
+---
+
+## 5. "Stake 압살" 범위 (정직)
+
+**달성**: PC 3열 패리티 + 모바일 0 회귀 + 게임 패턴 검증.
+**미달**: Realtime/채팅/real-money/게임 가짓수/브랜드 — 별 트랙.
+→ **Visual Parity Phase 1** 로 라벨링.
+
+---
+
+## 6. 다음 액션
+
+1. **Lovable**: 진행 중인 ROUND K(Dice) 완료 → merge GREEN.
+2. **Cursor**: P-0 (§2) 1 PR → vitest/lint/125% QA GREEN → merge.
+3. **Lovable**: P-0 merge 확인 → LAYOUT-L 빌드 모드 진입 → §3 구현.
+
+v2.1 GO 확정 — 승인 부탁드립니다.
