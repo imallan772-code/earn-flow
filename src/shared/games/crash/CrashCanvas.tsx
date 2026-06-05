@@ -5,6 +5,7 @@
  * Single RAF rule: subscribe to the shared tick loop, never call rAF directly.
  */
 import { useEffect, useRef } from "react";
+import { useReducedMotion } from "framer-motion";
 import { sharedTickLoop } from "@/shared/games/engine/tickLoop";
 import { multiplierAt, type Phase, BETTING_MS } from "./CrashEngine";
 
