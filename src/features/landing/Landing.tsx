@@ -128,9 +128,7 @@ export function Landing() {
             <Zap size={22} style={{ color: "var(--color-cyan)" }} />
             <div>
               <div className="text-sm font-semibold">3초 시작 · 직장인·주부·대학생 누구나</div>
-              <div className="text-xs text-(--color-muted)">
-                가입하자마자 첫 보상 떨어집니다
-              </div>
+              <div className="text-xs text-(--color-muted)">가입하자마자 첫 보상 떨어집니다</div>
             </div>
           </Premium3DCard>
           <Premium3DCard className="flex items-center gap-3 p-4" glow="gold">

@@ -121,9 +121,7 @@ function StaticPanel({
             {rtpLabel}
           </span>
         </span>
-        <span className="font-numeric text-(--color-rose)">
-          최대 손실 -{maxLoss.toFixed(2)}
-        </span>
+        <span className="font-numeric text-(--color-rose)">최대 손실 -{maxLoss.toFixed(2)}</span>
       </div>
     </div>
   );
@@ -301,9 +299,7 @@ function Cell({
         style={{ color }}
       >
         {value}
-        {unit && (
-          <span className="ml-1 text-[9px] font-bold text-muted-2">{unit}</span>
-        )}
+        {unit && <span className="ml-1 text-[9px] font-bold text-muted-2">{unit}</span>}
       </div>
     </div>
   );

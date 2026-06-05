@@ -82,9 +82,7 @@ export function LiveBetsFeed({ limit = 12, showHeader = true, game, className }:
 
       <ul className="flex flex-col">
         {view.length === 0 ? (
-          <li className="py-4 text-center text-[11px] text-muted-2">
-            베팅 대기 중...
-          </li>
+          <li className="py-4 text-center text-[11px] text-muted-2">베팅 대기 중...</li>
         ) : (
           view.map((b) => <LiveBetRow key={b.id} bet={b} />)
         )}

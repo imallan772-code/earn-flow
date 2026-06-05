@@ -41,11 +41,7 @@ export function GameRulesCard({ rules, onVerify }: Props) {
         <span className="flex items-center gap-2 text-xs font-bold">
           <BookOpen size={14} className="text-(--color-cyan)" />
           <span>게임 룰 · {rules.name}</span>
-          {!open && (
-            <span className="text-[10px] font-normal text-muted-2">
-              (펼쳐서 보기)
-            </span>
-          )}
+          {!open && <span className="text-[10px] font-normal text-muted-2">(펼쳐서 보기)</span>}
         </span>
         <ChevronDown
           size={16}

@@ -90,10 +90,7 @@ function OnboardingFlow() {
         </div>
         <div className="glass-1 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5">
           <Sparkles size={14} style={{ color: "var(--color-gold)" }} />
-          <CountUp
-            value={balanceView}
-            className="font-numeric text-sm font-bold text-gold"
-          />
+          <CountUp value={balanceView} className="font-numeric text-sm font-bold text-gold" />
           <span className="text-[10px] text-(--color-muted)">PHON</span>
         </div>
       </div>

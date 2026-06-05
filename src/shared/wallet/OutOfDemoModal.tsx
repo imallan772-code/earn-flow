@@ -70,9 +70,7 @@ export function OutOfDemoModal() {
         </div>
 
         <div className="mb-3 rounded-xl border border-[color-mix(in_oklab,var(--color-gold)_30%,transparent)] bg-[color-mix(in_oklab,var(--color-gold)_8%,transparent)] p-3 text-center">
-          <div className="text-[11px] uppercase tracking-wider text-gold">
-            첫 입금 보너스
-          </div>
+          <div className="text-[11px] uppercase tracking-wider text-gold">첫 입금 보너스</div>
           <div className="font-numeric text-xl font-extrabold text-gold">+100%</div>
           <div className="text-[10px] text-muted-2">최대 200,000원까지 매칭</div>
         </div>

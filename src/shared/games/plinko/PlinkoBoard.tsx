@@ -192,9 +192,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
               disabled={phase !== "idle"}
               className={cn(
                 "flex-1 rounded-lg py-1.5 text-[11px] font-bold uppercase tracking-wider transition disabled:opacity-50",
-                risk === r
-                  ? "bg-(--color-cyan) text-(--color-bg-0)"
-                  : "text-(--color-muted)",
+                risk === r ? "bg-(--color-cyan) text-(--color-bg-0)" : "text-(--color-muted)",
               )}
             >
               {RISK_LABEL[r]}
@@ -209,9 +207,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
               disabled={phase !== "idle"}
               className={cn(
                 "flex-1 rounded-lg py-1.5 text-[11px] font-bold transition disabled:opacity-50",
-                rows === n
-                  ? "bg-(--color-cyan) text-(--color-bg-0)"
-                  : "text-(--color-muted)",
+                rows === n ? "bg-(--color-cyan) text-(--color-bg-0)" : "text-(--color-muted)",
               )}
             >
               {n}줄

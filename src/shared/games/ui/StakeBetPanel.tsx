@@ -144,9 +144,7 @@ export function StakeBetPanel({
               onClick={() => setTab(t)}
               className={cn(
                 "rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
-                tab === t
-                  ? "bg-(--color-cyan) text-(--color-bg-0)"
-                  : "text-(--color-muted)",
+                tab === t ? "bg-(--color-cyan) text-(--color-bg-0)" : "text-(--color-muted)",
               )}
             >
               {t === "manual" ? "수동" : "자동"}
@@ -158,14 +156,10 @@ export function StakeBetPanel({
       {/* AUTO HUD */}
       {effectiveTab === "auto" && autoRunning && autoState && (
         <div className="glass-1 flex items-center justify-between rounded-xl px-3 py-2 text-[11px]">
-          <span className="font-bold uppercase tracking-wider text-(--color-cyan)">
-            ● AUTO
-          </span>
+          <span className="font-bold uppercase tracking-wider text-(--color-cyan)">● AUTO</span>
           <span className="text-(--color-muted)">
             라운드{" "}
-            <span className="font-numeric text-(--color-foreground)">
-              {autoState.betsPlaced}
-            </span>
+            <span className="font-numeric text-(--color-foreground)">{autoState.betsPlaced}</span>
             {cfg.numberOfBets > 0 ? ` / ${cfg.numberOfBets}` : " / ∞"}
           </span>
           <span

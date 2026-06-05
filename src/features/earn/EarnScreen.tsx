@@ -70,9 +70,7 @@ export function EarnScreen() {
             <div className="flex-1">
               <div className="text-xs text-(--color-muted)">연속 출석</div>
               <div className="text-lg font-extrabold">{userBalance.streakDays}일 째 🔥</div>
-              <div className="mt-0.5 text-[11px] text-gold">
-                7일마다 +500,000 PHON 보너스
-              </div>
+              <div className="mt-0.5 text-[11px] text-gold">7일마다 +500,000 PHON 보너스</div>
             </div>
             <UrgencyBadge text="TOP 0.01%" variant="hot" />
           </Premium3DCard>
@@ -135,9 +133,7 @@ export function EarnScreen() {
                         받기
                       </button>
                     )}
-                    {claimed && (
-                      <span className="text-[10px] text-emerald">수령 완료</span>
-                    )}
+                    {claimed && <span className="text-[10px] text-emerald">수령 완료</span>}
                   </div>
                 </Premium3DCard>
               );
@@ -150,9 +146,7 @@ export function EarnScreen() {
             </div>
             <div className="flex-1">
               <div className="text-sm font-semibold">오늘의 미스터리 박스</div>
-              <div className="text-[11px] text-(--color-muted)">
-                최대 3,000,000 PHON · 일일 1회
-              </div>
+              <div className="text-[11px] text-(--color-muted)">최대 3,000,000 PHON · 일일 1회</div>
             </div>
             <button
               onClick={() => {

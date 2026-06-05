@@ -48,9 +48,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-dvh items-center justify-center bg-cosmic px-4">
       <div className="glass-3 max-w-sm rounded-3xl p-8 text-center shadow-depth-3">
         <h1 className="text-lg font-semibold">잠시 문제가 생겼어요</h1>
-        <p className="mt-1.5 text-sm text-(--color-muted)">
-          다시 시도하거나 홈으로 돌아가 주세요.
-        </p>
+        <p className="mt-1.5 text-sm text-(--color-muted)">다시 시도하거나 홈으로 돌아가 주세요.</p>
         <div className="mt-5 flex justify-center gap-2">
           <button
             onClick={() => {
@@ -133,7 +131,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ModeProvider>
-          <LazyMotion features={domAnimation} strict>
+          <LazyMotion features={domAnimation}>
             <Outlet />
             <OutOfDemoModal />
             <Toaster

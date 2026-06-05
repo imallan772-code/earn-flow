@@ -65,9 +65,7 @@ export function PlinkoCanvasView({
           <div
             className={cn(
               "font-numeric text-sm font-extrabold leading-tight",
-              lastOutcome.outcome === "win"
-                ? "text-emerald"
-                : "text-(--color-rose)",
+              lastOutcome.outcome === "win" ? "text-emerald" : "text-(--color-rose)",
             )}
           >
             {lastOutcome.outcome === "win" ? "+" : ""}

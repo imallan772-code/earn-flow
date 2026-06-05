@@ -94,9 +94,7 @@ export function EventDetail({ id }: { id: string }) {
           <span className="flex items-center gap-1 text-(--color-muted)">
             <Users size={12} />
             <span className="font-numeric">{e.participants.toLocaleString()}</span>명 참여
-            {e.cap && (
-              <span className="text-muted-2"> / {e.cap.toLocaleString()}</span>
-            )}
+            {e.cap && <span className="text-muted-2"> / {e.cap.toLocaleString()}</span>}
           </span>
           <span className="font-numeric font-bold">{pct}%</span>
         </div>
@@ -110,9 +108,7 @@ export function EventDetail({ id }: { id: string }) {
 
       <div className="glass-2 rounded-2xl p-4">
         <h2 className="mb-2 text-sm font-bold">이벤트 안내</h2>
-        <p className="whitespace-pre-wrap text-sm leading-relaxed text-(--color-muted)">
-          {e.body}
-        </p>
+        <p className="whitespace-pre-wrap text-sm leading-relaxed text-(--color-muted)">{e.body}</p>
       </div>
 
       {leaderboard.length > 0 && (
@@ -136,9 +132,7 @@ export function EventDetail({ id }: { id: string }) {
                   {row.rank}
                 </span>
                 <span className="flex-1 truncate">{row.nickname}</span>
-                <span className="font-numeric text-xs font-bold text-emerald">
-                  +{row.score}%
-                </span>
+                <span className="font-numeric text-xs font-bold text-emerald">+{row.score}%</span>
               </li>
             ))}
           </ul>

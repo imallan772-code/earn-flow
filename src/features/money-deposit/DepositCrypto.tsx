@@ -53,9 +53,7 @@ export function DepositCrypto() {
               ))}
             </div>
           </div>
-          <div className="text-[10px] font-semibold text-(--color-muted)">
-            입금 주소 (mock)
-          </div>
+          <div className="text-[10px] font-semibold text-(--color-muted)">입금 주소 (mock)</div>
           <div
             className="mt-1 flex w-full items-center justify-between gap-2 rounded-2xl border px-3 py-2.5"
             style={{

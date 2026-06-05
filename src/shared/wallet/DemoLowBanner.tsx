@@ -32,9 +32,7 @@ export function DemoLowBanner() {
         <div className="text-[11px] font-bold text-gold">
           데모 크레딧 {balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}원 남음
         </div>
-        <div className="text-[10px] text-muted-2">
-          리얼로 전환 시 첫 입금 보너스 100%
-        </div>
+        <div className="text-[10px] text-muted-2">리얼로 전환 시 첫 입금 보너스 100%</div>
       </div>
       <ArrowRight size={14} className="shrink-0 text-gold" />
     </button>

@@ -21,9 +21,7 @@ export function DepositHub() {
 
         {/* FOMO 상단 배너 — 거래소 톤이지만 이벤트는 표시 */}
         <div className="glass-1 mb-4 flex items-center gap-2 rounded-2xl px-3 py-2.5 text-xs">
-          <span className="text-gold font-semibold">
-            🎁 오늘 입금 시 +10% 보너스
-          </span>
+          <span className="text-gold font-semibold">🎁 오늘 입금 시 +10% 보너스</span>
           <span className="text-(--color-muted)">— 24시간 한정</span>
         </div>
 

@@ -245,9 +245,7 @@ export function MinesScreen() {
                 {h.multiplier.toFixed(2)}x
               </li>
             ))}
-            {history.length === 0 && (
-              <li className="text-[11px] text-muted-2">아직 라운드 없음</li>
-            )}
+            {history.length === 0 && <li className="text-[11px] text-muted-2">아직 라운드 없음</li>}
           </ul>
         }
         displayArea={

@@ -219,9 +219,7 @@ function AuthShellForm({ mode }: Props) {
         )}
         {tab === "google" && (
           <div className="glass-2 rounded-2xl p-5 text-center text-sm text-(--color-muted)">
-            <div className="font-semibold text-(--color-foreground)">
-              구글 계정으로 계속하기
-            </div>
+            <div className="font-semibold text-(--color-foreground)">구글 계정으로 계속하기</div>
             <div className="mt-1 text-xs">OAuth 연동 준비 중 — 이메일로 가입해 주세요</div>
           </div>
         )}

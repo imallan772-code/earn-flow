@@ -19,9 +19,7 @@ export function WithdrawalHub() {
           <PremiumPageHeader eyebrow="💸 출금" title="출금 방식" />
         </div>
         <div className="glass-1 mb-4 flex items-center gap-2 rounded-2xl px-3 py-2.5 text-xs">
-          <span className="text-gold font-semibold">
-            🏆 VIP Gold I — 출금 수수료 50% 할인
-          </span>
+          <span className="text-gold font-semibold">🏆 VIP Gold I — 출금 수수료 50% 할인</span>
         </div>
         <div className="space-y-2.5">
           <MoneyChannelCard

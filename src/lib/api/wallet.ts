@@ -17,7 +17,11 @@ function parseBalance(data: unknown): WalletBalance | null {
 }
 
 async function callWalletRpc(
-  rpcName: "debit_phon_for_bet" | "credit_phon_for_payout" | "debit_phon_for_bet_v2" | "credit_phon_for_payout_v2",
+  rpcName:
+    | "debit_phon_for_bet"
+    | "credit_phon_for_payout"
+    | "debit_phon_for_bet_v2"
+    | "credit_phon_for_payout_v2",
   input: { amount: number; game: string; roundId: string },
 ) {
   const supabase = getSupabaseClient();
