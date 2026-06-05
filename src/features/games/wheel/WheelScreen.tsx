@@ -188,7 +188,9 @@ export function WheelScreen() {
   const segPaths = useMemo(() => buildSegmentPaths(segArray.length), [segArray.length]);
   const avgMult = useMemo(() => expectedMultiplier(risk, segments), [risk, segments]);
   const resultMult =
-    resultIndex != null ? multiplierAt(active?.risk ?? risk, active?.segments ?? segments, resultIndex) : null;
+    resultIndex != null
+      ? multiplierAt(active?.risk ?? risk, active?.segments ?? segments, resultIndex)
+      : null;
 
   return (
     <div className="flex flex-col gap-2">
@@ -234,22 +236,15 @@ export function WheelScreen() {
                 {h.multiplier.toFixed(2)}x
               </li>
             ))}
-            {history.length === 0 && (
-              <li className="text-[11px] text-muted-2">아직 라운드 없음</li>
-            )}
+            {history.length === 0 && <li className="text-[11px] text-muted-2">아직 라운드 없음</li>}
           </ul>
         }
         displayArea={
           <div className="glass-2 grid place-items-center rounded-2xl p-3">
             <div className="relative" style={{ width: WHEEL_SIZE, height: WHEEL_SIZE }}>
               {/* 포인터 — 12시 고정 */}
-              <div
-                className="absolute left-1/2 top-0 z-10 -translate-x-1/2"
-                aria-hidden
-              >
-                <div
-                  className="h-3 w-3 -translate-y-1 rotate-45 rounded-sm bg-gold shadow-glow-gold"
-                />
+              <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2" aria-hidden>
+                <div className="h-3 w-3 -translate-y-1 rotate-45 rounded-sm bg-gold shadow-glow-gold" />
               </div>
               <m.svg
                 width={WHEEL_SIZE}
@@ -285,9 +280,7 @@ export function WheelScreen() {
                     className="font-numeric text-2xl font-extrabold"
                     style={{
                       color:
-                        resultMult != null
-                          ? colorForMult(resultMult)
-                          : "var(--color-foreground)",
+                        resultMult != null ? colorForMult(resultMult) : "var(--color-foreground)",
                     }}
                   >
                     {resultMult != null
@@ -315,9 +308,7 @@ export function WheelScreen() {
                     disabled={!round.isIdle}
                     className={cn(
                       "rounded-lg px-2 py-1.5 text-[11px] font-bold uppercase tracking-wider transition disabled:opacity-50",
-                      risk === r
-                        ? "bg-(--color-cyan) text-(--color-bg-0)"
-                        : "text-(--color-muted)",
+                      risk === r ? "bg-(--color-cyan) text-(--color-bg-0)" : "text-(--color-muted)",
                     )}
                   >
                     {r === "low" ? "낮음" : r === "medium" ? "보통" : "높음"}

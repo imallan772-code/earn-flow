@@ -209,9 +209,7 @@ export function LimboScreen() {
                 {h.crashPoint.toFixed(2)}x
               </li>
             ))}
-            {history.length === 0 && (
-              <li className="text-[11px] text-muted-2">아직 라운드 없음</li>
-            )}
+            {history.length === 0 && <li className="text-[11px] text-muted-2">아직 라운드 없음</li>}
           </ul>
         }
         displayArea={
@@ -337,8 +335,9 @@ export function LimboScreen() {
               </FairRow>
             </dl>
             <p className="mt-4 text-[10px] leading-relaxed text-(--color-muted)">
-              결과 배수 = floor((100 − u) / (1 − u)) / 100, u = floatFromBytes(HMAC-SHA256(serverSeed,
-              &quot;clientSeed:nonce:0&quot;)). 동일 시드/라운드에 대해 항상 같은 결과가 나옵니다.
+              결과 배수 = floor((100 − u) / (1 − u)) / 100, u =
+              floatFromBytes(HMAC-SHA256(serverSeed, &quot;clientSeed:nonce:0&quot;)). 동일
+              시드/라운드에 대해 항상 같은 결과가 나옵니다.
             </p>
           </div>
         </div>

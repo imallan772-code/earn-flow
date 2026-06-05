@@ -48,11 +48,7 @@ export function getSegments(risk: WheelRisk, segments: WheelSegments): readonly 
   return TABLE[risk][segments];
 }
 
-export function multiplierAt(
-  risk: WheelRisk,
-  segments: WheelSegments,
-  index: number,
-): number {
+export function multiplierAt(risk: WheelRisk, segments: WheelSegments, index: number): number {
   const arr = getSegments(risk, segments);
   if (arr.length === 0) return 0;
   const safeIdx = Math.max(0, Math.min(arr.length - 1, Math.floor(index)));
@@ -60,10 +56,7 @@ export function multiplierAt(
 }
 
 /** PF 기반 인덱스 추첨. 결과 ∈ [0, segments). */
-export async function spin(
-  input: ProvablyFairInput,
-  segments: WheelSegments,
-): Promise<number> {
+export async function spin(input: ProvablyFairInput, segments: WheelSegments): Promise<number> {
   const bytes = await bytesGenerator(input, 0);
   const u = floatFromBytes(bytes, 0);
   const idx = Math.floor(u * segments);
