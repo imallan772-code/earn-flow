@@ -27,6 +27,6 @@ Connected project: **phonara-gb** (`https://kanftnqenuzverroodev.supabase.co`)
 
 - `profiles` — nickname, referral, VIP, onboarding state (RLS: own row)
 - `wallet_balances` — PHON / USDT / KRW (RLS: own row)
-- `complete_onboarding_step` RPC — server-authoritative onboarding rewards (1000+500+200+100 PHON)
+- `complete_onboarding_step` RPC — server-authoritative onboarding rewards (5000+2500+1500+1000 = 10,000 PHON)
 
 Migrations live in `supabase/migrations/`.

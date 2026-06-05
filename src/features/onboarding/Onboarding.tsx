@@ -13,10 +13,10 @@ import { useAuth } from "@/features/auth/AuthContext";
 import { useProfile } from "@/features/profile/useProfile";
 
 const STEPS = [
-  { reward: 1000, title: "탭하여 1,000 PHON 받기", caption: "지금 8,420명이 받는 중" },
-  { reward: 500, title: "닉네임 입력 +500 PHON", caption: "기억하기 쉬운 이름이 좋아요" },
-  { reward: 200, title: "추천코드 복사 +200 PHON", caption: "친구에게 공유하면 추가 5,000 PHON" },
-  { reward: 100, title: "오늘 출석 불꽃 +100 PHON", caption: "내일도 들어오면 스트릭 시작!" },
+  { reward: 5000, title: "탭하여 5,000 PHON 받기", caption: "지금 8,420명이 받는 중" },
+  { reward: 2500, title: "닉네임 입력 +2,500 PHON", caption: "기억하기 쉬운 이름이 좋아요" },
+  { reward: 1500, title: "추천코드 복사 +1,500 PHON", caption: "친구에게 공유하면 추가 5,000 PHON" },
+  { reward: 1000, title: "오늘 출석 불꽃 +1,000 PHON", caption: "내일도 들어오면 스트릭 시작!" },
 ];
 
 export function Onboarding() {
@@ -128,7 +128,7 @@ function OnboardingFlow() {
                 disabled={nickname.length < 2 || submitting}
                 className="flex h-14 w-full items-center justify-center rounded-2xl bg-holographic text-base font-bold text-(--color-bg-0) shadow-glow-purple disabled:opacity-50"
               >
-                저장하고 +500 PHON
+                저장하고 +2,500 PHON
               </button>
             </div>
           )}
@@ -147,7 +147,7 @@ function OnboardingFlow() {
                 disabled={submitting}
                 className="mt-4 inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-holographic px-6 font-bold text-(--color-bg-0) shadow-glow-pink disabled:opacity-60"
               >
-                <Copy size={16} /> 복사하고 +200 PHON
+                <Copy size={16} /> 복사하고 +1,500 PHON
               </button>
             </div>
           )}

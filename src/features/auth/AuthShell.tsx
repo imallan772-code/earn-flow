@@ -104,7 +104,7 @@ function AuthShellForm({ mode }: Props) {
 
       <div className="mt-6">
         <div className="text-xs font-semibold uppercase tracking-wider text-cyan">
-          {isSignup ? "🚀 1,800 PHON 첫 보상 대기 중" : "👋 다시 오신 걸 환영해요"}
+          {isSignup ? "🚀 10,000 PHON 첫 보상 대기 중" : "👋 다시 오신 걸 환영해요"}
         </div>
         <h1 className="mt-2 text-3xl font-extrabold leading-tight">
           {isSignup ? (
@@ -229,11 +229,11 @@ function AuthShellForm({ mode }: Props) {
         disabled={submitting}
         className="mt-5 flex h-14 w-full items-center justify-center rounded-2xl bg-holographic text-base font-extrabold text-bg-0 shadow-glow-purple disabled:opacity-60"
       >
-        {submitting ? "연결 중..." : isSignup ? "지금 시작하고 1,800 PHON 받기" : "로그인"}
+        {submitting ? "연결 중..." : isSignup ? "지금 시작하고 10,000 PHON 받기" : "로그인"}
       </button>
 
       <Link to={isSignup ? "/login" : "/signup"} className="mt-4 text-center text-xs text-muted">
-        {isSignup ? "이미 계정이 있나요? 로그인" : "처음이신가요? 가입하고 1,800 PHON"}
+        {isSignup ? "이미 계정이 있나요? 로그인" : "처음이신가요? 가입하고 10,000 PHON"}
       </Link>
 
       <style>{`
