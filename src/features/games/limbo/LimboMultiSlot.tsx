@@ -41,7 +41,11 @@ export const LimboMultiSlot = memo(function LimboMultiSlot({
       {slots.map((s) => {
         const isActive = s.slot === activeSlot;
         const lastOutcome = s.lastOutcome
-          ? { outcome: s.lastOutcome.outcome, profit: s.lastOutcome.profit, nonce: s.lastOutcome.nonce }
+          ? {
+              outcome: s.lastOutcome.outcome,
+              profit: s.lastOutcome.profit,
+              nonce: s.lastOutcome.nonce,
+            }
           : null;
         return (
           <div key={s.slot} className="flex flex-col gap-2">

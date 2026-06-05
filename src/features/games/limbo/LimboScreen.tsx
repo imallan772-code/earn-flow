@@ -87,7 +87,9 @@ export function LimboScreen() {
   const rounds = [round0, round1] as const;
 
   const [resultCrash, setResultCrash] = useState<[number | null, number | null]>([null, null]);
-  const [recentResult, setRecentResult] = useState<{ slot: 0 | 1; result: SlotResult } | null>(null);
+  const [recentResult, setRecentResult] = useState<{ slot: 0 | 1; result: SlotResult } | null>(
+    null,
+  );
   const settledRefs = [useRef(false), useRef(false)] as const;
   const restoredRef = useRef(false);
   const [commit, setCommit] = useState("");
@@ -262,7 +264,8 @@ export function LimboScreen() {
     [],
   );
   const setActiveSlot = useCallback(
-    (slot: 0 | 1) => limboStore.set((s) => (s.activeSlot === slot ? s : { ...s, activeSlot: slot })),
+    (slot: 0 | 1) =>
+      limboStore.set((s) => (s.activeSlot === slot ? s : { ...s, activeSlot: slot })),
     [],
   );
 
@@ -358,9 +361,7 @@ export function LimboScreen() {
     {
       label: "서버 시드 (해시)",
       content: (
-        <code className="break-all text-[10px] text-(--color-cyan)">
-          {commit || "로딩 중..."}
-        </code>
+        <code className="break-all text-[10px] text-(--color-cyan)">{commit || "로딩 중..."}</code>
       ),
       copyText: commit || undefined,
     },
@@ -383,9 +384,7 @@ export function LimboScreen() {
     },
     {
       label: "다음 픽 승률",
-      content: (
-        <code className="font-numeric text-(--color-cyan)">{winPct.toFixed(2)}%</code>
-      ),
+      content: <code className="font-numeric text-(--color-cyan)">{winPct.toFixed(2)}%</code>,
     },
   ];
 
@@ -470,11 +469,7 @@ export function LimboScreen() {
                 ctx.fillText(recentResult.result.won ? "LIMBO WIN" : "LIMBO LOSS", w / 2, 60);
                 ctx.fillStyle = "#fff";
                 ctx.font = "bold 36px system-ui";
-                ctx.fillText(
-                  `${recentResult.result.mult.toFixed(2)}x`,
-                  w / 2,
-                  h / 2 + 8,
-                );
+                ctx.fillText(`${recentResult.result.mult.toFixed(2)}x`, w / 2, h / 2 + 8);
                 ctx.font = "16px system-ui";
                 ctx.fillText(
                   `#${recentResult.result.nonce}  ${recentResult.result.profit >= 0 ? "+" : ""}${recentResult.result.profit.toFixed(2)}`,

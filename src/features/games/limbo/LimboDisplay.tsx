@@ -86,24 +86,22 @@ export const LimboDisplay = memo(function LimboDisplay({
           initial={{ opacity: 0.6 }}
           animate={{ opacity: [0.6, 1, 0.6] }}
           transition={{ duration: 0.7, repeat: Infinity }}
-          className={cn("font-numeric mt-0.5 text-4xl font-extrabold tabular-nums text-(--color-cyan)")}
+          className={cn(
+            "font-numeric mt-0.5 text-4xl font-extrabold tabular-nums text-(--color-cyan)",
+          )}
         >
           ···
         </m.div>
       ) : (
         <m.span
-          className={cn(
-            "font-numeric mt-0.5 text-4xl font-extrabold tabular-nums",
-            displayColor,
-          )}
+          className={cn("font-numeric mt-0.5 text-4xl font-extrabold tabular-nums", displayColor)}
         >
           {text}
         </m.span>
       )}
       <div className="mt-2 flex items-center gap-1 text-[10px] text-(--color-muted)">
         <TrendingUp size={11} className="text-(--color-cyan)" />
-        목표{" "}
-        <span className="font-numeric font-extrabold text-gold">{target.toFixed(2)}x</span>
+        목표 <span className="font-numeric font-extrabold text-gold">{target.toFixed(2)}x</span>
       </div>
     </button>
   );

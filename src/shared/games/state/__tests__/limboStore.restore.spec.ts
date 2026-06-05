@@ -100,10 +100,7 @@ describe("limboStore.activeRounds — per-slot lifecycle", () => {
         { nonce: 49, amount: 1, target: 2, liveBetId: "x", placedAt: 0, slot: 0 },
         null,
       ],
-      lastOutcomeBySlot: [
-        { outcome: "win", profit: 1, nonce: 48, crashPoint: 3, target: 2 },
-        null,
-      ],
+      lastOutcomeBySlot: [{ outcome: "win", profit: 1, nonce: 48, crashPoint: 3, target: 2 }, null],
     }));
 
     // simulated apply seed
