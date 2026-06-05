@@ -36,6 +36,8 @@ export interface DicePersisted {
   target: number;
   diceMode: "over" | "under";
   pendingAmount: number;
+  /** PF 클라이언트 시드. PF 모달에서 변경 가능. ROUND K 추가 — version=2 유지(머지). */
+  clientSeed: string;
 }
 export const diceStore = createGameStore<DicePersisted>(
   "dice",
@@ -47,6 +49,7 @@ export const diceStore = createGameStore<DicePersisted>(
     target: 50,
     diceMode: "over",
     pendingAmount: 10,
+    clientSeed: "phonara-player-001",
   },
   2,
 );

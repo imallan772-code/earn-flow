@@ -1,8 +1,11 @@
 /**
  * DiceResultDisplay — Stake/Roobet style result canvas. No 3D cube, no timer.
  * Big number is the truth; meta on the right shows multiplier / target / win%.
+ *
+ * ROUND K: settled bounce via LazyMotion + useReducedMotion. 폴백 animate-result-pop.
  */
 import { useEffect, useRef, useState } from "react";
+import { LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { DiceMode } from "./DiceEngine";
 
@@ -29,6 +32,7 @@ export function DiceResultDisplay({
 }: Props) {
   const [shuffle, setShuffle] = useState<number | null>(null);
   const rafRef = useRef<number | null>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (phase !== "rolling") {
@@ -74,6 +78,8 @@ export function DiceResultDisplay({
           : "패배"
         : "베팅 대기 중";
 
+  const settledBounceKey = `${phase}-${rollValue}`;
+
   return (
     <div
       className={cn(
@@ -99,26 +105,33 @@ export function DiceResultDisplay({
         <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-(--color-muted)">
           {label}
         </div>
-        <div
-          key={`${phase}-${rollValue}`}
-          className={cn(
-            "font-numeric text-[60px] font-black leading-none tabular-nums transition-colors",
-            phase === "settled" && "animate-result-pop",
-          )}
-          style={{
-            color,
-            textShadow:
-              outcome === "win"
-                ? "0 0 32px color-mix(in oklab, var(--color-emerald) 60%, transparent)"
-                : outcome === "loss"
-                  ? "0 0 32px color-mix(in oklab, var(--color-rose) 60%, transparent)"
-                  : phase === "rolling"
-                    ? "0 0 22px color-mix(in oklab, var(--color-cyan) 50%, transparent)"
-                    : "none",
-          }}
-        >
-          {display}
-        </div>
+        <LazyMotion features={domAnimation} strict>
+          <m.div
+            key={settledBounceKey}
+            initial={false}
+            animate={
+              phase === "settled" && !prefersReducedMotion ? { scale: [1, 1.08, 1] } : { scale: 1 }
+            }
+            transition={{ duration: 0.36, ease: "easeOut" }}
+            className={cn(
+              "font-numeric text-[60px] font-black leading-none tabular-nums transition-colors",
+              phase === "settled" && prefersReducedMotion && "animate-result-pop",
+            )}
+            style={{
+              color,
+              textShadow:
+                outcome === "win"
+                  ? "0 0 32px color-mix(in oklab, var(--color-emerald) 60%, transparent)"
+                  : outcome === "loss"
+                    ? "0 0 32px color-mix(in oklab, var(--color-rose) 60%, transparent)"
+                    : phase === "rolling"
+                      ? "0 0 22px color-mix(in oklab, var(--color-cyan) 50%, transparent)"
+                      : "none",
+            }}
+          >
+            {display}
+          </m.div>
+        </LazyMotion>
       </div>
 
       <div className="relative flex flex-col items-end gap-1.5 text-right">

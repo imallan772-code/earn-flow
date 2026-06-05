@@ -69,6 +69,10 @@ export const DICE_RULES: GameRules = {
       title: "공정성 (Provably Fair)",
       body: "서버 시드 + 클라이언트 시드 + 라운드 번호로 HMAC-SHA256을 계산해 결과 숫자를 결정론적으로 산출합니다. 결과는 조작 불가능합니다.",
     },
+    {
+      title: "단축키",
+      body: "• Space: 베팅 · ↑/↓: 목표 ±1 · Shift+↑/↓: ±10 · O/U: 높게/낮게 · P: 공정성 · M: 음소거",
+    },
   ],
 };
 
