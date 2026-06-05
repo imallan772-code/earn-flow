@@ -26,33 +26,25 @@ real 모드에서 mid-round cancel(PF apply / unmount) 시 PHON이 Supabase RPC�
 
 ## L-2-pre — Limbo single-slot revert (Lovable, **before** L-2 PR2)
 
+Full spec: **[ROUND-L-2-PRE-LIMBO.md](ROUND-L-2-PRE-LIMBO.md)**
+
 **Why separate:** L-2 PR2 = 5-game cancel + StakeBetPanel (~3–4h). Limbo 구조 환원을 섞으면 diff·sanitation 추적이 어렵다.
 
-### Scope
+### Summary
 
 | Item | Action |
 |------|--------|
 | `LimboMultiSlot.tsx` | 삭제 |
-| `LimboScreen.tsx` | 단일 `StakeBetPanel` + Crash/Wheel 동형 |
-| `persistedGameState.ts` | `activeRound: ActiveLimboRound \| null` (drop `activeRounds`, `activeSlot`, `lastOutcomeBySlot`) |
-| Store version | bump + **legacy migrate** (see below) |
-| Specs | `limboStore.*.spec.ts` 단일 슬롯 시나리오로 재작성 |
-
-### Legacy 2-slot localStorage migrate (**money-safe — mandatory**)
-
-On hydrate/migrate when old shape has `activeRounds`:
-
-1. For **each** non-null slot → `void refund(amount, { game: 'limbo', roundId: \`n${nonce}\` })` (real) before clearing
-2. Fold state: prefer `activeRounds[0]` for `activeRound`; if `[1]` also active, refund `[1]` then discard (never silent forfeit)
-3. Drop multi-slot fields after migrate
-
-**Owner:** Lovable (store + screen). Real RPC already on `main` (PR1).
+| `LimboScreen.tsx` | 단일 `StakeBetPanel` |
+| `persistedGameState.ts` | `activeRound \| null`, limbo **v2** |
+| Legacy migrate | `pendingLegacyRefunds` → mount에서 `refund(..., { roundId: \`n${nonce}\` })` |
+| Specs | migrate + persist + restore 재작성 |
 
 ### L-2-pre gate
 
 - [ ] `bun run check` GREEN
 - [ ] No supabase / lib/api / types edits
-- [ ] Dual-slot UI gone; single panel only
+- [ ] Dual-slot UI gone
 
 ---
 
@@ -86,7 +78,7 @@ On hydrate/migrate when old shape has `activeRounds`:
 
 ## PR2 — Lovable (`lovable/l-2-cancel-paths`)
 
-**Prerequisite:** PR1 on `main` · **L-2-pre merged** · read [`docs/CURSOR_AUDIT_NOTES.md`](../../CURSOR_AUDIT_NOTES.md)
+**Prerequisite:** PR1 on `main` · **[L-2-pre merged](ROUND-L-2-PRE-LIMBO.md)** · read [`docs/CURSOR_AUDIT_NOTES.md`](../../CURSOR_AUDIT_NOTES.md)
 
 **Budget:** ~3–4h (StakeBetPanel mode clamp **1–2h**)
 
