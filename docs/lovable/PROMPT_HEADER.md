@@ -5,10 +5,11 @@
 
 아래 문서를 모두 준수하라 (순서대로):
 1. docs/lovable/PROMPT_HEADER.md (본 헤더)
-2. docs/lovable/BOUNDARIES.md
-3. docs/LOVABLE_WORK_RULES.md
-4. docs/TECH_STACK.md
-5. (게임 UX 로드맵 라운드 시) docs/backlog/rounds/GAMES-ROADMAP-v2.1.md — 해당 ROUND 섹션만
+2. docs/CURSOR_AUDIT_NOTES.md — blocking=Yes 행을 plan에 의무 반영
+3. docs/lovable/BOUNDARIES.md
+4. docs/LOVABLE_WORK_RULES.md
+5. docs/TECH_STACK.md
+6. (게임 UX 로드맵 라운드 시) docs/backlog/rounds/GAMES-ROADMAP-v2.1.md — 해당 ROUND 섹션만
 
 【워크플로】
 Lovable 생성 → GitHub export → Cursor pull → 최적화·감사·수리

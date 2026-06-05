@@ -3,7 +3,8 @@
  *
  * v1 (default): debit_phon_for_bet / credit_phon_for_payout — legacy, unchanged.
  * v2 (opt-in):  debit_phon_for_bet_v2 / credit_phon_for_payout_v2 — idempotent + audited.
- * Enable v2: VITE_MONEY_RPC_V2=true
+ * refund:       refund_phon_for_bet_v2 — always v2 (mid-round cancel).
+ * Enable v2 debit/credit: VITE_MONEY_RPC_V2=true
  */
 import { getSupabaseClient } from "@/integrations/supabase/client";
 import type { WalletBalance } from "@/integrations/supabase/types";
@@ -16,12 +17,15 @@ function parseBalance(data: unknown): WalletBalance | null {
   return row && typeof row === "object" ? (row as WalletBalance) : null;
 }
 
+type WalletRpcName =
+  | "debit_phon_for_bet"
+  | "credit_phon_for_payout"
+  | "debit_phon_for_bet_v2"
+  | "credit_phon_for_payout_v2"
+  | "refund_phon_for_bet_v2";
+
 async function callWalletRpc(
-  rpcName:
-    | "debit_phon_for_bet"
-    | "credit_phon_for_payout"
-    | "debit_phon_for_bet_v2"
-    | "credit_phon_for_payout_v2",
+  rpcName: WalletRpcName,
   input: { amount: number; game: string; roundId: string },
 ) {
   const supabase = getSupabaseClient();
@@ -47,6 +51,12 @@ export async function creditPhonForPayout(amount: number, game: string, roundId:
   return callWalletRpc(rpc, input);
 }
 
+/** Mid-round cancel — always v2; same roundId as debit (no -refund suffix). */
+export async function refundPhonForBet(amount: number, game: string, roundId: string) {
+  const input = walletBetInputSchema.parse({ amount, game, roundId });
+  return callWalletRpc("refund_phon_for_bet_v2", input);
+}
+
 /** Explicit v2 entry points (for gradual rollout / A-B testing). */
 export async function debitPhonForBetV2(amount: number, game: string, roundId: string) {
   const input = walletBetInputSchema.parse({ amount, game, roundId });
@@ -56,4 +66,8 @@ export async function debitPhonForBetV2(amount: number, game: string, roundId: s
 export async function creditPhonForPayoutV2(amount: number, game: string, roundId: string) {
   const input = walletBetInputSchema.parse({ amount, game, roundId });
   return callWalletRpc("credit_phon_for_payout_v2", input);
+}
+
+export async function refundPhonForBetV2(amount: number, game: string, roundId: string) {
+  return refundPhonForBet(amount, game, roundId);
 }

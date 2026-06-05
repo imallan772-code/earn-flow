@@ -3,7 +3,8 @@ import { useBalance, wallet, useWalletStats, useIsDemoLow, syncRealBalance } fro
 import { useMode } from "@/shared/mode/ModeContext";
 import { useProfile } from "@/features/profile/useProfile";
 import { useAuth } from "@/features/auth/AuthContext";
-import { creditPhonForPayout, debitPhonForBet } from "@/lib/api/wallet";
+import { creditPhonForPayout, debitPhonForBet, refundPhonForBet } from "@/lib/api/wallet";
+import { toIntegerPhonAmount } from "@/lib/api/walletSchemas";
 import { logGameRound } from "@/lib/api/trading";
 import { appToast } from "@/shared/ui/toast";
 
@@ -15,7 +16,7 @@ export interface GameWalletMeta {
 /**
  * Unified game wallet hook.
  * - demo: localStorage walletStore
- * - real: Supabase RPC (debit/credit) + Realtime sync
+ * - real: Supabase RPC (debit/credit/refund) + Realtime sync
  */
 export function useGameWallet() {
   const { mode } = useMode();
@@ -45,11 +46,12 @@ export function useGameWallet() {
       }
       if (profileLoading) return false;
 
+      const betAmount = toIntegerPhonAmount(amount);
+      if (betAmount == null) return false;
+
       try {
         const roundId = meta?.roundId ?? crypto.randomUUID();
         const game = meta?.game ?? "game";
-        const betAmount = Math.round(amount);
-        if (betAmount <= 0) return false;
         const { balance: row } = await debitPhonForBet(betAmount, game, roundId);
         if (row?.phon != null) syncRealBalance(row.phon);
         void logGameRound(game, roundId, betAmount, 0).catch(() => undefined);
@@ -62,6 +64,7 @@ export function useGameWallet() {
     [mode, isConfigured, status, profileLoading],
   );
 
+  /** Credit gross payout (stake + profit on win). */
   const credit = useCallback(
     async (amount: number, multiplier?: number, meta?: GameWalletMeta): Promise<void> => {
       if (amount <= 0) return;
@@ -70,11 +73,13 @@ export function useGameWallet() {
         return;
       }
       if (!isConfigured || status !== "authenticated") return;
+
+      const payoutAmount = toIntegerPhonAmount(amount);
+      if (payoutAmount == null) return;
+
       try {
         const roundId = meta?.roundId ?? crypto.randomUUID();
         const game = meta?.game ?? "game";
-        const payoutAmount = Math.round(amount);
-        if (payoutAmount <= 0) return;
         const { balance: row } = await creditPhonForPayout(payoutAmount, game, roundId);
         if (row?.phon != null) syncRealBalance(row.phon);
         void logGameRound(game, roundId, 0, payoutAmount).catch(() => undefined);
@@ -85,11 +90,40 @@ export function useGameWallet() {
     [mode, isConfigured, status],
   );
 
+  /**
+   * Refund unsettled stake (mid-round cancel).
+   * Real mode requires meta { game, roundId } (same roundId as debit).
+   * Without meta: legacy local cache bump until Lovable PR2 wires call sites (gap window).
+   */
   const refund = useCallback(
-    (amount: number) => {
-      wallet.refund(mode, amount);
+    async (amount: number, meta?: GameWalletMeta): Promise<boolean> => {
+      if (amount <= 0) return false;
+      if (mode === "demo") {
+        wallet.refund("demo", amount);
+        return true;
+      }
+      if (!isConfigured || status !== "authenticated") return false;
+
+      const refundAmount = toIntegerPhonAmount(amount);
+      if (refundAmount == null) return false;
+
+      const roundId = meta?.roundId;
+      const game = meta?.game;
+      if (!roundId || !game) {
+        wallet.refund("real", refundAmount);
+        return true;
+      }
+
+      try {
+        const { balance: row } = await refundPhonForBet(refundAmount, game, roundId);
+        if (row?.phon != null) syncRealBalance(row.phon);
+        return true;
+      } catch {
+        appToast.raw.error("환불 동기화에 실패했습니다");
+        return false;
+      }
     },
-    [mode],
+    [mode, isConfigured, status],
   );
 
   return {

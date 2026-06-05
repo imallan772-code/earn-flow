@@ -247,6 +247,7 @@ export type Database = {
           bet_amount: number;
           payout_amount: number;
           created_at: string;
+          refunded_at: string | null;
         };
         Insert: Record<string, unknown>;
         Update: Record<string, unknown>;
@@ -275,6 +276,10 @@ export type Database = {
         Returns: Json;
       };
       credit_phon_for_payout_v2: {
+        Args: { p_amount: number; p_game: string; p_round_id: string };
+        Returns: Json;
+      };
+      refund_phon_for_bet_v2: {
         Args: { p_amount: number; p_game: string; p_round_id: string };
         Returns: Json;
       };
