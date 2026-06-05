@@ -8,7 +8,7 @@ import { APP_NAV_ITEMS } from "./appNav";
 export function BottomNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <nav className="sticky bottom-0 z-40 mx-auto w-full max-w-md safe-bottom">
+    <nav className="z-40 mx-auto w-full max-w-md safe-bottom">
       <div className="glass-3 mx-3 mb-3 flex items-center justify-around rounded-3xl px-2 py-2 shadow-depth-3">
         {APP_NAV_ITEMS.map((it) => {
           const active = it.match(path);

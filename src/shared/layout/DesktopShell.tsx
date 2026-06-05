@@ -26,18 +26,18 @@ export function DesktopShell({ children }: { children: ReactNode }) {
     <GameViewportProvider viewportRef={viewportRef}>
       <div className="flex min-h-dvh w-full flex-col lg:flex-row">
         <AppSidebar />
-        <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col safe-top lg:mx-0 lg:min-w-0 lg:max-w-none lg:flex-1">
+        <div className="mx-auto flex h-dvh min-h-0 w-full max-w-md flex-col safe-top lg:mx-0 lg:min-w-0 lg:max-w-none lg:flex-1">
           <main
             ref={viewportRef}
             className={cn(
-              "mx-auto w-full max-w-md flex-1 px-4 pb-6 pt-3 lg:px-6 lg:pb-4",
+              "mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-4 pt-3 lg:px-6",
               MAIN_LG_MAX[mainMode],
             )}
             data-game-viewport
           >
             {children}
           </main>
-          <div className="lg:hidden">
+          <div className="shrink-0 lg:hidden">
             <BottomNav />
           </div>
         </div>
