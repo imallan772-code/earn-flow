@@ -232,19 +232,17 @@ export function CrashScreen() {
     const unsub = loop.subscribe(() => {
       const elapsed = performance.now() - startedAtRef.current;
       const m = multiplierAt6(elapsed);
-      setBet((prev) => {
-        if (!prev || prev.cashedAt !== null) return prev;
+      const prev = betRef.current;
+      if (prev && prev.cashedAt === null) {
         if (reachedTarget(m, prev.autoTarget) && prev.autoTarget < crashPoint) {
-          // auto-cashout → store + local 동시
           crashStore.set((s) =>
             s.activeRound
               ? { ...s, activeRound: { ...s.activeRound, cashedAt: prev.autoTarget } }
               : s,
           );
-          return { ...prev, cashedAt: prev.autoTarget };
+          setBet({ ...prev, cashedAt: prev.autoTarget });
         }
-        return prev;
-      });
+      }
       if (m >= crashPoint) setPhase("crashed");
     });
     return () => {
