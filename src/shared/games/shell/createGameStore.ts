@@ -80,11 +80,26 @@ function createDebouncedFlusher<T>(
  * 호환성: 기존 diceStore(v2)·crashStore(v2)는 동일 key로 그대로 로드된다.
  * 신규 게임은 v1로 시작.
  */
-export function createGameStore<T extends object>(key: string, initial: T, version = 1): Store<T> {
+/**
+ * 게임별 영속 스토어 생성. localStorage key = `phonara.gamestate.<key>.v<version>`.
+ *
+ * 호환성: 기존 diceStore(v2)·crashStore(v2)는 동일 key로 그대로 로드된다.
+ * 신규 게임은 v1로 시작.
+ *
+ * `migrate`: 게임별 옵션 훅. 기존 호출부는 생략 → 기존 머지 규칙 유지.
+ *  - `parsed`는 localStorage payload (없으면 `null`).
+ *  - 반환값이 최종 hydrate 결과로 사용.
+ */
+export function createGameStore<T extends object>(
+  key: string,
+  initial: T,
+  version = 1,
+  migrate?: (parsed: unknown, initial: T) => T,
+): Store<T> {
   const storageKey = `phonara.gamestate.${key}.v${version}`;
   const listeners = new Set<() => void>();
 
-  let state: T = hydrate(storageKey, initial);
+  let state: T = hydrate(storageKey, initial, migrate);
 
   const flusher = createDebouncedFlusher(storageKey, () => state);
 
