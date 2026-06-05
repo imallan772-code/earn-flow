@@ -189,6 +189,10 @@ export const WHEEL_RULES: GameRules = {
       title: "공정성 (Provably Fair)",
       body: "결과 인덱스 = floor(u × segments), u = floatFromBytes(HMAC-SHA256(serverSeed, clientSeed:nonce:0)). 배수 테이블은 (위험도, 세그먼트)별로 공개되어 있어 누구나 평균 RTP를 검증할 수 있습니다.",
     },
+    {
+      title: "단축키",
+      body: "• Space: 돌리기 · ←→: 난이도 바꾸기 · 1/2/3: 칸 10/20/30 · P: 공정성 · M: 소리 끄기",
+    },
   ],
 };
 
