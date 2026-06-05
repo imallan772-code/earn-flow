@@ -57,6 +57,7 @@ import { useSfx } from "@/shared/sfx/useSfx";
 import { appToast } from "@/shared/ui/toast";
 import { WheelDisplay } from "./WheelDisplay";
 import { WheelControls } from "./WheelControls";
+import { WheelLegend } from "./WheelLegend";
 
 const SERVER_SEED = "phonara-wheel-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
