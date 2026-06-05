@@ -58,6 +58,9 @@ import { appToast } from "@/shared/ui/toast";
 import { WheelDisplay } from "./WheelDisplay";
 import { WheelControls } from "./WheelControls";
 import { WheelLegend } from "./WheelLegend";
+import { WheelRightRail } from "./WheelRightRail";
+import { useDesktopLayout } from "@/shared/hooks/useDesktopLayout";
+import { useRegisterRightRail } from "@/shared/layout/useGameLayout";
 
 const SERVER_SEED = "phonara-wheel-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
