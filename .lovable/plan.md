@@ -1,39 +1,56 @@
-# LAYOUT-L hotfix v2 — Wheel 박스 빈 공간 제거
+# P-1 Phase 2 — Feed desktop RightRail (ONLY)
 
-## 현 상태 (스크린샷 확인)
-- v1 hotfix(`lg:max-w-xl` = 576px) 적용됨 → 박스가 화면 전체에서 ~520px로 축소됨 ✅
-- 하지만 휠 SVG는 280px cap → 정사각형 박스(520×520) 안에 휠이 상단 중앙에만 그려져 하단 큰 빈 공간 잔존
+Phase 1 인프라(`useRegisterMainMode`, DesktopShell mode 분기, 6게임 `game` 등록) main merge 확인됨. Wheel/LAYOUT-L 0-diff.
 
-## 원인
-`WheelDisplay`의 내부 SVG는 `maxWidth: 280px` 고정 (보호 대상, 0 diff). 박스 폭 > 휠 폭일 때 박스 하단 빈 공간이 그대로 보임.
+## 변경 (`src/features/feed/`만)
 
-## 변경 — 1 파일, 1 줄
-
-### `src/features/games/wheel/WheelScreen.tsx` line 339
+### 1. `src/features/feed/FeedRightRail.tsx` (신규) — `useRegisterRightRail` 유일 호출
 ```tsx
-// before (현재)
-<div className="mx-auto flex w-full flex-col gap-2 lg:max-w-xl">
+import { useMemo } from "react";
+import { LiveCashoutStrip } from "@/shared/layout/LiveCashoutStrip";
+import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
+import { useRegisterRightRail } from "@/shared/layout/useGameLayout";
 
-// after
-<div className="mx-auto flex w-full flex-col gap-2 lg:max-w-md">
+export function FeedRightRail() {
+  const node = useMemo(
+    () => (
+      <>
+        <LiveCashoutStrip />
+        <LiveBetsFeed limit={10} />
+      </>
+    ),
+    [],
+  );
+  useRegisterRightRail(node);
+  return null;
+}
 ```
+- `useRegisterRightRail` 내부에서 `useDesktopLayout` 분기 처리 → 모바일은 자동 미등록.
+- v1은 기존 컴포넌트 재배치만 (신규 디자인 비범위).
 
-`lg:max-w-md` = 448px = 모바일 MobileShell과 동일 폭.
-박스(448²) - p-4(32) = 416px → SVG 280px maxWidth가 그대로 적용되지만 휠과 박스의 시각 비율이 모바일과 동일해짐.
+### 2. `src/features/feed/FeedScreen.tsx`
+- `useRegisterMainMode('feed')` 호출 (DesktopShell `<main>` → `lg:max-w-2xl` ≈672px).
+- `const isDesktop = useDesktopLayout()`.
+- Center 내 `<LiveCashoutStrip />` / `<LiveBetsFeed limit={10} />` → `{!isDesktop && ...}` 로 감싸 **DOM singleton** 보장 (CSS `hidden lg:` 토글 금지).
+- `<FeedRightRail />` 마운트 (Screen에서 `useRegisterRightRail` 호출 금지).
+- 헤더 / `ModeToggle` / `NoticeBar` / `EventHero` / `FomoMarquee` / Hot strip / 실시간 스트림 / compact `OnlineCounterChip` 0-diff.
 
-## 기대 결과
-- 데스크탑 ≥1024 Wheel: 박스 약 448×448, 휠이 박스를 자연스럽게 채움 (모바일 동일)
-- 모바일: 0 diff (부모 max-w-md가 이미 좁아 무효)
-- 컨트롤/베팅 패널: 동일 폭으로 정렬
-- RightRail, 사이드바, 타 게임/페이지: 0 diff
-
-## 보호 대상 (계속 0 diff)
-`WheelDisplay`, `WheelEngine`, `WheelControls`, `WheelLegend`, `GameShell`, `DesktopShell`, `styles.css`, 타 5게임, supabase, lib/api.
+## 0-diff 보호
+`DesktopShell`, `ResponsiveShell`, `GameLayoutProvider`, `gameLayoutContext`, `useGameLayout`, `RightRail` 컨테이너, `MobileShell`, `BottomNav`, `AppSidebar`, 6게임 Screen 및 엔진/내부 컴포넌트(특히 `WheelScreen`, `WheelRightRail`), `src/styles.css`, `supabase/`, `src/lib/api/`, `src/integrations/supabase/types.ts`, 랜딩/온보딩/로그인, `/deposit`/`/withdrawal`.
 
 ## QA
-- ≥1024 `/games/wheel` — 박스 ~448², 휠이 박스 거의 가득 채움
-- <1024 — 모바일 0 diff
-- `bun run check` GREEN
+- ≥1024 `/feed`: Center ≈672px, RightRail 320px에 `LiveCashoutStrip` + `LiveBetsFeed(limit=10)`, **각 위젯 DOM 1 인스턴스**.
+- ≥1024 `/` (Landing) / `/money` / `/earn` / `/notifications` / `/my`: 기본 `mobile` mode ≈448px, 0-diff.
+- ≥1024 6게임: `game` mode ≈896px, 0-diff (Wheel RightRail 포함).
+- <1024 모든 라우트: 0-diff.
+- `bun run check` GREEN.
 
-## 후속 (범위 외)
-박스를 더 크게 가져가고 싶다면 별도 라운드에서 `WheelDisplay`의 `WHEEL_SIZE`/`maxWidth` 상향 (현재 보호).
+## Cursor audit-only (Lovable 완료 후)
+- `src/features/feed/` diff만
+- DOM singleton (LiveCashoutStrip / LiveBetsFeed) 확인
+- `bun run check`
+
+## 비범위 (후속)
+- RightRail 위젯 세로형 신규 디자인
+- 나머지 5게임 RightRail 이전
+- Feed 카드 데스크탑 그리드
