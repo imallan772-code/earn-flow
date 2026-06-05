@@ -18,6 +18,8 @@ export function RewardBurst({ trigger, count = 10 }: Props) {
       dist: 60 + Math.random() * 40,
       delay: Math.random() * 0.08,
     }));
+    // `trigger` is intentional: changing it must regenerate particles to re-fire the burst.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [count, reduced, trigger]);
 
   return (
