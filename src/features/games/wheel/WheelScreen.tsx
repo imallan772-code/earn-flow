@@ -58,6 +58,9 @@ import { appToast } from "@/shared/ui/toast";
 import { WheelDisplay } from "./WheelDisplay";
 import { WheelControls } from "./WheelControls";
 import { WheelLegend } from "./WheelLegend";
+import { WheelRightRail } from "./WheelRightRail";
+import { useDesktopLayout } from "@/shared/hooks/useDesktopLayout";
+import { useRegisterRightRail } from "@/shared/layout/useGameLayout";
 
 const SERVER_SEED = "phonara-wheel-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
@@ -84,6 +87,9 @@ export function WheelScreen() {
   const [seedDraft, setSeedDraft] = useState("");
   const sfx = useSfx();
   const tickIntervalRef = useRef<number | null>(null);
+  const isDesktop = useDesktopLayout();
+  const rightRailNode = useMemo(() => <WheelRightRail />, []);
+  useRegisterRightRail(rightRailNode);
 
   // PF commit hash
   useEffect(() => {
@@ -364,7 +370,7 @@ export function WheelScreen() {
               items={history.map((h) => ({ id: h.id, multiplier: h.multiplier }))}
               onPillClick={() => setShowFair(true)}
             />
-            <SessionStatsBar />
+            {!isDesktop && <SessionStatsBar />}
           </div>
         }
         displayArea={
@@ -423,7 +429,7 @@ export function WheelScreen() {
         }
       />
 
-      <LiveBetsFeed game="wheel" limit={10} />
+      {!isDesktop && <LiveBetsFeed game="wheel" limit={10} />}
 
       <ProvablyFairModal
         open={showFair}
