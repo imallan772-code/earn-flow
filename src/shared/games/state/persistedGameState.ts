@@ -152,3 +152,77 @@ export const plinkoStore = createGameStore<PlinkoPersisted>(
   },
   1,
 );
+
+// ───────── LIMBO ─────────
+// 본 라운드 P2 신규(v1). MinesScreen single-step 패턴 + useGameRound({ rollingMs, settledMs }).
+export interface LimboHistoryItem {
+  id: string;
+  crashPoint: number;
+  target: number;
+  win: boolean;
+}
+export interface LimboOutcome {
+  outcome: "win" | "loss";
+  profit: number;
+  nonce: number;
+  crashPoint: number;
+  target: number;
+}
+export interface LimboPersisted {
+  nonce: number;
+  history: LimboHistoryItem[];
+  lastOutcome: LimboOutcome | null;
+  target: number;
+  pendingAmount: number;
+}
+export const limboStore = createGameStore<LimboPersisted>(
+  "limbo",
+  {
+    nonce: 0,
+    history: [],
+    lastOutcome: null,
+    target: 2.0,
+    pendingAmount: 10,
+  },
+  1,
+);
+
+// ───────── WHEEL ─────────
+// 본 라운드 P2 신규(v1). risk × segments 가중 세그먼트 휠.
+export interface WheelHistoryItem {
+  id: string;
+  risk: "low" | "medium" | "high";
+  segments: 10 | 20 | 30;
+  index: number;
+  multiplier: number;
+  win: boolean;
+}
+export interface WheelOutcome {
+  outcome: "win" | "loss";
+  profit: number;
+  nonce: number;
+  risk: "low" | "medium" | "high";
+  segments: 10 | 20 | 30;
+  index: number;
+  multiplier: number;
+}
+export interface WheelPersisted {
+  nonce: number;
+  history: WheelHistoryItem[];
+  lastOutcome: WheelOutcome | null;
+  risk: "low" | "medium" | "high";
+  segments: 10 | 20 | 30;
+  pendingAmount: number;
+}
+export const wheelStore = createGameStore<WheelPersisted>(
+  "wheel",
+  {
+    nonce: 0,
+    history: [],
+    lastOutcome: null,
+    risk: "medium",
+    segments: 20,
+    pendingAmount: 10,
+  },
+  1,
+);

@@ -18,6 +18,10 @@ const GAMES: LiveGame[] = [
   "slots",
   "slots",
   "mines",
+  "mines",
+  "limbo",
+  "limbo",
+  "wheel",
   "roulette",
 ];
 

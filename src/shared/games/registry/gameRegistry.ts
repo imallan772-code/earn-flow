@@ -10,6 +10,8 @@ import {
   Trophy,
   Coins,
   Bomb,
+  TrendingUp,
+  Disc3,
 } from "lucide-react";
 import { MOCK_GAME_LIVE_BETS } from "@/mocks/gameLobby";
 import {
@@ -17,6 +19,8 @@ import {
   DICE_RULES,
   PLINKO_RULES,
   MINES_RULES,
+  LIMBO_RULES,
+  WHEEL_RULES,
   type GameRules,
 } from "@/shared/games/rules/gameRules";
 
@@ -25,6 +29,8 @@ export type GameId =
   | "dice"
   | "plinko"
   | "mines"
+  | "limbo"
+  | "wheel"
   | "slots"
   | "roulette"
   | "rps"
@@ -90,6 +96,28 @@ export const GAME_REGISTRY: GameRegistryEntry[] = [
     accent: "warning",
     route: "/_app/games/mines",
     rules: MINES_RULES,
+  },
+  {
+    id: "limbo",
+    name: "Limbo",
+    rtp: "99%",
+    liveBets: MOCK_GAME_LIVE_BETS.limbo,
+    Icon: TrendingUp,
+    open: true,
+    accent: "purple",
+    route: "/_app/games/limbo",
+    rules: LIMBO_RULES,
+  },
+  {
+    id: "wheel",
+    name: "Wheel",
+    rtp: "99%",
+    liveBets: MOCK_GAME_LIVE_BETS.wheel,
+    Icon: Disc3,
+    open: true,
+    accent: "gold",
+    route: "/_app/games/wheel",
+    rules: WHEEL_RULES,
   },
   {
     id: "slots",
@@ -165,7 +193,13 @@ export function getGameById(id: GameId): GameRegistryEntry | undefined {
   return GAME_REGISTRY.find((g) => g.id === id);
 }
 
-export type OpenGamePath = "/games/crash" | "/games/dice" | "/games/plinko" | "/games/mines";
+export type OpenGamePath =
+  | "/games/crash"
+  | "/games/dice"
+  | "/games/plinko"
+  | "/games/mines"
+  | "/games/limbo"
+  | "/games/wheel";
 
 /** Public route path for TanStack Router Link `to` prop (open games only). */
 export function gamePath(id: GameId): OpenGamePath | null {

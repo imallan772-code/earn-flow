@@ -4,6 +4,8 @@ export const MOCK_GAME_LIVE_BETS: Record<string, number> = {
   dice: 311,
   plinko: 207,
   mines: 156,
+  limbo: 263,
+  wheel: 198,
   slots: 0,
   roulette: 0,
   rps: 0,
