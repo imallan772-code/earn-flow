@@ -11,7 +11,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const ARTIFACT_DIRS = ["playwright-report", "test-results", "blob-report"] as const;
 
 export function shouldKeepE2eArtifacts(): boolean {
-  return process.env.CI === "1" || process.env.CI === "true" || process.env.E2E_KEEP_ARTIFACTS === "1";
+  return (
+    process.env.CI === "1" || process.env.CI === "true" || process.env.E2E_KEEP_ARTIFACTS === "1"
+  );
 }
 
 export function cleanupE2eArtifacts(rootDir = ROOT): { removed: string[]; skipped: string[] } {
