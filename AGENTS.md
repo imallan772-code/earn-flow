@@ -1,12 +1,34 @@
 # AGENTS.md — earn-flow Cursor Agent SSOT
 
+## Workflow
+
+```text
+Lovable 생성 → GitHub export/push → Cursor pull → 최적화·감사·수리 → bun run check GREEN
+```
+
+## Tech Stack (고정)
+
+| 항목 | 값 |
+|------|-----|
+| Framework | TanStack Start **v1** + TanStack Router |
+| UI | React **19**, TypeScript **strict** |
+| Style | Tailwind **v4** — `src/styles.css` `@theme` (CSS-first) |
+| Motion | Framer Motion — `LazyMotion` + `domAnimation` |
+| Backend | Supabase — RLS, RPC (SECURITY DEFINER), Realtime, Edge Functions |
+| Charts | `@tradingview/lightweight-charts` + Canvas2D + Web Workers |
+| PWA | Vite PWA plugin (Cursor only) |
+| Monorepo | **pnpm** target: `apps/web` + `apps/admin` (현재 루트 단일 패키지 + bun) |
+
+Full detail: `docs/TECH_STACK.md`
+
 ## Commands
 
 ```bash
 bun install
 bun run dev
-bun run check    # lint + test + build
+bun run check    # test + build
 bun run lint
+bun run lint:strict
 bun run test
 bun run build
 ```
@@ -26,7 +48,7 @@ Copy `docs/lovable/PROMPT_HEADER.md` to every Lovable round.
 ## Supabase
 
 - Project: **phonara-gb** (`kanftnqenuzverroodev`)
-- Forbidden: phonara-world-main, phonetok
+- Forbidden: **phonara-world-main**, phonetok
 - Lovable must NOT touch: `supabase/`, `src/integrations/supabase/types.ts`, `src/lib/api/`
 
 ## Structure
@@ -41,9 +63,17 @@ supabase/         migrations (Cursor)
 docs/lovable/     Lovable SSOT
 ```
 
+Target monorepo:
+
+```
+apps/web/         user app
+apps/admin/       admin app
+packages/         shared
+```
+
 ## vite.config.ts
 
-Do NOT add plugins manually — use @lovable.dev/vite-tanstack-config only.
+Do NOT add plugins manually — use `@lovable.dev/vite-tanstack-config` only. PWA = Cursor task.
 
 ## Rules
 

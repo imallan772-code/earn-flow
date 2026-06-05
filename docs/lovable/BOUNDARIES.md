@@ -1,6 +1,15 @@
 # Lovable 작업 경계 (BOUNDARIES)
 
-> Lovable = **눈(속도)** · Cursor = **머리+돈+DB(진실)**
+> Lovable = **눈(속도)** · Cursor = **머리+돈+DB(진실)**  
+> 스택 SSOT: `docs/TECH_STACK.md`
+
+## 고정 스택 (Lovable 준수)
+
+- TanStack Start v1 · React 19 · TS strict
+- Tailwind v4 `@theme` in `src/styles.css` (raw hex 금지)
+- Framer Motion: `LazyMotion` + `domAnimation`
+- 게임: Canvas2D / Worker-friendly Engine (wallet은 Screen/훅에서만)
+- Exchange UI: lightweight-charts shell만 (데이터 wiring = Cursor)
 
 ## Lovable 담당 (OK)
 

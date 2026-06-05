@@ -1,0 +1,42 @@
+---
+description: PHONARA 고정 기술 스택 — TanStack Start v1, React 19, Tailwind v4, Supabase, charts, PWA, pnpm monorepo
+alwaysApply: true
+---
+
+# Tech Stack (고정)
+
+Full SSOT: `docs/TECH_STACK.md`
+
+## Workflow
+
+Lovable 생성 → GitHub export → Cursor pull → 최적화/감사 → `bun run check` GREEN
+
+## Frontend
+
+- TanStack Start **v1** + TanStack Router (`src/routes/` only)
+- **React 19** + **TypeScript strict**
+- **Tailwind v4** CSS-first — `src/styles.css` `@theme` SSOT, no raw hex
+- **Framer Motion** — `LazyMotion` + `domAnimation` only (no full `motion` import tree)
+- `vite.config.ts` — @lovable.dev/vite-tanstack-config only; **no manual plugins** (PWA = Cursor)
+
+## Monorepo (target)
+
+pnpm: `apps/web` + `apps/admin` + `packages/*`  
+Current root is transitional (bun) until split.
+
+## Supabase (phonara-gb ONLY)
+
+- RLS on all public tables
+- Money: RPC `SECURITY DEFINER` + `search_path` + `auth.uid()`
+- Realtime + Edge Functions: Cursor only
+- NEVER: phonara-world-main, phonetok
+
+## Charts & rendering
+
+- Exchange: `@tradingview/lightweight-charts`
+- Games: Canvas2D (visual) separated from wallet/settlement
+- Heavy compute: Web Workers (never block main thread)
+
+## Lovable must NOT
+
+- Edit supabase/, types.ts, lib/api/, walletStore schema, PWA config, vite plugins

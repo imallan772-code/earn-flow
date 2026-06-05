@@ -1,15 +1,17 @@
 # Golden Loop — Lovable ↔ Cursor 영구 운영 SOP
 
+기술 스택: `docs/TECH_STACK.md`
+
 ## 한 사이클
 
 ```text
-[1] Lovable 라운드 — docs/lovable/PROMPT_HEADER.md 복붙 후 작업
+[1] Lovable 생성 — PROMPT_HEADER + TECH_STACK 준수
 [2] Lovable 게이트 — eslint / vitest / build GREEN
-[3] GitHub push (Lovable auto-sync)
-[4] Cursor git pull
-[5] Cursor 15분 감사 — docs/CURSOR_SANITATION_CHECKLIST.md
+[3] GitHub export / push
+[4] Cursor git pull → 최적화·감사
+[5] CURSOR_SANITATION_CHECKLIST.md (15분)
 [6] FAIL → Cursor 수리 (Lovable에 되돌리지 않음)
-[7] Supabase 필요 → docs/SUPABASE_AUTOMATION_RULES.md (Cursor 자동)
+[7] Supabase → SUPABASE_AUTOMATION_RULES.md (Cursor)
 [8] bun run check GREEN
 [9] 다음 Lovable 라운드
 ```

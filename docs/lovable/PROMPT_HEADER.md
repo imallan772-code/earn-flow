@@ -7,13 +7,27 @@
 1. docs/lovable/PROMPT_HEADER.md (본 헤더)
 2. docs/lovable/BOUNDARIES.md
 3. docs/LOVABLE_WORK_RULES.md
+4. docs/TECH_STACK.md
+
+【워크플로】
+Lovable 생성 → GitHub export → Cursor pull → 최적화·감사·수리
+
+【기술 스택 (고정)】
+- TanStack Start v1 + React 19 + TypeScript strict
+- Tailwind v4 CSS-first (src/styles.css @theme)
+- Framer Motion: LazyMotion + domAnimation only
+- Supabase: RLS / RPC security definer / Realtime / Edge (Cursor 전담)
+- lightweight-charts + Canvas2D + Web Workers (연산은 Worker 분리)
+- Vite PWA 플러그인 (Cursor 전담 — Lovable 금지)
+- pnpm monorepo 목표: apps/web + apps/admin
 
 【Golden Loop】
 Lovable 작업 → GitHub push → Cursor pull/감사/수리.
 DB·migration·RPC·types는 Lovable 금지 → TODO만 남기고 Cursor에 넘김.
 
 【Supabase 프로젝트】
-phonara-gb (kanftnqenuzverroodev) ONLY — phonara-world-main 절대 금지
+phonara-gb (kanftnqenuzverroodev) ONLY
+phonara-world-main · phonetok 절대 금지
 
 【절대 금지】
 - supabase/ 수정
