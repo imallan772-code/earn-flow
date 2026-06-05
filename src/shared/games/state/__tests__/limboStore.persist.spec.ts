@@ -1,17 +1,16 @@
 /**
- * limboStore persist spec — ROUND I 신규 필드 호환성.
+ * limboStore persist spec — ROUND L-2-pre single-slot 영속 호환성.
  *
  * 시나리오
- *  - 기존 v1 저장본(activeRounds / clientSeed / activeSlot / lastOutcomeBySlot 없음)이
- *    새 코드와 만나도 `createGameStore`의 `{ ...initial, ...parsed }` 머지로 신규 필드가
- *    기본값으로 주입.
- *  - localStorage key는 `phonara.gamestate.limbo.v1` 그대로 (version=1 유지).
+ *  - localStorage key는 `phonara.gamestate.limbo.v2` (version 2).
+ *  - 신규 단일 슬롯 필드(activeRound · lastOutcome) 영속/하이드레이트 확인.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const KEY = "phonara.gamestate.limbo.v1";
+const KEY = "phonara.gamestate.limbo.v2";
+const V1 = "phonara.gamestate.limbo.v1";
 
-describe("limboStore — v1 hydrate merges new ROUND I fields", () => {
+describe("limboStore — v2 single-slot persist", () => {
   beforeEach(() => {
     vi.resetModules();
     window.localStorage.clear();
@@ -21,70 +20,63 @@ describe("limboStore — v1 hydrate merges new ROUND I fields", () => {
     window.localStorage.clear();
   });
 
-  it("localStorage key는 .v1 그대로 (version 변경 없음)", async () => {
+  it("localStorage key는 v2", async () => {
     const { limboStore } = await import("../persistedGameState");
     limboStore.set((s) => ({ ...s, pendingAmount: 42 }));
     await new Promise((r) => setTimeout(r, 120));
     expect(window.localStorage.getItem(KEY)).not.toBeNull();
-    expect(window.localStorage.getItem("phonara.gamestate.limbo.v2")).toBeNull();
+    expect(window.localStorage.getItem(V1)).toBeNull();
   });
 
-  it("기존 v1 저장본에 신규 필드 없으면 기본값으로 채워서 로드", async () => {
-    const legacy = {
-      nonce: 5,
-      history: [{ id: "n0", crashPoint: 2.34, target: 2.0, win: true }],
-      lastOutcome: null,
-      target: 3.5,
-      pendingAmount: 25,
-    };
-    window.localStorage.setItem(KEY, JSON.stringify(legacy));
-
-    const { limboStore } = await import("../persistedGameState");
-    const s = limboStore.get();
-
-    // 기존 필드 보존
-    expect(s.nonce).toBe(5);
-    expect(s.target).toBe(3.5);
-    expect(s.pendingAmount).toBe(25);
-    expect(s.history).toHaveLength(1);
-    // 신규 필드 기본값 주입
-    expect(s.activeRounds).toEqual([null, null]);
-    expect(s.lastOutcomeBySlot).toEqual([null, null]);
-    expect(s.clientSeed).toBe("phonara-player-001");
-    expect(s.activeSlot).toBe(0);
-  });
-
-  it("이미 신규 필드를 가진 저장본은 그대로 로드", async () => {
+  it("v2 저장본 그대로 로드 (멀티 슬롯 필드 부재)", async () => {
     const stored = {
       nonce: 12,
       history: [],
-      lastOutcome: null,
-      lastOutcomeBySlot: [null, null],
+      lastOutcome: { outcome: "win", profit: 5, nonce: 11, crashPoint: 2.5, target: 2.0 },
       target: 2.0,
       pendingAmount: 10,
-      activeRounds: [
-        {
-          nonce: 10,
-          amount: 50,
-          target: 2.5,
-          liveBetId: "lb_test",
-          placedAt: 1700000000000,
-          slot: 0,
-        },
-        null,
-      ],
+      activeRound: {
+        nonce: 11,
+        amount: 50,
+        target: 2.5,
+        liveBetId: "lb_test",
+        placedAt: 1700000000000,
+      },
       clientSeed: "custom-seed",
-      activeSlot: 1,
+      pendingLegacyRefunds: [],
     };
     window.localStorage.setItem(KEY, JSON.stringify(stored));
 
     const { limboStore } = await import("../persistedGameState");
     const s = limboStore.get();
 
-    expect(s.activeRounds[0]?.liveBetId).toBe("lb_test");
-    expect(s.activeRounds[0]?.target).toBe(2.5);
-    expect(s.activeRounds[1]).toBeNull();
+    expect(s.activeRound?.liveBetId).toBe("lb_test");
+    expect(s.activeRound?.target).toBe(2.5);
+    expect(s.lastOutcome?.outcome).toBe("win");
     expect(s.clientSeed).toBe("custom-seed");
-    expect(s.activeSlot).toBe(1);
+    expect(s.pendingLegacyRefunds).toEqual([]);
+    // 멀티 슬롯 필드 부재
+    expect((s as unknown as Record<string, unknown>).activeRounds).toBeUndefined();
+    expect((s as unknown as Record<string, unknown>).activeSlot).toBeUndefined();
+    expect((s as unknown as Record<string, unknown>).lastOutcomeBySlot).toBeUndefined();
+  });
+
+  it("activeRound 갱신 후 persist", async () => {
+    const { limboStore } = await import("../persistedGameState");
+    limboStore.set((s) => ({
+      ...s,
+      activeRound: {
+        nonce: 1,
+        amount: 10,
+        target: 2.0,
+        liveBetId: "lb_a",
+        placedAt: 0,
+      },
+    }));
+    await new Promise((r) => setTimeout(r, 120));
+    const raw = window.localStorage.getItem(KEY);
+    expect(raw).not.toBeNull();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.activeRound.liveBetId).toBe("lb_a");
   });
 });
