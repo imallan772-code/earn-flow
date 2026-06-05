@@ -238,7 +238,8 @@ export const limboStore = createGameStore<LimboPersisted>(
 );
 
 // ───────── WHEEL ─────────
-// 본 라운드 P2 신규(v1). risk × segments 가중 세그먼트 휠.
+// ROUND J: activeRound + clientSeed 추가. version=1 유지 (createGameStore 머지 규칙
+// `{ ...initial, ...parsed }`로 기존 저장본은 신규 필드만 기본값으로 주입 — migrate 불필요).
 export interface WheelHistoryItem {
   id: string;
   risk: "low" | "medium" | "high";
@@ -256,6 +257,19 @@ export interface WheelOutcome {
   index: number;
   multiplier: number;
 }
+/**
+ * 진행 중 라운드 스냅샷. 새로고침 복원용.
+ *  - `liveBetId`는 LiveBetsFeed의 동일 베팅 카드를 update할 수 있도록 보존.
+ *  - settle 시점에 같은 tick으로 `null` 처리 (이중 차감 절대 금지).
+ */
+export interface ActiveWheelRound {
+  nonce: number;
+  amount: number;
+  risk: "low" | "medium" | "high";
+  segments: 10 | 20 | 30;
+  liveBetId: string;
+  placedAt: number;
+}
 export interface WheelPersisted {
   nonce: number;
   history: WheelHistoryItem[];
@@ -263,6 +277,10 @@ export interface WheelPersisted {
   risk: "low" | "medium" | "high";
   segments: 10 | 20 | 30;
   pendingAmount: number;
+  /** 진행 중 라운드 (없으면 null). */
+  activeRound: ActiveWheelRound | null;
+  /** PF 클라이언트 시드. PF 모달에서 변경 가능. */
+  clientSeed: string;
 }
 export const wheelStore = createGameStore<WheelPersisted>(
   "wheel",
@@ -273,6 +291,8 @@ export const wheelStore = createGameStore<WheelPersisted>(
     risk: "medium",
     segments: 20,
     pendingAmount: 10,
+    activeRound: null,
+    clientSeed: "phonara-player-001",
   },
   1,
 );
