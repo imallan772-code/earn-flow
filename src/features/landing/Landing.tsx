@@ -59,7 +59,7 @@ export function Landing() {
             <span className="text-holographic">진짜 돈 버는 곳.</span>
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
-            글로벌 매일 출석·미션·게임으로 PHON을 모아 KRW/USDE로 인출합니다. 가입 즉시{" "}
+            글로벌 매일 출석·미션·게임으로 PHON을 모아 KRW/USDT로 인출합니다. 가입 즉시{" "}
             <span className="font-semibold text-[var(--color-gold)]">5,000 PHON+</span>
           </p>
         </section>
