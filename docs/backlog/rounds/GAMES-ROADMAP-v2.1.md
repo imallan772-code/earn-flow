@@ -2,10 +2,10 @@
 
 | 항목 | 값 |
 | ---- | -- |
-| **상태** | ✅ ROUND 0 완료 (Cursor) — 다음: **ROUND I (Limbo)** |
+| **상태** | ✅ ROUND K (Dice) merge — **다음: ROUND L-1 (Crash)** |
 | **승인일** | 2026-06-05 |
 | **담당** | 🤖 Lovable (UI/UX) → 🔧 Cursor (pull·감사·money·Realtime) |
-| **베이스라인** | vitest **71+** GREEN (`bun run check` SSOT) |
+| **베이스라인** | vitest **114** GREEN (`bun run check` SSOT) |
 | **검토** | Cursor 검토 6건 + v2.1 선택 3건 반영 |
 
 **목표:** UI·UX·체감 성능을 Lovable 규칙 안에서 최대치까지 끌어올림. 이후 Cursor가 Supabase Realtime / RPC / wallet / Edge PF 시드로 real-money·멀티플레이어 완성.
