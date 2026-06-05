@@ -2,7 +2,7 @@
 
 export const MOCK_ONLINE_BASE = 10_048_293;
 export const MOCK_CONCURRENT_PEAK = 327_412; // 32만 명 동시 접속
-export const MOCK_EVENT_BONUS_PERCENT = 300;
+export const MOCK_EVENT_BONUS_PERCENT = 150;
 export const MOCK_TOTAL_PAID_TODAY_PHON = 1_240_000_000;
 
 export interface MarqueeRow {
@@ -15,7 +15,7 @@ export const MOCK_MARQUEE_ROWS: MarqueeRow[] = [
   { id: "m1", text: "🔥 김** 님이 방금 1,240,000 PHON 출금 완료", accent: "gold" },
   { id: "m2", text: "⚡ 지금 32만 명이 동시에 PHONARA에서 돈 벌고 있어요", accent: "cyan" },
   { id: "m3", text: "💎 박** 님 크래시 27.4× 캐시아웃 성공", accent: "purple" },
-  { id: "m4", text: "🎁 오늘만 300% 보너스 — 마감 임박", accent: "pink" },
+  { id: "m4", text: "🎁 오늘만 150% 보너스 — 마감 임박", accent: "pink" },
   { id: "m5", text: "🚀 이** 님 슬롯에서 잭팟 8,400,000 PHON", accent: "gold" },
   { id: "m6", text: "💸 지금 1,012만+ 명이 PHONARA에 접속 중", accent: "cyan" },
   { id: "m7", text: "🏆 TOP 0.01% VIP 승급 폭주", accent: "purple" },
