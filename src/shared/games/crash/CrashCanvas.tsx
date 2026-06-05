@@ -22,6 +22,9 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef({ phase, startedAt, crashPoint, bettingMsLeft });
   stateRef.current = { phase, startedAt, crashPoint, bettingMsLeft };
+  const reduced = useReducedMotion() ?? false;
+  const reducedRef = useRef(reduced);
+  reducedRef.current = reduced;
 
   // particle trail — positions relative to curve head, drifting up
   const particlesRef = useRef<Array<{ t0: number; ox: number; oy: number }>>([]);
