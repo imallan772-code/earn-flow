@@ -44,8 +44,34 @@ export const MOCK_CASHOUT_FEED: CashoutTick[] = [
   { id: "c8", name: "조**", amount: 540_000, multiplier: 5.4 },
 ];
 
-export const MOCK_LANDING_HERO_STATS = [
-  { label: "전 세계 실시간 접속", value: "1,012만+", accent: "cyan" as const, sub: "지금 폭주 중" },
-  { label: "오늘 지급된 PHON", value: "12억+", accent: "gold" as const, sub: "마감까지 남은 시간" },
-  { label: "이벤트 보너스", value: "+300%", accent: "pink" as const, sub: "오늘만" },
+export interface LandingHeroStat {
+  label: string;
+  accent: "cyan" | "gold" | "pink" | "purple";
+  sub: string;
+  /** Live-animated numeric value */
+  live?: { base: number; amplitudeRatio: number; bias: number; suffix?: string; prefix?: string; mode: "manlike" | "eok" | "raw" | "percent" };
+  /** Static display (when no live) */
+  staticValue?: string;
+}
+
+export const MOCK_LANDING_HERO_STATS: LandingHeroStat[] = [
+  {
+    label: "전 세계 실시간 접속",
+    accent: "cyan",
+    sub: "지금 폭주 중",
+    live: { base: 10_120_000, amplitudeRatio: 0.003, bias: 0.5, mode: "manlike", suffix: "+" },
+  },
+  {
+    label: "오늘 지급된 PHON",
+    accent: "gold",
+    sub: "마감까지 남은 시간",
+    live: { base: 1_240_000_000, amplitudeRatio: 0.005, bias: 0.62, mode: "eok", suffix: "+" },
+  },
+  {
+    label: "이벤트 보너스",
+    accent: "pink",
+    sub: "오늘만",
+    staticValue: `+${MOCK_EVENT_BONUS_PERCENT}%`,
+  },
 ];
+
