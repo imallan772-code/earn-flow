@@ -37,6 +37,16 @@ interface LiveProps {
   onCashout?: () => void;
   /** If user already cashed out, show locked-in value here. */
   cashedAt?: number | null;
+  /**
+   * Optional hold-to-confirm cashout window (ms). When set AND `onCashout` is
+   * provided, the cashout button requires a sustained press of this duration
+   * before firing. Touch / mouse (pointerdown→up) and keyboard (C/Enter)
+   * release before threshold cancels silently. Omit (or 0) for instant cashout
+   * — preserves original Dice/static behaviour 100%.
+   *
+   * Only honoured in the `live` variant. `static` ignores this prop.
+   */
+  holdConfirmMs?: number;
 }
 
 type Props = StaticProps | LiveProps;
