@@ -9,11 +9,7 @@
  *  - styles.css 0 diff. raw tailwind palette 금지.
  */
 import { memo, useMemo } from "react";
-import {
-  getSegments,
-  type WheelRisk,
-  type WheelSegments,
-} from "@/shared/games/wheel/WheelEngine";
+import { getSegments, type WheelRisk, type WheelSegments } from "@/shared/games/wheel/WheelEngine";
 
 interface Props {
   risk: WheelRisk;
@@ -47,15 +43,9 @@ export const WheelLegend = memo(function WheelLegend({ risk, segments }: Props) 
   }, [risk, segments]);
 
   return (
-    <div
-      className="flex flex-wrap items-center justify-center gap-1.5"
-      aria-label="배당 범례"
-    >
+    <div className="flex flex-wrap items-center justify-center gap-1.5" aria-label="배당 범례">
       {items.map((it) => (
-        <div
-          key={it.mult}
-          className="glass-2 flex items-center gap-1.5 rounded-full px-2.5 py-1"
-        >
+        <div key={it.mult} className="glass-2 flex items-center gap-1.5 rounded-full px-2.5 py-1">
           <span
             aria-hidden
             className="inline-block size-2 rounded-full"
@@ -70,9 +60,7 @@ export const WheelLegend = memo(function WheelLegend({ risk, segments }: Props) 
           <span className="font-numeric text-[11px] font-bold tabular-nums text-(--color-foreground)">
             {it.mult}×
           </span>
-          <span className="text-[10px] font-medium text-(--color-muted)">
-            ×{it.count}
-          </span>
+          <span className="text-[10px] font-medium text-(--color-muted)">×{it.count}</span>
         </div>
       ))}
     </div>
