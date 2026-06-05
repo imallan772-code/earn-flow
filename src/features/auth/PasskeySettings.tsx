@@ -88,7 +88,9 @@ export function PasskeySettings() {
       </p>
 
       {!supported && (
-        <p className="mt-3 text-xs text-(--color-muted)">이 기기/브라우저에서는 패스키를 쓸 수 없습니다.</p>
+        <p className="mt-3 text-xs text-(--color-muted)">
+          이 기기/브라우저에서는 패스키를 쓸 수 없습니다.
+        </p>
       )}
 
       {loading ? (
@@ -103,9 +105,7 @@ export function PasskeySettings() {
               className="flex items-center justify-between gap-2 rounded-xl bg-white/5 px-3 py-2 text-xs"
             >
               <div>
-                <div className="font-semibold text-foreground">
-                  {pk.friendly_name ?? "패스키"}
-                </div>
+                <div className="font-semibold text-foreground">{pk.friendly_name ?? "패스키"}</div>
                 <div className="text-(--color-muted)">
                   등록 {new Date(pk.created_at).toLocaleDateString("ko-KR")}
                 </div>
