@@ -110,9 +110,7 @@ export function DiceResultDisplay({
             key={settledBounceKey}
             initial={false}
             animate={
-              phase === "settled" && !prefersReducedMotion
-                ? { scale: [1, 1.08, 1] }
-                : { scale: 1 }
+              phase === "settled" && !prefersReducedMotion ? { scale: [1, 1.08, 1] } : { scale: 1 }
             }
             transition={{ duration: 0.36, ease: "easeOut" }}
             className={cn(
