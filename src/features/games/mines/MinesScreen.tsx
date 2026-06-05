@@ -294,7 +294,7 @@ export function MinesScreen() {
                       round.phase === "playing" &&
                         !isRevealed &&
                         hitTile == null &&
-                        "hover:bg-(--color-bg-2)",
+                        "hover:bg-bg-2",
                     )}
                   >
                     {isRevealed ? (
