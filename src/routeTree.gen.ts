@@ -13,6 +13,7 @@ import { Route as TransferRouteImport } from './routes/transfer'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as AppRouteRouteImport } from './routes/_app/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WithdrawalIndexRouteImport } from './routes/withdrawal/index'
@@ -60,6 +61,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRouteRoute = AppRouteRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
@@ -80,9 +86,9 @@ const DepositIndexRoute = DepositIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/admin/',
-  path: '/admin/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const WithdrawalPhonRoute = WithdrawalPhonRouteImport.update({
   id: '/withdrawal/phon',
@@ -110,14 +116,14 @@ const DepositBankRoute = DepositBankRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminNoticeRoute = AdminNoticeRouteImport.update({
-  id: '/admin/notice',
-  path: '/admin/notice',
-  getParentRoute: () => rootRouteImport,
+  id: '/notice',
+  path: '/notice',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminEventRoute = AdminEventRouteImport.update({
-  id: '/admin/event',
-  path: '/admin/event',
-  getParentRoute: () => rootRouteImport,
+  id: '/event',
+  path: '/event',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AppNoticeRoute = AppNoticeRouteImport.update({
   id: '/notice',
@@ -192,6 +198,7 @@ const AppEventIdRoute = AppEventIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/signup': typeof SignupRoute
@@ -256,6 +263,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteRouteWithChildren
+  '/admin': typeof AdminRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/signup': typeof SignupRoute
@@ -289,6 +297,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/login'
     | '/onboarding'
     | '/signup'
@@ -352,6 +361,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_app'
+    | '/admin'
     | '/login'
     | '/onboarding'
     | '/signup'
@@ -385,18 +395,16 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRouteRoute: typeof AppRouteRouteWithChildren
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   SignupRoute: typeof SignupRoute
   TransferRoute: typeof TransferRoute
-  AdminEventRoute: typeof AdminEventRoute
-  AdminNoticeRoute: typeof AdminNoticeRoute
   DepositBankRoute: typeof DepositBankRoute
   DepositCryptoRoute: typeof DepositCryptoRoute
   DepositGiftRoute: typeof DepositGiftRoute
   WithdrawalCryptoRoute: typeof WithdrawalCryptoRoute
   WithdrawalPhonRoute: typeof WithdrawalPhonRoute
-  AdminIndexRoute: typeof AdminIndexRoute
   DepositIndexRoute: typeof DepositIndexRoute
   WithdrawalIndexRoute: typeof WithdrawalIndexRoute
 }
@@ -431,6 +439,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app': {
       id: '/_app'
       path: ''
@@ -461,10 +476,10 @@ declare module '@tanstack/react-router' {
     }
     '/admin/': {
       id: '/admin/'
-      path: '/admin'
+      path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/withdrawal/phon': {
       id: '/withdrawal/phon'
@@ -503,17 +518,17 @@ declare module '@tanstack/react-router' {
     }
     '/admin/notice': {
       id: '/admin/notice'
-      path: '/admin/notice'
+      path: '/notice'
       fullPath: '/admin/notice'
       preLoaderRoute: typeof AdminNoticeRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/admin/event': {
       id: '/admin/event'
-      path: '/admin/event'
+      path: '/event'
       fullPath: '/admin/event'
       preLoaderRoute: typeof AdminEventRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/_app/notice': {
       id: '/_app/notice'
@@ -674,21 +689,35 @@ const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
   AppRouteRouteChildren,
 )
 
+interface AdminRouteRouteChildren {
+  AdminEventRoute: typeof AdminEventRoute
+  AdminNoticeRoute: typeof AdminNoticeRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminEventRoute: AdminEventRoute,
+  AdminNoticeRoute: AdminNoticeRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRouteRoute: AppRouteRouteWithChildren,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   SignupRoute: SignupRoute,
   TransferRoute: TransferRoute,
-  AdminEventRoute: AdminEventRoute,
-  AdminNoticeRoute: AdminNoticeRoute,
   DepositBankRoute: DepositBankRoute,
   DepositCryptoRoute: DepositCryptoRoute,
   DepositGiftRoute: DepositGiftRoute,
   WithdrawalCryptoRoute: WithdrawalCryptoRoute,
   WithdrawalPhonRoute: WithdrawalPhonRoute,
-  AdminIndexRoute: AdminIndexRoute,
   DepositIndexRoute: DepositIndexRoute,
   WithdrawalIndexRoute: WithdrawalIndexRoute,
 }

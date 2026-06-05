@@ -1,10 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Bell, ChevronRight, Pin } from "lucide-react";
-import { NOTICES } from "@/mocks/notice";
+import { useNotices } from "@/shared/notices/useNotices";
 
 export function NoticeBar() {
-  const list = NOTICES.filter((n) => n.pinned).slice(0, 3);
+  const { notices } = useNotices();
+  const list = notices.filter((n) => n.pinned).slice(0, 3);
   const [i, setI] = useState(0);
   useEffect(() => {
     if (list.length < 2) return;

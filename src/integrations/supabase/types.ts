@@ -98,6 +98,30 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      admin_users: {
+        Row: { user_id: string; created_at: string };
+        Insert: { user_id: string; created_at?: string };
+        Update: { user_id?: string; created_at?: string };
+        Relationships: [];
+      };
+      notices: {
+        Row: {
+          id: string;
+          category: string;
+          title: string;
+          excerpt: string;
+          body: string;
+          pinned: boolean;
+          published_at: string;
+          author: string;
+          is_published: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
       events: {
         Row: {
           id: string;
@@ -261,6 +285,15 @@ export type Database = {
       };
       claim_mission_reward: { Args: { p_mission_id: string }; Returns: Json };
       list_events: { Args: never; Returns: Json };
+      list_notices: { Args: never; Returns: Json };
+      is_admin: { Args: never; Returns: boolean };
+      admin_list_notices: { Args: never; Returns: Json };
+      admin_upsert_notice: { Args: { p_payload: Json }; Returns: Json };
+      admin_delete_notice: { Args: { p_id: string }; Returns: Json };
+      admin_list_events: { Args: never; Returns: Json };
+      admin_upsert_event: { Args: { p_payload: Json }; Returns: Json };
+      admin_delete_event: { Args: { p_id: string }; Returns: Json };
+      admin_dashboard_stats: { Args: never; Returns: Json };
       join_event: { Args: { p_event_id: string }; Returns: Json };
       get_event_leaderboard: { Args: { p_event_id: string }; Returns: Json };
       fetch_market_candles: {

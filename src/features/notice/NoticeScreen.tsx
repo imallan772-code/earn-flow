@@ -1,8 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { Pin, Search, Bell, ShieldAlert, Wrench, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
-import { NOTICES, type Notice, type NoticeCategory } from "@/mocks/notice";
+import { useNotices } from "@/shared/notices/useNotices";
+import type { NoticeView } from "@/lib/api/notices";
 import { cn } from "@/lib/utils";
+
+type NoticeCategory = NoticeView["category"];
 
 const CATEGORIES: { key: NoticeCategory | "전체"; Icon: typeof Bell }[] = [
   { key: "전체", Icon: Bell },
@@ -31,11 +34,12 @@ function fmtDate(iso: string) {
 }
 
 export function NoticeScreen() {
+  const { notices } = useNotices();
   const [cat, setCat] = useState<NoticeCategory | "전체">("전체");
   const [q, setQ] = useState("");
 
   const list = useMemo(() => {
-    const filtered = NOTICES.filter((n) => {
+    const filtered = notices.filter((n) => {
       const catOk = cat === "전체" || n.category === cat;
       const qOk = !q || n.title.includes(q) || n.excerpt.includes(q);
       return catOk && qOk;
@@ -44,7 +48,7 @@ export function NoticeScreen() {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
       return b.publishedAt.localeCompare(a.publishedAt);
     });
-  }, [cat, q]);
+  }, [notices, cat, q]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -98,7 +102,7 @@ export function NoticeScreen() {
   );
 }
 
-function NoticeRow({ n }: { n: Notice }) {
+function NoticeRow({ n }: { n: NoticeView }) {
   return (
     <Link
       to="/notice/$id"

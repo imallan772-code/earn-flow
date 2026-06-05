@@ -1,13 +1,87 @@
+/**
+ * AdminEvent — Supabase admin_list_events / admin_upsert_event / admin_delete_event.
+ */
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Plus, Trash2, Edit3, Trophy } from "lucide-react";
+import { AdminLayout } from "@/shared/admin/AdminLayout";
+import {
+  adminDeleteEvent,
+  adminListEvents,
+  adminUpsertEvent,
+  type AdminEventView,
+} from "@/lib/api/admin/events";
+import { isSupabaseConfigured } from "@/integrations/supabase/env";
 import { EVENTS, type AppEvent } from "@/mocks/event";
+import { appToast } from "@/shared/ui/toast";
+
+const ADMIN_EVENTS_KEY = ["admin", "events"] as const;
+
+function mockToAdmin(e: AppEvent): AdminEventView {
+  return { ...e, isPublished: true, cap: e.cap };
+}
+
+function toRpcPayload(e: AdminEventView) {
+  return {
+    id: e.id,
+    status: e.status,
+    title: e.title,
+    tagline: e.tagline,
+    body: e.body,
+    reward_preview: e.rewardPreview,
+    starts_at: e.startsAt,
+    ends_at: e.endsAt,
+    participants: e.participants,
+    cap: e.cap ?? null,
+    cta_label: e.ctaLabel,
+    terms: e.terms,
+    bg_from: e.bgFrom,
+    bg_to: e.bgTo,
+    progress: e.progress,
+    is_published: e.isPublished,
+  };
+}
 
 export function AdminEvent() {
-  const [list, setList] = useState<AppEvent[]>(EVENTS);
-  const [editing, setEditing] = useState<AppEvent | null>(null);
+  const configured = isSupabaseConfigured();
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: ADMIN_EVENTS_KEY,
+    queryFn: adminListEvents,
+    enabled: configured,
+  });
 
-  const save = (e: AppEvent) => {
-    setList((prev) => {
+  const [localList, setLocalList] = useState<AdminEventView[]>(() => EVENTS.map(mockToAdmin));
+  const list = configured && query.data ? query.data : localList;
+  const [editing, setEditing] = useState<AdminEventView | null>(null);
+
+  const upsertMut = useMutation({
+    mutationFn: (row: AdminEventView) => adminUpsertEvent(toRpcPayload(row)),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ADMIN_EVENTS_KEY });
+      await qc.invalidateQueries({ queryKey: ["events"] });
+      appToast.raw.success("이벤트 저장됨");
+      setEditing(null);
+    },
+    onError: () => appToast.raw.error("이벤트 저장 실패"),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: adminDeleteEvent,
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ADMIN_EVENTS_KEY });
+      await qc.invalidateQueries({ queryKey: ["events"] });
+      appToast.raw.success("이벤트 삭제됨");
+    },
+    onError: () => appToast.raw.error("이벤트 삭제 실패"),
+  });
+
+  const save = (e: AdminEventView) => {
+    if (configured) {
+      upsertMut.mutate(e);
+      return;
+    }
+    setLocalList((prev) => {
       const i = prev.findIndex((p) => p.id === e.id);
       if (i >= 0) {
         const next = [...prev];
@@ -19,13 +93,21 @@ export function AdminEvent() {
     setEditing(null);
   };
 
+  const remove = (id: string) => {
+    if (configured) {
+      deleteMut.mutate(id);
+      return;
+    }
+    setLocalList((prev) => prev.filter((p) => p.id !== id));
+  };
+
   return (
-    <div className="min-h-dvh bg-cosmic p-6 text-(--color-foreground)">
-      <div className="mb-6 flex items-center justify-between">
+    <AdminLayout active="event">
+      <div className="mb-6 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold">이벤트 관리</h1>
           <p className="text-sm text-(--color-muted)">
-            진행중 · 예정 · 종료 · 카운트다운 · 리더보드 (mock)
+            {configured ? "Supabase SSOT · 사용자 /event 즉시 반영" : "오프라인 mock"}
           </p>
         </div>
         <button
@@ -41,10 +123,12 @@ export function AdminEvent() {
               endsAt: new Date(Date.now() + 7 * 86_400_000).toISOString(),
               progress: 0,
               participants: 0,
+              cap: undefined,
               ctaLabel: "참여하기",
               terms: [],
               bgFrom: "var(--color-purple)",
               bgTo: "var(--color-pink)",
+              isPublished: true,
             })
           }
           className="flex items-center gap-1 rounded-2xl bg-holographic px-4 py-2 text-sm font-bold text-(--color-bg-0)"
@@ -60,11 +144,16 @@ export function AdminEvent() {
               <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-bold">
                 {e.status}
               </span>
+              {!e.isPublished && (
+                <span className="rounded-full bg-(--color-rose)/20 px-2 py-0.5 text-[9px] font-bold text-rose">
+                  비공개
+                </span>
+              )}
               <span className="ml-auto font-numeric text-[11px] text-(--color-muted)">
                 {e.startsAt.slice(0, 10)} ~ {e.endsAt.slice(0, 10)}
               </span>
             </div>
-            <div className="text-sm font-bold">{e.title}</div>
+            <div className="text-sm font-bold">{e.title || "(제목 없음)"}</div>
             <div className="flex items-center gap-1 text-xs text-(--color-muted)">
               <Trophy size={11} className="text-gold" />
               {e.rewardPreview}
@@ -78,7 +167,7 @@ export function AdminEvent() {
                   <Edit3 size={14} />
                 </button>
                 <button
-                  onClick={() => setList((prev) => prev.filter((p) => p.id !== e.id))}
+                  onClick={() => remove(e.id)}
                   className="rounded-lg p-1.5 text-(--color-rose) hover:bg-white/8"
                 >
                   <Trash2 size={14} />
@@ -132,6 +221,14 @@ export function AdminEvent() {
                 onChange={(ev) => setEditing({ ...editing, body: ev.target.value })}
                 className="glass-1 col-span-2 rounded-xl px-3 py-2 text-sm"
               />
+              <label className="col-span-2 flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={editing.isPublished}
+                  onChange={(ev) => setEditing({ ...editing, isPublished: ev.target.checked })}
+                />
+                사용자 앱에 게시
+              </label>
               <label className="text-xs">
                 시작
                 <input
@@ -187,6 +284,7 @@ export function AdminEvent() {
               </button>
               <button
                 onClick={() => save(editing)}
+                disabled={upsertMut.isPending}
                 className="rounded-xl bg-holographic px-4 py-2 text-sm font-bold text-(--color-bg-0)"
               >
                 저장
@@ -195,6 +293,6 @@ export function AdminEvent() {
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }

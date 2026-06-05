@@ -1,110 +1,92 @@
-import { Users, TrendingUp, Coins, Target, LayoutDashboard, Wallet, Settings } from "lucide-react";
+/**
+ * AdminDashboard — real KPI from admin_dashboard_stats RPC (mock fallback offline).
+ */
+import { useQuery } from "@tanstack/react-query";
+import { Users, TrendingUp, Megaphone, Trophy } from "lucide-react";
 import { CountUp } from "@/shared/motion/CountUp";
+import { AdminLayout } from "@/shared/admin/AdminLayout";
+import { adminDashboardStats } from "@/lib/api/admin/dashboard";
+import { isSupabaseConfigured } from "@/integrations/supabase/env";
 
-const KPIS = [
-  { label: "오늘 가입", value: 8_482, delta: "+12.4%", Icon: Users, color: "var(--color-cyan)" },
-  {
-    label: "총 유저",
-    value: 10_124_893,
-    delta: "+0.8%",
-    Icon: TrendingUp,
-    color: "var(--color-purple)",
-  },
-  {
-    label: "오늘 지급 PHON",
-    value: 1_240_000_000,
-    delta: "+34.2%",
-    Icon: Coins,
-    color: "var(--color-gold)",
-  },
-  {
-    label: "오늘 미션 완료",
-    value: 248_902,
-    delta: "+18.1%",
-    Icon: Target,
-    color: "var(--color-pink)",
-  },
-];
+const MOCK_STATS = {
+  total_users: 10_124_893,
+  signups_today: 8_482,
+  published_events: 3,
+  published_notices: 6,
+};
 
 export function AdminDashboard() {
+  const configured = isSupabaseConfigured();
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin", "dashboard"],
+    queryFn: adminDashboardStats,
+    enabled: configured,
+    staleTime: 30_000,
+  });
+
+  const stats = data ?? MOCK_STATS;
+
+  const kpis = [
+    {
+      label: "오늘 가입",
+      value: stats.signups_today,
+      Icon: Users,
+      color: "var(--color-cyan)",
+    },
+    {
+      label: "총 유저",
+      value: stats.total_users,
+      Icon: TrendingUp,
+      color: "var(--color-purple)",
+    },
+    {
+      label: "게시 이벤트",
+      value: stats.published_events,
+      Icon: Trophy,
+      color: "var(--color-gold)",
+    },
+    {
+      label: "게시 공지",
+      value: stats.published_notices,
+      Icon: Megaphone,
+      color: "var(--color-pink)",
+    },
+  ];
+
   return (
-    <div className="min-h-dvh bg-cosmic text-(--color-foreground)">
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="glass-2 hidden min-h-dvh w-60 flex-col gap-1 p-4 md:flex">
-          <div className="mb-4 flex items-center gap-2 px-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-holographic">
-              <LayoutDashboard size={16} className="text-(--color-bg-0)" />
-            </div>
-            <span className="text-sm font-extrabold">PHONARA Admin</span>
-          </div>
-          {[
-            { label: "Dashboard", Icon: LayoutDashboard, active: true },
-            { label: "Users", Icon: Users },
-            { label: "Economy", Icon: Coins },
-            { label: "Withdrawals", Icon: Wallet },
-            { label: "Settings", Icon: Settings },
-          ].map((it) => (
-            <button
-              key={it.label}
-              className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${it.active ? "bg-white/8 font-semibold" : "text-(--color-muted) hover:bg-white/5"}`}
-            >
-              <it.Icon size={16} />
-              {it.label}
-            </button>
-          ))}
-        </aside>
-
-        {/* Main */}
-        <main className="flex-1 p-6">
-          <div className="mb-6">
-            <h1 className="text-2xl font-extrabold">대시보드</h1>
-            <p className="text-sm text-(--color-muted)">실시간 KPI · 1인 운영 콘솔 (mock)</p>
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {KPIS.map((k) => (
-              <div key={k.label} className="glass-3 rounded-3xl p-5 shadow-depth-2">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-(--color-muted)">{k.label}</div>
-                  <k.Icon size={18} style={{ color: k.color }} />
-                </div>
-                <div className="mt-2">
-                  <CountUp value={k.value} className="font-numeric text-3xl font-extrabold" />
-                </div>
-                <div
-                  className="mt-1 text-xs font-semibold"
-                  style={{ color: "var(--color-emerald)" }}
-                >
-                  {k.delta} vs 어제
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 gap-3 lg:grid-cols-2">
-            <div className="glass-3 rounded-3xl p-5 shadow-depth-2">
-              <div className="text-sm font-semibold">최근 출금 큐 (mock)</div>
-              <div className="mt-3 space-y-2 text-xs">
-                {["김** · 1,240,000 KRW", "박** · 480 USDT", "이** · 8,400,000 PHON"].map((r) => (
-                  <div
-                    key={r}
-                    className="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2"
-                  >
-                    <span>{r}</span>
-                    <span className="text-emerald">승인됨</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="glass-3 rounded-3xl p-5 shadow-depth-2">
-              <div className="text-sm font-semibold">어뷰징 알림</div>
-              <div className="mt-3 text-xs text-(--color-muted)">
-                최근 24시간 이슈 없음 · 시스템 정상
-              </div>
-            </div>
-          </div>
-        </main>
+    <AdminLayout active="dashboard">
+      <div className="mb-6">
+        <h1 className="text-2xl font-extrabold">대시보드</h1>
+        <p className="text-sm text-(--color-muted)">
+          {configured ? (isLoading ? "Supabase 집계 로딩..." : "실시간 KPI") : "오프라인 mock KPI"}
+        </p>
       </div>
-    </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {kpis.map((k) => (
+          <div key={k.label} className="glass-3 rounded-3xl p-5 shadow-depth-2">
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-(--color-muted)">{k.label}</div>
+              <k.Icon size={18} style={{ color: k.color }} />
+            </div>
+            <div className="mt-2">
+              <CountUp value={k.value} className="font-numeric text-3xl font-extrabold" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-6 glass-3 rounded-3xl p-5 shadow-depth-2">
+        <div className="text-sm font-semibold">운영 안내</div>
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-(--color-muted)">
+          <li>공지·이벤트 CRUD는 Supabase admin RPC로 즉시 사용자 앱에 반영됩니다.</li>
+          <li>
+            최초 운영자 등록: Supabase SQL —{" "}
+            <code className="rounded bg-white/5 px-1">
+              INSERT INTO admin_users (user_id) VALUES (&apos;your-uuid&apos;);
+            </code>
+          </li>
+          <li>도메인 분리 출시: `apps/admin` standalone 빌드 → admin.phonara.com</li>
+        </ul>
+      </div>
+    </AdminLayout>
   );
 }
