@@ -6,6 +6,8 @@ import { FomoMarquee } from "@/shared/motion/FomoMarquee";
 import { LiveCashoutStrip } from "@/shared/layout/LiveCashoutStrip";
 import { Premium3DCard } from "@/shared/ui/Premium3DCard";
 import { LiveNumber } from "@/shared/motion/LiveNumber";
+import { CountUp } from "@/shared/motion/CountUp";
+import { useLiveOnline } from "@/shared/motion/liveOnlineStore";
 import { MOCK_LANDING_HERO_STATS, MOCK_EVENT_BONUS_PERCENT } from "@/mocks/fomo";
 
 const accentColor = {
