@@ -29,7 +29,7 @@ export const LimboDisplay = memo(function LimboDisplay({
   onActivate,
 }: Props) {
   const reduced = useReducedMotion();
-  const tiltRef = useTilt<HTMLDivElement>(6);
+  const tiltRef = useTilt<HTMLButtonElement>(6);
   const mv = useMotionValue(1);
   const text = useTransform(mv, (v) => `${v.toFixed(2)}x`);
 
