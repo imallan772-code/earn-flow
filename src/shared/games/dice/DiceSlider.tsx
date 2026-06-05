@@ -1,7 +1,8 @@
 /**
  * DiceSlider — interactive target picker with Over/Under mode toggle.
  *
- * Tokens-only. Owner controls `target` + `mode`; this component is pure UI.
+ * Pure UI. Owner controls `target` + `mode`.
+ * ROUND K: 햅틱(navigator.vibrate, SSR 가드) + onTick/onModeTick SFX 콜백.
  */
 import { type DiceMode, MAX_ROLL, payoutMultiplier, winChance } from "./DiceEngine";
 import { cn } from "@/lib/utils";
@@ -13,9 +14,31 @@ interface Props {
   onModeChange: (m: DiceMode) => void;
   /** Last roll to draw a marker on the bar (optional). */
   lastRoll?: number | null;
+  /** SFX/햅틱 트리거 (Screen에서 주입). target 변경 시. */
+  onTargetTick?: () => void;
+  /** SFX/햅틱 트리거. mode 변경 시. */
+  onModeTick?: () => void;
 }
 
-export function DiceSlider({ target, mode, onTargetChange, onModeChange, lastRoll }: Props) {
+function vibrate(ms: number) {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    try {
+      navigator.vibrate?.(ms);
+    } catch {
+      /* noop */
+    }
+  }
+}
+
+export function DiceSlider({
+  target,
+  mode,
+  onTargetChange,
+  onModeChange,
+  lastRoll,
+  onTargetTick,
+  onModeTick,
+}: Props) {
   const wc = winChance(target, mode);
   const pm = payoutMultiplier(wc);
   const winPct = (target / MAX_ROLL) * 100;
@@ -29,6 +52,20 @@ export function DiceSlider({ target, mode, onTargetChange, onModeChange, lastRol
 
   const lastPct = lastRoll != null ? Math.min(100, Math.max(0, (lastRoll / MAX_ROLL) * 100)) : null;
 
+  const handleTarget = (next: number) => {
+    if (next === target) return;
+    vibrate(8);
+    onTargetTick?.();
+    onTargetChange(next);
+  };
+
+  const handleMode = (m: DiceMode) => {
+    if (m === mode) return;
+    vibrate(12);
+    onModeTick?.();
+    onModeChange(m);
+  };
+
   return (
     <div className="flex flex-col gap-4">
       {/* mode toggle */}
@@ -36,7 +73,7 @@ export function DiceSlider({ target, mode, onTargetChange, onModeChange, lastRol
         {(["under", "over"] as const).map((m) => (
           <button
             key={m}
-            onClick={() => onModeChange(m)}
+            onClick={() => handleMode(m)}
             className={cn(
               "rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition",
               mode === m
@@ -81,7 +118,7 @@ export function DiceSlider({ target, mode, onTargetChange, onModeChange, lastRol
           max={Math.floor(MAX_ROLL) - 1}
           step={1}
           value={Math.round(target)}
-          onChange={(e) => onTargetChange(Number(e.target.value))}
+          onChange={(e) => handleTarget(Number(e.target.value))}
           className="-mt-4 h-4 w-full cursor-pointer appearance-none bg-transparent
                      [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-7
                      [&::-webkit-slider-thumb]:w-7 [&::-webkit-slider-thumb]:rounded-full
