@@ -87,6 +87,9 @@ export function WheelScreen() {
   const [seedDraft, setSeedDraft] = useState("");
   const sfx = useSfx();
   const tickIntervalRef = useRef<number | null>(null);
+  const isDesktop = useDesktopLayout();
+  const rightRailNode = useMemo(() => <WheelRightRail />, []);
+  useRegisterRightRail(rightRailNode);
 
   // PF commit hash
   useEffect(() => {
@@ -367,7 +370,7 @@ export function WheelScreen() {
               items={history.map((h) => ({ id: h.id, multiplier: h.multiplier }))}
               onPillClick={() => setShowFair(true)}
             />
-            <SessionStatsBar />
+            {!isDesktop && <SessionStatsBar />}
           </div>
         }
         displayArea={
@@ -426,7 +429,7 @@ export function WheelScreen() {
         }
       />
 
-      <LiveBetsFeed game="wheel" limit={10} />
+      {!isDesktop && <LiveBetsFeed game="wheel" limit={10} />}
 
       <ProvablyFairModal
         open={showFair}
