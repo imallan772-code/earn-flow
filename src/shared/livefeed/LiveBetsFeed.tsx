@@ -19,6 +19,8 @@ const GAME_LABEL: Record<LiveBet["game"], string> = {
   slots: "Slots",
   mines: "Mines",
   roulette: "Roulette",
+  limbo: "Limbo",
+  wheel: "Wheel",
 };
 
 const GAME_ACCENT: Record<LiveBet["game"], string> = {
@@ -28,6 +30,8 @@ const GAME_ACCENT: Record<LiveBet["game"], string> = {
   slots: "var(--color-pink)",
   mines: "var(--color-warning)",
   roulette: "var(--color-purple)",
+  limbo: "var(--color-purple)",
+  wheel: "var(--color-gold)",
 };
 
 interface Props {
