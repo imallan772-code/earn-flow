@@ -8,7 +8,7 @@
  *
  * Used by Crash + Dice + future games. House edge baked in via useMode.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TrendingUp, Zap } from "lucide-react";
 import { useMode } from "@/shared/mode/ModeContext";
 import { applyEdge } from "@/shared/games/engine/houseEdge";
@@ -37,6 +37,16 @@ interface LiveProps {
   onCashout?: () => void;
   /** If user already cashed out, show locked-in value here. */
   cashedAt?: number | null;
+  /**
+   * Optional hold-to-confirm cashout window (ms). When set AND `onCashout` is
+   * provided, the cashout button requires a sustained press of this duration
+   * before firing. Touch / mouse (pointerdown→up) and keyboard (C/Enter)
+   * release before threshold cancels silently. Omit (or 0) for instant cashout
+   * — preserves original Dice/static behaviour 100%.
+   *
+   * Only honoured in the `live` variant. `static` ignores this prop.
+   */
+  holdConfirmMs?: number;
 }
 
 type Props = StaticProps | LiveProps;
@@ -134,10 +144,81 @@ function LivePanel({
   busted,
   onCashout,
   cashedAt,
+  holdConfirmMs,
   mode,
   rtpLabel,
 }: LiveProps & { mode: "demo" | "real"; rtpLabel: string }) {
   const [liveM, setLiveM] = useState(1.0);
+  const [holdProgress, setHoldProgress] = useState(0);
+  const holdTimerRef = useRef<number | null>(null);
+  const holdStartRef = useRef<number | null>(null);
+  const holdRafRef = useRef<number | null>(null);
+  const cashoutRef = useRef(onCashout);
+  cashoutRef.current = onCashout;
+  const holdMs = holdConfirmMs ?? 0;
+  const requiresHold = holdMs > 0 && !!onCashout;
+
+  const clearHold = () => {
+    if (holdTimerRef.current != null) {
+      window.clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    if (holdRafRef.current != null) {
+      window.cancelAnimationFrame(holdRafRef.current);
+      holdRafRef.current = null;
+    }
+    holdStartRef.current = null;
+    setHoldProgress(0);
+  };
+
+  const startHold = () => {
+    if (!requiresHold) return;
+    if (holdTimerRef.current != null) return;
+    holdStartRef.current = performance.now();
+    holdTimerRef.current = window.setTimeout(() => {
+      clearHold();
+      cashoutRef.current?.();
+    }, holdMs);
+    const tick = () => {
+      if (holdStartRef.current == null) return;
+      const elapsed = performance.now() - holdStartRef.current;
+      setHoldProgress(Math.min(1, elapsed / holdMs));
+      if (elapsed < holdMs) holdRafRef.current = window.requestAnimationFrame(tick);
+    };
+    holdRafRef.current = window.requestAnimationFrame(tick);
+  };
+
+  const cancelHold = () => clearHold();
+
+  useEffect(() => () => clearHold(), []);
+
+  // Keyboard C / Enter hold (ignored when editable element focused)
+  useEffect(() => {
+    if (!requiresHold) return;
+    const isEditable = (el: EventTarget | null) => {
+      if (!(el instanceof HTMLElement)) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+    };
+    const onDown = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+      if (e.key !== "c" && e.key !== "C" && e.key !== "Enter") return;
+      if (isEditable(e.target)) return;
+      e.preventDefault();
+      startHold();
+    };
+    const onUp = (e: KeyboardEvent) => {
+      if (e.key !== "c" && e.key !== "C" && e.key !== "Enter") return;
+      cancelHold();
+    };
+    window.addEventListener("keydown", onDown);
+    window.addEventListener("keyup", onUp);
+    return () => {
+      window.removeEventListener("keydown", onDown);
+      window.removeEventListener("keyup", onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requiresHold, holdMs]);
 
   useEffect(() => {
     const loop = sharedTickLoop();
@@ -251,11 +332,28 @@ function LivePanel({
 
       {onCashout && !busted && (
         <button
-          onClick={onCashout}
-          className="mt-1 flex items-center justify-center gap-1.5 rounded-xl bg-warning py-2.5 text-sm font-extrabold text-(--color-bg-0) shadow-glow-gold active:scale-[0.98]"
+          // Instant cashout if `requiresHold` is false (Dice/legacy paths).
+          // Otherwise pointerdown/up drive the 150ms hold timer — onClick is a no-op.
+          onClick={requiresHold ? undefined : onCashout}
+          onPointerDown={requiresHold ? startHold : undefined}
+          onPointerUp={requiresHold ? cancelHold : undefined}
+          onPointerLeave={requiresHold ? cancelHold : undefined}
+          onPointerCancel={requiresHold ? cancelHold : undefined}
+          className="relative mt-1 flex items-center justify-center gap-1.5 overflow-hidden rounded-xl bg-warning py-2.5 text-sm font-extrabold text-(--color-bg-0) shadow-glow-gold active:scale-[0.98] select-none"
         >
-          <Zap size={14} />
-          캐쉬아웃 @ {effectiveLive.toFixed(2)}x
+          {requiresHold && (
+            <span
+              aria-hidden
+              className="absolute inset-y-0 left-0 bg-(--color-emerald)/40 transition-[width] duration-75"
+              style={{ width: `${holdProgress * 100}%` }}
+            />
+          )}
+          <span className="relative flex items-center gap-1.5">
+            <Zap size={14} />
+            {requiresHold && holdProgress > 0 && holdProgress < 1
+              ? "꾹 눌러 확정..."
+              : `캐쉬아웃 @ ${effectiveLive.toFixed(2)}x`}
+          </span>
         </button>
       )}
 

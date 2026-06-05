@@ -5,6 +5,7 @@
  * Single RAF rule: subscribe to the shared tick loop, never call rAF directly.
  */
 import { useEffect, useRef } from "react";
+import { useReducedMotion } from "framer-motion";
 import { sharedTickLoop } from "@/shared/games/engine/tickLoop";
 import { multiplierAt, type Phase, BETTING_MS } from "./CrashEngine";
 
@@ -21,6 +22,9 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef({ phase, startedAt, crashPoint, bettingMsLeft });
   stateRef.current = { phase, startedAt, crashPoint, bettingMsLeft };
+  const reduced = useReducedMotion() ?? false;
+  const reducedRef = useRef(reduced);
+  reducedRef.current = reduced;
 
   // particle trail — positions relative to curve head, drifting up
   const particlesRef = useRef<Array<{ t0: number; ox: number; oy: number }>>([]);
@@ -54,7 +58,9 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
     // background radial wash
     const wash = ctx.createRadialGradient(cssW / 2, cssH * 0.85, 0, cssW / 2, cssH * 0.85, cssH);
     if (ph === "crashed") {
-      wash.addColorStop(0, "oklch(0.68 0.22 25 / 0.18)");
+      // ROUND L-1: rose wash 강화. animate-crash-shake와 동기.
+      wash.addColorStop(0, "oklch(0.68 0.24 25 / 0.28)");
+      wash.addColorStop(0.55, "oklch(0.55 0.20 18 / 0.12)");
       wash.addColorStop(1, "oklch(0.18 0.05 282 / 0)");
     } else {
       wash.addColorStop(0, "oklch(0.85 0.18 200 / 0.14)");
@@ -144,27 +150,45 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
       ctx.stroke();
       const hx = toX(elapsed);
       const hy = toY(liveM);
+      // glow ring under the head — denser visual weight
+      if (!reducedRef.current) {
+        ctx.shadowColor = accent;
+        ctx.shadowBlur = 18;
+      }
       ctx.fillStyle = accent;
       ctx.beginPath();
       ctx.arc(hx, hy, 6, 0, Math.PI * 2);
       ctx.fill();
+      ctx.shadowBlur = 0;
 
-      // particles — spawn while running
+      // particles — spawn while running. reduced-motion → off.
+      const reducedM = reducedRef.current;
+      const maxParticles = reducedM ? 0 : 22;
+      const spawnChance = reducedM ? 0 : 0.55;
       const now = performance.now();
-      if (ph === "running" && particlesRef.current.length < 14 && Math.random() < 0.35) {
+      if (
+        ph === "running" &&
+        particlesRef.current.length < maxParticles &&
+        Math.random() < spawnChance
+      ) {
         particlesRef.current.push({
           t0: now,
-          ox: hx + (Math.random() - 0.5) * 16,
-          oy: hy + (Math.random() - 0.5) * 6,
+          ox: hx + (Math.random() - 0.5) * 20,
+          oy: hy + (Math.random() - 0.5) * 8,
         });
       }
-      particlesRef.current = particlesRef.current.filter((p) => now - p.t0 < 1200);
+      particlesRef.current = particlesRef.current.filter((p) => now - p.t0 < 1400);
       for (const p of particlesRef.current) {
-        const age = (now - p.t0) / 1200;
+        const age = (now - p.t0) / 1400;
         const a = 1 - age;
-        ctx.fillStyle = `oklch(0.85 0.18 200 / ${(a * 0.7).toFixed(3)})`;
+        // dual-tone trail: cyan core + purple outer halo
+        ctx.fillStyle = `oklch(0.78 0.22 295 / ${(a * 0.35).toFixed(3)})`;
         ctx.beginPath();
-        ctx.arc(p.ox, p.oy - age * 30, 2 + a * 1.5, 0, Math.PI * 2);
+        ctx.arc(p.ox, p.oy - age * 36, 3.5 + a * 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = `oklch(0.88 0.18 200 / ${(a * 0.85).toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(p.ox, p.oy - age * 36, 1.8 + a * 1.2, 0, Math.PI * 2);
         ctx.fill();
       }
     }

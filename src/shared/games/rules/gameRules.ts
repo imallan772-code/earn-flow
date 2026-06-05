@@ -42,6 +42,10 @@ export const CRASH_RULES: GameRules = {
       title: "공정성 (Provably Fair)",
       body: "서버 시드 + 클라이언트 시드 + 라운드 번호를 HMAC-SHA256으로 계산해 BUST 지점을 미리 결정합니다. 라운드 종료 후 서버 시드가 공개되어 누구나 검증할 수 있습니다.",
     },
+    {
+      title: "단축키",
+      body: "• Space: 베팅 (betting 구간) · C / Enter: 캐쉬아웃 (150ms 길게 눌러 확정) · P: 공정성 · M: 음소거",
+    },
   ],
 };
 

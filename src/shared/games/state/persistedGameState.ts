@@ -55,6 +55,8 @@ export const diceStore = createGameStore<DicePersisted>(
 );
 
 // ───────── CRASH ─────────
+// ROUND L-1: clientSeed + activeRound 추가. version=2 유지 (createGameStore 머지 규칙
+// `{ ...initial, ...parsed }`로 기존 v2 저장본은 신규 필드만 기본값으로 주입 — migrate 불필요).
 export interface CrashHistoryItem {
   id: string;
   multiplier: number;
@@ -64,12 +66,38 @@ export interface CrashOutcome {
   profit: number;
   nonce: number;
 }
+/**
+ * 진행 중 라운드 스냅샷. 새로고침 복원용.
+ *
+ * 시각 필드 의미 — 절대 혼동 금지:
+ *  - `placedAt`        : 베팅 클릭 시각 (epoch ms, Date.now). 디버깅·정렬용.
+ *  - `bettingStartedAt`: betting phase **진입 시점**(라운드 타이머 시작)의 `performance.now()` 스냅샷.
+ *                        place 시 그 값을 그대로 복사. placedAt을 넣으면 refresh 후 타이머가 어긋남.
+ *  - `startedAt`       : running 진입 `performance.now()` 스냅샷 (0 = 아직 betting).
+ *
+ * settle 시점(crashed)에 같은 tick으로 `null` 처리 (이중 차감 절대 금지).
+ */
+export interface ActiveCrashRound {
+  nonce: number;
+  amount: number;
+  autoTarget: number;
+  cashedAt: number | null;
+  liveBetId: string;
+  placedAt: number;
+  crashPoint: number;
+  startedAt: number;
+  bettingStartedAt: number;
+}
 export interface CrashPersisted {
   nonce: number;
   history: CrashHistoryItem[];
   lastOutcome: CrashOutcome | null;
   pendingAmount: number;
   pendingTarget: number;
+  /** 진행 중 라운드 (없으면 null). */
+  activeRound: ActiveCrashRound | null;
+  /** PF 클라이언트 시드. PF 모달에서 변경 가능. */
+  clientSeed: string;
 }
 export const crashStore = createGameStore<CrashPersisted>(
   "crash",
@@ -79,6 +107,8 @@ export const crashStore = createGameStore<CrashPersisted>(
     lastOutcome: null,
     pendingAmount: 10,
     pendingTarget: 2.0,
+    activeRound: null,
+    clientSeed: "phonara-player-001",
   },
   2,
 );
