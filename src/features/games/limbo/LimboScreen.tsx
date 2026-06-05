@@ -84,13 +84,15 @@ export function LimboScreen() {
 
   const round0 = useGameRound({ rollingMs: 700, settledMs: 900 });
   const round1 = useGameRound({ rollingMs: 700, settledMs: 900 });
-  const rounds = [round0, round1] as const;
+  const rounds = useMemo(() => [round0, round1] as const, [round0, round1]);
 
   const [resultCrash, setResultCrash] = useState<[number | null, number | null]>([null, null]);
   const [recentResult, setRecentResult] = useState<{ slot: 0 | 1; result: SlotResult } | null>(
     null,
   );
-  const settledRefs = [useRef(false), useRef(false)] as const;
+  const settledRef0 = useRef(false);
+  const settledRef1 = useRef(false);
+  const settledRefs = useMemo(() => [settledRef0, settledRef1] as const, []);
   const restoredRef = useRef(false);
   const [commit, setCommit] = useState("");
   const [showFair, setShowFair] = useState(false);
