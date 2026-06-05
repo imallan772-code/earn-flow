@@ -17,16 +17,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { m, useReducedMotion } from "framer-motion";
-import {
-  ArrowLeft,
-  Bomb,
-  Copy,
-  Dice5,
-  ShieldCheck,
-  Sparkles,
-  X,
-  Zap,
-} from "lucide-react";
+import { ArrowLeft, Bomb, Copy, Dice5, ShieldCheck, Sparkles, X, Zap } from "lucide-react";
 import { GameShell } from "@/shared/games/shell/GameShell";
 import { useGameRound } from "@/shared/games/shell/useGameRound";
 import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
@@ -47,10 +38,7 @@ import {
   nextMultiplier,
   placeMines,
 } from "@/shared/games/mines/MinesEngine";
-import {
-  type ActiveMinesRound,
-  minesStore,
-} from "@/shared/games/state/persistedGameState";
+import { type ActiveMinesRound, minesStore } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { cn } from "@/lib/utils";
@@ -228,9 +216,7 @@ export function MinesScreen() {
       vibrate(8);
       // 진행중 라운드에 revealed 누적
       minesStore.set((s) =>
-        s.activeRound
-          ? { ...s, activeRound: { ...s.activeRound, revealed: nextRevealed } }
-          : s,
+        s.activeRound ? { ...s, activeRound: { ...s.activeRound, revealed: nextRevealed } } : s,
       );
     },
     [round, active, revealed, hitTile],
@@ -380,23 +366,20 @@ export function MinesScreen() {
 
   // ───────── Hover tooltip position (single absolute)
   const [tipPos, setTipPos] = useState<{ x: number; y: number } | null>(null);
-  const onTileHover = useCallback(
-    (idx: number | null) => {
-      setHoverTile(idx);
-      if (idx == null) {
-        setTipPos(null);
-        return;
-      }
-      const board = boardRef.current;
-      if (!board) return;
-      const cell = board.querySelector<HTMLElement>(`[data-tile="${idx}"]`);
-      if (!cell) return;
-      const cr = cell.getBoundingClientRect();
-      const br = board.getBoundingClientRect();
-      setTipPos({ x: cr.left - br.left + cr.width / 2, y: cr.top - br.top });
-    },
-    [],
-  );
+  const onTileHover = useCallback((idx: number | null) => {
+    setHoverTile(idx);
+    if (idx == null) {
+      setTipPos(null);
+      return;
+    }
+    const board = boardRef.current;
+    if (!board) return;
+    const cell = board.querySelector<HTMLElement>(`[data-tile="${idx}"]`);
+    if (!cell) return;
+    const cr = cell.getBoundingClientRect();
+    const br = board.getBoundingClientRect();
+    setTipPos({ x: cr.left - br.left + cr.width / 2, y: cr.top - br.top });
+  }, []);
 
   const announce = useMemo(() => {
     if (hitTile != null) return `지뢰 폭발. 배수 0. 손실 ${formatPHON(active?.amount ?? 0)}.`;
@@ -481,11 +464,7 @@ export function MinesScreen() {
             <m.div
               key={shakeKey}
               ref={boardRef}
-              animate={
-                shakeKey && !reduced
-                  ? { x: [0, -4, 4, -3, 3, 0] }
-                  : { x: 0 }
-              }
+              animate={shakeKey && !reduced ? { x: [0, -4, 4, -3, 3, 0] } : { x: 0 }}
               transition={{ duration: 0.16 }}
               className="relative"
             >
@@ -493,7 +472,8 @@ export function MinesScreen() {
                 {tiles.map((tile) => {
                   const isRevealed = revealed.includes(tile);
                   const isHit = hitTile === tile;
-                  const showAll = round.phase === "settled" || (round.phase === "idle" && hitTile != null);
+                  const showAll =
+                    round.phase === "settled" || (round.phase === "idle" && hitTile != null);
                   const isMineRevealed =
                     showAll && active != null && active.mines.includes(tile) && !isHit;
                   return (
