@@ -1,12 +1,20 @@
-import { useBalance, wallet, useWalletStats, useIsDemoLow } from "./walletStore";
+import { useCallback } from "react";
+import { useBalance, wallet, useWalletStats, useIsDemoLow, syncRealBalance } from "./walletStore";
 import { useMode } from "@/shared/mode/ModeContext";
 import { useProfile } from "@/features/profile/useProfile";
 import { useAuth } from "@/features/auth/AuthContext";
+import { creditPhonForPayout, debitPhonForBet } from "@/lib/api/wallet";
+import { appToast } from "@/shared/ui/toast";
+
+export interface GameWalletMeta {
+  game: string;
+  roundId?: string;
+}
 
 /**
  * Unified game wallet hook.
- * - demo mode: localStorage walletStore (unchanged)
- * - real mode: Supabase phon balance synced into walletStore.realBalance
+ * - demo: localStorage walletStore
+ * - real: Supabase RPC (debit/credit) + Realtime sync
  */
 export function useGameWallet() {
   const { mode } = useMode();
@@ -18,7 +26,62 @@ export function useGameWallet() {
   const isDemoLow = useIsDemoLow();
 
   const activeBalance = mode === "demo" ? demoBalance : realBalance;
-  const isRealReady = !isConfigured || status !== "authenticated" || !profileLoading;
+  const isRealReady =
+    isConfigured && status === "authenticated" && !profileLoading && balance != null;
+
+  const tryDebit = useCallback(
+    async (amount: number, meta?: GameWalletMeta): Promise<boolean> => {
+      if (amount <= 0) return false;
+      if (mode === "demo") return wallet.tryDebit("demo", amount);
+
+      if (!isConfigured) {
+        appToast.raw.error("Supabase가 설정되지 않았습니다");
+        return false;
+      }
+      if (status !== "authenticated") {
+        appToast.raw.error("리얼 모드는 로그인이 필요합니다");
+        return false;
+      }
+      if (profileLoading) return false;
+
+      try {
+        const roundId = meta?.roundId ?? crypto.randomUUID();
+        const { balance: row } = await debitPhonForBet(amount, meta?.game ?? "game", roundId);
+        if (row?.phon != null) syncRealBalance(row.phon);
+        return true;
+      } catch {
+        appToast.raw.error("베팅에 실패했습니다 (잔액 부족 또는 네트워크)");
+        return false;
+      }
+    },
+    [mode, isConfigured, status, profileLoading],
+  );
+
+  const credit = useCallback(
+    async (amount: number, multiplier?: number, meta?: GameWalletMeta): Promise<void> => {
+      if (amount <= 0) return;
+      if (mode === "demo") {
+        wallet.credit("demo", amount, multiplier);
+        return;
+      }
+      if (!isConfigured || status !== "authenticated") return;
+      try {
+        const roundId = meta?.roundId ?? crypto.randomUUID();
+        const { balance: row } = await creditPhonForPayout(amount, meta?.game ?? "game", roundId);
+        if (row?.phon != null) syncRealBalance(row.phon);
+      } catch {
+        appToast.raw.error("정산 동기화에 실패했습니다");
+      }
+    },
+    [mode, isConfigured, status],
+  );
+
+  const refund = useCallback(
+    (amount: number) => {
+      wallet.refund(mode, amount);
+    },
+    [mode],
+  );
 
   return {
     mode,
@@ -29,9 +92,9 @@ export function useGameWallet() {
     stats,
     isDemoLow,
     isRealReady,
-    tryDebit: (amount: number) => wallet.tryDebit(mode, amount),
-    credit: (amount: number, multiplier?: number) => wallet.credit(mode, amount, multiplier),
-    refund: (amount: number) => wallet.refund(mode, amount),
+    tryDebit,
+    credit,
+    refund,
     resetDemo: () => wallet.resetDemo(),
   };
 }

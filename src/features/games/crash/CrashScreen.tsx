@@ -141,7 +141,7 @@ export function CrashScreen() {
       const cashed = bet.cashedAt;
       if (cashed !== null) {
         const profit = profitOf(bet.amount, cashed, mode);
-        credit(bet.amount + profit, cashed);
+        void credit(bet.amount + profit, cashed, { game: "crash", roundId: `n${nonce}` });
         crashStore.set((s) => ({
           ...s,
           lastOutcome: { outcome: "win", profit, nonce },
@@ -184,9 +184,10 @@ export function CrashScreen() {
   }, [phase, bet, crashPoint, nonce, mode, credit]);
 
   const handlePlace = useCallback(
-    (amount: number, autoTarget: number) => {
+    async (amount: number, autoTarget: number) => {
       if (phase !== "betting" || bet || amount <= 0) return;
-      if (!tryDebit(amount)) return;
+      const ok = await tryDebit(amount, { game: "crash", roundId: `n${nonce}` });
+      if (!ok) return;
       crashStore.set((s) => ({
         ...s,
         pendingAmount: amount,
@@ -205,7 +206,7 @@ export function CrashScreen() {
       setBet({ amount, autoTarget, cashedAt: null, liveBetId });
       appToast.game.bet({ amount: formatPHON(amount) });
     },
-    [phase, bet, mode, tryDebit],
+    [phase, bet, mode, tryDebit, nonce],
   );
 
   const handleCashout = useCallback(() => {

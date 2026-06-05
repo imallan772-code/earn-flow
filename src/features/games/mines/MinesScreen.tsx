@@ -91,7 +91,8 @@ export function MinesScreen() {
   const handlePlace = useCallback(
     async (amount: number) => {
       if (!round.isIdle || amount <= 0) return;
-      if (!tryDebit(amount)) return;
+      const ok = await tryDebit(amount, { game: "mines", roundId: `n${nonce}` });
+      if (!ok) return;
       minesStore.set((s) => ({ ...s, pendingAmount: amount }));
       const mines = await placeMines(
         { serverSeed: SERVER_SEED, clientSeed: CLIENT_SEED, nonce },
@@ -162,7 +163,10 @@ export function MinesScreen() {
   const handleCashout = useCallback(() => {
     if (round.phase !== "playing" || !active || revealed.length === 0 || hitTile != null) return;
     const profit = profitOf(active.amount, currentMult, mode);
-    credit(active.amount + profit, currentMult);
+    void credit(active.amount + profit, currentMult, {
+      game: "mines",
+      roundId: `n${active.nonce}`,
+    });
     liveBetsStore.update(active.liveBetId, {
       multiplier: currentMult,
       profit: +profit.toFixed(2),

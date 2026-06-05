@@ -83,6 +83,10 @@ export type Database = {
         Args: { p_amount: number; p_game: string; p_round_id: string };
         Returns: Json;
       };
+      credit_phon_for_payout: {
+        Args: { p_amount: number; p_game: string; p_round_id: string };
+        Returns: Json;
+      };
     };
     Enums: {
       [_ in never]: never;

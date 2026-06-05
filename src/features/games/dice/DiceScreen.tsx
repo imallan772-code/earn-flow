@@ -74,7 +74,10 @@ export function DiceScreen() {
 
         if (won) {
           // gross payout = stake + profit (stake was already debited at place)
-          credit(activeBet.amount + profit, pm);
+          void credit(activeBet.amount + profit, pm, {
+            game: "dice",
+            roundId: `n${activeBet.nonce}`,
+          });
         }
         diceStore.set((s) => ({
           ...s,
@@ -115,9 +118,10 @@ export function DiceScreen() {
   }, [phase]);
 
   const handlePlace = useCallback(
-    (amount: number) => {
+    async (amount: number) => {
       if (phase !== "idle" || activeBet || amount <= 0) return;
-      if (!tryDebit(amount)) return; // demo: opens modal automatically
+      const ok = await tryDebit(amount, { game: "dice", roundId: `n${nonce}` });
+      if (!ok) return;
       diceStore.set((s) => ({ ...s, pendingAmount: amount }));
       const liveBetId = liveBetsStore.push({
         user: "나의_베팅",
