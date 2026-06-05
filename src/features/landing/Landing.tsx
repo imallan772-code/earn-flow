@@ -136,7 +136,7 @@ export function Landing() {
             <ShieldCheck size={22} style={{ color: "var(--color-purple)" }} />
             <div>
               <div className="text-sm font-semibold">투명한 정산 · 24/7 지원</div>
-              <div className="text-xs text-[var(--color-muted)]">한국 운영팀 직접 운영</div>
+              <div className="text-xs text-[var(--color-muted)]">글로벌 운영팀 24/7 운영</div>
             </div>
           </Premium3DCard>
         </div>
