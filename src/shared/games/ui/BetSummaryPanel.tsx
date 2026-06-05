@@ -144,10 +144,81 @@ function LivePanel({
   busted,
   onCashout,
   cashedAt,
+  holdConfirmMs,
   mode,
   rtpLabel,
 }: LiveProps & { mode: "demo" | "real"; rtpLabel: string }) {
   const [liveM, setLiveM] = useState(1.0);
+  const [holdProgress, setHoldProgress] = useState(0);
+  const holdTimerRef = useRef<number | null>(null);
+  const holdStartRef = useRef<number | null>(null);
+  const holdRafRef = useRef<number | null>(null);
+  const cashoutRef = useRef(onCashout);
+  cashoutRef.current = onCashout;
+  const holdMs = holdConfirmMs ?? 0;
+  const requiresHold = holdMs > 0 && !!onCashout;
+
+  const clearHold = () => {
+    if (holdTimerRef.current != null) {
+      window.clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    if (holdRafRef.current != null) {
+      window.cancelAnimationFrame(holdRafRef.current);
+      holdRafRef.current = null;
+    }
+    holdStartRef.current = null;
+    setHoldProgress(0);
+  };
+
+  const startHold = () => {
+    if (!requiresHold) return;
+    if (holdTimerRef.current != null) return;
+    holdStartRef.current = performance.now();
+    holdTimerRef.current = window.setTimeout(() => {
+      clearHold();
+      cashoutRef.current?.();
+    }, holdMs);
+    const tick = () => {
+      if (holdStartRef.current == null) return;
+      const elapsed = performance.now() - holdStartRef.current;
+      setHoldProgress(Math.min(1, elapsed / holdMs));
+      if (elapsed < holdMs) holdRafRef.current = window.requestAnimationFrame(tick);
+    };
+    holdRafRef.current = window.requestAnimationFrame(tick);
+  };
+
+  const cancelHold = () => clearHold();
+
+  useEffect(() => () => clearHold(), []);
+
+  // Keyboard C / Enter hold (ignored when editable element focused)
+  useEffect(() => {
+    if (!requiresHold) return;
+    const isEditable = (el: EventTarget | null) => {
+      if (!(el instanceof HTMLElement)) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+    };
+    const onDown = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+      if (e.key !== "c" && e.key !== "C" && e.key !== "Enter") return;
+      if (isEditable(e.target)) return;
+      e.preventDefault();
+      startHold();
+    };
+    const onUp = (e: KeyboardEvent) => {
+      if (e.key !== "c" && e.key !== "C" && e.key !== "Enter") return;
+      cancelHold();
+    };
+    window.addEventListener("keydown", onDown);
+    window.addEventListener("keyup", onUp);
+    return () => {
+      window.removeEventListener("keydown", onDown);
+      window.removeEventListener("keyup", onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requiresHold, holdMs]);
 
   useEffect(() => {
     const loop = sharedTickLoop();
