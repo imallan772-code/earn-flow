@@ -31,7 +31,11 @@ bun run lint
 bun run lint:strict
 bun run test
 bun run build
+bun run test:e2e          # ends with artifact cleanup (Cursor 렉 방지)
+bun run test:e2e:cleanup  # manual: playwright-report, test-results, blob-report
 ```
+
+E2E 후 아티팩트 정리: `.cursor/rules/e2e-cleanup.mdc`. 디버그만 `E2E_KEEP_ARTIFACTS=1`.
 
 ## Golden Loop
 

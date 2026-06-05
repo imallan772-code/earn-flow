@@ -1,0 +1,43 @@
+---
+description: E2E 종료 후 Playwright 아티팩트 자동 정리 — Cursor 렉 방지
+globs: e2e/**,playwright.config.ts,scripts/cleanup-e2e-artifacts.ts
+alwaysApply: false
+---
+
+# E2E Artifact Cleanup (mandatory)
+
+Playwright E2E는 `playwright-report/`, `test-results/`, `blob-report/`를 대량 생성해 **Cursor 인덱싱·파일 감시가 느려짐**. 로컬에서는 **항상 테스트 직후 정리**한다.
+
+## 자동 정리 (SSOT)
+
+| 경로 | 역할 |
+| ---- | ---- |
+| `e2e/utils/cleanup-artifacts.ts` | 삭제 로직 + `shouldKeepE2eArtifacts()` |
+| `e2e/global-teardown.ts` | Playwright `globalTeardown` |
+| `scripts/cleanup-e2e-artifacts.ts` | 수동/스크립트 fallback |
+| `package.json` `test:e2e*` | `playwright test; bun run test:e2e:cleanup` |
+
+`bun run test:e2e` / `test:e2e:public` / `test:e2e:ui` / `test:e2e:headed` 실행 후 **반드시** 위 cleanup이 돌아가야 함.
+
+## 유지 예외 (삭제 금지)
+
+- `CI=1` — CI 아티팩트 업로드용
+- `E2E_KEEP_ARTIFACTS=1` — 로컬 디버그·리포트 확인
+
+```bash
+E2E_KEEP_ARTIFACTS=1 bun run test:e2e
+bun run test:e2e:report
+```
+
+## Agent / Cursor 규칙
+
+1. E2E 실행을 **마지막에** 돌렸다면, 종료 후 `bun run test:e2e:cleanup`이 돌았는지 확인. 없으면 **직접 실행**.
+2. `playwright-report/`·`test-results/`를 커밋·스테이징 **금지** (`.gitignore`·`.cursorignore` 유지).
+3. E2E 관련 스크립트 추가 시 `globalTeardown` 또는 `test:e2e:cleanup` 체인을 끊지 말 것.
+4. HTML 리포트가 필요하면 `E2E_KEEP_ARTIFACTS=1`로 돌린 뒤 `test:e2e:report` — 확인 후 `bun run test:e2e:cleanup`.
+
+## 수동 정리
+
+```bash
+bun run test:e2e:cleanup
+```

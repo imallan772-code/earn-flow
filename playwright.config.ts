@@ -27,6 +27,7 @@ if (hasAuthCreds) {
 export default defineConfig({
   testDir: "./e2e/tests",
   globalSetup: path.resolve(rootDir, "e2e/global-setup.ts"),
+  globalTeardown: path.resolve(rootDir, "e2e/global-teardown.ts"),
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1,

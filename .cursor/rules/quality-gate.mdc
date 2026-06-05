@@ -30,6 +30,12 @@ Supabase changes: `get_advisors` + `types.ts` regen.
 - Verify: `bun run test:e2e:verify-creds` before `bun run test:e2e`.
 - Rule file: `.cursor/rules/e2e-env.mdc`
 
+## E2E artifact cleanup (Cursor 렉 방지)
+
+- `test:e2e*` 종료 후 `playwright-report/`, `test-results/`, `blob-report/` **자동 삭제** (`globalTeardown` + `test:e2e:cleanup`).
+- 디버그 시만: `E2E_KEEP_ARTIFACTS=1 bun run test:e2e` → `test:e2e:report` → `bun run test:e2e:cleanup`.
+- Rule file: `.cursor/rules/e2e-cleanup.mdc`
+
 ## Money Path Testing
 
 Money 관련 변경이 포함된 PR/라운드는 반드시:
