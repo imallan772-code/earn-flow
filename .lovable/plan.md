@@ -1,75 +1,47 @@
-# LAYOUT-L — Wheel 데스크탑 3열 파일럿 (v1.1)
+# LAYOUT-L hotfix — Wheel 데스크탑 폭 정정
 
-P-0 (origin/main @ b1a36d0)이 머지됐으므로 Wheel만 ≥1024px에서 3열 (Sidebar | Center | RightRail)로 동작하게 합니다. 모바일(<1024px) 0 diff. 엔진/스토어/스타일/4개 게임 미접촉.
+## 증상
+≥1024px에서 `WheelDisplay`의 `aspect-square w-full`이 DesktopShell main `max-w-4xl` 폭(~896px)을 그대로 받아 거대한 정사각형 빈 박스가 생기고, 내부 SVG 휠은 `maxWidth: 280px`로 작게 떠 있음. 하단 컨트롤/베팅 패널이 화면 한참 아래로 밀림.
 
-Cursor 피드백 반영:
-1. **SessionStatsBar 중복 가드** — historyStrip 안에서도 `!isDesktop` 분기.
-2. **useRegisterRightRail 단순화** — 내부에서 이미 1024 분기하므로 isDesktop 삼항 제거.
+## 원인
+- `DesktopShell`의 `<main className="... lg:max-w-4xl ...">` 폭이 게임에 너무 넓음
+- `WheelDisplay` 정사각형 컨테이너는 폭 = 높이 → 폭이 커지면 박스가 통째로 커짐
+- 휠 SVG는 280px cap → 비주얼 미스매치
 
-## 변경 파일 (총 2)
+## 보호 대상 (0 diff)
+- `WheelDisplay.tsx`, `WheelEngine.ts`, `WheelControls.tsx`, `WheelLegend.tsx`
+- `GameShell.tsx`, `styles.css`
+- `DesktopShell.tsx` (P-0 SSOT — 다른 게임/페이지 회귀 위험)
+- Wheel 외 5게임, supabase, lib/api
 
-### 1. 신규 `src/features/games/wheel/WheelRightRail.tsx`
-- `SessionStatsBar` + `LiveBetsFeed game="wheel" limit={10} showHeader`을 세로 스택
-- 순수 표현 컴포넌트 (memo), props 없음
+## 변경 — 1 파일만
 
-### 2. 수정 `src/features/games/wheel/WheelScreen.tsx`
-- import 추가:
-  - `useDesktopLayout` from `@/shared/hooks/useDesktopLayout`
-  - `useRegisterRightRail` from `@/shared/layout/useGameLayout`
-  - `WheelRightRail` (local)
-- 컴포넌트 body:
-  ```ts
-  const isDesktop = useDesktopLayout();
-  const rightRail = useMemo(() => <WheelRightRail />, []);
-  useRegisterRightRail(rightRail); // 내부에서 1024 분기 처리
-  ```
-- **historyStrip 안 `SessionStatsBar`을 모바일 전용으로**:
-  ```tsx
-  historyStrip={
-    <div className="flex flex-col gap-1.5">
-      <HistoryPillStrip ... />
-      {!isDesktop && <SessionStatsBar />}
-    </div>
-  }
-  ```
-- **하단 `<LiveBetsFeed>`을 모바일 전용으로**:
-  ```tsx
-  {!isDesktop && <LiveBetsFeed game="wheel" limit={10} />}
-  ```
+### `src/features/games/wheel/WheelScreen.tsx`
+컴포넌트 최상위 `<div className="flex flex-col gap-2">` 에 데스크탑 전용 max-width + 중앙 정렬 추가:
 
-다른 로직/JSX/import 0 diff.
+```tsx
+// before
+<div className="flex flex-col gap-2">
 
-## 절대 미접촉
-`WheelEngine.ts`, `WheelDisplay.tsx`, `WheelControls.tsx`, `WheelLegend.tsx`, `wheelStore` (persistedGameState), `styles.css`, `GameShell`, `StakeBetPanel`, 나머지 5게임 (Dice/Crash/Mines/Plinko/Limbo/Lobby), `supabase/`, `src/integrations/supabase/types.ts`, `src/lib/api/`, P-0 파일들 (`useDesktopLayout`, `DesktopShell`, `RightRail`, `useGameLayout`, `AppSidebar`).
-
-## 동작
-
-```text
-<1024px (모바일)
-  center: GameShell (max-w-md, historyStrip=PillStrip+SessionStatsBar)
-        + LiveBetsFeed 하단
-  RightRail: null
-
-≥1024px (데스크탑)
-  AppSidebar | Center(max-w-4xl, GameShell, historyStrip=PillStrip only)
-            | RightRail(SessionStatsBar + LiveBetsFeed)
-  → SessionStatsBar 1개, LiveBetsFeed 1개
+// after
+<div className="mx-auto flex w-full flex-col gap-2 lg:max-w-xl">
 ```
 
-## QA 체크리스트
+→ `lg:max-w-xl` (576px). 휠 디스플레이 정사각형이 576px 이하로 제한되고, 내부 SVG(280px max)와 시각 균형 회복. 컨트롤/베팅 패널도 같은 폭으로 자연 정렬.
+
+`<1024px`에서는 부모(MobileShell `max-w-md` = 448px)가 더 좁으므로 `lg:max-w-xl`이 무효 → 모바일 0 diff.
+
+## QA
 
 | 항목 | 기대 |
 |---|---|
-| <1024 Wheel | 모바일 0 diff (SessionStatsBar 1·LiveBets 1) |
-| ≥1024 Wheel | sidebar + center(max-w-4xl) + RightRail |
-| ≥1024 Wheel DOM `LiveBetsFeed` | 정확히 1 (RightRail) |
-| ≥1024 Wheel DOM `SessionStatsBar` | 정확히 1 (RightRail) |
-| ≥1024 다른 게임 (Dice/Crash 등) | RightRail 미렌더 |
-| ≥1024 비-게임 (Earn/Feed) | RightRail 미렌더 |
-| 1023↔1024 리사이즈 | RightRail 토글, wheelStore 상태 보존 |
-| 125% OS zoom | P-0 SSOT 그대로 |
-| `bun run lint:strict` | GREEN |
-| `bun run check` | GREEN (109 tests 0 변동) |
+| <1024 Wheel | 모바일 0 diff |
+| ≥1024 Wheel center | max-w-xl(576px) 중앙 정렬, 디스플레이 정사각형 ~576px |
+| 휠 SVG vs 박스 | 박스가 휠을 적당히 감싸는 균형 (빈 박스 ❌) |
+| RightRail | 변동 없음 (P-0 register 그대로) |
+| 다른 게임/페이지 | 변동 없음 (WheelScreen 한정) |
+| `bun run check` | GREEN |
 
-## 다음 라운드 (범위 외)
-- P-3에서 이 패턴을 K~O 5게임에 일괄 복제 (Cursor canvas 게임 서브태스크 선행).
+## 후속 (범위 외)
+- P-3에서 K~O 5게임 복제 시 동일 패턴(`lg:max-w-xl` 게임 래퍼) 적용 검토
+- 더 큰 wheel 시각을 원하면 별도 라운드에서 `WheelDisplay`의 `WHEEL_SIZE` / `maxWidth` 상향 (현재는 0 diff)

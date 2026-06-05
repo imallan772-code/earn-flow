@@ -336,7 +336,7 @@ export function WheelScreen() {
   const displaySegments = activeRound?.segments ?? segments;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="mx-auto flex w-full flex-col gap-2 lg:max-w-xl">
       <GameShell
         header={
           <header className="flex items-center gap-2">
