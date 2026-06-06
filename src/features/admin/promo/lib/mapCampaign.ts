@@ -2,7 +2,7 @@ import type { PromoCampaign, PromoVariant } from "../types";
 
 /**
  * Z-2 mapCampaign SSOT — `image_url ↔ variant.imageUrl`.
- * features `lib/` 하위. `src/lib/api/promo.ts` 수정 0 (read-back은 Cursor TODO).
+ * Read-back: lib/api/promo.ts `toVariant` (Cursor Z-2 sanitation).
  */
 export function variantToPayload(v: PromoVariant) {
   const utm: Record<string, unknown> = {};

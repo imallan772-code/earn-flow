@@ -28,6 +28,13 @@ function readBearer(request: Request): string | null {
   return m ? m[1] : null;
 }
 
+function isDevAdminOpen(): boolean {
+  return (
+    process.env.NODE_ENV === "development" &&
+    process.env.VITE_ADMIN_DEV_OPEN === "true"
+  );
+}
+
 /**
  * Verify the request is from an authenticated admin user.
  * Returns null when authorized, otherwise a 401 Response.
@@ -45,6 +52,8 @@ export async function assertAdminRequest(
     process.env.SUPABASE_ANON_KEY ||
     process.env.VITE_SUPABASE_ANON_KEY;
   if (!url || !key) return unauthorized("supabase not configured");
+
+  if (isDevAdminOpen()) return null;
 
   const token = readBearer(request);
   if (!token) return unauthorized("missing bearer token");

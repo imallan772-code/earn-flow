@@ -35,7 +35,7 @@ function settingsPayload(s: {
 }
 
 export function ChannelMatrix() {
-  const { dispatches, settings, configured } = usePromoAdmin();
+  const { dispatches, settings, persisting } = usePromoAdmin();
   const ko = ADMIN_KO.promo.channels;
   const koPub = ADMIN_KO.promo.publish;
 
@@ -111,7 +111,7 @@ export function ChannelMatrix() {
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold">{PROMO_CHANNEL_LABELS_KO[id]}</span>
                 <span className="ml-auto rounded-full bg-white/8 px-2 py-0.5 text-[9px] font-bold">
-                  {configured ? ko.liveBadge : ko.mockBadge}
+                  {persisting ? ko.liveBadge : ko.mockBadge}
                 </span>
               </div>
               {warn && <p className="text-[10px] text-(--color-muted)">⚠ {warn}</p>}

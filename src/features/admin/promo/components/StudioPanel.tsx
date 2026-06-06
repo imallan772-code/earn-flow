@@ -12,6 +12,7 @@ import { LivePreview } from "./LivePreview";
 import { AbSplitBar } from "./AbSplitBar";
 import { VariantEditorCard } from "./VariantEditorCard";
 import { usePromoAiStatus } from "../hooks/usePromoAiStatus";
+import { promoAiProviderLabelKo } from "../lib/promoAiLabel";
 import type { PromoChannelId, PromoVariant } from "../types";
 
 const CHANNELS: PromoChannelId[] = ["telegram", "x", "slack", "discord", "linkedin"];
@@ -158,7 +159,7 @@ export function StudioPanel() {
   const providerBadge = status.loading
     ? null
     : status.configured
-      ? (status.provider === "gemini-direct" ? koAi.providerGemini : koAi.providerGateway)
+      ? promoAiProviderLabelKo(status.provider)
       : koAi.notConfigured;
 
   return (

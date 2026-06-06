@@ -3,8 +3,10 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { Users, TrendingUp, Megaphone, Trophy } from "lucide-react";
+import { useAuth } from "@/features/auth/AuthContext";
 import { CountUp } from "@/shared/motion/CountUp";
 import { AdminLayout } from "@/shared/admin/AdminLayout";
+import { fetchIsAdmin } from "@/lib/api/admin/auth";
 import { adminDashboardStats } from "@/lib/api/admin/dashboard";
 import { isSupabaseConfigured } from "@/integrations/supabase/env";
 
@@ -17,10 +19,22 @@ const MOCK_STATS = {
 
 export function AdminDashboard() {
   const configured = isSupabaseConfigured();
+  const { status } = useAuth();
+  const adminMembership = useQuery({
+    queryKey: ["admin", "membership"],
+    queryFn: fetchIsAdmin,
+    enabled: configured && status === "authenticated",
+    retry: false,
+    staleTime: 5 * 60_000,
+  });
+  const persisting =
+    configured && status === "authenticated" && adminMembership.data === true;
+
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "dashboard"],
     queryFn: adminDashboardStats,
-    enabled: configured,
+    enabled: persisting,
+    retry: false,
     staleTime: 30_000,
   });
 
@@ -58,7 +72,13 @@ export function AdminDashboard() {
       <div className="mb-6">
         <h1 className="text-2xl font-extrabold">대시보드</h1>
         <p className="text-sm text-(--color-muted)">
-            {configured ? (isLoading ? "Supabase 집계 불러오는 중…" : "실시간 KPI") : "오프라인 데모 KPI"}
+          {persisting
+            ? isLoading
+              ? "Supabase 집계 불러오는 중…"
+              : "실시간 KPI"
+            : configured
+              ? "데모 KPI (admin_users 등록 후 실데이터)"
+              : "오프라인 데모 KPI"}
         </p>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">

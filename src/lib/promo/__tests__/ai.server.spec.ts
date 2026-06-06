@@ -3,6 +3,8 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 const ORIG = { ...process.env };
 
 beforeEach(() => {
+  delete process.env.OPENROUTER_API_KEY;
+  delete process.env.OPENROUTER_PROMO_MODEL;
   delete process.env.GEMINI_API_KEY;
   delete process.env.LOVABLE_API_KEY;
   delete process.env.GEMINI_MODEL;
@@ -25,7 +27,15 @@ describe("ai.server.resolveProvider", () => {
     const { resolveProvider } = await load();
     expect(resolveProvider()).toBeNull();
   });
-  it("prefers gemini-direct when GEMINI_API_KEY set", async () => {
+  it("prefers openrouter when OPENROUTER_API_KEY set", async () => {
+    process.env.OPENROUTER_API_KEY = "sk-or-test";
+    process.env.GEMINI_API_KEY = "test-gemini";
+    const { resolveProvider } = await load();
+    const r = resolveProvider();
+    expect(r?.provider).toBe("openrouter");
+    expect(r?.model).toBe("openrouter/free");
+  });
+  it("prefers gemini-direct when only GEMINI_API_KEY set", async () => {
     process.env.GEMINI_API_KEY = "test-gemini";
     process.env.LOVABLE_API_KEY = "test-lovable";
     const { resolveProvider } = await load();
@@ -96,6 +106,35 @@ describe("ai.server.callPromoBundle", () => {
       expect(r.data.variants).toHaveLength(2);
       expect(r.data.variants[0].channel).toBe("telegram");
     }
+  });
+
+  it("OpenRouter: parses OpenAI-style choices", async () => {
+    process.env.OPENROUTER_API_KEY = "sk-or-k";
+    const payload = {
+      brief: "ok",
+      variants: [{ channel: "slack", body: "s", hashtags: [], cta: "" }],
+      risk: { score: 0, flags: [] },
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string, init?: RequestInit) => {
+        expect(url).toContain("openrouter.ai");
+        expect((init?.headers as Record<string, string>).Authorization).toContain("Bearer");
+        return new Response(
+          JSON.stringify({ choices: [{ message: { content: JSON.stringify(payload) } }] }),
+          { status: 200 },
+        );
+      }),
+    );
+    const { callPromoBundle } = await load();
+    const r = await callPromoBundle({
+      brief: "x",
+      title: "",
+      targetUrl: "",
+      channels: ["slack"],
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.provider).toBe("openrouter");
   });
 
   it("Gateway: parses OpenAI-style choices", async () => {

@@ -2,11 +2,11 @@ import { usePromoAdmin } from "../hooks/usePromoAdmin";
 import { ADMIN_KO } from "@/shared/admin/labels.ko";
 
 export function AnalyticsKpis() {
-  const { analytics, configured, loading } = usePromoAdmin();
+  const { analytics, persisting, loading } = usePromoAdmin();
   const ctr =
     analytics.impressions > 0 ? (analytics.clicks / analytics.impressions) * 100 : 0;
   const ko = ADMIN_KO.promo.analytics;
-  const hint = configured ? ko.hintConfigured : ko.hint;
+  const hint = persisting ? ko.hintConfigured : ko.hint;
 
   const cards = [
     { label: ko.impressions, value: analytics.impressions.toLocaleString("ko-KR") },

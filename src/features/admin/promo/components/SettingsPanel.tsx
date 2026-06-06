@@ -1,36 +1,11 @@
-import { useEffect } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { usePromoAdmin } from "../hooks/usePromoAdmin";
 import { ADMIN_KO, PROMO_SETTINGS_KO_EXTRA } from "@/shared/admin/labels.ko";
-import { getPromoSettingsExtended } from "@/lib/promo/promo.functions";
 
 export function SettingsPanel() {
-  const { settings, updateSettings, configured, loading } = usePromoAdmin();
+  const { settings, updateSettings, persisting, loading } = usePromoAdmin();
   const ko = ADMIN_KO.promo.settings;
   const koTg = PROMO_SETTINGS_KO_EXTRA;
-  const hint = configured ? ko.hintConfigured : ko.hint;
-
-  const fetchExtended = useServerFn(getPromoSettingsExtended);
-
-  // Read-back telegram fields from raw RPC (toSettings 정식화는 Cursor 큐).
-  useEffect(() => {
-    let cancelled = false;
-    fetchExtended()
-      .then((r) => {
-        if (cancelled || !("ok" in r) || !r.ok) return;
-        const patch: Partial<typeof settings> = {};
-        if (r.telegramBotToken && !settings.telegramBotToken) patch.telegramBotToken = r.telegramBotToken;
-        if (r.telegramChatId && !settings.telegramChatId) patch.telegramChatId = r.telegramChatId;
-        if (Object.keys(patch).length > 0) updateSettings(patch);
-      })
-      .catch(() => {
-        /* ignore */
-      });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const hint = persisting ? ko.hintConfigured : ko.hint;
 
   return (
     <section className="glass-2 max-w-xl rounded-3xl p-5">

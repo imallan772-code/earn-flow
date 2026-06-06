@@ -3,6 +3,8 @@
  * Z-2 v1.3: assertAdminRequest (is_admin RPC) → 401 JSON before stream.
  */
 import { createFileRoute } from "@tanstack/react-router";
+import { randomUUID } from "node:crypto";
+import { cronUpsertPromoAsset, uploadPromoGeneratedImage } from "@/lib/api/promo/storage.server";
 import { assertAdminRequest } from "@/lib/promo/adminGate.server";
 import { streamPromoImage } from "@/lib/promo/image.server";
 
@@ -38,12 +40,28 @@ export const Route = createFileRoute("/api/admin/promo/image-stream")({
             controller.enqueue(encoder.encode(sseEvent("progress", { stage: "start" })));
             const result = await streamPromoImage(prompt);
             if (result.ok) {
+              const publicUrl = await uploadPromoGeneratedImage({
+                base64: result.data.base64,
+                mimeType: result.data.mimeType,
+              });
+              const assetId = `img-${randomUUID()}`;
+              if (publicUrl) {
+                await cronUpsertPromoAsset({
+                  id: assetId,
+                  kind: "image",
+                  url: publicUrl,
+                  alt: prompt.slice(0, 80),
+                  prompt,
+                });
+              }
               controller.enqueue(
                 encoder.encode(
                   sseEvent("done", {
                     ok: true,
                     mimeType: result.data.mimeType,
                     base64: result.data.base64,
+                    imageUrl: publicUrl ?? undefined,
+                    assetId: publicUrl ? assetId : undefined,
                   }),
                 ),
               );

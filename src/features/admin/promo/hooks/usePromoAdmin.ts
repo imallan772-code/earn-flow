@@ -3,6 +3,8 @@
  * Pattern: AdminNotice (lib/api + TanStack Query + mock fallback).
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/features/auth/AuthContext";
+import { fetchIsAdmin } from "@/lib/api/admin/auth";
 import { isSupabaseConfigured } from "@/integrations/supabase/env";
 import {
   promoAnalyticsSummary,
@@ -37,7 +39,20 @@ export const PROMO_QUERY_KEYS = {
 
 export function usePromoAdmin() {
   const configured = isSupabaseConfigured();
+  const { status } = useAuth();
   const qc = useQueryClient();
+
+  const adminMembership = useQuery({
+    queryKey: ["admin", "membership"],
+    queryFn: fetchIsAdmin,
+    enabled: configured && status === "authenticated",
+    retry: false,
+    staleTime: 5 * 60_000,
+  });
+
+  /** Supabase RPC — only when logged-in admin_users member (stops 400 spam in dev-open). */
+  const persisting =
+    configured && status === "authenticated" && adminMembership.data === true;
 
   const mockCampaigns = usePromoState((s) => s.campaigns);
   const mockDispatches = usePromoState((s) => s.dispatches);
@@ -48,36 +63,39 @@ export function usePromoAdmin() {
   const campaignsQuery = useQuery({
     queryKey: PROMO_QUERY_KEYS.campaigns,
     queryFn: promoListCampaigns,
-    enabled: configured,
+    enabled: persisting,
+    retry: false,
   });
   const dispatchesQuery = useQuery({
     queryKey: PROMO_QUERY_KEYS.dispatches,
     queryFn: () => promoListDispatches(),
-    enabled: configured,
+    enabled: persisting,
+    retry: false,
   });
   const assetsQuery = useQuery({
     queryKey: PROMO_QUERY_KEYS.assets,
     queryFn: promoListAssets,
-    enabled: configured,
+    enabled: persisting,
+    retry: false,
   });
   const settingsQuery = useQuery({
     queryKey: PROMO_QUERY_KEYS.settings,
     queryFn: promoGetSettings,
-    enabled: configured,
+    enabled: persisting,
+    retry: false,
   });
   const analyticsQuery = useQuery({
     queryKey: PROMO_QUERY_KEYS.analytics,
     queryFn: promoAnalyticsSummary,
-    enabled: configured,
+    enabled: persisting,
+    retry: false,
   });
 
-  const campaigns =
-    configured && campaignsQuery.data ? campaignsQuery.data : mockCampaigns;
+  const campaigns = persisting && campaignsQuery.data ? campaignsQuery.data : mockCampaigns;
   const dispatches =
-    configured && dispatchesQuery.data ? dispatchesQuery.data : mockDispatches;
-  const assets = configured && assetsQuery.data ? assetsQuery.data : mockAssets;
-  const settings =
-    configured && settingsQuery.data ? settingsQuery.data : mockSettings;
+    persisting && dispatchesQuery.data ? dispatchesQuery.data : mockDispatches;
+  const assets = persisting && assetsQuery.data ? assetsQuery.data : mockAssets;
+  const settings = persisting && settingsQuery.data ? settingsQuery.data : mockSettings;
 
   const invalidateAll = async () => {
     await Promise.all([
@@ -145,7 +163,7 @@ export function usePromoAdmin() {
   });
 
   const upsertCampaign = (c: PromoCampaign) => {
-    if (configured) {
+    if (persisting) {
       upsertCampaignMut.mutate(c);
       return;
     }
@@ -153,7 +171,7 @@ export function usePromoAdmin() {
   };
 
   const removeCampaign = (id: string) => {
-    if (configured) {
+    if (persisting) {
       deleteCampaignMut.mutate(id);
       return;
     }
@@ -168,7 +186,7 @@ export function usePromoAdmin() {
   };
 
   const addDispatch = (d: PromoDispatch) => {
-    if (configured) {
+    if (persisting) {
       recordDispatchMut.mutate(d);
       return;
     }
@@ -176,7 +194,7 @@ export function usePromoAdmin() {
   };
 
   const updateSettings = (patch: Partial<PromoSettings>) => {
-    if (configured) {
+    if (persisting) {
       upsertSettingsMut.mutate(patch);
       return;
     }
@@ -184,14 +202,14 @@ export function usePromoAdmin() {
   };
 
   const addAsset = (a: PromoAsset) => {
-    if (configured) {
+    if (persisting) {
       addAssetMut.mutate(a);
       return;
     }
     promoMockStore.addAsset(a);
   };
 
-  const analytics = configured && analyticsQuery.data
+  const analytics = persisting && analyticsQuery.data
     ? {
         impressions: analyticsQuery.data.sent * 100,
         clicks: analyticsQuery.data.clicks,
@@ -208,7 +226,7 @@ export function usePromoAdmin() {
       };
 
   const loading =
-    configured &&
+    persisting &&
     (campaignsQuery.isLoading ||
       dispatchesQuery.isLoading ||
       assetsQuery.isLoading ||
@@ -216,6 +234,7 @@ export function usePromoAdmin() {
 
   return {
     configured,
+    persisting,
     loading,
     campaigns,
     dispatches,

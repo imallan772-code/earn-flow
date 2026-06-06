@@ -2,9 +2,10 @@
  * Promo AI helper — server-only.
  *
  * Provider 우선순위 (handler 내부에서 process.env read):
- *   1) GEMINI_API_KEY     → Google Generative Language API (Flash 무료)
- *   2) LOVABLE_API_KEY    → Lovable AI Gateway (preview)
- *   3) null               → caller가 fallback 처리
+ *   1) OPENROUTER_API_KEY → OpenRouter chat/completions (KR geo 우회·무료 :free 모델)
+ *   2) GEMINI_API_KEY     → Google Generative Language API (Flash 무료)
+ *   3) LOVABLE_API_KEY    → Lovable AI Gateway (preview)
+ *   4) null               → caller가 fallback 처리
  *
  * 절대 module-level에서 process.env 읽지 말 것 (Cloudflare Workers).
  * 절대 VITE_* prefix 사용 금지 (client 노출).
@@ -14,7 +15,7 @@ import { z } from "zod";
 import type { PromoChannelId, PromoVariant } from "@/features/admin/promo/types";
 import { buildFallbackVariants } from "./fallbackVariants";
 
-export type PromoAiProvider = "gemini-direct" | "lovable-gateway";
+export type PromoAiProvider = "openrouter" | "gemini-direct" | "lovable-gateway";
 
 export type AiErrorCode =
   | "AI_NOT_CONFIGURED"
@@ -28,8 +29,10 @@ export type AiEnvelope<T> =
   | { ok: false; code: AiErrorCode; message?: string };
 
 const DIRECT_DEFAULT_MODEL = "gemini-2.5-flash";
+const OPENROUTER_DEFAULT_MODEL = "openrouter/free";
 const GATEWAY_DEFAULT_MODEL = "google/gemini-3-flash-preview";
 const DIRECT_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
+const OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 const GATEWAY_ENDPOINT = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 const DEFAULT_TIMEOUT_MS = 25_000;
@@ -42,6 +45,14 @@ export interface ResolvedProvider {
 
 /** handler 내부에서만 호출. 키 값은 절대 client로 흘러나가면 안 됨. */
 export function resolveProvider(): ResolvedProvider | null {
+  const openRouterKey = process.env.OPENROUTER_API_KEY;
+  if (openRouterKey) {
+    return {
+      provider: "openrouter",
+      apiKey: openRouterKey,
+      model: process.env.OPENROUTER_PROMO_MODEL || OPENROUTER_DEFAULT_MODEL,
+    };
+  }
   const geminiKey = process.env.GEMINI_API_KEY;
   if (geminiKey) {
     return {
@@ -196,7 +207,9 @@ export async function callPromoBundle(
     const raw =
       resolved.provider === "gemini-direct"
         ? await callGeminiDirect(resolved, prompt, ac.signal)
-        : await callLovableGateway(resolved, prompt, ac.signal);
+        : resolved.provider === "openrouter"
+          ? await callOpenRouter(resolved, prompt, ac.signal)
+          : await callLovableGateway(resolved, prompt, ac.signal);
 
     if (!raw.ok) return { ok: false, code: raw.code, message: raw.message };
     const bundle = parseAiBundle(raw.text, { brief: input.brief, channels: input.channels });
@@ -284,12 +297,38 @@ async function callLovableGateway(
   prompt: string,
   signal: AbortSignal,
 ): Promise<RawResult> {
-  const res = await fetch(GATEWAY_ENDPOINT, {
+  return callOpenAiChatCompletions(GATEWAY_ENDPOINT, r, prompt, signal, "gateway", {
+    Authorization: `Bearer ${r.apiKey}`,
+  });
+}
+
+async function callOpenRouter(
+  r: ResolvedProvider,
+  prompt: string,
+  signal: AbortSignal,
+): Promise<RawResult> {
+  const siteUrl = process.env.VITE_SITE_URL || process.env.SITE_URL || "https://phonara.app";
+  return callOpenAiChatCompletions(OPENROUTER_ENDPOINT, r, prompt, signal, "openrouter", {
+    Authorization: `Bearer ${r.apiKey}`,
+    "HTTP-Referer": siteUrl,
+    "X-Title": "PHONARA earn-flow Promo",
+  });
+}
+
+async function callOpenAiChatCompletions(
+  endpoint: string,
+  r: ResolvedProvider,
+  prompt: string,
+  signal: AbortSignal,
+  label: string,
+  extraHeaders: Record<string, string>,
+): Promise<RawResult> {
+  const res = await fetch(endpoint, {
     method: "POST",
     signal,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${r.apiKey}`,
+      ...extraHeaders,
     },
     body: JSON.stringify({
       model: r.model,
@@ -301,7 +340,7 @@ async function callLovableGateway(
   if (res.status === 402) return { ok: false, code: "AI_ERROR", message: "credits exhausted" };
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    return { ok: false, code: "AI_ERROR", message: `gateway ${res.status}: ${body.slice(0, 200)}` };
+    return { ok: false, code: "AI_ERROR", message: `${label} ${res.status}: ${body.slice(0, 200)}` };
   }
   const data = (await res.json()) as {
     choices?: Array<{ message?: { content?: string } }>;

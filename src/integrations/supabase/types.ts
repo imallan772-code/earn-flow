@@ -941,6 +941,13 @@ export type Database = {
         Args: { p_amount: number; p_game: string; p_round_id: string }
         Returns: Json
       }
+      cron_get_promo_settings: { Args: never; Returns: Json }
+      cron_list_due_promo_campaigns: { Args: { p_now?: string }; Returns: Json }
+      cron_mark_promo_campaign_status: {
+        Args: { p_id: string; p_status: string }
+        Returns: undefined
+      }
+      cron_record_promo_dispatch: { Args: { p_payload: Json }; Returns: Json }
       debit_phon_for_bet: {
         Args: { p_amount: number; p_game: string; p_round_id: string }
         Returns: Json

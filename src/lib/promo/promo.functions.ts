@@ -26,6 +26,7 @@ import {
 import { mergeRiskScores, scanRiskLocal } from "./risk";
 import { getChannelAdapter } from "./channels";
 import type { ChannelSettings } from "./channels/types";
+import { publishPromoChannel, type PublishOneResult } from "./dispatch.server";
 import { planDispatch } from "./dispatchTick";
 import type { PromoAsset, PromoCampaign, PromoChannelId, PromoDispatch } from "@/features/admin/promo/types";
 
@@ -167,60 +168,22 @@ const publishInputSchema = z.object({
   settings: channelSettingsSchema.optional(),
 });
 
-interface PublishOne {
+async function recordAdminDispatch(input: {
   campaignId: string;
-  channel: PromoChannelId;
   variantId: string;
-  ok: boolean;
-  code?: string;
-  message?: string;
-}
-
-async function publishOne(
-  campaign: PromoCampaign,
-  channel: PromoChannelId,
-  settings: ChannelSettings,
-): Promise<PublishOne> {
-  const variant =
-    campaign.variants.find((v) => v.channel === channel) ?? campaign.variants[0];
-  if (!variant) {
-    return {
-      campaignId: campaign.id,
-      channel,
-      variantId: "",
-      ok: false,
-      code: "NO_VARIANT",
-    };
-  }
-  const adapter = getChannelAdapter(channel);
-  const result = await adapter.send({
-    channel,
-    variant,
-    targetUrl: campaign.targetUrl,
-    settings,
+  channel: PromoChannelId;
+  status: "sent" | "failed";
+  error?: string;
+  externalId?: string;
+}) {
+  await promoRecordDispatch({
+    campaignId: input.campaignId,
+    variantId: input.variantId,
+    channel: input.channel,
+    status: input.status,
+    error: input.error,
+    externalId: input.externalId,
   });
-  // Record dispatch (best effort; ignore RPC errors when Supabase not configured).
-  if (isSupabaseConfigured()) {
-    try {
-      await promoRecordDispatch({
-        campaignId: campaign.id,
-        variantId: variant.id,
-        channel,
-        status: result.ok ? "sent" : "failed",
-        error: result.ok ? undefined : `${result.code}${result.message ? `: ${result.message}` : ""}`,
-      });
-    } catch {
-      /* ignore — Cursor TODO: service-role record */
-    }
-  }
-  return {
-    campaignId: campaign.id,
-    channel,
-    variantId: variant.id,
-    ok: result.ok,
-    code: result.ok ? undefined : result.code,
-    message: result.ok ? result.message : result.message,
-  };
 }
 
 /** 단건 발행 — CampaignTable 행 「발행」 전용. */
@@ -231,20 +194,22 @@ export const publishPromoCampaign = createServerFn({ method: "POST" })
       return {
         ok: false as const,
         code: "DB_NOT_CONFIGURED" as const,
-        results: [] as PublishOne[],
+        results: [] as PublishOneResult[],
       };
     }
     const campaigns = await promoListCampaigns();
     const campaign = campaigns.find((c) => c.id === data.campaignId);
     if (!campaign) {
-      return { ok: false as const, code: "CAMPAIGN_NOT_FOUND" as const, results: [] as PublishOne[] };
+      return { ok: false as const, code: "CAMPAIGN_NOT_FOUND" as const, results: [] as PublishOneResult[] };
     }
     const targetChannels: PromoChannelId[] = data.channel
       ? [data.channel as PromoChannelId]
       : campaign.channels;
     const settings: ChannelSettings = data.settings ?? {};
     const results = await Promise.all(
-      targetChannels.map((ch) => publishOne(campaign, ch, settings)),
+      targetChannels.map((ch) =>
+        publishPromoChannel(campaign, ch, settings, recordAdminDispatch),
+      ),
     );
     const sent = results.filter((r) => r.ok).length;
     return { ok: true as const, sent, failed: results.length - sent, results };
@@ -276,10 +241,10 @@ export const runPromoCronTick = createServerFn({ method: "POST" })
       plan.map(async (item) => {
         const c = byId.get(item.campaignId);
         if (!c) return null;
-        return publishOne(c, item.channel, settings);
+        return publishPromoChannel(c, item.channel, settings, recordAdminDispatch);
       }),
     );
-    const ok = results.filter((r): r is PublishOne => r !== null);
+    const ok = results.filter((r): r is PublishOneResult => r !== null);
     const sent = ok.filter((r) => r.ok).length;
     return {
       ok: true as const,
@@ -308,28 +273,23 @@ export const testChannel = createServerFn({ method: "POST" })
       : { ok: false as const, code: result.code, message: result.message };
   });
 
-/**
- * Settings telegram read-back.
- * lib/api/promo.ts `toSettings`는 telegram 필드를 매핑하지 않음 → raw RPC 호출.
- * lib/api/promo.ts 수정 0 (Cursor 큐: toSettings 정식화).
- */
+/** Telegram settings slice — delegates to lib/api/promo `promoGetSettings`. */
 export const getPromoSettingsExtended = createServerFn({ method: "GET" }).handler(
   async () => {
     if (!isSupabaseConfigured()) {
       return { ok: true as const, telegramBotToken: "", telegramChatId: "" };
     }
-    const { getSupabaseClient } = await import("@/integrations/supabase/client");
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase.rpc("admin_get_promo_settings");
-    if (error) {
-      return { ok: false as const, code: "RPC_ERROR" as const, message: error.message };
+    try {
+      const { promoGetSettings } = await import("@/lib/api/promo");
+      const s = await promoGetSettings();
+      return {
+        ok: true as const,
+        telegramBotToken: s.telegramBotToken ?? "",
+        telegramChatId: s.telegramChatId ?? "",
+      };
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "RPC_ERROR";
+      return { ok: false as const, code: "RPC_ERROR" as const, message };
     }
-    const raw = (data ?? {}) as { default_utm?: Record<string, unknown> | null };
-    const utm = (raw.default_utm ?? {}) as Record<string, unknown>;
-    return {
-      ok: true as const,
-      telegramBotToken: typeof utm.telegramBotToken === "string" ? utm.telegramBotToken : "",
-      telegramChatId: typeof utm.telegramChatId === "string" ? utm.telegramChatId : "",
-    };
   },
 );

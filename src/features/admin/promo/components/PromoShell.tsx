@@ -3,6 +3,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { ADMIN_KO } from "@/shared/admin/labels.ko";
 import { usePromoAiStatus } from "../hooks/usePromoAiStatus";
+import { promoAiProviderLabelKo } from "../lib/promoAiLabel";
 import {
   Wand2,
   ListChecks,
@@ -30,9 +31,7 @@ export function PromoShell({ children }: { children: ReactNode }) {
   const subtitle = status.loading
     ? ADMIN_KO.promo.subtitle
     : status.configured
-      ? koAi.subtitleConfigured(
-          status.provider === "gemini-direct" ? koAi.providerGemini : koAi.providerGateway,
-        )
+      ? koAi.subtitleConfigured(promoAiProviderLabelKo(status.provider))
       : koAi.subtitleFallback;
   return (
     <div className="min-h-dvh bg-cosmic text-(--color-foreground)">

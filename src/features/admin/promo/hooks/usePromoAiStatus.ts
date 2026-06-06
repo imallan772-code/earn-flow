@@ -6,17 +6,19 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getPromoAiStatus } from "@/lib/promo/promo.functions";
 
-export type PromoAiProvider = "gemini-direct" | "lovable-gateway" | null;
+import type { PromoAiProvider } from "@/lib/promo/ai.server";
+
+export type { PromoAiProvider };
 
 export interface PromoAiStatus {
   loading: boolean;
   configured: boolean;
-  provider: PromoAiProvider;
+  provider: PromoAiProvider | null;
 }
 
 interface CacheEntry {
   configured: boolean;
-  provider: PromoAiProvider;
+  provider: PromoAiProvider | null;
 }
 
 let cache: CacheEntry | null = null;

@@ -10,8 +10,6 @@ import type {
   PromoChannelId,
   PromoDispatch,
   PromoSettings,
-  PromoStatus,
-  PromoVariant,
 } from "@/features/admin/promo/types";
 import {
   promoAnalyticsSummarySchema,
@@ -25,62 +23,13 @@ import {
   promoSettingsRowSchema,
   promoSettingsUpsertSchema,
 } from "@/lib/api/promo/schemas";
-
-function briefText(brief: unknown): string {
-  if (typeof brief === "string") return brief;
-  if (brief && typeof brief === "object" && "text" in brief) {
-    return String((brief as { text: unknown }).text ?? "");
-  }
-  return "";
-}
-
-function toVariant(row: {
-  id: string;
-  channel: string;
-  body: string;
-  hashtags?: string[] | null;
-  cta?: string | null;
-  weight: number;
-  utm?: Record<string, unknown> | null;
-}): PromoVariant {
-  const utm = row.utm ?? undefined;
-  const imagePrompt =
-    utm && typeof utm.imagePrompt === "string" ? utm.imagePrompt : undefined;
-  return {
-    id: row.id,
-    channel: row.channel as PromoChannelId,
-    body: row.body,
-    hashtags: row.hashtags ?? [],
-    cta: row.cta ?? undefined,
-    weight: row.weight,
-    imagePrompt,
-  };
-}
+import {
+  mapPromoCampaignRow,
+  mapPromoSettingsRow,
+} from "@/lib/api/promo/mappers";
 
 function toCampaign(row: ReturnType<typeof promoCampaignRowSchema.parse>): PromoCampaign {
-  const variants = (row.variants ?? []).map((v) =>
-    toVariant({
-      id: v.id,
-      channel: v.channel,
-      body: v.body,
-      hashtags: v.hashtags,
-      cta: v.cta,
-      weight: v.weight,
-      utm: v.utm,
-    }),
-  );
-  return {
-    id: row.id,
-    title: row.title,
-    brief: briefText(row.brief),
-    targetUrl: row.target_url,
-    channels: (row.channels ?? []) as PromoChannelId[],
-    variants,
-    scheduledAt: row.scheduled_at ?? new Date().toISOString(),
-    status: row.status as PromoStatus,
-    riskScore: row.risk_score,
-    heroAssetId: row.hero_asset_id ?? undefined,
-  };
+  return mapPromoCampaignRow(row);
 }
 
 function toDispatch(row: ReturnType<typeof promoDispatchRowSchema.parse>): PromoDispatch {
@@ -106,12 +55,7 @@ function toAsset(row: ReturnType<typeof promoAssetRowSchema.parse>): PromoAsset 
 }
 
 function toSettings(row: ReturnType<typeof promoSettingsRowSchema.parse>): PromoSettings {
-  const utm = (row.default_utm ?? {}) as Record<string, string>;
-  return {
-    webhookUrl: utm.webhookUrl ?? "",
-    hmacSecret: utm.hmacSecret ?? "",
-    defaultUtmSource: utm.defaultUtmSource ?? utm.utm_source ?? "phonara-promo",
-  };
+  return mapPromoSettingsRow((row.default_utm ?? {}) as Record<string, string>);
 }
 
 function toUpsertPayload(input: ReturnType<typeof promoCampaignUpsertSchema.parse>) {

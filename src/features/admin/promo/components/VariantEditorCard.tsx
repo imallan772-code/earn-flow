@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Image as ImageIcon, Loader2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { PROMO_CHANNEL_LABELS_KO, ADMIN_KO } from "@/shared/admin/labels.ko";
+import { getAdminAuthHeaders } from "@/lib/admin/session";
 import { usePromoAdmin } from "../hooks/usePromoAdmin";
 import type { PromoVariant } from "../types";
 
@@ -14,6 +15,8 @@ interface SseDone {
   ok: true;
   mimeType: string;
   base64: string;
+  imageUrl?: string;
+  assetId?: string;
 }
 
 interface SseErr {
@@ -55,10 +58,11 @@ export function VariantEditorCard({ variant, onChange }: Props) {
     abortRef.current = ac;
     setGenState("loading");
     try {
+      const headers = await getAdminAuthHeaders();
       const res = await fetch("/api/admin/promo/image-stream", {
         method: "POST",
         signal: ac.signal,
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ prompt }),
       });
       if (!res.ok || !res.body) {
@@ -79,11 +83,12 @@ export function VariantEditorCard({ variant, onChange }: Props) {
           if (e.name === "done") {
             const payload = JSON.parse(e.data) as SseDone;
             const dataUrl = `data:${payload.mimeType};base64,${payload.base64}`;
-            onChange({ ...variant, imageUrl: dataUrl });
+            const imageUrl = payload.imageUrl ?? dataUrl;
+            onChange({ ...variant, imageUrl });
             addAsset({
-              id: `img-${variant.id}-${Date.now()}`,
+              id: payload.assetId ?? `img-${variant.id}-${Date.now()}`,
               kind: "image",
-              url: dataUrl,
+              url: imageUrl,
               alt: prompt.slice(0, 80),
               createdAt: new Date().toISOString(),
             });

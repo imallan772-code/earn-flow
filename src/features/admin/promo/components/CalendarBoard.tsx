@@ -2,9 +2,9 @@ import { usePromoAdmin } from "../hooks/usePromoAdmin";
 import { ADMIN_KO } from "@/shared/admin/labels.ko";
 
 export function CalendarBoard() {
-  const { campaigns, scheduleCampaign, configured, loading } = usePromoAdmin();
+  const { campaigns, scheduleCampaign, persisting, loading } = usePromoAdmin();
   const ko = ADMIN_KO.promo.calendar;
-  const hint = configured ? ko.hintConfigured : ko.hint;
+  const hint = persisting ? ko.hintConfigured : ko.hint;
   return (
     <section className="glass-2 rounded-3xl p-5">
       <h2 className="mb-3 text-base font-bold">{ko.title}</h2>

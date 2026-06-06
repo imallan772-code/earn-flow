@@ -27,4 +27,28 @@ describe("campaignToUpsertPayload", () => {
     expect(payload.variants?.[0]?.utm).toEqual({ imagePrompt: "neon hero" });
     expect(payload.target_url).toBe("https://phonara.app");
   });
+
+  it("maps imageUrl to image_url column", () => {
+    const payload = campaignToUpsertPayload({
+      id: "camp-2",
+      title: "Img",
+      brief: "B",
+      targetUrl: "https://phonara.app",
+      channels: ["x"],
+      variants: [
+        {
+          id: "v1",
+          channel: "x",
+          body: "post",
+          hashtags: [],
+          weight: 1,
+          imageUrl: "data:image/png;base64,abc",
+        },
+      ],
+      scheduledAt: "2030-01-01T00:00:00.000Z",
+      status: "draft",
+      riskScore: 0,
+    });
+    expect(payload.variants?.[0]?.image_url).toBe("data:image/png;base64,abc");
+  });
 });
