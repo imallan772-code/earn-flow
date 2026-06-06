@@ -80,6 +80,9 @@ function paintResultCanvas(
 
 export function MinesScreen() {
   useRegisterMainMode("game");
+  const isDesktop = useDesktopLayout();
+  const rightRailNode = useMemo(() => <MinesRightRail />, []);
+  useRegisterRightRail(rightRailNode);
   const wallet = useGameWallet();
   const { balance } = wallet;
   const nonce = minesStore.use((s) => s.nonce);
@@ -353,7 +356,7 @@ export function MinesScreen() {
         }
       />
 
-      <LiveBetsFeed game="mines" limit={10} />
+      {!isDesktop && <LiveBetsFeed game="mines" limit={10} />}
 
       {flashRecent && (
         <>
