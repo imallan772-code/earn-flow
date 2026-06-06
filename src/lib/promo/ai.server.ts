@@ -244,16 +244,15 @@ function buildPromptText(input: CallPromptInput): string {
   ].join("\n");
 }
 
-interface RawResponse {
-  ok: true;
-  text: string;
-}
+type RawResult =
+  | { ok: true; text: string }
+  | { ok: false; code: AiErrorCode; message?: string };
 
 async function callGeminiDirect(
   r: ResolvedProvider,
   prompt: string,
   signal: AbortSignal,
-): Promise<RawResponse | AiEnvelope<never>> {
+): Promise<RawResult> {
   const url = `${DIRECT_ENDPOINT}/${encodeURIComponent(r.model)}:generateContent?key=${encodeURIComponent(r.apiKey)}`;
   const res = await fetch(url, {
     method: "POST",
