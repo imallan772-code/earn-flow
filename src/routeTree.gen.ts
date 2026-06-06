@@ -54,6 +54,7 @@ import { Route as AppExchangeSymbolRouteImport } from './routes/_app/exchange.$s
 import { Route as AppEventIdRouteImport } from './routes/_app/event.$id'
 import { Route as ApiPublicRSlugRouteImport } from './routes/api/public/r.$slug'
 import { Route as ApiPublicCronPromoTickRouteImport } from './routes/api/public/cron/promo-tick'
+import { Route as ApiAdminPromoImageStreamRouteImport } from './routes/api/admin/promo/image-stream'
 
 const TransferRoute = TransferRouteImport.update({
   id: '/transfer',
@@ -279,6 +280,12 @@ const ApiPublicCronPromoTickRoute = ApiPublicCronPromoTickRouteImport.update({
   path: '/api/public/cron/promo-tick',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminPromoImageStreamRoute =
+  ApiAdminPromoImageStreamRouteImport.update({
+    id: '/api/admin/promo/image-stream',
+    path: '/api/admin/promo/image-stream',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -323,6 +330,7 @@ export interface FileRoutesByFullPath {
   '/admin/promo/settings': typeof AdminPromoSettingsRoute
   '/admin/promo/studio': typeof AdminPromoStudioRoute
   '/admin/promo/': typeof AdminPromoIndexRoute
+  '/api/admin/promo/image-stream': typeof ApiAdminPromoImageStreamRoute
   '/api/public/cron/promo-tick': typeof ApiPublicCronPromoTickRoute
   '/api/public/r/$slug': typeof ApiPublicRSlugRoute
 }
@@ -367,6 +375,7 @@ export interface FileRoutesByTo {
   '/admin/promo/settings': typeof AdminPromoSettingsRoute
   '/admin/promo/studio': typeof AdminPromoStudioRoute
   '/admin/promo': typeof AdminPromoIndexRoute
+  '/api/admin/promo/image-stream': typeof ApiAdminPromoImageStreamRoute
   '/api/public/cron/promo-tick': typeof ApiPublicCronPromoTickRoute
   '/api/public/r/$slug': typeof ApiPublicRSlugRoute
 }
@@ -415,6 +424,7 @@ export interface FileRoutesById {
   '/admin/promo/settings': typeof AdminPromoSettingsRoute
   '/admin/promo/studio': typeof AdminPromoStudioRoute
   '/admin/promo/': typeof AdminPromoIndexRoute
+  '/api/admin/promo/image-stream': typeof ApiAdminPromoImageStreamRoute
   '/api/public/cron/promo-tick': typeof ApiPublicCronPromoTickRoute
   '/api/public/r/$slug': typeof ApiPublicRSlugRoute
 }
@@ -463,6 +473,7 @@ export interface FileRouteTypes {
     | '/admin/promo/settings'
     | '/admin/promo/studio'
     | '/admin/promo/'
+    | '/api/admin/promo/image-stream'
     | '/api/public/cron/promo-tick'
     | '/api/public/r/$slug'
   fileRoutesByTo: FileRoutesByTo
@@ -507,6 +518,7 @@ export interface FileRouteTypes {
     | '/admin/promo/settings'
     | '/admin/promo/studio'
     | '/admin/promo'
+    | '/api/admin/promo/image-stream'
     | '/api/public/cron/promo-tick'
     | '/api/public/r/$slug'
   id:
@@ -554,6 +566,7 @@ export interface FileRouteTypes {
     | '/admin/promo/settings'
     | '/admin/promo/studio'
     | '/admin/promo/'
+    | '/api/admin/promo/image-stream'
     | '/api/public/cron/promo-tick'
     | '/api/public/r/$slug'
   fileRoutesById: FileRoutesById
@@ -576,6 +589,7 @@ export interface RootRouteChildren {
   WithdrawalPhonRoute: typeof WithdrawalPhonRoute
   DepositIndexRoute: typeof DepositIndexRoute
   WithdrawalIndexRoute: typeof WithdrawalIndexRoute
+  ApiAdminPromoImageStreamRoute: typeof ApiAdminPromoImageStreamRoute
   ApiPublicCronPromoTickRoute: typeof ApiPublicCronPromoTickRoute
   ApiPublicRSlugRoute: typeof ApiPublicRSlugRoute
 }
@@ -897,6 +911,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronPromoTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/promo/image-stream': {
+      id: '/api/admin/promo/image-stream'
+      path: '/api/admin/promo/image-stream'
+      fullPath: '/api/admin/promo/image-stream'
+      preLoaderRoute: typeof ApiAdminPromoImageStreamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1020,6 +1041,7 @@ const rootRouteChildren: RootRouteChildren = {
   WithdrawalPhonRoute: WithdrawalPhonRoute,
   DepositIndexRoute: DepositIndexRoute,
   WithdrawalIndexRoute: WithdrawalIndexRoute,
+  ApiAdminPromoImageStreamRoute: ApiAdminPromoImageStreamRoute,
   ApiPublicCronPromoTickRoute: ApiPublicCronPromoTickRoute,
   ApiPublicRSlugRoute: ApiPublicRSlugRoute,
 }

@@ -11,7 +11,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { isSupabaseConfigured } from "@/integrations/supabase/env";
-import { promoListAssets, promoListCampaigns, promoListDispatches } from "@/lib/api/promo";
+import {
+  promoListAssets,
+  promoListCampaigns,
+  promoListDispatches,
+  promoRecordDispatch,
+} from "@/lib/api/promo";
 import {
   callPromoBundle,
   resolveProvider,
@@ -19,6 +24,9 @@ import {
   type PromoAiProvider,
 } from "./ai.server";
 import { mergeRiskScores, scanRiskLocal } from "./risk";
+import { getChannelAdapter } from "./channels";
+import type { ChannelSettings } from "./channels/types";
+import { planDispatch } from "./dispatchTick";
 import type { PromoAsset, PromoCampaign, PromoChannelId, PromoDispatch } from "@/features/admin/promo/types";
 
 // ── 1) AI provider status (키 노출 0) ─────────────────────────
