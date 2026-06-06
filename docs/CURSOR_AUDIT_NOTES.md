@@ -33,6 +33,7 @@ Lovable: **매 라운드 시작 시 본 문서를 읽고 `blocking = Yes` 행을
 3. ~~L-2 PR2 (Lovable)~~ **done** — Cursor sanitation `ee30ebd` GREEN
 4. ~~ROUND M Plinko (Lovable)~~ **done** — `d062e1e` · Cursor sanitation + live feed settle
 5. ~~L-3 + L1-E (Lovable)~~ **done** — `458b008` · Cursor sanitation GREEN
+6. ~~ROUND N Mines (Lovable)~~ **done** — `8dd2ec6` · Cursor sanitation GREEN
 
 ## PR1–PR2 gap
 
@@ -40,7 +41,7 @@ Lovable: **매 라운드 시작 시 본 문서를 읽고 `blocking = Yes` 행을
 
 ## Next (non-blocking)
 
-- **ROUND N:** Mines Display/Controls 분리 (v2.1)
+- **ROUND O:** Lobby + react-window (v2.1)
 - Orphan debit reconciliation job (deferred)
 
 ## 차례 SSOT
