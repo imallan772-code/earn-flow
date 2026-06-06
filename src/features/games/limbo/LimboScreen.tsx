@@ -51,6 +51,7 @@ import {
   limboStore,
 } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
+import { useUnmountRefund } from "@/shared/wallet/useUnmountRefund";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { useHotkeys, type HotkeyMap } from "@/shared/hooks/useHotkeys";
 import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
@@ -128,6 +129,13 @@ export function LimboScreen() {
     // 즉시 클리어 → 재마운트/재진입 시 이중 refund 방지.
     limboStore.set((s) => ({ ...s, pendingLegacyRefunds: [] }));
   }, []);
+  // Unmount: refund active bet (RPC idempotent, fire-and-forget) — SSOT
+  useUnmountRefund(refund, () => {
+    const ar = limboStore.get().activeRound;
+    if (!ar) return null;
+    return { amount: ar.amount, meta: { game: "limbo", roundId: `n${ar.nonce}` } };
+  });
+
 
   const settle = useCallback(async () => {
     const ar = limboStore.get().activeRound;
@@ -241,12 +249,21 @@ export function LimboScreen() {
     [],
   );
 
-  // PF: apply new seed (full refund RPC = L-2 PR2; 본 라운드는 activeRound=null만)
+  // PF: apply new seed — active round 있으면 refund RPC 1회 후 reset
   const applySeed = useCallback(() => {
     const next = seedDraft.trim().slice(0, 32) || DEFAULT_CLIENT_SEED;
     if (next === clientSeed) {
       setShowFair(false);
       return;
+    }
+    const ar = limboStore.get().activeRound;
+    if (ar) {
+      void refund(ar.amount, { game: "limbo", roundId: `n${ar.nonce}` }).catch(() => undefined);
+      liveBetsStore.update(ar.liveBetId, {
+        multiplier: null,
+        profit: 0,
+        status: "loss",
+      });
     }
     limboStore.set((s) => ({
       ...s,
@@ -259,7 +276,7 @@ export function LimboScreen() {
     settledRef.current = false;
     appToast.game.bet({ amount: "시드 변경됨 · nonce 0 리셋" });
     setShowFair(false);
-  }, [seedDraft, clientSeed]);
+  }, [seedDraft, clientSeed, refund]);
 
   // Hotkeys (slot 전환 키 제거)
   const hotkeys = useMemo<HotkeyMap>(
