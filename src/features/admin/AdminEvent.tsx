@@ -107,7 +107,7 @@ export function AdminEvent() {
         <div>
           <h1 className="text-2xl font-extrabold">이벤트 관리</h1>
           <p className="text-sm text-(--color-muted)">
-            {configured ? "Supabase SSOT · 사용자 /event 즉시 반영" : "오프라인 mock"}
+            {configured ? "Supabase 연동 · 사용자 앱 /event 즉시 반영" : "오프라인 데모"}
           </p>
         </div>
         <button

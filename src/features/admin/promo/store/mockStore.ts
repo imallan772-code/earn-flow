@@ -23,7 +23,7 @@ interface State {
 
 const SEED_CAMPAIGN: PromoCampaign = {
   id: "camp-seed",
-  title: "PHONARA Launch Teaser",
+  title: "PHONARA 런칭 티저",
   brief: "한국 P2E earn-flow 신규 유저 모집",
   targetUrl: "https://phonara.app",
   channels: ["telegram", "x", "slack"],

@@ -58,7 +58,7 @@ export function AdminDashboard() {
       <div className="mb-6">
         <h1 className="text-2xl font-extrabold">대시보드</h1>
         <p className="text-sm text-(--color-muted)">
-          {configured ? (isLoading ? "Supabase 집계 로딩..." : "실시간 KPI") : "오프라인 mock KPI"}
+            {configured ? (isLoading ? "Supabase 집계 불러오는 중…" : "실시간 KPI") : "오프라인 데모 KPI"}
         </p>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">

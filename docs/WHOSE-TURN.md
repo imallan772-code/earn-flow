@@ -4,39 +4,45 @@
 
 ---
 
-## 🔴 현재 차례 (2026-06-06)
+## 🔴 현재 차례 (2026-06-07)
 
 | | |
 |---|---|
-| **지금** | 🤖 **Lovable AI** — Q-c polish (Fair modal → `/fair/verify` 링크) 또는 R Cashier UI |
-| **당신** | Part 5 dashboard (leaked password) · Q-c/Lovable 지시 |
-| **Cursor** | **Supabase Hardening 1–4** ✅ · **Q-PR1a/b** ✅ pushed |
+| **지금** | 🤖 **Lovable AI** — **Phase Z-1** (Studio compose + Live Preview 5종 + risk scan UI) |
+| **당신** | Z-0 merge 확인 · `/admin/promo` 수동 QA |
+| **Cursor** | **Z-0 sanitation** ✅ · **Z-DB** ✅ (promo_* migration + `lib/api/promo.ts` + types regen) |
 
-### Supabase Hardening 완료 (Cursor)
+### ROUND Z-0 완료 (Lovable + Cursor sanitation)
 
-- Part 1–4 migrations + `docs/SUPABASE_HARDENING_ROADMAP.md`
-- RPC anon surface closed · money v1 deprecated · live_bets column privacy
-- Commit `9cc3775` on `main`
+- `/admin/promo` 7-tab shell + client mockStore + 28 tests GREEN
+- Cursor: cron route fix · `record_promo_click` wired on `/api/public/r/$slug`
 
-### ROUND Q-PR1 완료 (Cursor)
+### ROUND Z-DB 완료 (Cursor)
 
-- `/fair/verify` public route — SHA256 commit + 5-game outcome re-derive
-- `src/lib/pf/verifyPublic.ts` + vitest
-- SSOT: `docs/ROUND-Q-PR1.md`
-
-### ROUND P-PR1 완료 (Cursor)
-
-- `live_bets` table + game_rounds trigger + Realtime publication
-- `lib/api/liveFeed.ts` + `liveBetsRealtimeAdapter` (additive merge, bot 0-diff)
+- `supabase/migrations/20260607010000_promo_engine.sql`
+- 6 tables + admin RPCs + `record_promo_click` + `promo-assets` bucket
+- `src/lib/api/promo.ts` + `src/integrations/supabase/types.ts` regen
+- pg_cron: manual — enable `pg_cron` + `pg_net`, schedule POST to `/api/public/cron/promo-tick`
 
 ---
 
-## 전체 큐
+## ROUND Z 큐
 
 ```text
-[완료] P-PR1 · P-PR2 · Supabase Hardening 1–4 · Q-PR1a/b
-[지금] Lovable → Q-c polish 또는 R Cashier shell
-[다음] R-PR1 Cashier (Lovable UI + Cursor money wiring 별도)
+[완료] Z-0 (Lovable UI shell) · Z-DB (Cursor Supabase)
+[지금] Lovable → Z-1 (AI compose + Preview)
+[다음] Lovable → Z-2 (Image SSE + real channels)
+[그다음] Lovable → Z-3 (Calendar/Analytics polish)
+[병렬 가능] Cursor → Z-OAuth (X/LinkedIn/TikTok)
+[수동] pg_cron schedule + PROMO_CRON_SECRET in deploy secrets
+```
+
+---
+
+## 기타 큐 (보류)
+
+```text
+[보류] Lovable Q-c polish · R Cashier shell
 [수동] Supabase Part 5 — leaked password protection
 ```
 
@@ -46,6 +52,6 @@
 
 | 날짜 | 현재 차례 |
 |------|-----------|
+| 2026-06-07 | **Z-0 + Z-DB 완료** → Lovable Z-1 |
 | 2026-06-06 | **Q-PR1 + Hardening** → Lovable Q-c / R |
-| 2026-06-06 | **P-PR1 완료** → Cursor hardening |
 | 2026-06-06 | **P-PR2 완료** → Cursor P-PR1 |

@@ -5,6 +5,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { mergeUtm } from "@/lib/promo/utm";
 import { assertSafeUrl } from "@/lib/promo/ssrf";
+import { recordPromoClickServer } from "@/lib/promo/click.server";
 
 export const Route = createFileRoute("/api/public/r/$slug")({
   server: {
@@ -31,8 +32,19 @@ export const Route = createFileRoute("/api/public/r/$slug")({
 
         const final = mergeUtm(safe.toString(), utm);
 
-        // Z-1: supabase RPC record_promo_click(slug, channel, ref) here.
-        console.info(`[promo:r] click slug=${params.slug} ch=${utm.utm_medium}`);
+        const ch = url.searchParams.get("ch") ?? utm.utm_medium;
+        const variant = url.searchParams.get("v") ?? content ?? undefined;
+        await recordPromoClickServer({
+          slug: params.slug,
+          channel: ch ?? undefined,
+          variantId: variant,
+          referrer: request.headers.get("referer") ?? undefined,
+          ua: request.headers.get("user-agent") ?? undefined,
+          ip:
+            request.headers.get("cf-connecting-ip") ??
+            request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+            undefined,
+        });
 
         return new Response(null, {
           status: 302,

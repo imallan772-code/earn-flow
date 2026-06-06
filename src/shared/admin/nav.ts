@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { LayoutDashboard, Megaphone, Trophy, Sparkles } from "lucide-react";
+import { ADMIN_KO } from "@/shared/admin/labels.ko";
 
 export type AdminNavId = "dashboard" | "notice" | "event" | "promo";
 
@@ -11,14 +12,14 @@ export interface AdminNavItem {
 }
 
 export const ADMIN_NAV: AdminNavItem[] = [
-  { id: "dashboard", label: "Dashboard", to: "/admin", Icon: LayoutDashboard },
-  { id: "notice", label: "공지", to: "/admin/notice", Icon: Megaphone },
-  { id: "event", label: "이벤트", to: "/admin/event", Icon: Trophy },
-  { id: "promo", label: "Promo", to: "/admin/promo", Icon: Sparkles },
+  { id: "dashboard", label: ADMIN_KO.nav.dashboard, to: "/admin", Icon: LayoutDashboard },
+  { id: "notice", label: ADMIN_KO.nav.notice, to: "/admin/notice", Icon: Megaphone },
+  { id: "event", label: ADMIN_KO.nav.event, to: "/admin/event", Icon: Trophy },
+  { id: "promo", label: ADMIN_KO.nav.promo, to: "/admin/promo", Icon: Sparkles },
 ];
 
 export const ADMIN_SHELL_META = {
-  title: "PHONARA Admin",
-  subtitle: "1인 운영 콘솔 · phonara-gb",
+  title: ADMIN_KO.shell.title,
+  subtitle: ADMIN_KO.shell.subtitle,
   webAppLink: "/feed",
 } as const;

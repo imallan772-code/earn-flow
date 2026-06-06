@@ -1,16 +1,16 @@
 import { promoMockStore, usePromoState } from "../store/mockStore";
+import { ADMIN_KO } from "@/shared/admin/labels.ko";
 
 export function SettingsPanel() {
   const settings = usePromoState((s) => s.settings);
+  const ko = ADMIN_KO.promo.settings;
   return (
     <section className="glass-2 max-w-xl rounded-3xl p-5">
-      <h2 className="mb-3 text-base font-bold">Settings</h2>
-      <p className="mb-4 text-[11px] text-(--color-muted)">
-        Z-0에선 mockStore에 저장만 됩니다. 실 secret은 Cursor Z-DB의 Lovable Cloud secrets에 등록.
-      </p>
+      <h2 className="mb-3 text-base font-bold">{ko.title}</h2>
+      <p className="mb-4 text-[11px] text-(--color-muted)">{ko.hint}</p>
       <div className="flex flex-col gap-3">
         <label className="flex flex-col gap-1 text-xs">
-          <span className="text-(--color-muted)">Zapier Webhook URL</span>
+          <span className="text-(--color-muted)">{ko.webhook}</span>
           <input
             value={settings.webhookUrl}
             onChange={(e) => promoMockStore.updateSettings({ webhookUrl: e.target.value })}
@@ -19,17 +19,17 @@ export function SettingsPanel() {
           />
         </label>
         <label className="flex flex-col gap-1 text-xs">
-          <span className="text-(--color-muted)">Cron HMAC Secret</span>
+          <span className="text-(--color-muted)">{ko.hmac}</span>
           <input
             type="password"
             value={settings.hmacSecret}
             onChange={(e) => promoMockStore.updateSettings({ hmacSecret: e.target.value })}
-            placeholder="hex string ≥32"
+            placeholder="32자 이상 랜덤 문자열"
             className="glass-1 rounded-xl px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1 text-xs">
-          <span className="text-(--color-muted)">Default utm_source</span>
+          <span className="text-(--color-muted)">{ko.utm}</span>
           <input
             value={settings.defaultUtmSource}
             onChange={(e) => promoMockStore.updateSettings({ defaultUtmSource: e.target.value })}

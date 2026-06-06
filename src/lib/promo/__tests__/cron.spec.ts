@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { __test } from "@/routes/api/public/cron.promo-tick";
+import { verifyPromoCronHmac } from "@/lib/promo/cronHmac";
 import { createHmac } from "crypto";
 
 describe("cron HMAC", () => {
@@ -8,15 +8,15 @@ describe("cron HMAC", () => {
   const valid = createHmac("sha256", secret).update(body).digest("hex");
 
   it("accepts valid signature", () => {
-    expect(__test.verifyHmac(secret, body, valid)).toBe(true);
+    expect(verifyPromoCronHmac(secret, body, valid)).toBe(true);
   });
   it("rejects missing", () => {
-    expect(__test.verifyHmac(secret, body, null)).toBe(false);
+    expect(verifyPromoCronHmac(secret, body, null)).toBe(false);
   });
   it("rejects wrong sig", () => {
-    expect(__test.verifyHmac(secret, body, "deadbeef")).toBe(false);
+    expect(verifyPromoCronHmac(secret, body, "deadbeef")).toBe(false);
   });
   it("rejects tampered body", () => {
-    expect(__test.verifyHmac(secret, '{"tick":2}', valid)).toBe(false);
+    expect(verifyPromoCronHmac(secret, '{"tick":2}', valid)).toBe(false);
   });
 });

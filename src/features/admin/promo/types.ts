@@ -69,14 +69,6 @@ export interface PromoSettings {
   defaultUtmSource: string;
 }
 
-export const CHANNEL_LABELS: Record<PromoChannelId, string> = {
-  telegram: "Telegram",
-  discord: "Discord",
-  slack: "Slack",
-  x: "X (Twitter)",
-  linkedin: "LinkedIn",
-  tiktok: "TikTok",
-  resend: "Resend Email",
-  zapier: "Zapier Webhook",
-  copy: "Copy-Mode (Naver/Kakao/IG)",
-};
+import { PROMO_CHANNEL_LABELS_KO } from "@/shared/admin/labels.ko";
+
+export const CHANNEL_LABELS = PROMO_CHANNEL_LABELS_KO as Record<PromoChannelId, string>;

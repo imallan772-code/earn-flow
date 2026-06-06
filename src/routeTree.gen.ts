@@ -53,7 +53,7 @@ import { Route as AppGamesCrashRouteImport } from './routes/_app/games.crash'
 import { Route as AppExchangeSymbolRouteImport } from './routes/_app/exchange.$symbol'
 import { Route as AppEventIdRouteImport } from './routes/_app/event.$id'
 import { Route as ApiPublicRSlugRouteImport } from './routes/api/public/r.$slug'
-import { Route as ApiPublicCronPromoTickRouteImport } from './routes/api/public/cron.promo-tick'
+import { Route as ApiPublicCronPromoTickRouteImport } from './routes/api/public/cron/promo-tick'
 
 const TransferRoute = TransferRouteImport.update({
   id: '/transfer',
@@ -1026,3 +1026,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

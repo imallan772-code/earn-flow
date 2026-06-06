@@ -1,4 +1,5 @@
 import { ShieldAlert, ShieldCheck } from "lucide-react";
+import { ADMIN_KO } from "@/shared/admin/labels.ko";
 
 export function RiskBadge({ score, flags }: { score: number; flags: string[] }) {
   const level = score >= 60 ? "high" : score >= 25 ? "medium" : "low";
@@ -11,11 +12,11 @@ export function RiskBadge({ score, flags }: { score: number; flags: string[] }) 
   const Icon = level === "low" ? ShieldCheck : ShieldAlert;
   return (
     <span
-      title={flags.join(", ") || "no flags"}
+      title={flags.join(", ") || ADMIN_KO.promo.risk.noFlags}
       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${color}`}
     >
       <Icon size={11} />
-      Risk {score}
+      {ADMIN_KO.promo.risk.label(score)}
     </span>
   );
 }

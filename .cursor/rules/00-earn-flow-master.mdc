@@ -1,57 +1,114 @@
----
-description: PHONARA earn-flow 최상위 규칙 — Golden Loop, phonara-gb, 기술 스택, 품질 게이트
-alwaysApply: true
----
-
-# earn-flow Master Rule
-
-## Workflow
-
-**Lovable 생성 → GitHub export → Cursor pull → 최적화·감사·수리 → `bun run check` GREEN**
-
-- Lovable: UI, Engine, Screen, mocks (`docs/lovable/`)
-- Cursor: SSOT 수리, Supabase, wallet wire, PWA, workers, charts
-
-## Tech Stack (고정)
-
-| Layer | Stack |
-|-------|-------|
-| App | TanStack Start **v1** + React **19** + TS **strict** |
-| Style | Tailwind **v4** CSS-first (`src/styles.css` `@theme`) |
-| Motion | Framer Motion `LazyMotion` + `domAnimation` |
-| DB | Supabase phonara-gb — RLS / RPC SECURITY DEFINER / Realtime / Edge |
-| Charts | lightweight-charts + Canvas2D + Web Workers |
-| Deploy | Vite PWA plugin (Cursor) |
-| Repo | **pnpm monorepo** target: `apps/web` + `apps/admin` |
-
-상세: `docs/TECH_STACK.md`
-
-## Supabase Lock
-
-- **ONLY:** phonara-gb (`kanftnqenuzverroodev`)
-- **NEVER:** phonara-world-main, phonetok
-
-## Runtime (현재)
-
-- Vite + Bun (`packageManager` 전환 전 과도기)
-- 신규 라우트: `src/routes/` only
-- `vite.config.ts` 플러그인 수동 추가 금지
-
-## Money
-
-- demo: walletStore localStorage
-- real: Supabase RPC only — client 발행 금지
-- `useGameWallet` 경유
-
-## Quality Gate
-
-```bash
-bun run check
-```
-
-## 문서 SSOT
-
-- 스택: `docs/TECH_STACK.md`
-- Lovable: `docs/lovable/PROMPT_HEADER.md`
-- Cursor 감사: `docs/CURSOR_SANITATION_CHECKLIST.md`
-- Supabase: `docs/SUPABASE_AUTOMATION_RULES.md`
+---
+
+description: PHONARA earn-flow 최상위 규칙 — Golden Loop, phonara-gb, 기술 스택, 품질 게이트
+
+alwaysApply: true
+
+---
+
+
+
+# earn-flow Master Rule
+
+
+
+## Workflow
+
+
+
+**Lovable 생성 → GitHub export → Cursor pull → 최적화·감사·수리 → `bun run check` GREEN**
+
+
+
+- Lovable: UI, Engine, Screen, mocks (`docs/lovable/`)
+
+- Cursor: SSOT 수리, Supabase, wallet wire, PWA, workers, charts
+
+
+
+## Tech Stack (고정)
+
+
+
+| Layer | Stack |
+
+|-------|-------|
+
+| App | TanStack Start **v1** + React **19** + TS **strict** |
+
+| Style | Tailwind **v4** CSS-first (`src/styles.css` `@theme`) |
+
+| Motion | Framer Motion `LazyMotion` + `domAnimation` |
+
+| DB | Supabase phonara-gb — RLS / RPC SECURITY DEFINER / Realtime / Edge |
+
+| Charts | lightweight-charts + Canvas2D + Web Workers |
+
+| Deploy | Vite PWA plugin (Cursor) |
+
+| Repo | **pnpm monorepo** target: `apps/web` + `apps/admin` |
+
+
+
+상세: `docs/TECH_STACK.md`
+
+
+
+## Supabase Lock
+
+
+
+- **ONLY:** phonara-gb (`kanftnqenuzverroodev`)
+
+- **NEVER:** phonara-world-main, phonetok
+
+
+
+## Runtime (현재)
+
+
+
+- Vite + Bun (`packageManager` 전환 전 과도기)
+
+- 신규 라우트: `src/routes/` only
+
+- `vite.config.ts` 플러그인 수동 추가 금지
+
+
+
+## Money
+
+
+
+- demo: walletStore localStorage
+
+- real: Supabase RPC only — client 발행 금지
+
+- `useGameWallet` 경유
+
+
+
+## Quality Gate
+
+
+
+```bash
+
+bun run check
+
+```
+
+
+
+## 문서 SSOT
+
+
+
+- 스택: `docs/TECH_STACK.md`
+
+- Lovable: `docs/lovable/PROMPT_HEADER.md`
+
+- Cursor 감사: `docs/CURSOR_SANITATION_CHECKLIST.md`
+
+- Supabase: `docs/SUPABASE_AUTOMATION_RULES.md`
+

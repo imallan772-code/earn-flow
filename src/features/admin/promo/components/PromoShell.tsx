@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+import { ADMIN_KO } from "@/shared/admin/labels.ko";
 import {
   Wand2,
   ListChecks,
@@ -12,13 +13,13 @@ import {
 } from "lucide-react";
 
 const TABS = [
-  { to: "/admin/promo/studio", label: "Studio", Icon: Wand2 },
-  { to: "/admin/promo/campaigns", label: "Campaigns", Icon: ListChecks },
-  { to: "/admin/promo/calendar", label: "Calendar", Icon: CalendarDays },
-  { to: "/admin/promo/channels", label: "Channels", Icon: Radio },
-  { to: "/admin/promo/assets", label: "Assets", Icon: ImageIcon },
-  { to: "/admin/promo/analytics", label: "Analytics", Icon: BarChart3 },
-  { to: "/admin/promo/settings", label: "Settings", Icon: Settings },
+  { to: "/admin/promo/studio", label: ADMIN_KO.promo.tabs.studio, Icon: Wand2 },
+  { to: "/admin/promo/campaigns", label: ADMIN_KO.promo.tabs.campaigns, Icon: ListChecks },
+  { to: "/admin/promo/calendar", label: ADMIN_KO.promo.tabs.calendar, Icon: CalendarDays },
+  { to: "/admin/promo/channels", label: ADMIN_KO.promo.tabs.channels, Icon: Radio },
+  { to: "/admin/promo/assets", label: ADMIN_KO.promo.tabs.assets, Icon: ImageIcon },
+  { to: "/admin/promo/analytics", label: ADMIN_KO.promo.tabs.analytics, Icon: BarChart3 },
+  { to: "/admin/promo/settings", label: ADMIN_KO.promo.tabs.settings, Icon: Settings },
 ] as const;
 
 export function PromoShell({ children }: { children: ReactNode }) {
@@ -28,16 +29,14 @@ export function PromoShell({ children }: { children: ReactNode }) {
       <header className="glass-2 sticky top-0 z-30 border-b border-white/5 px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-sm font-extrabold">PHONARA · Promo Studio</div>
-            <div className="text-[11px] text-(--color-muted)">
-              Phase Z-0 mock · 실 발행/AI 호출 비활성
-            </div>
+            <div className="text-sm font-extrabold">{ADMIN_KO.promo.title}</div>
+            <div className="text-[11px] text-(--color-muted)">{ADMIN_KO.promo.subtitle}</div>
           </div>
           <Link
             to="/admin"
             className="rounded-xl px-3 py-1.5 text-xs text-(--color-muted) hover:bg-white/5"
           >
-            ← Admin
+            {ADMIN_KO.shell.backToAdmin}
           </Link>
         </div>
         <nav className="mt-3 flex gap-1 overflow-x-auto">

@@ -1,13 +1,13 @@
 import { promoMockStore, usePromoState } from "../store/mockStore";
+import { ADMIN_KO } from "@/shared/admin/labels.ko";
 
 export function CalendarBoard() {
   const campaigns = usePromoState((s) => s.campaigns);
+  const ko = ADMIN_KO.promo.calendar;
   return (
     <section className="glass-2 rounded-3xl p-5">
-      <h2 className="mb-3 text-base font-bold">Calendar</h2>
-      <p className="mb-3 text-[11px] text-(--color-muted)">
-        예약 시각을 변경하면 mockStore에 즉시 반영됩니다 (Z-DB 머지 후 supabase로 교체).
-      </p>
+      <h2 className="mb-3 text-base font-bold">{ko.title}</h2>
+      <p className="mb-3 text-[11px] text-(--color-muted)">{ko.hint}</p>
       <div className="grid gap-2">
         {campaigns.map((c) => (
           <div key={c.id} className="glass-1 flex items-center gap-3 rounded-2xl p-3">
@@ -22,9 +22,7 @@ export function CalendarBoard() {
             />
           </div>
         ))}
-        {campaigns.length === 0 && (
-          <p className="text-xs text-(--color-muted)">캠페인이 없습니다.</p>
-        )}
+        {campaigns.length === 0 && <p className="text-xs text-(--color-muted)">{ko.empty}</p>}
       </div>
     </section>
   );

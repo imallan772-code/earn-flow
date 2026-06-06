@@ -97,7 +97,7 @@ export function AdminNotice() {
         <div>
           <h1 className="text-2xl font-extrabold">공지 관리</h1>
           <p className="text-sm text-(--color-muted)">
-            {configured ? "Supabase SSOT · 사용자 /notice 즉시 반영" : "오프라인 mock"}
+            {configured ? "Supabase 연동 · 사용자 앱 /notice 즉시 반영" : "오프라인 데모"}
           </p>
         </div>
         <button

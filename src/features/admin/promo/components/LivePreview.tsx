@@ -1,4 +1,5 @@
 import { buildUtmUrl } from "@/lib/promo/utm";
+import { ADMIN_KO, PROMO_CHANNEL_LABELS_KO } from "@/shared/admin/labels.ko";
 import type { PromoVariant } from "../types";
 
 const TYPES = ["telegram", "x", "slack", "discord", "linkedin"] as const;
@@ -11,11 +12,7 @@ export function LivePreview({
   targetUrl: string;
 }) {
   if (variants.length === 0) {
-    return (
-      <p className="text-xs text-(--color-muted)">
-        Generate를 누르면 채널별 미리보기 5종이 여기에 표시됩니다.
-      </p>
-    );
+    return <p className="text-xs text-(--color-muted)">{ADMIN_KO.promo.studio.previewEmpty}</p>;
   }
   return (
     <div className="flex flex-col gap-3">
@@ -35,7 +32,7 @@ export function LivePreview({
         return (
           <article key={t} className="glass-1 rounded-2xl p-3">
             <header className="mb-1 text-[10px] font-bold tracking-wider text-(--color-muted)">
-              {t.toUpperCase()}
+              {PROMO_CHANNEL_LABELS_KO[t] ?? t}
             </header>
             <p className="text-sm">{v.body}</p>
             <p className="mt-1 text-[11px] text-(--color-muted)">

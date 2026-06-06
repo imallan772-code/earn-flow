@@ -3,20 +3,7 @@
  * Z-1에서 promo_campaigns scheduled scan + dispatch enqueue.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { createHmac, timingSafeEqual } from "crypto";
-
-function verifyHmac(secret: string, body: string, sig: string | null): boolean {
-  if (!sig) return false;
-  try {
-    const expected = createHmac("sha256", secret).update(body).digest("hex");
-    const a = Buffer.from(sig, "utf8");
-    const b = Buffer.from(expected, "utf8");
-    if (a.length !== b.length) return false;
-    return timingSafeEqual(a, b);
-  } catch {
-    return false;
-  }
-}
+import { verifyPromoCronHmac } from "@/lib/promo/cronHmac";
 
 export const Route = createFileRoute("/api/public/cron/promo-tick")({
   server: {
@@ -26,7 +13,7 @@ export const Route = createFileRoute("/api/public/cron/promo-tick")({
         if (!secret) return new Response("not configured", { status: 503 });
         const body = await request.text();
         const sig = request.headers.get("x-promo-signature");
-        if (!verifyHmac(secret, body, sig)) {
+        if (!verifyPromoCronHmac(secret, body, sig)) {
           return new Response("invalid signature", { status: 401 });
         }
         return Response.json({ ok: true, ticked: 0, note: "Z-0 stub" });
@@ -34,5 +21,3 @@ export const Route = createFileRoute("/api/public/cron/promo-tick")({
     },
   },
 });
-
-export const __test = { verifyHmac };

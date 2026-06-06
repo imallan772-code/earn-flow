@@ -7,6 +7,7 @@ import { Link } from "@tanstack/react-router";
 import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ADMIN_NAV, ADMIN_SHELL_META, type AdminNavId } from "@/shared/admin/nav";
+import { ADMIN_KO } from "@/shared/admin/labels.ko";
 
 export function AdminLayout({ active, children }: { active: AdminNavId; children: ReactNode }) {
   return (
@@ -37,7 +38,7 @@ export function AdminLayout({ active, children }: { active: AdminNavId; children
             className="mt-auto flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-(--color-muted) hover:bg-white/5"
           >
             <ExternalLink size={14} />
-            사용자 앱
+            {ADMIN_KO.shell.userApp}
           </Link>
         </aside>
         <main className="flex-1 p-4 md:p-6">{children}</main>

@@ -346,7 +346,7 @@ function LivePanel({
           {requiresHold && (
             <span
               aria-hidden
-              className="absolute inset-y-0 left-0 bg-(--color-emerald)/40 transition-[width] duration-75"
+              className="absolute inset-y-0 left-0 bg-emerald/40 transition-[width] duration-75"
               style={{ width: `${holdProgress * 100}%` }}
             />
           )}

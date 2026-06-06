@@ -4,6 +4,8 @@
  * server in-memory store 절대 금지 (`new Map()` / module-level `let arr=[]` 금지).
  */
 import { createServerFn } from "@tanstack/react-start";
+import { isSupabaseConfigured } from "@/integrations/supabase/env";
+import { promoListAssets, promoListCampaigns, promoListDispatches } from "@/lib/api/promo";
 
 const NOT_IMPLEMENTED = "Phase Z-0 stub — Z-1에서 구현";
 
@@ -26,14 +28,19 @@ export const testChannel = createServerFn({ method: "POST" })
   });
 
 export const listCampaigns = createServerFn({ method: "GET" }).handler(async () => {
-  // Z-DB 머지 후 supabase select. 지금은 빈 배열.
-  return { campaigns: [] as string[] };
+  if (!isSupabaseConfigured()) return { campaigns: [] as string[] };
+  const campaigns = await promoListCampaigns();
+  return { campaigns };
 });
 
 export const listDispatches = createServerFn({ method: "GET" }).handler(async () => {
-  return { dispatches: [] as string[] };
+  if (!isSupabaseConfigured()) return { dispatches: [] as string[] };
+  const dispatches = await promoListDispatches();
+  return { dispatches };
 });
 
 export const listAssets = createServerFn({ method: "GET" }).handler(async () => {
-  return { assets: [] as string[] };
+  if (!isSupabaseConfigured()) return { assets: [] as string[] };
+  const assets = await promoListAssets();
+  return { assets };
 });
