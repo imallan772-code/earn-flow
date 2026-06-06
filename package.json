@@ -16,6 +16,7 @@
     "test:e2e:headed": "playwright test --headed; bun run test:e2e:cleanup",
     "test:e2e:public": "playwright test --project=public; bun run test:e2e:cleanup",
     "test:e2e:cleanup": "bun scripts/cleanup-e2e-artifacts.ts",
+    "cleanup:workspace": "bun scripts/cleanup-workspace.ts",
     "test:e2e:report": "playwright show-report",
     "test:e2e:install": "playwright install chromium",
     "test:e2e:verify-creds": "bun scripts/verify-e2e-creds.ts",
