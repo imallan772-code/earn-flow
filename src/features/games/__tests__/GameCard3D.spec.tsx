@@ -1,12 +1,23 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { RouterProvider, createRootRoute, createRoute, createRouter, createMemoryHistory, Outlet } from "@tanstack/react-router";
+import {
+  RouterProvider,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  createMemoryHistory,
+  Outlet,
+} from "@tanstack/react-router";
 import { GameCard3D } from "../GameCard3D";
 import { getGameById } from "@/shared/games/registry/gameRegistry";
 
 function renderWithRouter(ui: React.ReactNode) {
   const rootRoute = createRootRoute({ component: () => <Outlet /> });
-  const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: () => <>{ui}</> });
+  const indexRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/",
+    component: () => <>{ui}</>,
+  });
   const router = createRouter({
     routeTree: rootRoute.addChildren([indexRoute]),
     history: createMemoryHistory({ initialEntries: ["/"] }),

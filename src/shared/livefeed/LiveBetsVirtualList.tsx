@@ -30,9 +30,7 @@ function Row({ index, style, bets }: RowComponentProps<RowExtra>) {
 export function LiveBetsVirtualList({ bets, height = 360 }: Props) {
   const view = bets.slice(0, MAX_ROWS);
   if (view.length === 0) {
-    return (
-      <div className="py-4 text-center text-[11px] text-muted-2">베팅 대기 중...</div>
-    );
+    return <div className="py-4 text-center text-[11px] text-muted-2">베팅 대기 중...</div>;
   }
   return (
     <List<RowExtra>

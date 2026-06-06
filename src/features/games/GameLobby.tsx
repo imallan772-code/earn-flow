@@ -18,13 +18,12 @@ export function GameLobby() {
   const focusByOffset = useCallback((offset: number) => {
     const grid = gridRef.current;
     if (!grid) return;
-    const cards = Array.from(
-      grid.querySelectorAll<HTMLElement>("[data-game-card]"),
-    );
+    const cards = Array.from(grid.querySelectorAll<HTMLElement>("[data-game-card]"));
     if (cards.length === 0) return;
     const active = document.activeElement as HTMLElement | null;
     const currentIndex = active ? cards.indexOf(active) : -1;
-    const next = currentIndex < 0 ? 0 : Math.min(cards.length - 1, Math.max(0, currentIndex + offset));
+    const next =
+      currentIndex < 0 ? 0 : Math.min(cards.length - 1, Math.max(0, currentIndex + offset));
     cards[next]?.focus();
   }, []);
 
