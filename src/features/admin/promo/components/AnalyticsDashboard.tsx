@@ -77,7 +77,7 @@ export function AnalyticsDashboard() {
         <>
           <div className="grid gap-4 lg:grid-cols-2">
             <ChannelBreakdown rows={breakdown} />
-            <TopCampaignCard top={top} topChannel={analytics.topChannel} />
+            <TopCampaignCard top={top} topChannel={analytics.topChannel ?? null} />
           </div>
           <DispatchSparkline buckets={buckets} />
           <DispatchTimeline dispatches={filteredDispatches} campaigns={campaigns} />
