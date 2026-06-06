@@ -10,6 +10,9 @@ dist-ssr/
 .tanstack/
 .nitro/
 .wrangler/
+coverage/
+apps/admin/dist/
+apps/admin/node_modules/
 
 # Generated
 src/routeTree.gen.ts

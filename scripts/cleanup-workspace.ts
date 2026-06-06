@@ -18,7 +18,10 @@ const WORKSPACE_DIRS = [
   ".tanstack",
   ".nitro",
   ".wrangler",
+  "coverage",
   "node_modules/.vite",
+  "apps/admin/dist",
+  "apps/admin/node_modules/.vite",
   "supabase/.temp",
 ] as const;
 
@@ -61,6 +64,30 @@ function trimTerminals(maxKeep = 8): number {
   return removed;
 }
 
+/** Old chat JSONL bloats Cursor context/indexing — keep newest N sessions only. */
+function trimAgentTranscripts(maxKeep = 8): number {
+  const dir = path.join(CURSOR_PROJECT, "agent-transcripts");
+  if (!fs.existsSync(dir)) return 0;
+  const sessions = fs
+    .readdirSync(dir, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => ({
+      name: e.name,
+      mtime: fs.statSync(path.join(dir, e.name)).mtimeMs,
+    }))
+    .sort((a, b) => b.mtime - a.mtime);
+  let removed = 0;
+  for (const session of sessions.slice(maxKeep)) {
+    try {
+      fs.rmSync(path.join(dir, session.name), { recursive: true, force: true });
+      removed++;
+    } catch {
+      /* ignore */
+    }
+  }
+  return removed;
+}
+
 function main() {
   console.log("→ cleanup:workspace");
 
@@ -82,13 +109,17 @@ function main() {
       if (rmDir(dir, CURSOR_PROJECT)) removedCursor.push(dir);
     }
     const terminalsRemoved = trimTerminals();
+    const transcriptsRemoved = trimAgentTranscripts();
     if (removedCursor.length > 0) {
       console.log(`✓ Removed Cursor cache: ${removedCursor.join(", ")}`);
     }
     if (terminalsRemoved > 0) {
       console.log(`✓ Trimmed ${terminalsRemoved} old terminal log(s)`);
     }
-    if (removedCursor.length === 0 && terminalsRemoved === 0) {
+    if (transcriptsRemoved > 0) {
+      console.log(`✓ Trimmed ${transcriptsRemoved} old agent transcript session(s)`);
+    }
+    if (removedCursor.length === 0 && terminalsRemoved === 0 && transcriptsRemoved === 0) {
       console.log("○ Cursor project cache already lean");
     }
   }

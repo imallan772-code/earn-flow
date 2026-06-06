@@ -14,7 +14,9 @@
     "**/blob-report": true,
     "**/.output": true,
     "**/.vinxi": true,
-    "**/.tanstack": true
+    "**/.tanstack": true,
+    "**/coverage": true,
+    "**/supabase/.temp": true
   },
   "search.exclude": {
     "**/node_modules": true,
@@ -30,7 +32,9 @@
     "**/dist/**": true,
     "**/playwright-report/**": true,
     "**/test-results/**": true,
-    "**/.tanstack/**": true
+    "**/.tanstack/**": true,
+    "**/coverage/**": true,
+    "**/supabase/.temp/**": true
   },
   "cSpell.enabled": false
 }
