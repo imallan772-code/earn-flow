@@ -1,8 +1,13 @@
 /**
  * Promo analytics aggregation — pure functions.
- * SSOT: dispatches[] (+ campaigns[] join). clicks row-level은 Cursor RPC 후.
+ * SSOT: dispatches[] + clicks[] (+ campaigns[] join).
  */
-import type { PromoCampaign, PromoChannelId, PromoDispatch } from "@/features/admin/promo/types";
+import type {
+  PromoCampaign,
+  PromoChannelId,
+  PromoClick,
+  PromoDispatch,
+} from "@/features/admin/promo/types";
 import { ymdKey } from "./calendarGrid";
 
 export type PeriodKey = "7d" | "30d" | "all";
@@ -107,6 +112,23 @@ export function topCampaignByDispatches(
   }
   if (!bestId) return null;
   return campaigns.find((c) => c.id === bestId) ?? null;
+}
+
+export function topChannelFromClicks(clicks: PromoClick[]): PromoChannelId | null {
+  if (clicks.length === 0) return null;
+  const counts = new Map<PromoChannelId, number>();
+  for (const c of clicks) {
+    counts.set(c.channel, (counts.get(c.channel) ?? 0) + 1);
+  }
+  let best: PromoChannelId | null = null;
+  let bestN = 0;
+  for (const [ch, n] of counts) {
+    if (n > bestN) {
+      bestN = n;
+      best = ch;
+    }
+  }
+  return best;
 }
 
 export function resolveCampaignTitle(campaigns: PromoCampaign[], id: string): string {

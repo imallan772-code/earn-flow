@@ -8,16 +8,21 @@
 
 | | |
 |---|---|
-| **지금** | 🤖 **Cursor** — **Z-OAuth** (X / LinkedIn / TikTok) · pg_cron 수동 등록 |
-| **당신** | promo cron/Storage QA · Lovable Z-3 push 있으면 `git pull` |
-| **Cursor** | **Z-3** ✅ Calendar/Analytics polish + sanitation (mock flash · PromoShell · loading) |
+| **지금** | 🤖 **Cursor** — **Z-OAuth** (X / LinkedIn / TikTok) |
+| **당신** | migration `20260607210000` phonara-gb apply · pg_cron 등록 (`docs/PROMO_CRON_SETUP.md`) |
+| **Cursor** | **Z-4** ✅ clicks RPC + analytics date-range · **Z-3** ✅ |
+
+### ROUND Z-4 Analytics RPC (Cursor)
+
+- Migration `20260607210000_promo_analytics_clicks_rpc.sql`
+- `admin_list_promo_clicks` · `admin_promo_analytics_summary(p_from, p_to)`
+- `usePromoAdmin.clicks[]` · AnalyticsDashboard 기간별 클릭/CTR
 
 ### ROUND Z-3 완료 (Lovable v1.3.1 + Cursor sanitation)
 
 - `calendarGrid.ts` · `analyticsAggregate.ts` + vitest 13 cases
 - CalendarBoard 월간 그리드 + listView · AnalyticsDashboard
-- labels.ko hintConfigured 정리 · `promoDispatchLabel` on timeline
-- Cursor: `usePromoAdmin` loading+analyticsQuery · mock flash 제거 · PromoShell persisting subtitle
+- Cursor: mock flash 제거 · PromoShell persisting subtitle
 
 ### ROUND Z-2 Supabase (Cursor)
 
@@ -30,10 +35,9 @@
 ## ROUND Z 큐
 
 ```text
-[완료] Z-0 · Z-DB · Z-1 · Z-SWAP · Z-2 · Z-3
+[완료] Z-0 · Z-DB · Z-1 · Z-SWAP · Z-2 · Z-3 · Z-4
 [지금] Cursor → Z-OAuth
-[수동] pg_cron + PROMO_CRON_SECRET
-[TODO] list_promo_clicks RPC · promo analytics date-range RPC
+[수동] pg_cron + PROMO_CRON_SECRET · Z-4 migration apply
 ```
 
 ---
@@ -42,6 +46,7 @@
 
 | 날짜 | 현재 차례 |
 |------|-----------|
-| 2026-06-07 | **Z-3 완료** → Cursor Z-OAuth |
+| 2026-06-07 | **Z-4 완료** → Cursor Z-OAuth |
+| 2026-06-07 | **Z-3 완료** → Cursor Z-4 RPC |
 | 2026-06-07 | **Z-2 완료** → Lovable Z-3 |
 | 2026-06-07 | **Z-SWAP 완료** → Lovable Z-2 |

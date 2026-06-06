@@ -8,6 +8,7 @@ import type {
   PromoAsset,
   PromoCampaign,
   PromoChannelId,
+  PromoClick,
   PromoDispatch,
   PromoSettings,
 } from "@/features/admin/promo/types";
@@ -18,6 +19,8 @@ import {
   promoCampaignRowSchema,
   promoCampaignsSchema,
   promoCampaignUpsertSchema,
+  promoClickRowSchema,
+  promoClicksSchema,
   promoDispatchRowSchema,
   promoDispatchesSchema,
   promoSettingsRowSchema,
@@ -30,6 +33,16 @@ import {
 
 function toCampaign(row: ReturnType<typeof promoCampaignRowSchema.parse>): PromoCampaign {
   return mapPromoCampaignRow(row);
+}
+
+function toClick(row: ReturnType<typeof promoClickRowSchema.parse>): PromoClick {
+  return {
+    id: row.id,
+    campaignId: row.campaign_id,
+    channel: row.channel as PromoChannelId,
+    ts: row.created_at,
+    ref: row.referrer ?? undefined,
+  };
 }
 
 function toDispatch(row: ReturnType<typeof promoDispatchRowSchema.parse>): PromoDispatch {
@@ -193,9 +206,27 @@ export async function promoUpsertAsset(input: {
   return toAsset(promoAssetRowSchema.parse(data));
 }
 
-export async function promoAnalyticsSummary() {
+export async function promoListClicks(input?: {
+  campaignId?: string;
+  from?: string;
+  to?: string;
+}): Promise<PromoClick[]> {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase.rpc("admin_promo_analytics_summary");
+  const { data, error } = await supabase.rpc("admin_list_promo_clicks", {
+    p_campaign_id: input?.campaignId,
+    p_from: input?.from,
+    p_to: input?.to,
+  });
+  if (error) throw error;
+  return promoClicksSchema.parse(data ?? []).map(toClick);
+}
+
+export async function promoAnalyticsSummary(input?: { from?: string; to?: string }) {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.rpc("admin_promo_analytics_summary", {
+    p_from: input?.from,
+    p_to: input?.to,
+  });
   if (error) throw error;
   return promoAnalyticsSummarySchema.parse(data);
 }

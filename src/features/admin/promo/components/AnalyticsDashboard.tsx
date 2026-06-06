@@ -10,25 +10,27 @@ import {
   periodRange,
   resolveCampaignTitle,
   topCampaignByDispatches,
+  topChannelFromClicks,
   type PeriodKey,
 } from "@/lib/promo/analyticsAggregate";
 import type { PromoCampaign, PromoDispatch } from "../types";
 
-// TODO(Cursor): list_promo_clicks RPC + usePromoAdmin clicks[] 노출 — real CTR sparkline
-// TODO(Cursor): usePromoAdmin.loading에 analyticsQuery.isLoading 포함
-// TODO(Cursor): persisting && loading 시 mock fallback 반환 금지 (mock flash 제거)
-// TODO(Cursor): promo analytics RPC with date range — client filter is Z-3 demo only
-
 export function AnalyticsDashboard() {
-  const { analytics, dispatches, campaigns, persisting, loading } = usePromoAdmin();
+  const { analytics, dispatches, clicks, campaigns, persisting, loading } = usePromoAdmin();
   const ko = ADMIN_KO.promo.analytics;
 
   const [period, setPeriod] = useState<PeriodKey>("7d");
 
-  const filteredDispatches = useMemo(() => {
-    const { from, to } = periodRange(new Date(), period);
-    return filterByPeriod(dispatches, (d) => d.sentAt, from, to);
-  }, [dispatches, period]);
+  const { from, to } = useMemo(() => periodRange(new Date(), period), [period]);
+
+  const filteredDispatches = useMemo(
+    () => filterByPeriod(dispatches, (d) => d.sentAt, from, to),
+    [dispatches, from, to],
+  );
+  const filteredClicks = useMemo(
+    () => filterByPeriod(clicks, (c) => c.ts, from, to),
+    [clicks, from, to],
+  );
 
   const breakdown = useMemo(() => channelBreakdown(filteredDispatches), [filteredDispatches]);
   const buckets = useMemo(
@@ -39,15 +41,18 @@ export function AnalyticsDashboard() {
     () => topCampaignByDispatches(campaigns, filteredDispatches),
     [campaigns, filteredDispatches],
   );
+  const periodTopChannel = useMemo(() => topChannelFromClicks(filteredClicks), [filteredClicks]);
 
   if (persisting && loading) {
     return <DashboardSkeleton />;
   }
 
-  const isEmpty = analytics.dispatches === 0 && analytics.clicks === 0;
   const filteredCount = filteredDispatches.length;
+  const filteredClickCount = filteredClicks.length;
   const filteredImpressions = filteredCount * 100;
-  const ctr = analytics.impressions > 0 ? (analytics.clicks / analytics.impressions) * 100 : 0;
+  const ctr =
+    filteredImpressions > 0 ? (filteredClickCount / filteredImpressions) * 100 : 0;
+  const isEmpty = filteredCount === 0 && filteredClickCount === 0;
 
   return (
     <section className="flex flex-col gap-4">
@@ -65,9 +70,10 @@ export function AnalyticsDashboard() {
 
       <KpiRow
         impressions={filteredImpressions}
-        clicks={analytics.clicks}
+        clicks={filteredClickCount}
         ctr={ctr}
         dispatches={filteredCount}
+        showDemoNote={!persisting}
       />
 
       {isEmpty ? (
@@ -76,7 +82,10 @@ export function AnalyticsDashboard() {
         <>
           <div className="grid gap-4 lg:grid-cols-2">
             <ChannelBreakdown rows={breakdown} />
-            <TopCampaignCard top={top} topChannel={analytics.topChannel ?? null} />
+            <TopCampaignCard
+              top={top}
+              topChannel={periodTopChannel ?? analytics.topChannel ?? null}
+            />
           </div>
           <DispatchSparkline buckets={buckets} />
           <DispatchTimeline dispatches={filteredDispatches} campaigns={campaigns} />
@@ -115,17 +124,27 @@ function KpiRow({
   clicks,
   ctr,
   dispatches,
+  showDemoNote,
 }: {
   impressions: number;
   clicks: number;
   ctr: number;
   dispatches: number;
+  showDemoNote?: boolean;
 }) {
   const ko = ADMIN_KO.promo.analytics;
   const cards = [
     { label: ko.impressions, value: impressions.toLocaleString("ko-KR") },
-    { label: ko.clicks, value: clicks.toLocaleString("ko-KR"), note: ko.clicksScopeNote },
-    { label: ko.ctr, value: `${ctr.toFixed(2)}%`, note: ko.clicksScopeNote },
+    {
+      label: ko.clicks,
+      value: clicks.toLocaleString("ko-KR"),
+      note: showDemoNote ? ko.clicksScopeNote : undefined,
+    },
+    {
+      label: ko.ctr,
+      value: `${ctr.toFixed(2)}%`,
+      note: showDemoNote ? ko.clicksScopeNote : undefined,
+    },
     { label: ko.dispatches, value: dispatches.toLocaleString("ko-KR") },
   ];
   return (

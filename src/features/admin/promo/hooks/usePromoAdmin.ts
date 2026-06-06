@@ -12,6 +12,7 @@ import {
   promoGetSettings,
   promoListAssets,
   promoListCampaigns,
+  promoListClicks,
   promoListDispatches,
   promoRecordDispatch,
   promoUpsertAsset,
@@ -24,6 +25,7 @@ import type {
   PromoAsset,
   PromoCampaign,
   PromoChannelId,
+  PromoClick,
   PromoDispatch,
   PromoSettings,
   PromoVariant,
@@ -32,6 +34,7 @@ import type {
 export const PROMO_QUERY_KEYS = {
   campaigns: ["admin", "promo", "campaigns"] as const,
   dispatches: ["admin", "promo", "dispatches"] as const,
+  clicks: ["admin", "promo", "clicks"] as const,
   assets: ["admin", "promo", "assets"] as const,
   settings: ["admin", "promo", "settings"] as const,
   analytics: ["admin", "promo", "analytics"] as const,
@@ -72,6 +75,12 @@ export function usePromoAdmin() {
     enabled: persisting,
     retry: false,
   });
+  const clicksQuery = useQuery({
+    queryKey: PROMO_QUERY_KEYS.clicks,
+    queryFn: () => promoListClicks(),
+    enabled: persisting,
+    retry: false,
+  });
   const assetsQuery = useQuery({
     queryKey: PROMO_QUERY_KEYS.assets,
     queryFn: promoListAssets,
@@ -95,6 +104,7 @@ export function usePromoAdmin() {
     persisting &&
     (campaignsQuery.isLoading ||
       dispatchesQuery.isLoading ||
+      clicksQuery.isLoading ||
       assetsQuery.isLoading ||
       settingsQuery.isLoading ||
       analyticsQuery.isLoading);
@@ -109,6 +119,11 @@ export function usePromoAdmin() {
       ? []
       : (dispatchesQuery.data ?? [])
     : mockDispatches;
+  const clicks: PromoClick[] = persisting
+    ? queriesPending
+      ? []
+      : (clicksQuery.data ?? [])
+    : mockClicks;
   const assets = persisting
     ? queriesPending
       ? []
@@ -126,6 +141,7 @@ export function usePromoAdmin() {
     await Promise.all([
       qc.invalidateQueries({ queryKey: PROMO_QUERY_KEYS.campaigns }),
       qc.invalidateQueries({ queryKey: PROMO_QUERY_KEYS.dispatches }),
+      qc.invalidateQueries({ queryKey: PROMO_QUERY_KEYS.clicks }),
       qc.invalidateQueries({ queryKey: PROMO_QUERY_KEYS.analytics }),
     ]);
   };
@@ -266,6 +282,7 @@ export function usePromoAdmin() {
     loading,
     campaigns,
     dispatches,
+    clicks,
     assets,
     settings,
     analytics,

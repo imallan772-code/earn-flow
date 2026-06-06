@@ -916,7 +916,14 @@ export type Database = {
         Args: { p_campaign_id?: string }
         Returns: Json
       }
-      admin_promo_analytics_summary: { Args: never; Returns: Json }
+      admin_list_promo_clicks: {
+        Args: { p_campaign_id?: string; p_from?: string; p_to?: string }
+        Returns: Json
+      }
+      admin_promo_analytics_summary: {
+        Args: { p_from?: string; p_to?: string }
+        Returns: Json
+      }
       admin_record_promo_dispatch: { Args: { p_payload: Json }; Returns: Json }
       admin_upsert_event: { Args: { p_payload: Json }; Returns: Json }
       admin_upsert_notice: { Args: { p_payload: Json }; Returns: Json }

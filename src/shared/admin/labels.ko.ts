@@ -105,7 +105,7 @@ export const ADMIN_KO = {
     analytics: {
       title: "성과 분석",
       hint: "데모 집계 — 채널 탭에서 테스트 발행하면 즉시 반영됩니다.",
-      hintConfigured: "Supabase 실데이터 — 발송·집계는 실시간, 클릭 상세는 Cursor RPC 후 노출.",
+      hintConfigured: "Supabase promo_clicks · promo_dispatches 실데이터 · 기간 필터 적용",
       loading: "불러오는 중…",
       impressions: "노출(추정)",
       clicks: "클릭",
@@ -122,7 +122,7 @@ export const ADMIN_KO = {
       emptyTitle: "아직 발송·클릭 데이터가 없습니다.",
       emptyCta: "채널 탭에서 테스트 발행 →",
       ctrTrend: "발송 추이 (CTR proxy)",
-      clicksScopeNote: "클릭·CTR은 전체 기간 집계 (상세는 Cursor RPC 후)",
+      clicksScopeNote: "데모 · 클릭은 로컬 mock",
       timelineEmpty: "해당 기간에 발송이 없습니다.",
       noTop: "—",
     },

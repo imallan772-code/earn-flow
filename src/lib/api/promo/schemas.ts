@@ -67,6 +67,17 @@ export const promoDispatchRowSchema = z.object({
 
 export const promoDispatchesSchema = z.array(promoDispatchRowSchema);
 
+export const promoClickRowSchema = z.object({
+  id: z.string().uuid(),
+  campaign_id: z.string(),
+  variant_id: z.string().nullable().optional(),
+  channel: z.string(),
+  referrer: z.string().nullable().optional(),
+  created_at: z.string(),
+});
+
+export const promoClicksSchema = z.array(promoClickRowSchema);
+
 export const promoAssetRowSchema = z.object({
   id: z.string(),
   kind: z.enum(["image", "video", "copy"]),

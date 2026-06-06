@@ -6,8 +6,9 @@ import {
   periodRange,
   resolveCampaignTitle,
   topCampaignByDispatches,
+  topChannelFromClicks,
 } from "../analyticsAggregate";
-import type { PromoCampaign, PromoDispatch } from "@/features/admin/promo/types";
+import type { PromoCampaign, PromoClick, PromoDispatch } from "@/features/admin/promo/types";
 
 function disp(
   id: string,
@@ -100,5 +101,15 @@ describe("analyticsAggregate", () => {
   it("topCampaignByDispatches returns null for empty inputs", () => {
     expect(topCampaignByDispatches([], [])).toBeNull();
     expect(topCampaignByDispatches([camp("a", "A")], [])).toBeNull();
+  });
+
+  it("topChannelFromClicks returns highest-count channel", () => {
+    const clicks: PromoClick[] = [
+      { id: "1", campaignId: "a", channel: "telegram", ts: "2026-06-01T00:00:00Z" },
+      { id: "2", campaignId: "a", channel: "telegram", ts: "2026-06-01T00:00:00Z" },
+      { id: "3", campaignId: "b", channel: "x", ts: "2026-06-01T00:00:00Z" },
+    ];
+    expect(topChannelFromClicks(clicks)).toBe("telegram");
+    expect(topChannelFromClicks([])).toBeNull();
   });
 });
