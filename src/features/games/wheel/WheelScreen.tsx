@@ -249,8 +249,12 @@ export function WheelScreen() {
     [round, tryDebit, mode, sfx],
   );
 
-  // PF seed 적용
+  // PF seed 적용 — 진행 중 라운드 있으면 차단 (Dice/Wheel: refund RPC 없음, round 2~5s)
   const applySeed = useCallback(() => {
+    if (!round.isIdle || wheelStore.get().activeRound) {
+      appToast.raw.error("진행 중인 라운드가 있어 시드를 변경할 수 없습니다");
+      return;
+    }
     const next = seedDraft.trim().slice(0, 32) || DEFAULT_CLIENT_SEED;
     const cur = wheelStore.get().clientSeed;
     if (next === cur) {
@@ -261,7 +265,6 @@ export function WheelScreen() {
       ...s,
       clientSeed: next,
       nonce: 0,
-      activeRound: null,
       lastOutcome: null,
     }));
     setResultIndex(null);
@@ -269,7 +272,7 @@ export function WheelScreen() {
     settledRef.current = false;
     appToast.game.bet({ amount: "시드 변경됨 · nonce 0 리셋" });
     setShowFair(false);
-  }, [seedDraft]);
+  }, [seedDraft, round.isIdle]);
 
   // Hotkeys
   const hotkeys = useMemo<HotkeyMap>(

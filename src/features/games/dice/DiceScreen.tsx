@@ -186,6 +186,11 @@ export function DiceScreen() {
   }, []);
 
   const applySeed = useCallback(() => {
+    // Dice 진행 중 시드 변경 차단 (refund RPC 없음 — round < 2s)
+    if (!round.isIdle || activeBet) {
+      appToast.raw.error("진행 중인 라운드가 있어 시드를 변경할 수 없습니다");
+      return;
+    }
     const next = seedDraft.trim().slice(0, 32) || DEFAULT_CLIENT_SEED;
     if (next === diceStore.get().clientSeed) {
       setShowFair(false);
@@ -202,7 +207,7 @@ export function DiceScreen() {
     settledRef.current = false;
     appToast.game.bet({ amount: "시드 변경됨 · nonce 0 리셋" });
     setShowFair(false);
-  }, [seedDraft]);
+  }, [seedDraft, round.isIdle, activeBet]);
 
   const hotkeys = useMemo<HotkeyMap>(
     () => ({

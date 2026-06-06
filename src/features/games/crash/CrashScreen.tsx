@@ -60,6 +60,7 @@ import { commitServerSeed } from "@/shared/games/engine/provablyFair";
 import { reachedTarget } from "@/shared/games/engine/clamp";
 import { type ActiveCrashRound, crashStore } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
+import { useUnmountRefund } from "@/shared/wallet/useUnmountRefund";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { useHotkeys, type HotkeyMap } from "@/shared/hooks/useHotkeys";
 import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
@@ -123,15 +124,14 @@ export function CrashScreen() {
     if (showFair) setSeedDraft(crashStore.get().clientSeed);
   }, [showFair]);
 
-  // Refund unsettled bet on unmount (user left mid-round) — 보존
+  // Refund unsettled bet on unmount — SSOT useUnmountRefund (Crash/Mines/Limbo).
   const refundRef = useRef(refund);
   refundRef.current = refund;
-  useEffect(() => {
-    return () => {
-      const b = betRef.current;
-      if (b && b.cashedAt === null) refundRef.current(b.amount);
-    };
-  }, []);
+  useUnmountRefund(refund, () => {
+    const ar = crashStore.get().activeRound;
+    if (!ar || ar.cashedAt !== null) return null;
+    return { amount: ar.amount, meta: { game: "crash", roundId: `n${ar.nonce}` } };
+  });
 
   // ─── 마운트 복원 (1회) ────────────────────────────────────────────
   // activeRound != null && 미settle → bet/phase/crashPoint/startedAt hydrate만.
@@ -398,8 +398,10 @@ export function CrashScreen() {
     }
     const ar = crashStore.get().activeRound;
     if (ar && ar.cashedAt === null) {
-      // place 시 즉시 debit이라 seed reset만 하면 돈이 샘 → refund 1회.
-      refundRef.current(ar.amount);
+      // place 시 즉시 debit이라 seed reset만 하면 돈이 샘 → refund RPC 1회 (idempotent).
+      void refundRef
+        .current(ar.amount, { game: "crash", roundId: `n${ar.nonce}` })
+        .catch(() => undefined);
       liveBetsStore.update(ar.liveBetId, {
         multiplier: null,
         profit: 0,
