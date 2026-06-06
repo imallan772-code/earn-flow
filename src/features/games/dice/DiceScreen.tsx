@@ -82,6 +82,10 @@ export function DiceScreen() {
   const sfx = useSfx();
   const tickIntervalRef = useRef<number | null>(null);
   const settledRef = useRef(false);
+  const isDesktop = useDesktopLayout();
+  const rightRailNode = useMemo(() => <DiceRightRail />, []);
+  useRegisterRightRail(rightRailNode);
+
 
   useEffect(() => {
     commitServerSeed(SERVER_SEED).then(setCommit);
@@ -373,7 +377,7 @@ export function DiceScreen() {
         }
       />
 
-      <LiveBetsFeed game="dice" limit={10} />
+      {!isDesktop && <LiveBetsFeed game="dice" limit={10} />}
 
       <ProvablyFairModal
         open={showFair}
