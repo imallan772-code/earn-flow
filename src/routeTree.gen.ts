@@ -34,6 +34,15 @@ import { Route as AppMyRouteImport } from './routes/_app/my'
 import { Route as AppFeedRouteImport } from './routes/_app/feed'
 import { Route as AppEventRouteImport } from './routes/_app/event'
 import { Route as AppEarnRouteImport } from './routes/_app/earn'
+import { Route as AdminPromoRouteRouteImport } from './routes/admin/promo/route'
+import { Route as AdminPromoIndexRouteImport } from './routes/admin/promo/index'
+import { Route as AdminPromoStudioRouteImport } from './routes/admin/promo/studio'
+import { Route as AdminPromoSettingsRouteImport } from './routes/admin/promo/settings'
+import { Route as AdminPromoChannelsRouteImport } from './routes/admin/promo/channels'
+import { Route as AdminPromoCampaignsRouteImport } from './routes/admin/promo/campaigns'
+import { Route as AdminPromoCalendarRouteImport } from './routes/admin/promo/calendar'
+import { Route as AdminPromoAssetsRouteImport } from './routes/admin/promo/assets'
+import { Route as AdminPromoAnalyticsRouteImport } from './routes/admin/promo/analytics'
 import { Route as AppNoticeIdRouteImport } from './routes/_app/notice.$id'
 import { Route as AppGamesWheelRouteImport } from './routes/_app/games.wheel'
 import { Route as AppGamesPlinkoRouteImport } from './routes/_app/games.plinko'
@@ -168,6 +177,51 @@ const AppEarnRoute = AppEarnRouteImport.update({
   path: '/earn',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AdminPromoRouteRoute = AdminPromoRouteRouteImport.update({
+  id: '/promo',
+  path: '/promo',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminPromoIndexRoute = AdminPromoIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminPromoRouteRoute,
+} as any)
+const AdminPromoStudioRoute = AdminPromoStudioRouteImport.update({
+  id: '/studio',
+  path: '/studio',
+  getParentRoute: () => AdminPromoRouteRoute,
+} as any)
+const AdminPromoSettingsRoute = AdminPromoSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminPromoRouteRoute,
+} as any)
+const AdminPromoChannelsRoute = AdminPromoChannelsRouteImport.update({
+  id: '/channels',
+  path: '/channels',
+  getParentRoute: () => AdminPromoRouteRoute,
+} as any)
+const AdminPromoCampaignsRoute = AdminPromoCampaignsRouteImport.update({
+  id: '/campaigns',
+  path: '/campaigns',
+  getParentRoute: () => AdminPromoRouteRoute,
+} as any)
+const AdminPromoCalendarRoute = AdminPromoCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => AdminPromoRouteRoute,
+} as any)
+const AdminPromoAssetsRoute = AdminPromoAssetsRouteImport.update({
+  id: '/assets',
+  path: '/assets',
+  getParentRoute: () => AdminPromoRouteRoute,
+} as any)
+const AdminPromoAnalyticsRoute = AdminPromoAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminPromoRouteRoute,
+} as any)
 const AppNoticeIdRoute = AppNoticeIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -222,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/transfer': typeof TransferRoute
+  '/admin/promo': typeof AdminPromoRouteRouteWithChildren
   '/earn': typeof AppEarnRoute
   '/event': typeof AppEventRouteWithChildren
   '/feed': typeof AppFeedRoute
@@ -248,6 +303,14 @@ export interface FileRoutesByFullPath {
   '/games/plinko': typeof AppGamesPlinkoRoute
   '/games/wheel': typeof AppGamesWheelRoute
   '/notice/$id': typeof AppNoticeIdRoute
+  '/admin/promo/analytics': typeof AdminPromoAnalyticsRoute
+  '/admin/promo/assets': typeof AdminPromoAssetsRoute
+  '/admin/promo/calendar': typeof AdminPromoCalendarRoute
+  '/admin/promo/campaigns': typeof AdminPromoCampaignsRoute
+  '/admin/promo/channels': typeof AdminPromoChannelsRoute
+  '/admin/promo/settings': typeof AdminPromoSettingsRoute
+  '/admin/promo/studio': typeof AdminPromoStudioRoute
+  '/admin/promo/': typeof AdminPromoIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -282,6 +345,14 @@ export interface FileRoutesByTo {
   '/games/plinko': typeof AppGamesPlinkoRoute
   '/games/wheel': typeof AppGamesWheelRoute
   '/notice/$id': typeof AppNoticeIdRoute
+  '/admin/promo/analytics': typeof AdminPromoAnalyticsRoute
+  '/admin/promo/assets': typeof AdminPromoAssetsRoute
+  '/admin/promo/calendar': typeof AdminPromoCalendarRoute
+  '/admin/promo/campaigns': typeof AdminPromoCampaignsRoute
+  '/admin/promo/channels': typeof AdminPromoChannelsRoute
+  '/admin/promo/settings': typeof AdminPromoSettingsRoute
+  '/admin/promo/studio': typeof AdminPromoStudioRoute
+  '/admin/promo': typeof AdminPromoIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -293,6 +364,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/transfer': typeof TransferRoute
+  '/admin/promo': typeof AdminPromoRouteRouteWithChildren
   '/_app/earn': typeof AppEarnRoute
   '/_app/event': typeof AppEventRouteWithChildren
   '/_app/feed': typeof AppFeedRoute
@@ -319,6 +391,14 @@ export interface FileRoutesById {
   '/_app/games/plinko': typeof AppGamesPlinkoRoute
   '/_app/games/wheel': typeof AppGamesWheelRoute
   '/_app/notice/$id': typeof AppNoticeIdRoute
+  '/admin/promo/analytics': typeof AdminPromoAnalyticsRoute
+  '/admin/promo/assets': typeof AdminPromoAssetsRoute
+  '/admin/promo/calendar': typeof AdminPromoCalendarRoute
+  '/admin/promo/campaigns': typeof AdminPromoCampaignsRoute
+  '/admin/promo/channels': typeof AdminPromoChannelsRoute
+  '/admin/promo/settings': typeof AdminPromoSettingsRoute
+  '/admin/promo/studio': typeof AdminPromoStudioRoute
+  '/admin/promo/': typeof AdminPromoIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -330,6 +410,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/transfer'
+    | '/admin/promo'
     | '/earn'
     | '/event'
     | '/feed'
@@ -356,6 +437,14 @@ export interface FileRouteTypes {
     | '/games/plinko'
     | '/games/wheel'
     | '/notice/$id'
+    | '/admin/promo/analytics'
+    | '/admin/promo/assets'
+    | '/admin/promo/calendar'
+    | '/admin/promo/campaigns'
+    | '/admin/promo/channels'
+    | '/admin/promo/settings'
+    | '/admin/promo/studio'
+    | '/admin/promo/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -390,6 +479,14 @@ export interface FileRouteTypes {
     | '/games/plinko'
     | '/games/wheel'
     | '/notice/$id'
+    | '/admin/promo/analytics'
+    | '/admin/promo/assets'
+    | '/admin/promo/calendar'
+    | '/admin/promo/campaigns'
+    | '/admin/promo/channels'
+    | '/admin/promo/settings'
+    | '/admin/promo/studio'
+    | '/admin/promo'
   id:
     | '__root__'
     | '/'
@@ -400,6 +497,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/transfer'
+    | '/admin/promo'
     | '/_app/earn'
     | '/_app/event'
     | '/_app/feed'
@@ -426,6 +524,14 @@ export interface FileRouteTypes {
     | '/_app/games/plinko'
     | '/_app/games/wheel'
     | '/_app/notice/$id'
+    | '/admin/promo/analytics'
+    | '/admin/promo/assets'
+    | '/admin/promo/calendar'
+    | '/admin/promo/campaigns'
+    | '/admin/promo/channels'
+    | '/admin/promo/settings'
+    | '/admin/promo/studio'
+    | '/admin/promo/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -625,6 +731,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEarnRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/admin/promo': {
+      id: '/admin/promo'
+      path: '/promo'
+      fullPath: '/admin/promo'
+      preLoaderRoute: typeof AdminPromoRouteRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/promo/': {
+      id: '/admin/promo/'
+      path: '/'
+      fullPath: '/admin/promo/'
+      preLoaderRoute: typeof AdminPromoIndexRouteImport
+      parentRoute: typeof AdminPromoRouteRoute
+    }
+    '/admin/promo/studio': {
+      id: '/admin/promo/studio'
+      path: '/studio'
+      fullPath: '/admin/promo/studio'
+      preLoaderRoute: typeof AdminPromoStudioRouteImport
+      parentRoute: typeof AdminPromoRouteRoute
+    }
+    '/admin/promo/settings': {
+      id: '/admin/promo/settings'
+      path: '/settings'
+      fullPath: '/admin/promo/settings'
+      preLoaderRoute: typeof AdminPromoSettingsRouteImport
+      parentRoute: typeof AdminPromoRouteRoute
+    }
+    '/admin/promo/channels': {
+      id: '/admin/promo/channels'
+      path: '/channels'
+      fullPath: '/admin/promo/channels'
+      preLoaderRoute: typeof AdminPromoChannelsRouteImport
+      parentRoute: typeof AdminPromoRouteRoute
+    }
+    '/admin/promo/campaigns': {
+      id: '/admin/promo/campaigns'
+      path: '/campaigns'
+      fullPath: '/admin/promo/campaigns'
+      preLoaderRoute: typeof AdminPromoCampaignsRouteImport
+      parentRoute: typeof AdminPromoRouteRoute
+    }
+    '/admin/promo/calendar': {
+      id: '/admin/promo/calendar'
+      path: '/calendar'
+      fullPath: '/admin/promo/calendar'
+      preLoaderRoute: typeof AdminPromoCalendarRouteImport
+      parentRoute: typeof AdminPromoRouteRoute
+    }
+    '/admin/promo/assets': {
+      id: '/admin/promo/assets'
+      path: '/assets'
+      fullPath: '/admin/promo/assets'
+      preLoaderRoute: typeof AdminPromoAssetsRouteImport
+      parentRoute: typeof AdminPromoRouteRoute
+    }
+    '/admin/promo/analytics': {
+      id: '/admin/promo/analytics'
+      path: '/analytics'
+      fullPath: '/admin/promo/analytics'
+      preLoaderRoute: typeof AdminPromoAnalyticsRouteImport
+      parentRoute: typeof AdminPromoRouteRoute
+    }
     '/_app/notice/$id': {
       id: '/_app/notice/$id'
       path: '/$id'
@@ -749,13 +918,41 @@ const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
   AppRouteRouteChildren,
 )
 
+interface AdminPromoRouteRouteChildren {
+  AdminPromoAnalyticsRoute: typeof AdminPromoAnalyticsRoute
+  AdminPromoAssetsRoute: typeof AdminPromoAssetsRoute
+  AdminPromoCalendarRoute: typeof AdminPromoCalendarRoute
+  AdminPromoCampaignsRoute: typeof AdminPromoCampaignsRoute
+  AdminPromoChannelsRoute: typeof AdminPromoChannelsRoute
+  AdminPromoSettingsRoute: typeof AdminPromoSettingsRoute
+  AdminPromoStudioRoute: typeof AdminPromoStudioRoute
+  AdminPromoIndexRoute: typeof AdminPromoIndexRoute
+}
+
+const AdminPromoRouteRouteChildren: AdminPromoRouteRouteChildren = {
+  AdminPromoAnalyticsRoute: AdminPromoAnalyticsRoute,
+  AdminPromoAssetsRoute: AdminPromoAssetsRoute,
+  AdminPromoCalendarRoute: AdminPromoCalendarRoute,
+  AdminPromoCampaignsRoute: AdminPromoCampaignsRoute,
+  AdminPromoChannelsRoute: AdminPromoChannelsRoute,
+  AdminPromoSettingsRoute: AdminPromoSettingsRoute,
+  AdminPromoStudioRoute: AdminPromoStudioRoute,
+  AdminPromoIndexRoute: AdminPromoIndexRoute,
+}
+
+const AdminPromoRouteRouteWithChildren = AdminPromoRouteRoute._addFileChildren(
+  AdminPromoRouteRouteChildren,
+)
+
 interface AdminRouteRouteChildren {
+  AdminPromoRouteRoute: typeof AdminPromoRouteRouteWithChildren
   AdminEventRoute: typeof AdminEventRoute
   AdminNoticeRoute: typeof AdminNoticeRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminPromoRouteRoute: AdminPromoRouteRouteWithChildren,
   AdminEventRoute: AdminEventRoute,
   AdminNoticeRoute: AdminNoticeRoute,
   AdminIndexRoute: AdminIndexRoute,
