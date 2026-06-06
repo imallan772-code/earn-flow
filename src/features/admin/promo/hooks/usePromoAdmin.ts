@@ -95,7 +95,7 @@ export function usePromoAdmin() {
   });
   const analyticsQuery = useQuery({
     queryKey: PROMO_QUERY_KEYS.analytics,
-    queryFn: promoAnalyticsSummary,
+    queryFn: () => promoAnalyticsSummary(),
     enabled: persisting,
     retry: false,
   });
