@@ -12,6 +12,7 @@ import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
 import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
 import { plinkoStore } from "@/shared/games/state/persistedGameState";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
+import { useHotkeys } from "@/shared/hooks/useHotkeys";
 import { cn } from "@/lib/utils";
 import { Volume2, VolumeX } from "lucide-react";
 
