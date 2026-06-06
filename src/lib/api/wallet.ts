@@ -1,14 +1,12 @@
 /**
  * Wallet RPC wrappers — Cursor-only SSOT for Supabase money paths.
  *
- * v1 (default): debit_phon_for_bet / credit_phon_for_payout — legacy, unchanged.
- * v2 (opt-in):  debit_phon_for_bet_v2 / credit_phon_for_payout_v2 — idempotent + audited.
- * refund:       refund_phon_for_bet_v2 — always v2 (mid-round cancel).
- * Enable v2 debit/credit: VITE_MONEY_RPC_V2=true
+ * debit/credit/refund all use v2 (idempotent + game_rounds audit).
+ * refund_phon_for_bet_v2 requires debit_phon_for_bet_v2 — never mix with v1 debit.
  */
 import { getSupabaseClient } from "@/integrations/supabase/client";
 import type { WalletBalance } from "@/integrations/supabase/types";
-import { useMoneyRpcV2, walletBetInputSchema, walletRpcResultSchema } from "./walletSchemas";
+import { walletBetInputSchema, walletRpcResultSchema } from "./walletSchemas";
 
 function parseBalance(data: unknown): WalletBalance | null {
   const parsed = walletRpcResultSchema.safeParse(data);
@@ -18,8 +16,6 @@ function parseBalance(data: unknown): WalletBalance | null {
 }
 
 type WalletRpcName =
-  | "debit_phon_for_bet"
-  | "credit_phon_for_payout"
   | "debit_phon_for_bet_v2"
   | "credit_phon_for_payout_v2"
   | "refund_phon_for_bet_v2";
@@ -41,14 +37,12 @@ async function callWalletRpc(
 
 export async function debitPhonForBet(amount: number, game: string, roundId: string) {
   const input = walletBetInputSchema.parse({ amount, game, roundId });
-  const rpc = useMoneyRpcV2 ? "debit_phon_for_bet_v2" : "debit_phon_for_bet";
-  return callWalletRpc(rpc, input);
+  return callWalletRpc("debit_phon_for_bet_v2", input);
 }
 
 export async function creditPhonForPayout(amount: number, game: string, roundId: string) {
   const input = walletBetInputSchema.parse({ amount, game, roundId });
-  const rpc = useMoneyRpcV2 ? "credit_phon_for_payout_v2" : "credit_phon_for_payout";
-  return callWalletRpc(rpc, input);
+  return callWalletRpc("credit_phon_for_payout_v2", input);
 }
 
 /** Mid-round cancel — always v2; same roundId as debit (no -refund suffix). */

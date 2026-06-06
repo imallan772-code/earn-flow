@@ -1,7 +1,7 @@
 /**
  * StakeBetPanel — reusable Manual/Auto bet UI for all crash-style games.
  */
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useMode } from "@/shared/mode/ModeContext";
 import { AutoBetConfigFields } from "./AutoBetConfigFields";
@@ -23,6 +23,11 @@ interface Props extends BetCallbacks {
   suppressCashoutButton?: boolean;
   variant?: "full" | "compact";
   showAutoTarget?: boolean;
+  /** Persisted stake — keeps BetSummaryPanel in sync while typing */
+  defaultAmount?: number;
+  defaultTarget?: number;
+  onAmountChange?: (amount: number) => void;
+  onTargetChange?: (target: number) => void;
 }
 
 export function StakeBetPanel({
@@ -37,22 +42,51 @@ export function StakeBetPanel({
   suppressCashoutButton,
   variant = "full",
   showAutoTarget = true,
+  defaultAmount,
+  defaultTarget,
+  onAmountChange,
+  onTargetChange,
 }: Props) {
   const { mode } = useMode();
   const isReal = mode === "real";
   const minBet = isReal ? 1 : 0.01;
   const step = isReal ? 1 : 0.01;
-  const clampStake = (n: number): number => {
-    if (!Number.isFinite(n) || n <= 0) return 0;
-    return isReal ? Math.max(0, Math.floor(n)) : +n.toFixed(2);
-  };
+  const clampStake = useCallback(
+    (n: number): number => {
+      if (!Number.isFinite(n) || n <= 0) return 0;
+      return isReal ? Math.max(0, Math.floor(n)) : +n.toFixed(2);
+    },
+    [isReal],
+  );
 
   const compact = variant === "compact";
   const [tab, setTab] = useState<"manual" | "auto">("manual");
   const effectiveTab: "manual" | "auto" = compact ? "manual" : tab;
-  const [amount, setAmount] = useState(10);
-  const [target, setTarget] = useState(2.0);
+  const [amount, setAmount] = useState(defaultAmount ?? 10);
+  const [target, setTarget] = useState(defaultTarget ?? 2.0);
   const placingRef = useRef(false);
+
+  const updateAmount = (next: number) => {
+    const v = clampStake(next);
+    setAmount(v);
+    onAmountChange?.(v);
+  };
+
+  const updateTarget = (next: number) => {
+    const v = Math.max(1.01, +next.toFixed(2));
+    setTarget(v);
+    onTargetChange?.(v);
+  };
+
+  useEffect(() => {
+    if (defaultAmount == null || !canPlace) return;
+    setAmount(clampStake(defaultAmount));
+  }, [defaultAmount, canPlace, clampStake]);
+
+  useEffect(() => {
+    if (defaultTarget == null || !canPlace) return;
+    setTarget(Math.max(1.01, defaultTarget));
+  }, [defaultTarget, canPlace]);
 
   const { cfg, setCfg, autoRunning, autoState, startAuto, stopAuto } = useAutoBetController({
     canPlace,
@@ -67,7 +101,8 @@ export function StakeBetPanel({
 
   // Real mode → floor to integer when mode flips (avoid stale 0.49 from demo).
   useEffect(() => {
-    if (isReal) setAmount((a) => Math.max(0, Math.floor(a)));
+    if (isReal) updateAmount(Math.max(0, Math.floor(amount)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mode flip only
   }, [isReal]);
 
   useEffect(() => {
@@ -123,13 +158,13 @@ export function StakeBetPanel({
             min={minBet}
             step={step}
             value={amount}
-            onChange={(e) => setAmount(clampStake(Number(e.target.value) || 0))}
+            onChange={(e) => updateAmount(Number(e.target.value) || 0)}
             className="font-numeric flex-1 rounded-lg bg-(--color-bg-0) px-2 py-1.5 text-sm outline-none"
           />
           {[
-            { lbl: "½", fn: () => setAmount((a) => clampStake(a / 2)) },
-            { lbl: "2x", fn: () => setAmount((a) => clampStake(a * 2)) },
-            { lbl: "MAX", fn: () => setAmount(clampStake(balance)) },
+            { lbl: "½", fn: () => updateAmount(amount / 2) },
+            { lbl: "2x", fn: () => updateAmount(amount * 2) },
+            { lbl: "MAX", fn: () => updateAmount(balance) },
           ].map((b) => (
             <button
               key={b.lbl}
@@ -153,7 +188,7 @@ export function StakeBetPanel({
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => setTarget((t) => Math.max(1.01, +(t - 0.1).toFixed(2)))}
+              onClick={() => updateTarget(target - 0.1)}
               className="rounded-lg bg-(--color-surface-hi) px-2 py-1.5 text-[11px] font-bold"
             >
               −
@@ -163,12 +198,12 @@ export function StakeBetPanel({
               min={1.01}
               step={0.01}
               value={target}
-              onChange={(e) => setTarget(Math.max(1.01, Number(e.target.value) || 1.01))}
+              onChange={(e) => updateTarget(Math.max(1.01, Number(e.target.value) || 1.01))}
               className="font-numeric flex-1 rounded-lg bg-(--color-bg-0) px-2 py-1.5 text-sm outline-none"
             />
             <button
               type="button"
-              onClick={() => setTarget((t) => +(t + 0.1).toFixed(2))}
+              onClick={() => updateTarget(target + 0.1)}
               className="rounded-lg bg-(--color-surface-hi) px-2 py-1.5 text-[11px] font-bold"
             >
               +

@@ -1,16 +1,16 @@
 /**
- * crashStore restore spec — activeRound 라이프사이클 + PF refund + 이중 차감 금지.
+ * crashStore restore spec — activeRound 라이프사이클 + PF block + 이중 차감 금지.
  *
  * 검증
  *  - place: activeRound 세팅 + bettingStartedAt !== placedAt 의미 분리.
  *  - cashout: activeRound.cashedAt 갱신.
  *  - settle(crashed): activeRound=null + lastOutcome + history 동일 tick.
- *  - PF seed 변경 (미정산 베팅): refund 호출 + nonce=0 + activeRound=null + lastOutcome=null.
+ *  - PF seed 변경 (미정산 베팅): Screen에서 차단 — store는 변경 없음.
  *  - 마운트 복원 시 tryDebit/liveBetsStore.push 0회 (store는 pure state hydrate만).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-describe("crashStore.activeRound — lifecycle + restore + PF refund", () => {
+describe("crashStore.activeRound — lifecycle + restore + PF policy", () => {
   beforeEach(() => {
     vi.resetModules();
     window.localStorage.clear();
@@ -97,7 +97,7 @@ describe("crashStore.activeRound — lifecycle + restore + PF refund", () => {
     expect(s.history).toHaveLength(1);
   });
 
-  it("PF seed 변경 (미정산 베팅) → refund 호출 의도 + nonce=0 + activeRound/lastOutcome 클리어", async () => {
+  it("PF seed 변경 (미정산 베팅) — activeRound 유지 (Screen에서 차단, store 직접 변경 없음)", async () => {
     const { crashStore } = await import("../persistedGameState");
     // 진행 중 미정산 베팅
     crashStore.set((s) => ({
@@ -117,12 +117,13 @@ describe("crashStore.activeRound — lifecycle + restore + PF refund", () => {
       lastOutcome: { outcome: "win", profit: 5, nonce: 48 },
     }));
 
-    // PF apply: 미정산 베팅이 있으면 Screen 레벨에서 refund 호출 후 store 리셋.
-    // (refund는 walletStore 책임 — 본 스펙은 store 클리어 의도만 검증.)
+    // PF apply with active unsettled bet: Screen blocks — store unchanged until round ends.
     const before = crashStore.get();
     expect(before.activeRound?.amount).toBe(25);
     expect(before.activeRound?.cashedAt).toBeNull();
+    expect(before.nonce).toBe(50);
 
+    // Allowed PF reset only after round cleared (simulate post-settle):
     crashStore.set((s) => ({
       ...s,
       clientSeed: "new-seed",

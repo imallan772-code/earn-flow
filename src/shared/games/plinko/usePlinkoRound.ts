@@ -5,9 +5,7 @@
  *
  * Money 정책 (Plinko-specific, L-2 inheritance):
  *  - PF block: 큐 가득 (5공 / reduced-motion 시 1공) → enqueue 무시
- *  - Real unmount: 새 enqueue 차단 + in-flight 정산 완료까지 drain.
- *    refund RPC 호출 0 — Plinko 1공 ~800ms, idempotency 의미 없음 (Dice/Wheel block-only).
- *  - useUnmountRefund 미장착 (long-round 전용 hook).
+ *  - Real unmount: in-flight 정산만 drain — refund RPC 0 (Stake resume policy).
  *
  * 동시성:
  *  - 렌더러는 한 번에 한 공만 표시. 큐는 sequential drain.

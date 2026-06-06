@@ -1,9 +1,10 @@
 import { useCallback } from "react";
 import { useBalance, wallet, useWalletStats, useIsDemoLow, syncRealBalance } from "./walletStore";
-import { useMode } from "@/shared/mode/ModeContext";
+import { useMode, type GameMode } from "@/shared/mode/ModeContext";
 import { useProfile } from "@/features/profile/useProfile";
 import { useAuth } from "@/features/auth/AuthContext";
 import { creditPhonForPayout, debitPhonForBet, refundPhonForBet } from "@/lib/api/wallet";
+import { isBenignRefundError } from "@/lib/api/walletErrors";
 import { toIntegerPhonAmount } from "@/lib/api/walletSchemas";
 import { logGameRound } from "@/lib/api/trading";
 import { appToast } from "@/shared/ui/toast";
@@ -11,6 +12,8 @@ import { appToast } from "@/shared/ui/toast";
 export interface GameWalletMeta {
   game: string;
   roundId?: string;
+  /** Mode at bet placement — refund uses this instead of current toggle when set. */
+  betMode?: GameMode;
 }
 
 /**
@@ -54,7 +57,7 @@ export function useGameWallet() {
         const game = meta?.game ?? "game";
         const { balance: row } = await debitPhonForBet(betAmount, game, roundId);
         if (row?.phon != null) syncRealBalance(row.phon);
-        void logGameRound(game, roundId, betAmount, 0).catch(() => undefined);
+        await logGameRound(game, roundId, betAmount, 0).catch(() => undefined);
         return true;
       } catch {
         appToast.raw.error("베팅에 실패했습니다 (잔액 부족 또는 네트워크)");
@@ -98,7 +101,8 @@ export function useGameWallet() {
   const refund = useCallback(
     async (amount: number, meta?: GameWalletMeta): Promise<boolean> => {
       if (amount <= 0) return false;
-      if (mode === "demo") {
+      const refundMode = meta?.betMode ?? mode;
+      if (refundMode === "demo") {
         wallet.refund("demo", amount);
         return true;
       }
@@ -118,8 +122,10 @@ export function useGameWallet() {
         const { balance: row } = await refundPhonForBet(refundAmount, game, roundId);
         if (row?.phon != null) syncRealBalance(row.phon);
         return true;
-      } catch {
-        appToast.raw.error("환불 동기화에 실패했습니다");
+      } catch (err) {
+        if (!isBenignRefundError(err)) {
+          appToast.raw.error("환불 동기화에 실패했습니다");
+        }
         return false;
       }
     },

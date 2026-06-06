@@ -24,6 +24,7 @@ import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
 import { GameRulesCard } from "@/shared/games/ui/GameRulesCard";
 import { HistoryPillStrip } from "@/shared/games/ui/HistoryPillStrip";
 import { ProvablyFairModal, type ProvablyFairRow } from "@/shared/games/ui/ProvablyFairModal";
+import { PF_BLOCK_ACTIVE_ROUND_MSG } from "@/shared/games/ui/pfPolicy";
 import { SessionStatsBar } from "@/shared/games/ui/SessionStatsBar";
 import { recordSessionOutcome } from "@/shared/games/ui/sessionStats";
 import { DICE_RULES } from "@/shared/games/rules/gameRules";
@@ -46,6 +47,7 @@ import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { useHotkeys, type HotkeyMap } from "@/shared/hooks/useHotkeys";
 import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
 import { useSfx } from "@/shared/sfx/useSfx";
+import { notifyPfSeedChanged } from "@/shared/games/ui/gameOutcomePolicy";
 import { appToast } from "@/shared/ui/toast";
 
 const SERVER_SEED = "phonara-dice-demo-server-seed-v1";
@@ -193,7 +195,7 @@ export function DiceScreen() {
   const applySeed = useCallback(() => {
     // Dice 진행 중 시드 변경 차단 (refund RPC 없음 — round < 2s)
     if (!round.isIdle || activeBet) {
-      appToast.raw.error("진행 중인 라운드가 있어 시드를 변경할 수 없습니다");
+      appToast.raw.error(PF_BLOCK_ACTIVE_ROUND_MSG);
       return;
     }
     const next = seedDraft.trim().slice(0, 32) || DEFAULT_CLIENT_SEED;
@@ -210,7 +212,7 @@ export function DiceScreen() {
     }));
     setActiveBet(null);
     settledRef.current = false;
-    appToast.game.bet({ amount: "시드 변경됨 · nonce 0 리셋" });
+    notifyPfSeedChanged();
     setShowFair(false);
   }, [seedDraft, round.isIdle, activeBet]);
 
@@ -359,8 +361,9 @@ export function DiceScreen() {
             balance={balance}
             lastOutcome={lastOutcome}
             showAutoTarget={false}
+            defaultAmount={pendingAmount}
+            onAmountChange={(amount) => diceStore.set((s) => ({ ...s, pendingAmount: amount }))}
             onPlace={(amount) => {
-              diceStore.set((s) => ({ ...s, pendingAmount: amount }));
               void handlePlace(amount);
             }}
             onCashout={() => {}}

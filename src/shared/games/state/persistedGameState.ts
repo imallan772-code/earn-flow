@@ -87,6 +87,7 @@ export interface ActiveCrashRound {
   crashPoint: number;
   startedAt: number;
   bettingStartedAt: number;
+  betMode?: "demo" | "real";
 }
 export interface CrashPersisted {
   nonce: number;
@@ -145,6 +146,10 @@ export interface ActiveMinesRound {
   revealed: number[];
   liveBetId: string;
   placedAt: number;
+  /** demo | real at place time — settlement uses this, not current mode toggle. */
+  betMode?: "demo" | "real";
+  /** Real mode: mine layout on server only (Stake-like). */
+  serverSide?: boolean;
 }
 export interface MinesPersisted {
   nonce: number;
@@ -240,6 +245,7 @@ export interface ActiveLimboRound {
   target: number;
   liveBetId: string;
   placedAt: number;
+  betMode?: "demo" | "real";
 }
 /** Legacy v1 → v2 fold 시점에 채워지는 mid-round refund 대기 항목. */
 export interface PendingLegacyRefund {
@@ -370,6 +376,7 @@ export interface ActiveWheelRound {
   segments: 10 | 20 | 30;
   liveBetId: string;
   placedAt: number;
+  betMode?: "demo" | "real";
 }
 export interface WheelPersisted {
   nonce: number;

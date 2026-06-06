@@ -258,6 +258,8 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
             ? { outcome: lastOutcome.outcome, profit: lastOutcome.profit, nonce: lastOutcome.nonce }
             : null
         }
+        defaultAmount={pendingAmount}
+        onAmountChange={(amount) => plinkoStore.set((s) => ({ ...s, pendingAmount: amount }))}
         onPlace={(amount) => void handlePlace(amount)}
         onCashout={() => {}}
       />

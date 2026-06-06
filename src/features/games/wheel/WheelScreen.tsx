@@ -30,6 +30,7 @@ import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
 import { GameRulesCard } from "@/shared/games/ui/GameRulesCard";
 import { HistoryPillStrip } from "@/shared/games/ui/HistoryPillStrip";
 import { ProvablyFairModal, type ProvablyFairRow } from "@/shared/games/ui/ProvablyFairModal";
+import { PF_BLOCK_ACTIVE_ROUND_MSG } from "@/shared/games/ui/pfPolicy";
 import { SessionStatsBar } from "@/shared/games/ui/SessionStatsBar";
 import { recordSessionOutcome } from "@/shared/games/ui/sessionStats";
 import { WHEEL_RULES } from "@/shared/games/rules/gameRules";
@@ -53,9 +54,16 @@ import {
 } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
+import {
+  clearRealSession,
+  fetchRealSession,
+  nonceFromRoundId,
+  syncRealSession,
+} from "@/shared/games/gameSessionHelpers";
 import { useHotkeys, type HotkeyMap } from "@/shared/hooks/useHotkeys";
 import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
 import { useSfx } from "@/shared/sfx/useSfx";
+import { notifyPfSeedChanged } from "@/shared/games/ui/gameOutcomePolicy";
 import { appToast } from "@/shared/ui/toast";
 import { WheelDisplay } from "./WheelDisplay";
 import { WheelControls } from "./WheelControls";
@@ -104,12 +112,8 @@ export function WheelScreen() {
     if (showFair) setSeedDraft(wheelStore.get().clientSeed);
   }, [showFair]);
 
-  // Restore activeRound (once) — state hydrate only.
-  useEffect(() => {
-    if (restoredRef.current) return;
-    restoredRef.current = true;
-    const ar = wheelStore.get().activeRound;
-    if (ar) {
+  const hydrateActiveRound = useCallback(
+    (ar: ActiveWheelRound) => {
       liveBetsStore.ensureUserPending({
         id: ar.liveBetId,
         user: "나의_베팅",
@@ -122,9 +126,51 @@ export function WheelScreen() {
         isMe: true,
       });
       round.place();
+    },
+    [round, mode],
+  );
+
+  // Restore activeRound (once) — real: server SSOT, demo: localStorage
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+
+    const applyLocal = () => {
+      const ar = wheelStore.get().activeRound;
+      if (ar) hydrateActiveRound(ar);
+    };
+
+    if (mode !== "real") {
+      applyLocal();
+      return;
     }
-    // No tryDebit / liveBetsStore.push.
-  }, [round, mode]);
+
+    void fetchRealSession("wheel").then((row) => {
+      if (row) {
+        const cs = row.client_state as {
+          nonce?: number;
+          risk?: WheelRisk;
+          segments?: WheelSegments;
+          live_bet_id?: string;
+          placed_at?: number;
+        };
+        const local = wheelStore.get().activeRound;
+        const ar: ActiveWheelRound = {
+          nonce: cs.nonce ?? nonceFromRoundId(row.round_id),
+          amount: row.bet_amount,
+          risk: cs.risk ?? wheelStore.get().risk,
+          segments: cs.segments ?? wheelStore.get().segments,
+          liveBetId: local?.liveBetId ?? cs.live_bet_id ?? `lb_wheel_${row.round_id}`,
+          placedAt: cs.placed_at ?? Date.now(),
+          betMode: "real",
+        };
+        wheelStore.set((s) => ({ ...s, activeRound: ar }));
+        hydrateActiveRound(ar);
+        return;
+      }
+      applyLocal();
+    });
+  }, [mode, hydrateActiveRound]);
 
   // Settle: rolling phase → spin & resolve.
   useEffect(() => {
@@ -196,6 +242,7 @@ export function WheelScreen() {
         }
         // 일반 win/loss 토스트 제거 (Limbo 정렬).
         settledRef.current = true;
+        if (ar.betMode === "real") clearRealSession("wheel", `n${ar.nonce}`);
       },
     );
     return () => {
@@ -252,6 +299,7 @@ export function WheelScreen() {
         segments: s0.segments,
         liveBetId,
         placedAt: Date.now(),
+        betMode: mode as "demo" | "real",
       };
       wheelStore.set((s) => ({
         ...s,
@@ -259,6 +307,15 @@ export function WheelScreen() {
         pendingAmount: amount,
         activeRound: ar,
       }));
+      if (mode === "real") {
+        syncRealSession("wheel", `n${currentNonce}`, amount, {
+          nonce: currentNonce,
+          risk: s0.risk,
+          segments: s0.segments,
+          live_bet_id: liveBetId,
+          placed_at: ar.placedAt,
+        });
+      }
       setResultIndex(null);
       setResultMult(null);
       round.place();
@@ -271,7 +328,7 @@ export function WheelScreen() {
   // PF seed 적용 — 진행 중 라운드 있으면 차단 (Dice/Wheel: refund RPC 없음, round 2~5s)
   const applySeed = useCallback(() => {
     if (!round.isIdle || wheelStore.get().activeRound) {
-      appToast.raw.error("진행 중인 라운드가 있어 시드를 변경할 수 없습니다");
+      appToast.raw.error(PF_BLOCK_ACTIVE_ROUND_MSG);
       return;
     }
     const next = seedDraft.trim().slice(0, 32) || DEFAULT_CLIENT_SEED;
@@ -289,7 +346,7 @@ export function WheelScreen() {
     setResultIndex(null);
     setResultMult(null);
     settledRef.current = false;
-    appToast.game.bet({ amount: "시드 변경됨 · nonce 0 리셋" });
+    notifyPfSeedChanged();
     setShowFair(false);
   }, [seedDraft, round.isIdle]);
 
@@ -422,7 +479,7 @@ export function WheelScreen() {
         summaryPanel={
           <BetSummaryPanel
             variant="static"
-            amount={pendingAmount}
+            amount={activeRound?.amount ?? pendingAmount}
             targetMultiplier={Math.max(1.01, avgMult)}
           />
         }
@@ -444,8 +501,9 @@ export function WheelScreen() {
                   }
                 : null
             }
+            defaultAmount={pendingAmount}
+            onAmountChange={(amount) => wheelStore.set((s) => ({ ...s, pendingAmount: amount }))}
             onPlace={(amount) => {
-              wheelStore.set((s) => ({ ...s, pendingAmount: amount }));
               void handlePlace(amount);
             }}
             onCashout={() => {}}

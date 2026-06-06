@@ -8,7 +8,7 @@
  * 불변식 (ROUND H 보존)
  *  - handlePlace / tryDebit / liveBetsStore.push 재호출 금지 (이중 차감 방지)
  *  - 새로고침 mid-round 복원 시 round.place()만 호출, debit 추가 없음
- *  - useUnmountRefund — mid-round bet 환수 (Screen 측에서 등록)
+ *  - useUnmountRefund 미장착 — mid-round 이탈 시 activeRound resume (Stake-like)
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
@@ -19,7 +19,14 @@ import { type ActiveMinesRound, minesStore } from "@/shared/games/state/persiste
 import { recordSessionOutcome } from "@/shared/games/ui/sessionStats";
 import { useSfx } from "@/shared/sfx/useSfx";
 import { appToast } from "@/shared/ui/toast";
-import { formatPHON } from "@/lib/format";
+import { cashoutMinesRound, revealMinesTile, startMinesRound } from "@/lib/api/minesSession";
+import { clearGameActiveSession, getGameActiveSession } from "@/lib/api/gameSessions";
+import {
+  activeMinesRoundFromSession,
+  isMinesSessionConflict,
+} from "@/lib/gameSessions/minesSessionUtils";
+import { toIntegerPhonAmount } from "@/lib/api/walletSchemas";
+import { syncRealBalance } from "@/shared/wallet/walletStore";
 
 interface ActiveBet {
   amount: number;
@@ -27,6 +34,7 @@ interface ActiveBet {
   mines: number[];
   liveBetId: string;
   nonce: number;
+  serverSide?: boolean;
 }
 
 export interface RecentResult {
@@ -86,35 +94,87 @@ export function useMinesLifecycle({
   const [recent, setRecent] = useState<RecentResult | null>(null);
   const settledRef = useRef(false);
   const restoredRef = useRef(false);
+  const restoreReadyRef = useRef(wallet.mode !== "real");
+  const placeInFlightRef = useRef(false);
 
-  // Restore active round (1회) — handlePlace 재호출 금지
+  const commitActiveRound = useCallback(
+    (ar: ActiveMinesRound, opts?: { resumed?: boolean }) => {
+      minesStore.set((s) => ({ ...s, activeRound: ar, pendingAmount: ar.amount }));
+      setActive({
+        amount: ar.amount,
+        mineCount: ar.mineCount,
+        mines: ar.mines,
+        liveBetId: ar.liveBetId,
+        nonce: ar.nonce,
+        serverSide: ar.serverSide,
+      });
+      setRevealed(ar.revealed);
+      setHitTile(null);
+      liveBetsStore.ensureUserPending({
+        id: ar.liveBetId,
+        user: "나의_베팅",
+        game: "mines",
+        amount: ar.amount,
+        multiplier: null,
+        profit: null,
+        status: "pending",
+        mode: wallet.mode as never,
+        isMe: true,
+      });
+      round.place();
+      if (opts?.resumed) {
+        appToast.raw.info("진행 중인 Mines 라운드를 이어갑니다");
+      }
+    },
+    [round, wallet.mode],
+  );
+
+  const hydrateActiveRound = useCallback(
+    (ar: ActiveMinesRound, opts?: { resumed?: boolean }) => {
+      if (!ar.betMode) {
+        minesStore.set((s) =>
+          s.activeRound
+            ? { ...s, activeRound: { ...s.activeRound, betMode: wallet.mode as "demo" | "real" } }
+            : s,
+        );
+      }
+      commitActiveRound({ ...ar, betMode: ar.betMode ?? (wallet.mode as "demo" | "real") }, opts);
+    },
+    [commitActiveRound, wallet.mode],
+  );
+
+  // Restore active round (1회) — real: server SSOT, demo: localStorage
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
+
+    if (wallet.mode === "real") {
+      void getGameActiveSession("mines")
+        .then((row) => {
+          if (row) {
+            const local = minesStore.get().activeRound;
+            const ar = activeMinesRoundFromSession(row, mineCount, local?.liveBetId);
+            hydrateActiveRound(ar, { resumed: true });
+            return;
+          }
+          const ar = minesStore.get().activeRound;
+          if (ar) hydrateActiveRound(ar);
+        })
+        .catch(() => {
+          const ar = minesStore.get().activeRound;
+          if (ar) hydrateActiveRound(ar);
+        })
+        .finally(() => {
+          restoreReadyRef.current = true;
+        });
+      return;
+    }
+
+    restoreReadyRef.current = true;
+
     const ar = minesStore.get().activeRound;
-    if (!ar) return;
-    setActive({
-      amount: ar.amount,
-      mineCount: ar.mineCount,
-      mines: ar.mines,
-      liveBetId: ar.liveBetId,
-      nonce: ar.nonce,
-    });
-    setRevealed(ar.revealed);
-    setHitTile(null);
-    liveBetsStore.ensureUserPending({
-      id: ar.liveBetId,
-      user: "나의_베팅",
-      game: "mines",
-      amount: ar.amount,
-      multiplier: null,
-      profit: null,
-      status: "pending",
-      mode: wallet.mode as never,
-      isMe: true,
-    });
-    round.place();
-  }, [round, wallet.mode]);
+    if (ar) hydrateActiveRound(ar);
+  }, [hydrateActiveRound, wallet.mode, mineCount]);
 
   // settled → cleanup + nonce++
   useEffect(() => {
@@ -130,11 +190,83 @@ export function useMinesLifecycle({
   const handlePlace = useCallback(
     async (amount: number) => {
       if (!round.isIdle || amount <= 0) return;
-      const ok = await wallet.tryDebit(amount, { game: "mines", roundId: `n${nonce}` });
-      if (!ok) return;
-      minesStore.set((s) => ({ ...s, pendingAmount: amount }));
+
+      if (wallet.mode === "real") {
+        if (!restoreReadyRef.current || placeInFlightRef.current) return;
+        placeInFlightRef.current = true;
+        const roundId = `n${nonce}`;
+        const seed = minesStore.get().clientSeed || defaultClientSeed;
+        const betAmount = toIntegerPhonAmount(amount);
+        if (betAmount == null) return;
+
+        try {
+          const existing = await getGameActiveSession("mines");
+          if (existing) {
+            const local = minesStore.get().activeRound;
+            const ar = activeMinesRoundFromSession(existing, mineCount, local?.liveBetId);
+            hydrateActiveRound(ar, { resumed: true });
+            return;
+          }
+
+          const liveBetId = liveBetsStore.push({
+            user: "나의_베팅",
+            game: "mines",
+            amount: betAmount,
+            multiplier: null,
+            profit: null,
+            status: "pending",
+            mode: wallet.mode as never,
+            isMe: true,
+          });
+
+          const res = await startMinesRound({
+            amount: betAmount,
+            roundId,
+            mineCount,
+            clientSeed: seed,
+            nonce,
+            serverSeed,
+          });
+          if (res.balance?.phon != null) syncRealBalance(res.balance.phon);
+
+          const activeRound: ActiveMinesRound = {
+            nonce: res.nonce,
+            amount: res.bet_amount,
+            mineCount: res.mine_count,
+            mines: [],
+            revealed: res.revealed,
+            liveBetId,
+            placedAt: Date.now(),
+            betMode: "real",
+            serverSide: true,
+          };
+          commitActiveRound(activeRound, { resumed: res.resumed });
+          if (!res.resumed) {
+            sfx.play("bet");
+          }
+        } catch (err) {
+          if (isMinesSessionConflict(err)) {
+            try {
+              const row = await getGameActiveSession("mines");
+              if (row) {
+                const local = minesStore.get().activeRound;
+                const ar = activeMinesRoundFromSession(row, mineCount, local?.liveBetId);
+                hydrateActiveRound(ar, { resumed: true });
+                return;
+              }
+            } catch {
+              /* fall through */
+            }
+          }
+          appToast.raw.error("베팅에 실패했습니다 (진행 중 라운드가 있거나 네트워크 오류)");
+        } finally {
+          placeInFlightRef.current = false;
+        }
+        return;
+      }
+
+      const roundId = `n${nonce}`;
       const seed = minesStore.get().clientSeed || defaultClientSeed;
-      const mines = await placeMines({ serverSeed, clientSeed: seed, nonce }, mineCount);
       const liveBetId = liveBetsStore.push({
         user: "나의_베팅",
         game: "mines",
@@ -145,6 +277,10 @@ export function useMinesLifecycle({
         mode: wallet.mode as never,
         isMe: true,
       });
+      const ok = await wallet.tryDebit(amount, { game: "mines", roundId });
+      if (!ok) return;
+      minesStore.set((s) => ({ ...s, pendingAmount: amount }));
+      const mines = await placeMines({ serverSeed, clientSeed: seed, nonce }, mineCount);
       const activeRound: ActiveMinesRound = {
         nonce,
         amount,
@@ -153,6 +289,7 @@ export function useMinesLifecycle({
         revealed: [],
         liveBetId,
         placedAt: Date.now(),
+        betMode: "demo",
       };
       minesStore.set((s) => ({ ...s, activeRound }));
       setActive({ amount, mineCount, mines, liveBetId, nonce });
@@ -160,28 +297,37 @@ export function useMinesLifecycle({
       setHitTile(null);
       round.place();
       sfx.play("bet");
-      appToast.game.bet({ amount: formatPHON(amount) });
     },
-    [round, wallet, mineCount, nonce, serverSeed, defaultClientSeed, sfx],
+    [
+      round,
+      wallet,
+      mineCount,
+      nonce,
+      serverSeed,
+      defaultClientSeed,
+      sfx,
+      commitActiveRound,
+      hydrateActiveRound,
+    ],
   );
 
   const handleReveal = useCallback(
     (tile: number) => {
       if (round.phase !== "playing" || !active) return;
       if (revealed.includes(tile) || hitTile != null) return;
-      if (isMine(tile, active.mines)) {
+
+      const finishLoss = (mines: number[], mult: number) => {
         setHitTile(tile);
         setShakeKey((k) => k + 1);
         setFlashKey((k) => k + 1);
         vibrate(40);
-        const mult = nextMultiplier(revealed.length, active.mineCount);
+        if (active.serverSide) {
+          setActive((prev) => (prev ? { ...prev, mines } : null));
+          void clearGameActiveSession("mines", `n${active.nonce}`);
+        }
         liveBetsStore.settle(
           active.liveBetId,
-          {
-            multiplier: null,
-            profit: -active.amount,
-            status: "loss",
-          },
+          { multiplier: null, profit: -active.amount, status: "loss" },
           userLiveBetFallback("mines", active.amount, wallet.mode as never),
         );
         minesStore.set((s) => ({
@@ -208,7 +354,6 @@ export function useMinesLifecycle({
         }));
         recordSessionOutcome({ outcome: "loss", profit: -active.amount });
         sfx.play("loss");
-        appToast.game.lose({ amount: formatPHON(active.amount) });
         setRecent({
           outcome: "loss",
           profit: -active.amount,
@@ -219,6 +364,31 @@ export function useMinesLifecycle({
         });
         settledRef.current = true;
         round.settle();
+      };
+
+      if (active.serverSide) {
+        void revealMinesTile(`n${active.nonce}`, tile)
+          .then((res) => {
+            if (res.hit) {
+              finishLoss(res.mines ?? [], res.multiplier);
+              return;
+            }
+            const nextRevealed = res.revealed;
+            setRevealed(nextRevealed);
+            vibrate(8);
+            sfx.play("peg");
+            minesStore.set((s) =>
+              s.activeRound
+                ? { ...s, activeRound: { ...s.activeRound, revealed: nextRevealed } }
+                : s,
+            );
+          })
+          .catch(() => appToast.raw.error("타일 공개에 실패했습니다"));
+        return;
+      }
+
+      if (isMine(tile, active.mines)) {
+        finishLoss(active.mines, nextMultiplier(revealed.length, active.mineCount));
         return;
       }
       const nextRevealed = [...revealed, tile];
@@ -237,55 +407,70 @@ export function useMinesLifecycle({
   const handleCashout = useCallback(() => {
     if (round.phase !== "playing" || !active || revealed.length === 0 || hitTile != null) return;
     const profit = profitOf(active.amount, currentMult, wallet.mode as never);
-    void wallet.credit(active.amount + profit, currentMult, {
-      game: "mines",
-      roundId: `n${active.nonce}`,
-    });
-    liveBetsStore.settle(
-      active.liveBetId,
-      {
-        multiplier: currentMult,
-        profit: +profit.toFixed(2),
-        status: "cashout",
-      },
-      userLiveBetFallback("mines", active.amount, wallet.mode as never),
-    );
-    minesStore.set((s) => ({
-      ...s,
-      activeRound: null,
-      history: [
+    const gross = Math.round(active.amount + profit);
+
+    const finishWin = () => {
+      liveBetsStore.settle(
+        active.liveBetId,
         {
-          id: `n${active.nonce}`,
+          multiplier: currentMult,
+          profit: +profit.toFixed(2),
+          status: "cashout",
+        },
+        userLiveBetFallback("mines", active.amount, wallet.mode as never),
+      );
+      minesStore.set((s) => ({
+        ...s,
+        activeRound: null,
+        history: [
+          {
+            id: `n${active.nonce}`,
+            mineCount: active.mineCount,
+            revealed: revealed.length,
+            multiplier: currentMult,
+            win: true,
+          },
+          ...s.history,
+        ].slice(0, 30),
+        lastOutcome: {
+          outcome: "win",
+          profit,
+          nonce: active.nonce,
           mineCount: active.mineCount,
           revealed: revealed.length,
           multiplier: currentMult,
-          win: true,
         },
-        ...s.history,
-      ].slice(0, 30),
-      lastOutcome: {
+      }));
+      recordSessionOutcome({ outcome: "win", profit, multiplier: currentMult });
+      sfx.play("cashout");
+      if (currentMult >= 10) sfx.play("jackpot");
+      setRecent({
         outcome: "win",
         profit,
+        mult: currentMult,
         nonce: active.nonce,
         mineCount: active.mineCount,
         revealed: revealed.length,
-        multiplier: currentMult,
-      },
-    }));
-    recordSessionOutcome({ outcome: "win", profit, multiplier: currentMult });
-    sfx.play("cashout");
-    if (currentMult >= 10) sfx.play("jackpot");
-    appToast.game.cashout({ mult: currentMult.toFixed(2), amount: formatPHON(profit) });
-    setRecent({
-      outcome: "win",
-      profit,
-      mult: currentMult,
-      nonce: active.nonce,
-      mineCount: active.mineCount,
-      revealed: revealed.length,
+      });
+      settledRef.current = true;
+      round.settle();
+    };
+
+    if (active.serverSide) {
+      void cashoutMinesRound(`n${active.nonce}`, gross)
+        .then((res) => {
+          if (res.balance?.phon != null) syncRealBalance(res.balance.phon);
+          finishWin();
+        })
+        .catch(() => appToast.raw.error("캐시아웃에 실패했습니다"));
+      return;
+    }
+
+    void wallet.credit(gross, currentMult, {
+      game: "mines",
+      roundId: `n${active.nonce}`,
     });
-    settledRef.current = true;
-    round.settle();
+    finishWin();
   }, [round, active, revealed, hitTile, currentMult, wallet, sfx]);
 
   const randomLockRef = useRef(false);
@@ -298,12 +483,9 @@ export function useMinesLifecycle({
     }, 200);
     const candidates: number[] = [];
     for (let i = 0; i < TOTAL_TILES; i++) {
-      if (!revealed.includes(i) && !active.mines.includes(i)) candidates.push(i);
-    }
-    if (candidates.length === 0) {
-      for (let i = 0; i < TOTAL_TILES; i++) {
-        if (!revealed.includes(i)) candidates.push(i);
-      }
+      if (revealed.includes(i)) continue;
+      if (!active.serverSide && active.mines.includes(i)) continue;
+      candidates.push(i);
     }
     if (candidates.length === 0) return;
     const pick = candidates[Math.floor(Math.random() * candidates.length)];

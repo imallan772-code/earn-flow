@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { LazyMotion, domAnimation, m, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+/** Stake-like round flash — sole win/loss/cashout UI when used (no appToast.game.*). */
 interface Props {
   outcome: "win" | "loss";
   profit: number;
@@ -15,12 +16,13 @@ export function RoundResultCard({ outcome, profit, multiplier, nonce, onDone }: 
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
+    setVisible(true);
     const t = window.setTimeout(() => {
       setVisible(false);
       onDone?.();
-    }, 1600);
+    }, 1800);
     return () => window.clearTimeout(t);
-  }, [onDone]);
+  }, [outcome, profit, multiplier, nonce, onDone]);
 
   if (!visible) return null;
 

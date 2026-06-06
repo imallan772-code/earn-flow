@@ -10,8 +10,8 @@
  *  - SessionStatsBar / RoundResultCard / ShareResultButton / useHotkeys 적용
  *
  * 불변식 (ROUND H 보존)
- *  - useUnmountRefund — mid-round bet 환수 (본 Screen 책임)
- *  - minesStore.activeRound 영속 — 새로고침 시 동일 보드/revealed 복원 (lifecycle 내부)
+ *  - minesStore.activeRound 영속 — 이탈·새로고침 시 동일 보드/revealed 복원 (Stake resume)
+ *  - unmount refund 없음 — mid-round 이탈 시 라운드 유지
  *  - MinesEngine·StakeBetPanel·useGameWallet·useGameRound·minesStore 스키마 0-diff
  *
  * TODO(real-money): 지뢰 배치/정산은 Edge Function — 클라이언트는 결과 표시만.
@@ -31,16 +31,19 @@ import { SessionStatsBar } from "@/shared/games/ui/SessionStatsBar";
 import { ShareResultButton } from "@/shared/games/ui/ShareResultButton";
 import { MINES_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
-import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
-import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
+import { PF_BLOCK_ACTIVE_ROUND_MSG } from "@/shared/games/ui/pfPolicy";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
 import { TOTAL_TILES, clampMines, nextMultiplier } from "@/shared/games/mines/MinesEngine";
 import { minesStore } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
-import { useUnmountRefund } from "@/shared/wallet/useUnmountRefund";
 import { useHotkeys, type HotkeyMap } from "@/shared/hooks/useHotkeys";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
+import {
+  MINES_RESULT_FLASH_DELAY_MS,
+  notifyPfSeedChanged,
+  useRoundResultFlash,
+} from "@/shared/games/ui/gameOutcomePolicy";
 import { appToast } from "@/shared/ui/toast";
 import { formatPHON } from "@/lib/format";
 import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
@@ -76,7 +79,7 @@ function paintResultCanvas(
 export function MinesScreen() {
   useRegisterMainMode("game");
   const wallet = useGameWallet();
-  const { balance, refund, mode } = wallet;
+  const { balance } = wallet;
   const nonce = minesStore.use((s) => s.nonce);
   const history = minesStore.use((s) => s.history);
   const lastOutcome = minesStore.use((s) => s.lastOutcome);
@@ -116,21 +119,11 @@ export function MinesScreen() {
     handleRandomPick,
     resetForSeedChange,
   } = life;
+  const flashRecent = useRoundResultFlash(recent, MINES_RESULT_FLASH_DELAY_MS);
 
   useEffect(() => {
     commitServerSeed(SERVER_SEED).then(setCommit);
   }, []);
-
-  useUnmountRefund(refund, () => {
-    const ar = minesStore.get().activeRound;
-    if (!ar) return null;
-    return {
-      amount: ar.amount,
-      meta: { game: "mines", roundId: `n${ar.nonce}` },
-      liveBetId: ar.liveBetId,
-      mode,
-    };
-  });
 
   const setMineCount = useCallback((n: number) => {
     minesStore.set((s) => ({ ...s, mineCount: clampMines(n) }));
@@ -172,31 +165,25 @@ export function MinesScreen() {
   }, [showFair, clientSeed]);
 
   const applySeed = useCallback(() => {
+    if (minesStore.get().activeRound || !round.isIdle) {
+      appToast.raw.error(PF_BLOCK_ACTIVE_ROUND_MSG);
+      return;
+    }
     const next = seedDraft.trim().slice(0, 32) || DEFAULT_CLIENT_SEED;
     if (next === clientSeed) {
       setShowFair(false);
       return;
     }
-    const ar = minesStore.get().activeRound;
-    if (ar) {
-      void refund(ar.amount, { game: "mines", roundId: `n${ar.nonce}` }).catch(() => undefined);
-      liveBetsStore.settle(
-        ar.liveBetId,
-        { multiplier: null, profit: 0, status: "bust" },
-        userLiveBetFallback("mines", ar.amount, mode),
-      );
-    }
     minesStore.set((s) => ({
       ...s,
       clientSeed: next,
       nonce: 0,
-      activeRound: null,
       lastOutcome: null,
     }));
     resetForSeedChange();
-    appToast.game.bet({ amount: "시드 변경됨 · nonce 0 리셋" });
+    notifyPfSeedChanged();
     setShowFair(false);
-  }, [seedDraft, clientSeed, refund, resetForSeedChange, mode]);
+  }, [seedDraft, clientSeed, resetForSeedChange, round.isIdle]);
 
   const fairRows: ProvablyFairRow[] = useMemo(
     () => [
@@ -329,8 +316,10 @@ export function MinesScreen() {
         summaryPanel={
           <BetSummaryPanel
             variant="static"
-            amount={pendingAmount}
-            targetMultiplier={nextMultiplier(1, mineCount)}
+            amount={active?.amount ?? pendingAmount}
+            targetMultiplier={
+              round.phase === "playing" && active ? currentMult : nextMultiplier(1, mineCount)
+            }
           />
         }
         banner={<DemoLowBanner />}
@@ -352,8 +341,9 @@ export function MinesScreen() {
             variant="compact"
             showAutoTarget={false}
             suppressCashoutButton
+            defaultAmount={pendingAmount}
+            onAmountChange={(amount) => minesStore.set((s) => ({ ...s, pendingAmount: amount }))}
             onPlace={(amount) => {
-              minesStore.set((s) => ({ ...s, pendingAmount: amount }));
               void handlePlace(amount);
             }}
             onCashout={handleCashout}
@@ -363,18 +353,18 @@ export function MinesScreen() {
 
       <LiveBetsFeed game="mines" limit={10} />
 
-      {recent && (
+      {flashRecent && (
         <>
           <RoundResultCard
-            outcome={recent.outcome}
-            profit={recent.profit}
-            multiplier={recent.mult}
-            nonce={recent.nonce}
+            outcome={flashRecent.outcome}
+            profit={flashRecent.profit}
+            multiplier={flashRecent.mult}
+            nonce={flashRecent.nonce}
             onDone={() => setRecent(null)}
           />
           <div className="pointer-events-auto absolute right-4 top-[calc(33%+4.5rem)] z-20">
             <ShareResultButton
-              renderToCanvas={(canvas, ctx) => paintResultCanvas(recent, canvas, ctx)}
+              renderToCanvas={(canvas, ctx) => paintResultCanvas(flashRecent, canvas, ctx)}
             />
           </div>
         </>
@@ -388,8 +378,8 @@ export function MinesScreen() {
         footer={
           <span className="flex items-start gap-1">
             <Bomb size={10} className="mt-0.5 shrink-0" />
-            시드 변경 시 nonce 0 리셋 + 진행 중 라운드 폐기. 동일 시드/라운드는 항상 같은 배치를
-            만듭니다.
+            시드 변경은 라운드 종료 후 가능. 이탈 시 진행 상태가 저장되어 돌아오면 이어서
+            플레이합니다.
           </span>
         }
       />

@@ -7,6 +7,8 @@
  *               source and animates current payout per RAF.
  *
  * Used by Crash + Dice + future games. House edge baked in via useMode.
+ *
+ * Round outcome UX: see gameOutcomePolicy.ts (RoundResultCard — no duplicate toasts).
  */
 import { useEffect, useRef, useState } from "react";
 import { TrendingUp, Zap } from "lucide-react";

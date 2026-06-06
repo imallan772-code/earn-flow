@@ -253,6 +253,28 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      game_active_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          game: string;
+          round_id: string;
+          bet_amount: number;
+          client_state: Json;
+          status: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
+      game_session_secrets: {
+        Row: { session_id: string; mines: number[] };
+        Insert: Record<string, unknown>;
+        Update: Record<string, unknown>;
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -322,6 +344,39 @@ export type Database = {
       money_validate_bet_input: {
         Args: { p_amount: number; p_game: string; p_round_id: string };
         Returns: undefined;
+      };
+      get_game_active_session_v1: { Args: { p_game: string }; Returns: Json };
+      sync_game_active_session_v1: {
+        Args: {
+          p_game: string;
+          p_round_id: string;
+          p_bet_amount: number;
+          p_client_state: Json;
+        };
+        Returns: Json;
+      };
+      clear_game_active_session_v1: {
+        Args: { p_game: string; p_round_id: string };
+        Returns: boolean;
+      };
+      mines_start_round_v1: {
+        Args: {
+          p_amount: number;
+          p_round_id: string;
+          p_mine_count: number;
+          p_client_seed: string;
+          p_nonce: number;
+          p_server_seed?: string;
+        };
+        Returns: Json;
+      };
+      mines_reveal_tile_v1: {
+        Args: { p_round_id: string; p_tile: number };
+        Returns: Json;
+      };
+      mines_cashout_v1: {
+        Args: { p_round_id: string; p_gross_payout: number };
+        Returns: Json;
       };
     };
     Enums: {

@@ -5,7 +5,7 @@
  *  - CrashEngine.ts 0 diff (수학/상수/export)
  *  - StakeBetPanel props 계약: canPlace / hasActiveBet / bettingRoundKey / bettingProgress /
  *    suppressCashoutButton / onPlace / onCashout — 문자 그대로
- *  - useGameWallet / walletStore — refund-on-unmount, betRef 보존
+ *  - useGameWallet / walletStore — activeRound resume on return (no unmount refund)
  *  - 4-phase 머신: betting | running | crashed | cooldown
  *  - `useGameRound` 도입 금지 (betting timer + sharedTickLoop + 4-phase 매핑 불완전)
  *
@@ -18,7 +18,7 @@
  *  - crashed settle → settledRef 가드 1회. activeRound=null (이중 차감 절대 금지)
  *  - 마운트 복원    → activeRound != null && 미settle 이면 bet/phase hydrate만.
  *                       tryDebit/liveBetsStore.push 0회.
- *  - PF apply       → activeRound.cashedAt === null 이면 refund(amount) 1회 후 store 리셋
+ *  - PF apply       → 진행 중 미정산 베팅 있으면 차단 (Dice/Wheel 동형, refund 없음)
  *
  * 시각 필드 의미 (혼동 금지)
  *  - `placedAt`         : 베팅 클릭 시각 (Date.now). 디버깅·정렬용.
@@ -61,11 +61,18 @@ import { commitServerSeed } from "@/shared/games/engine/provablyFair";
 import { reachedTarget } from "@/shared/games/engine/clamp";
 import { type ActiveCrashRound, crashStore } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
-import { useUnmountRefund } from "@/shared/wallet/useUnmountRefund";
+import { PF_BLOCK_ACTIVE_ROUND_MSG } from "@/shared/games/ui/pfPolicy";
+import {
+  clearRealSession,
+  fetchRealSession,
+  nonceFromRoundId,
+  syncRealSession,
+} from "@/shared/games/gameSessionHelpers";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { useHotkeys, type HotkeyMap } from "@/shared/hooks/useHotkeys";
 import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
 import { useSfx } from "@/shared/sfx/useSfx";
+import { notifyPfSeedChanged } from "@/shared/games/ui/gameOutcomePolicy";
 import { appToast } from "@/shared/ui/toast";
 import { cn } from "@/lib/utils";
 
@@ -81,9 +88,24 @@ interface ActiveBet {
   liveBetId: string;
 }
 
+function syncCrashSessionFromStore() {
+  const ar = crashStore.get().activeRound;
+  if (!ar || ar.betMode !== "real") return;
+  syncRealSession("crash", `n${ar.nonce}`, ar.amount, {
+    nonce: ar.nonce,
+    auto_target: ar.autoTarget,
+    cashed_at: ar.cashedAt,
+    live_bet_id: ar.liveBetId,
+    crash_point: ar.crashPoint,
+    started_at: ar.startedAt,
+    betting_started_at: ar.bettingStartedAt,
+    placed_at: ar.placedAt,
+  });
+}
+
 export function CrashScreen() {
   useRegisterMainMode("game");
-  const { mode, balance, tryDebit, credit, refund } = useGameWallet();
+  const { mode, balance, tryDebit, credit } = useGameWallet();
 
   // Persisted store reads
   const nonce = crashStore.use((s) => s.nonce);
@@ -124,71 +146,102 @@ export function CrashScreen() {
     if (showFair) setSeedDraft(crashStore.get().clientSeed);
   }, [showFair]);
 
-  // Refund unsettled bet on unmount — SSOT useUnmountRefund (Crash/Mines/Limbo).
-  const refundRef = useRef(refund);
-  refundRef.current = refund;
-  useUnmountRefund(refund, () => {
-    const ar = crashStore.get().activeRound;
-    if (!ar || ar.cashedAt !== null) return null;
-    return {
-      amount: ar.amount,
-      meta: { game: "crash", roundId: `n${ar.nonce}` },
-      liveBetId: ar.liveBetId,
-      mode,
-    };
-  });
+  const hydrateCrashActiveRound = useCallback(
+    (ar: ActiveCrashRound) => {
+      if (ar.cashedAt !== null) return;
+      setBet({
+        amount: ar.amount,
+        autoTarget: ar.autoTarget,
+        cashedAt: ar.cashedAt,
+        liveBetId: ar.liveBetId,
+      });
+      liveBetsStore.ensureUserPending({
+        id: ar.liveBetId,
+        user: "나의_베팅",
+        game: "crash",
+        amount: ar.amount,
+        multiplier: ar.cashedAt,
+        profit: null,
+        status: "pending",
+        mode,
+        isMe: true,
+      });
+      setCrashPoint(ar.crashPoint);
+      bettingStartedAtRef.current = ar.bettingStartedAt || performance.now();
+      if (ar.startedAt > 0) {
+        startedAtRef.current = ar.startedAt;
+        setStartedAt(ar.startedAt);
+        setBettingMsLeft(0);
+        setPhase("running");
+      } else if (ar.bettingStartedAt > 0) {
+        const left = BETTING_MS - (performance.now() - ar.bettingStartedAt);
+        if (left <= 0) {
+          const t = performance.now();
+          startedAtRef.current = t;
+          setStartedAt(t);
+          crashStore.set((s) =>
+            s.activeRound ? { ...s, activeRound: { ...s.activeRound, startedAt: t } } : s,
+          );
+          syncCrashSessionFromStore();
+          setBettingMsLeft(0);
+          setPhase("running");
+        } else {
+          setBettingMsLeft(left);
+          setPhase("betting");
+        }
+      }
+    },
+    [mode],
+  );
 
-  // ─── 마운트 복원 (1회) ────────────────────────────────────────────
-  // activeRound != null && 미settle → bet/phase/crashPoint/startedAt hydrate만.
-  // tryDebit / liveBetsStore.push 0회.
+  // activeRound persists on navigation — resume on remount (Stake-like; no unmount refund).
+  // real: server SSOT first; demo: localStorage.
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
-    const ar = crashStore.get().activeRound;
-    if (!ar || ar.cashedAt !== null) return;
-    setBet({
-      amount: ar.amount,
-      autoTarget: ar.autoTarget,
-      cashedAt: ar.cashedAt,
-      liveBetId: ar.liveBetId,
-    });
-    liveBetsStore.ensureUserPending({
-      id: ar.liveBetId,
-      user: "나의_베팅",
-      game: "crash",
-      amount: ar.amount,
-      multiplier: ar.cashedAt,
-      profit: null,
-      status: "pending",
-      mode,
-      isMe: true,
-    });
-    setCrashPoint(ar.crashPoint);
-    bettingStartedAtRef.current = ar.bettingStartedAt || performance.now();
-    if (ar.startedAt > 0) {
-      // running 복원
-      startedAtRef.current = ar.startedAt;
-      setStartedAt(ar.startedAt);
-      setBettingMsLeft(0);
-      setPhase("running");
-    } else if (ar.bettingStartedAt > 0) {
-      // betting 복원 — 잔여 시간 재계산
-      const left = BETTING_MS - (performance.now() - ar.bettingStartedAt);
-      if (left <= 0) {
-        const t = performance.now();
-        startedAtRef.current = t;
-        setStartedAt(t);
-        crashStore.set((s) =>
-          s.activeRound ? { ...s, activeRound: { ...s.activeRound, startedAt: t } } : s,
-        );
-        setBettingMsLeft(0);
-        setPhase("running");
-      } else {
-        setBettingMsLeft(left);
-        setPhase("betting");
-      }
+
+    const applyLocal = () => {
+      const ar = crashStore.get().activeRound;
+      if (ar) hydrateCrashActiveRound(ar);
+    };
+
+    if (mode !== "real") {
+      applyLocal();
+      return;
     }
-  }, [mode]);
+
+    void fetchRealSession("crash").then((row) => {
+      if (row) {
+        const cs = row.client_state as {
+          nonce?: number;
+          auto_target?: number;
+          cashed_at?: number | null;
+          live_bet_id?: string;
+          crash_point?: number;
+          started_at?: number;
+          betting_started_at?: number;
+          placed_at?: number;
+        };
+        const local = crashStore.get().activeRound;
+        const ar: ActiveCrashRound = {
+          nonce: cs.nonce ?? nonceFromRoundId(row.round_id),
+          amount: row.bet_amount,
+          autoTarget: cs.auto_target ?? crashStore.get().pendingTarget,
+          cashedAt: cs.cashed_at ?? null,
+          liveBetId: local?.liveBetId ?? cs.live_bet_id ?? `lb_crash_${row.round_id}`,
+          placedAt: cs.placed_at ?? Date.now(),
+          crashPoint: cs.crash_point ?? 2,
+          startedAt: cs.started_at ?? 0,
+          bettingStartedAt: cs.betting_started_at ?? performance.now(),
+          betMode: "real",
+        };
+        crashStore.set((s) => ({ ...s, activeRound: ar }));
+        hydrateCrashActiveRound(ar);
+        return;
+      }
+      applyLocal();
+    });
+  }, [mode, hydrateCrashActiveRound]);
 
   // ─── betting phase 머신 ───────────────────────────────────────────
   useEffect(() => {
@@ -226,6 +279,7 @@ export function CrashScreen() {
         crashStore.set((s) =>
           s.activeRound ? { ...s, activeRound: { ...s.activeRound, startedAt: t } } : s,
         );
+        syncCrashSessionFromStore();
         setPhase("running");
       } else {
         setBettingMsLeft(left);
@@ -256,6 +310,7 @@ export function CrashScreen() {
               ? { ...s, activeRound: { ...s.activeRound, cashedAt: prev.autoTarget } }
               : s,
           );
+          syncCrashSessionFromStore();
           setBet({ ...prev, cashedAt: prev.autoTarget });
           const profit = profitOf(prev.amount, prev.autoTarget, mode);
           liveBetsStore.settle(
@@ -295,6 +350,7 @@ export function CrashScreen() {
       amount != null && liveBetId ? userLiveBetFallback("crash", amount, mode) : undefined;
 
     const roundId = `n${nonce}`;
+    const betMode = ar?.betMode;
     if (amount != null && liveBetId) {
       if (cashed !== null) {
         const profit = profitOf(amount, cashed, mode);
@@ -338,6 +394,9 @@ export function CrashScreen() {
     } else {
       // 베팅 없이 BUST — activeRound도 null (no-op safety)
       crashStore.set((s) => (s.activeRound ? { ...s, activeRound: null } : s));
+    }
+    if (betMode === "real" && amount != null) {
+      clearRealSession("crash", roundId);
     }
     crashStore.set((s) => ({
       ...s,
@@ -392,6 +451,7 @@ export function CrashScreen() {
         startedAt: 0,
         bettingStartedAt:
           bettingStartedAtRef.current > 0 ? bettingStartedAtRef.current : performance.now(),
+        betMode: mode,
       };
       crashStore.set((s) => ({
         ...s,
@@ -400,6 +460,7 @@ export function CrashScreen() {
         activeRound: ar,
       }));
       setBet({ amount, autoTarget, cashedAt: null, liveBetId });
+      syncCrashSessionFromStore();
       sfx.play("bet");
       return true;
     },
@@ -421,6 +482,7 @@ export function CrashScreen() {
     crashStore.set((s) =>
       s.activeRound ? { ...s, activeRound: { ...s.activeRound, cashedAt: m } } : s,
     );
+    syncCrashSessionFromStore();
     setBet((b) => (b ? { ...b, cashedAt: m } : b));
     const profit = profitOf(prev.amount, m, mode);
     liveBetsStore.settle(
@@ -439,31 +501,23 @@ export function CrashScreen() {
     return multiplierAt(performance.now() - startedAtRef.current);
   }, [phase, bet?.cashedAt]);
 
-  // ─── PF seed 적용 — 미정산 베팅 refund 1회 ───────────────────────
+  // ─── PF seed 적용 — 진행 중 미정산 베팅 있으면 차단 ───────────────
   const applySeed = useCallback(() => {
+    const ar = crashStore.get().activeRound;
+    if (ar && ar.cashedAt === null) {
+      appToast.raw.error(PF_BLOCK_ACTIVE_ROUND_MSG);
+      return;
+    }
     const next = seedDraft.trim().slice(0, 32) || DEFAULT_CLIENT_SEED;
     const cur = crashStore.get().clientSeed;
     if (next === cur) {
       setShowFair(false);
       return;
     }
-    const ar = crashStore.get().activeRound;
-    if (ar && ar.cashedAt === null) {
-      // place 시 즉시 debit이라 seed reset만 하면 돈이 샘 → refund RPC 1회 (idempotent).
-      void refundRef
-        .current(ar.amount, { game: "crash", roundId: `n${ar.nonce}` })
-        .catch(() => undefined);
-      liveBetsStore.settle(
-        ar.liveBetId,
-        { multiplier: null, profit: 0, status: "bust" },
-        userLiveBetFallback("crash", ar.amount, mode),
-      );
-    }
     crashStore.set((s) => ({
       ...s,
       clientSeed: next,
       nonce: 0,
-      activeRound: null,
       lastOutcome: null,
     }));
     setBet(null);
@@ -475,9 +529,9 @@ export function CrashScreen() {
     }
     setBettingMsLeft(BETTING_MS);
     setPhase("betting");
-    appToast.game.bet({ amount: "시드 변경됨 · nonce 0 리셋" });
+    notifyPfSeedChanged();
     setShowFair(false);
-  }, [seedDraft, mode]);
+  }, [seedDraft]);
 
   // ─── Hotkeys ──────────────────────────────────────────────────────
   // Space는 즉시 베팅. C/Enter는 BetSummaryPanel 내부에서 keydown hold 처리.
@@ -625,6 +679,10 @@ export function CrashScreen() {
             bettingRoundKey={nonce}
             bettingProgress={bettingProgress}
             suppressCashoutButton
+            defaultAmount={pendingAmount}
+            defaultTarget={pendingTarget}
+            onAmountChange={(amount) => crashStore.set((s) => ({ ...s, pendingAmount: amount }))}
+            onTargetChange={(target) => crashStore.set((s) => ({ ...s, pendingTarget: target }))}
             onPlace={onStakePlace}
             onCashout={handleCashout}
           />
@@ -638,7 +696,7 @@ export function CrashScreen() {
         onClose={() => setShowFair(false)}
         rows={fairRows}
         onApply={applySeed}
-        footer="시드 변경 시 nonce 0 리셋 + 진행 중 라운드 환불(refund). 동일 시드/라운드는 항상 같은 결과를 만듭니다."
+        footer="진행 중 베팅이 있으면 시드 변경 불가. 라운드 종료 후 nonce 0 리셋."
       />
     </div>
   );

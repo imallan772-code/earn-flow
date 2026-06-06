@@ -80,7 +80,7 @@ export const LimboDisplay = memo(function LimboDisplay({
       <div className="text-[9px] font-bold uppercase tracking-wider text-(--color-muted)">
         결과 배수
       </div>
-      {phase === "rolling" ? (
+      {phase === "rolling" && resultCrash == null ? (
         <m.div
           key="rolling"
           initial={{ opacity: 0.6 }}

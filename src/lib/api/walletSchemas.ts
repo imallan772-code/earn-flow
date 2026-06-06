@@ -49,8 +49,7 @@ export function toIntegerPhonAmount(amount: number): number | null {
   return rounded;
 }
 
-/** Opt-in v2 money RPCs (idempotent + audited). Default: v1 for backward compatibility. */
-export const useMoneyRpcV2 =
-  typeof import.meta !== "undefined" && import.meta.env?.VITE_MONEY_RPC_V2 === "true";
+/** @deprecated Debit/credit always use v2 RPCs; kept for docs/tests only. */
+export const useMoneyRpcV2 = true;
 
 export type WalletBetInput = z.infer<typeof walletBetInputSchema>;
