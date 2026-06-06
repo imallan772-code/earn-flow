@@ -12,6 +12,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
+import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
 import { profitOf } from "@/shared/games/engine/houseEdge";
 import { TOTAL_TILES, isMine, nextMultiplier, placeMines } from "@/shared/games/mines/MinesEngine";
 import { type ActiveMinesRound, minesStore } from "@/shared/games/state/persistedGameState";
@@ -101,8 +102,19 @@ export function useMinesLifecycle({
     });
     setRevealed(ar.revealed);
     setHitTile(null);
+    liveBetsStore.ensureUserPending({
+      id: ar.liveBetId,
+      user: "나의_베팅",
+      game: "mines",
+      amount: ar.amount,
+      multiplier: null,
+      profit: null,
+      status: "pending",
+      mode: wallet.mode as never,
+      isMe: true,
+    });
     round.place();
-  }, [round]);
+  }, [round, wallet.mode]);
 
   // settled → cleanup + nonce++
   useEffect(() => {
@@ -163,11 +175,15 @@ export function useMinesLifecycle({
         setFlashKey((k) => k + 1);
         vibrate(40);
         const mult = nextMultiplier(revealed.length, active.mineCount);
-        liveBetsStore.update(active.liveBetId, {
-          multiplier: null,
-          profit: -active.amount,
-          status: "loss",
-        });
+        liveBetsStore.settle(
+          active.liveBetId,
+          {
+            multiplier: null,
+            profit: -active.amount,
+            status: "loss",
+          },
+          userLiveBetFallback("mines", active.amount, wallet.mode as never),
+        );
         minesStore.set((s) => ({
           ...s,
           activeRound: null,
@@ -213,7 +229,7 @@ export function useMinesLifecycle({
         s.activeRound ? { ...s, activeRound: { ...s.activeRound, revealed: nextRevealed } } : s,
       );
     },
-    [round, active, revealed, hitTile, sfx],
+    [round, active, revealed, hitTile, sfx, wallet.mode],
   );
 
   const currentMult = nextMultiplier(revealed.length, active?.mineCount ?? mineCount);
@@ -225,11 +241,15 @@ export function useMinesLifecycle({
       game: "mines",
       roundId: `n${active.nonce}`,
     });
-    liveBetsStore.update(active.liveBetId, {
-      multiplier: currentMult,
-      profit: +profit.toFixed(2),
-      status: "cashout",
-    });
+    liveBetsStore.settle(
+      active.liveBetId,
+      {
+        multiplier: currentMult,
+        profit: +profit.toFixed(2),
+        status: "cashout",
+      },
+      userLiveBetFallback("mines", active.amount, wallet.mode as never),
+    );
     minesStore.set((s) => ({
       ...s,
       activeRound: null,

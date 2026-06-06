@@ -7,7 +7,12 @@
  */
 import { useEffect, useSyncExternalStore } from "react";
 import { Users, Globe2 } from "lucide-react";
-import { liveBetsStore, seedInitialBets, type LiveBet } from "./LiveBetsStore";
+import {
+  liveBetsStore,
+  seedInitialBets,
+  orderLiveBetsForView,
+  type LiveBet,
+} from "./LiveBetsStore";
 import { startBotFeed } from "./botGenerator";
 import { cn } from "@/lib/utils";
 import { RollingCountUp } from "@/shared/motion/RollingCountUp";
@@ -33,6 +38,8 @@ const GAME_ACCENT: Record<LiveBet["game"], string> = {
   limbo: "var(--color-purple)",
   wheel: "var(--color-gold)",
 };
+
+const ROW_GRID = "grid grid-cols-[0.375rem_minmax(0,1fr)_5rem_3.25rem_5.5rem] items-center gap-x-2";
 
 interface Props {
   /** Max rows to render (default 12). */
@@ -60,7 +67,7 @@ export function LiveBetsFeed({ limit = 12, showHeader = true, game, className }:
     liveBetsStore.getTotalVolume(),
   );
 
-  const filtered = game ? bets.filter((b) => b.game === game) : bets;
+  const filtered = orderLiveBetsForView(bets, game);
   const view = filtered.slice(0, limit);
 
   return (
@@ -83,6 +90,20 @@ export function LiveBetsFeed({ limit = 12, showHeader = true, game, className }:
           </span>
         </header>
       )}
+
+      <div
+        className={cn(
+          ROW_GRID,
+          "mb-1 text-[9px] font-semibold uppercase tracking-wider text-muted-2",
+        )}
+        aria-hidden
+      >
+        <span />
+        <span>유저</span>
+        <span className="text-right">베팅</span>
+        <span className="text-right">배수</span>
+        <span className="text-right">손익</span>
+      </div>
 
       <ul className="flex flex-col">
         {view.length === 0 ? (
@@ -122,17 +143,19 @@ function LiveBetRow({ bet }: { bet: LiveBet }) {
   return (
     <li
       className={cn(
-        "grid grid-cols-[auto_1fr_auto_auto_auto] items-center gap-2 border-b border-(--color-border) py-1.5 text-xs last:border-b-0",
-        bet.isMe &&
-          "rounded-lg bg-[color-mix(in_oklab,var(--color-cyan)_8%,transparent)] px-1.5 ring-1 ring-[color-mix(in_oklab,var(--color-cyan)_40%,transparent)]",
+        ROW_GRID,
+        "text-xs",
+        bet.isMe
+          ? "my-1 rounded-lg border-b-0 py-2.5 bg-[color-mix(in_oklab,var(--color-cyan)_8%,transparent)] ring-1 ring-inset ring-[color-mix(in_oklab,var(--color-cyan)_45%,transparent)]"
+          : "border-b border-(--color-border) py-1.5 last:border-b-0",
       )}
     >
       <span
-        className="h-1.5 w-1.5 rounded-full"
+        className="h-1.5 w-1.5 shrink-0 rounded-full"
         style={{ background: GAME_ACCENT[bet.game] }}
         title={GAME_LABEL[bet.game]}
       />
-      <span className="truncate text-(--color-muted)">
+      <span className="min-w-0 truncate text-(--color-muted)">
         {bet.isMe && (
           <span className="mr-1 rounded-sm bg-(--color-cyan) px-1 py-px text-[8px] font-bold text-(--color-bg-0)">
             ME
@@ -143,17 +166,17 @@ function LiveBetRow({ bet }: { bet: LiveBet }) {
           {bet.mode === "demo" ? "·데모" : ""}
         </span>
       </span>
-      <span className="font-numeric w-16 text-right tabular-nums">{bet.amount.toFixed(2)}</span>
+      <span className="font-numeric shrink-0 text-right tabular-nums">{bet.amount.toFixed(2)}</span>
       <span
         className={cn(
-          "font-numeric w-14 text-right tabular-nums",
-          bet.status === "bust" ? "text-(--color-rose)" : "text-(--color-muted)",
+          "font-numeric shrink-0 text-right tabular-nums",
+          bet.status === "bust" ? "font-semibold text-(--color-rose)" : "text-(--color-muted)",
         )}
       >
         {multText}
       </span>
       <span
-        className="font-numeric w-16 text-right font-bold tabular-nums"
+        className="font-numeric shrink-0 text-right font-bold tabular-nums"
         style={{ color: profitColor }}
       >
         {profitText}

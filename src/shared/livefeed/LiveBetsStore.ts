@@ -31,6 +31,8 @@ export interface LiveBet {
   isMe?: boolean;
 }
 
+export const ME_USER_LABEL = "나의_베팅";
+
 const MAX_BETS = 200;
 
 let buffer: LiveBet[] = [];
@@ -43,6 +45,14 @@ function emit() {
 
 function nextId(): string {
   return `lb_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function cancelStaleMePending(game: LiveGame): void {
+  buffer = buffer.map((b) =>
+    b.isMe && b.game === game && b.status === "pending"
+      ? { ...b, status: "bust", profit: -b.amount, multiplier: null }
+      : b,
+  );
 }
 
 export const liveBetsStore = {
@@ -64,11 +74,39 @@ export const liveBetsStore = {
   push(bet: Omit<LiveBet, "id" | "ts"> & { id?: string; ts?: number }): string {
     const id = bet.id ?? nextId();
     const ts = bet.ts ?? Date.now();
+    const existingIdx = buffer.findIndex((b) => b.id === id);
+
+    if (existingIdx >= 0) {
+      const merged: LiveBet = { ...buffer[existingIdx], ...bet, id, ts };
+      buffer = [merged, ...buffer.filter((_, i) => i !== existingIdx)].slice(0, MAX_BETS);
+      emit();
+      return id;
+    }
+
+    if (bet.isMe && bet.status === "pending") {
+      cancelStaleMePending(bet.game);
+    }
+
     const full: LiveBet = { ...bet, id, ts };
     buffer = [full, ...buffer].slice(0, MAX_BETS);
     totalVolume += bet.amount;
     emit();
     return id;
+  },
+
+  /**
+   * Re-insert or refresh the user's in-flight bet after page restore (buffer is in-memory only).
+   */
+  ensureUserPending(bet: Omit<LiveBet, "ts"> & { id: string }): void {
+    liveBetsStore.push({
+      ...bet,
+      user: ME_USER_LABEL,
+      isMe: true,
+      status: bet.status ?? "pending",
+      multiplier: bet.multiplier ?? null,
+      profit: bet.profit ?? null,
+      ts: Date.now(),
+    });
   },
 
   update(id: string, patch: Partial<Pick<LiveBet, "multiplier" | "profit" | "status">>): void {
@@ -79,6 +117,30 @@ export const liveBetsStore = {
       return { ...b, ...patch };
     });
     if (changed) emit();
+  },
+
+  /**
+   * Settle by id; if the row was evicted from the ring buffer (refresh / bot churn),
+   * re-insert using `fallback` so ME rows never stay stuck on pending.
+   */
+  settle(
+    id: string,
+    patch: Partial<Pick<LiveBet, "multiplier" | "profit" | "status">>,
+    fallback?: Omit<LiveBet, "id" | "ts">,
+  ): void {
+    if (buffer.some((b) => b.id === id)) {
+      liveBetsStore.update(id, patch);
+      return;
+    }
+    if (!fallback) return;
+    liveBetsStore.push({
+      ...fallback,
+      ...patch,
+      id,
+      user: ME_USER_LABEL,
+      isMe: true,
+      ts: Date.now(),
+    });
   },
 
   /** Test/dev only */
@@ -119,4 +181,14 @@ function lognormalAmount(): number {
   if (r < 0.85) return 5 + Math.random() * 95;
   if (r < 0.97) return 100 + Math.random() * 400;
   return 500 + Math.random() * 2500;
+}
+
+/** Feed ordering: pin ME bets (pending first) so updates stay visible. */
+export function orderLiveBetsForView(bets: LiveBet[], game?: LiveGame): LiveBet[] {
+  const filtered = game ? bets.filter((b) => b.game === game) : bets;
+  const me = filtered.filter((b) => b.isMe);
+  const rest = filtered.filter((b) => !b.isMe);
+  const mePending = me.filter((b) => b.status === "pending");
+  const meDone = me.filter((b) => b.status !== "pending");
+  return [...mePending, ...meDone, ...rest];
 }

@@ -32,6 +32,7 @@ import { ShareResultButton } from "@/shared/games/ui/ShareResultButton";
 import { MINES_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
+import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
 import { TOTAL_TILES, clampMines, nextMultiplier } from "@/shared/games/mines/MinesEngine";
@@ -75,7 +76,7 @@ function paintResultCanvas(
 export function MinesScreen() {
   useRegisterMainMode("game");
   const wallet = useGameWallet();
-  const { balance, refund } = wallet;
+  const { balance, refund, mode } = wallet;
   const nonce = minesStore.use((s) => s.nonce);
   const history = minesStore.use((s) => s.history);
   const lastOutcome = minesStore.use((s) => s.lastOutcome);
@@ -123,7 +124,12 @@ export function MinesScreen() {
   useUnmountRefund(refund, () => {
     const ar = minesStore.get().activeRound;
     if (!ar) return null;
-    return { amount: ar.amount, meta: { game: "mines", roundId: `n${ar.nonce}` } };
+    return {
+      amount: ar.amount,
+      meta: { game: "mines", roundId: `n${ar.nonce}` },
+      liveBetId: ar.liveBetId,
+      mode,
+    };
   });
 
   const setMineCount = useCallback((n: number) => {
@@ -174,7 +180,11 @@ export function MinesScreen() {
     const ar = minesStore.get().activeRound;
     if (ar) {
       void refund(ar.amount, { game: "mines", roundId: `n${ar.nonce}` }).catch(() => undefined);
-      liveBetsStore.update(ar.liveBetId, { multiplier: null, profit: 0, status: "bust" });
+      liveBetsStore.settle(
+        ar.liveBetId,
+        { multiplier: null, profit: 0, status: "bust" },
+        userLiveBetFallback("mines", ar.amount, mode),
+      );
     }
     minesStore.set((s) => ({
       ...s,
@@ -186,7 +196,7 @@ export function MinesScreen() {
     resetForSeedChange();
     appToast.game.bet({ amount: "시드 변경됨 · nonce 0 리셋" });
     setShowFair(false);
-  }, [seedDraft, clientSeed, refund, resetForSeedChange]);
+  }, [seedDraft, clientSeed, refund, resetForSeedChange, mode]);
 
   const fairRows: ProvablyFairRow[] = useMemo(
     () => [

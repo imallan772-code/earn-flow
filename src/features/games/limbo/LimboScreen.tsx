@@ -36,6 +36,7 @@ import { recordSessionOutcome } from "@/shared/games/ui/sessionStats";
 import { LIMBO_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
+import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { profitOf } from "@/shared/games/engine/houseEdge";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
@@ -108,9 +109,23 @@ export function LimboScreen() {
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
-    if (limboStore.get().activeRound) round.place();
+    const ar = limboStore.get().activeRound;
+    if (ar) {
+      liveBetsStore.ensureUserPending({
+        id: ar.liveBetId,
+        user: "나의_베팅",
+        game: "limbo",
+        amount: ar.amount,
+        multiplier: null,
+        profit: null,
+        status: "pending",
+        mode,
+        isMe: true,
+      });
+      round.place();
+    }
     // No tryDebit / liveBetsStore.push — pure state hydrate.
-  }, [round]);
+  }, [round, mode]);
 
   // Legacy v1 multi-slot fold → pendingLegacyRefunds drain (1회). 직후 store에서 비움.
   // refund 자체는 fire-and-forget (실패 시 다음 reload에 재시도; RPC idempotent).
@@ -131,7 +146,12 @@ export function LimboScreen() {
   useUnmountRefund(refund, () => {
     const ar = limboStore.get().activeRound;
     if (!ar) return null;
-    return { amount: ar.amount, meta: { game: "limbo", roundId: `n${ar.nonce}` } };
+    return {
+      amount: ar.amount,
+      meta: { game: "limbo", roundId: `n${ar.nonce}` },
+      liveBetId: ar.liveBetId,
+      mode,
+    };
   });
 
   const settle = useCallback(async () => {
@@ -166,11 +186,15 @@ export function LimboScreen() {
       ].slice(0, 30),
       lastOutcome: outcome,
     }));
-    liveBetsStore.update(ar.liveBetId, {
-      multiplier: won ? mult : null,
-      profit: won ? +profit.toFixed(2) : -ar.amount,
-      status: won ? "win" : "loss",
-    });
+    liveBetsStore.settle(
+      ar.liveBetId,
+      {
+        multiplier: won ? mult : null,
+        profit: won ? +profit.toFixed(2) : -ar.amount,
+        status: won ? "win" : "loss",
+      },
+      userLiveBetFallback("limbo", ar.amount, mode),
+    );
     recordSessionOutcome({
       outcome: won ? "win" : "loss",
       profit,
@@ -256,11 +280,11 @@ export function LimboScreen() {
     const ar = limboStore.get().activeRound;
     if (ar) {
       void refund(ar.amount, { game: "limbo", roundId: `n${ar.nonce}` }).catch(() => undefined);
-      liveBetsStore.update(ar.liveBetId, {
-        multiplier: null,
-        profit: 0,
-        status: "loss",
-      });
+      liveBetsStore.settle(
+        ar.liveBetId,
+        { multiplier: null, profit: 0, status: "loss" },
+        userLiveBetFallback("limbo", ar.amount, mode),
+      );
     }
     limboStore.set((s) => ({
       ...s,
@@ -273,7 +297,7 @@ export function LimboScreen() {
     settledRef.current = false;
     appToast.game.bet({ amount: "시드 변경됨 · nonce 0 리셋" });
     setShowFair(false);
-  }, [seedDraft, clientSeed, refund]);
+  }, [seedDraft, clientSeed, refund, mode]);
 
   // Hotkeys (slot 전환 키 제거)
   const hotkeys = useMemo<HotkeyMap>(

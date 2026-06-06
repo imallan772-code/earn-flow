@@ -14,7 +14,9 @@
 | 파일                     | 내용                                                                                          |
 | ------------------------ | --------------------------------------------------------------------------------------------- |
 | [`LATER.md`](./LATER.md) | 마스터 백로그 (우선순위·담당·체크리스트)                                                      |
-| [`rounds/`](./rounds/)   | Lovable 라운드별 **승인된 플랜** + 복붙용 지시문 (`GAMES-ROUND-0-PROMPT.md`, `GAMES-ROADMAP-v2.1.md`, …) |
+| [`WHOSE-TURN.md`](../WHOSE-TURN.md) | **지금 누구 차례** (매 라운드 갱신) |
+| [`rounds/`](./rounds/)   | Lovable 라운드별 **승인된 플랜** + 복붙용 지시문 |
+| [`rounds/GAMES-ROADMAP-v2.2-v2.3.md`](./rounds/GAMES-ROADMAP-v2.2-v2.3.md) | Stake/Rollbit 압살 (v2.1과 병렬) |
 
 ## SSOT 관계
 

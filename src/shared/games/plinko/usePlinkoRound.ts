@@ -18,6 +18,7 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { PlinkoEngine, MULTIPLIERS, type RiskLevel, type RowCount } from "./PlinkoEngine";
 import { getPlinkoSFX } from "./PlinkoSFX";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
+import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
 import { profitOf, payoutOf } from "@/shared/games/engine/houseEdge";
 import { plinkoStore, type PlinkoOutcome } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
@@ -136,7 +137,12 @@ export function usePlinkoRound(
       isMe: true,
     });
 
-    playDrop(result, (slot, multiplier) => {
+    let settled = false;
+    const finishDrop = (slot: number, multiplier: number) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(fallbackTimer);
+
       const payout = payoutOf(next.amount, multiplier, curMode);
       const profit = profitOf(next.amount, multiplier, curMode);
       const won = profit >= 0;
@@ -177,11 +183,15 @@ export function usePlinkoRound(
         jackpotTimerRef.current = setTimeout(() => setJackpot(null), JACKPOT_HOLD_MS);
       }
 
-      liveBetsStore.update(liveBetId, {
-        multiplier: won ? multiplier : null,
-        profit: +profit.toFixed(2),
-        status: won ? "win" : "loss",
-      });
+      liveBetsStore.settle(
+        liveBetId,
+        {
+          multiplier: won ? multiplier : null,
+          profit: +profit.toFixed(2),
+          status: won ? "win" : "loss",
+        },
+        userLiveBetFallback("plinko", next.amount, curMode),
+      );
 
       setPhase("settled");
       if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
@@ -195,7 +205,14 @@ export function usePlinkoRound(
           setPhase("idle");
         }
       }, SETTLE_MS);
-    });
+    };
+
+    // Safety: if canvas/renderer never calls onLand (HMR, zero-size canvas), still settle.
+    const fallbackTimer = setTimeout(() => {
+      finishDrop(result.finalSlot, result.multiplier);
+    }, SETTLE_MS + 700);
+
+    playDrop(result, finishDrop);
   }, [engineRef, playDrop, credit, refreshQueueSize]);
 
   const handlePlace = useCallback(
@@ -225,6 +242,7 @@ export function usePlinkoRound(
   // AC-M-4: real unmount → block new enqueue, let in-flight drain naturally, no refund RPC.
   // demo unmount → same (no balance impact since demo wallet is local cache).
   useEffect(() => {
+    unmountedRef.current = false;
     return () => {
       unmountedRef.current = true;
       if (jackpotTimerRef.current) {

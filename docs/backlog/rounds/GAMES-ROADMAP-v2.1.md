@@ -2,7 +2,7 @@
 
 | 항목 | 값 |
 | ---- | -- |
-| **상태** | ✅ ROUND L-1 (Crash) merge — **다음: ROUND M (Plinko)** |
+| **상태** | ✅ ROUND N 완료 — **다음: ROUND O (Lobby, Lovable)** · [`docs/WHOSE-TURN.md`](../../WHOSE-TURN.md) |
 | **승인일** | 2026-06-05 |
 | **담당** | 🤖 Lovable (UI/UX) → 🔧 Cursor (pull·감사·money·Realtime) |
 | **베이스라인** | vitest **122** GREEN (`bun run check` SSOT) |
@@ -13,7 +13,8 @@
 **실행 큐 (고정):**
 
 ```text
-ROUND 0 (1 PR) → I → J → K → L-1 → M → [Mines H Cursor GREEN] → N → O
+ROUND 0 → I → J → K → L-1 → L-2 ✅ → M → [L-3+L1-E] → N → O
+Stake/Rollbit 압살: docs/backlog/rounds/GAMES-ROADMAP-v2.2-v2.3.md (v2.1과 병렬)
 ```
 
 라운드당 **1 PR**. 한 번에 여러 라운드 묶음 금지. 각 라운드 종료 → GitHub push → Cursor pull → `docs/CURSOR_SANITATION_CHECKLIST.md` → `bun run check` GREEN → 다음.
@@ -203,6 +204,10 @@ ROUND 0 착수. docs/backlog/rounds/GAMES-ROADMAP-v2.1.md § ROUND 0 전체 준�
 **신규:** `PlinkoSlotRow.tsx`, 1 store spec  
 **미수정:** `PlinkoEngine.ts`, **`usePlinkoRound` export 시그니처 100% 불변**
 
+**Non-goal (v2.2+):** Realtime feed, Race, Vault, PF standalone, Crash MP → [`GAMES-ROADMAP-v2.2-v2.3.md`](./GAMES-ROADMAP-v2.2-v2.3.md)
+
+**Money (L-2 계승):** PF block-only (Dice/Wheel 패턴), unmount queue-drain toast — `useUnmountRefund` 미장착
+
 **기능:** 5공 큐, peg 글로우, 슬롯 잔광, `useRngWorker` PF 사전계산, 공통 인프라, hotkeys, reduced-motion=단일 공
 
 ---
@@ -287,3 +292,4 @@ Mines ROUND H Cursor pull → **`bun run check` GREEN** → N 착수
 | ---- | ---- | ---- |
 | v2 | 2026-06-05 | Cursor 검토 6건 반영 |
 | v2.1 | 2026-06-05 | useAutoBetController 불변·Limbo auto 정책·Mines 분리 게이트 |
+| v2.1 patch | 2026-06-06 | L-2 완료 · M Non-goal · WHOSE-TURN · v2.2-v2.3 링크 |

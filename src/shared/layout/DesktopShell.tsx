@@ -30,7 +30,7 @@ export function DesktopShell({ children }: { children: ReactNode }) {
           <main
             ref={viewportRef}
             className={cn(
-              "mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-4 pt-3 lg:px-6",
+              "mx-auto w-full max-w-md min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-4 pt-3 scrollbar-none lg:px-6",
               MAIN_LG_MAX[mainMode],
             )}
             data-game-viewport

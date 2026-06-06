@@ -44,7 +44,7 @@ export const CRASH_RULES: GameRules = {
     },
     {
       title: "단축키",
-      body: "• Space: 베팅 (betting 구간) · C / Enter: 캐쉬아웃 (350ms 길게 눌러 확정) · P: 공정성 · M: 음소거",
+      body: "• Space: 베팅 (betting 구간) · C / Enter: 캐쉬아웃 · P: 공정성 · M: 음소거",
     },
   ],
 };

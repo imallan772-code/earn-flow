@@ -9,7 +9,7 @@ export function RightRail() {
 
   return (
     <aside
-      className="glass-1 sticky top-0 hidden h-dvh max-h-dvh w-(--rightrail-width) shrink-0 flex-col overflow-y-auto border-l border-(--color-border) lg:flex safe-top safe-bottom"
+      className="glass-1 sticky top-0 hidden h-dvh max-h-dvh w-(--rightrail-width) shrink-0 flex-col overflow-y-auto border-l border-(--color-border) scrollbar-none lg:flex safe-top safe-bottom"
       aria-label="보조 패널"
     >
       <div className="flex flex-col gap-3 p-4">{rightRail}</div>

@@ -29,6 +29,7 @@ import { recordSessionOutcome } from "@/shared/games/ui/sessionStats";
 import { DICE_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
+import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { profitOf } from "@/shared/games/engine/houseEdge";
 import {
@@ -112,11 +113,15 @@ export function DiceScreen() {
           history: [{ id: `n${activeBet.nonce}`, roll, win: won }, ...s.history].slice(0, 30),
           lastOutcome: { outcome: won ? "win" : "loss", profit, nonce: activeBet.nonce, roll },
         }));
-        liveBetsStore.update(activeBet.liveBetId, {
-          multiplier: won ? pm : null,
-          profit: won ? +profit.toFixed(2) : -activeBet.amount,
-          status: won ? "win" : "loss",
-        });
+        liveBetsStore.settle(
+          activeBet.liveBetId,
+          {
+            multiplier: won ? pm : null,
+            profit: won ? +profit.toFixed(2) : -activeBet.amount,
+            status: won ? "win" : "loss",
+          },
+          userLiveBetFallback("dice", activeBet.amount, mode),
+        );
         recordSessionOutcome({
           outcome: won ? "win" : "loss",
           profit,

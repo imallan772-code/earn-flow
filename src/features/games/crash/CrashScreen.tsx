@@ -54,6 +54,7 @@ import { recordSessionOutcome } from "@/shared/games/ui/sessionStats";
 import { CRASH_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
+import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { profitOf, payoutOf } from "@/shared/games/engine/houseEdge";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
@@ -70,7 +71,6 @@ import { cn } from "@/lib/utils";
 
 const SERVER_SEED = "phonara-crash-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
-const HOLD_CONFIRM_MS = 350;
 
 type Phase = "betting" | "running" | "crashed" | "cooldown";
 
@@ -130,7 +130,12 @@ export function CrashScreen() {
   useUnmountRefund(refund, () => {
     const ar = crashStore.get().activeRound;
     if (!ar || ar.cashedAt !== null) return null;
-    return { amount: ar.amount, meta: { game: "crash", roundId: `n${ar.nonce}` } };
+    return {
+      amount: ar.amount,
+      meta: { game: "crash", roundId: `n${ar.nonce}` },
+      liveBetId: ar.liveBetId,
+      mode,
+    };
   });
 
   // ─── 마운트 복원 (1회) ────────────────────────────────────────────
@@ -146,6 +151,17 @@ export function CrashScreen() {
       autoTarget: ar.autoTarget,
       cashedAt: ar.cashedAt,
       liveBetId: ar.liveBetId,
+    });
+    liveBetsStore.ensureUserPending({
+      id: ar.liveBetId,
+      user: "나의_베팅",
+      game: "crash",
+      amount: ar.amount,
+      multiplier: ar.cashedAt,
+      profit: null,
+      status: "pending",
+      mode,
+      isMe: true,
     });
     setCrashPoint(ar.crashPoint);
     bettingStartedAtRef.current = ar.bettingStartedAt || performance.now();
@@ -172,7 +188,7 @@ export function CrashScreen() {
         setPhase("betting");
       }
     }
-  }, []);
+  }, [mode]);
 
   // ─── betting phase 머신 ───────────────────────────────────────────
   useEffect(() => {
@@ -241,6 +257,16 @@ export function CrashScreen() {
               : s,
           );
           setBet({ ...prev, cashedAt: prev.autoTarget });
+          const profit = profitOf(prev.amount, prev.autoTarget, mode);
+          liveBetsStore.settle(
+            prev.liveBetId,
+            {
+              multiplier: prev.autoTarget,
+              profit: +profit.toFixed(2),
+              status: "cashout",
+            },
+            userLiveBetFallback("crash", prev.amount, mode),
+          );
         }
       }
       if (m >= crashPoint) setPhase("crashed");
@@ -252,7 +278,7 @@ export function CrashScreen() {
         tickIntervalRef.current = null;
       }
     };
-  }, [phase, crashPoint, sfx]);
+  }, [phase, crashPoint, sfx, mode]);
 
   // ─── crashed → settle once (deps에 bet 금지) ──────────────────────
   useEffect(() => {
@@ -261,12 +287,18 @@ export function CrashScreen() {
     settledRef.current = true;
 
     const activeBet = betRef.current;
+    const ar = crashStore.get().activeRound;
+    const amount = activeBet?.amount ?? ar?.amount;
+    const liveBetId = activeBet?.liveBetId ?? ar?.liveBetId;
+    const cashed = activeBet?.cashedAt ?? ar?.cashedAt ?? null;
+    const feedFallback =
+      amount != null && liveBetId ? userLiveBetFallback("crash", amount, mode) : undefined;
+
     const roundId = `n${nonce}`;
-    if (activeBet) {
-      const cashed = activeBet.cashedAt;
+    if (amount != null && liveBetId) {
       if (cashed !== null) {
-        const profit = profitOf(activeBet.amount, cashed, mode);
-        const payout = Math.round(payoutOf(activeBet.amount, cashed, mode));
+        const profit = profitOf(amount, cashed, mode);
+        const payout = Math.round(payoutOf(amount, cashed, mode));
         void credit(payout, cashed, { game: "crash", roundId });
         crashStore.set((s) => ({
           ...s,
@@ -275,25 +307,33 @@ export function CrashScreen() {
         }));
         recordSessionOutcome({ outcome: "win", profit, multiplier: cashed });
         sfx.play("cashout");
-        liveBetsStore.update(activeBet.liveBetId, {
-          multiplier: cashed,
-          profit: +profit.toFixed(2),
-          status: "cashout",
-        });
+        liveBetsStore.settle(
+          liveBetId,
+          {
+            multiplier: cashed,
+            profit: +profit.toFixed(2),
+            status: "cashout",
+          },
+          feedFallback,
+        );
       } else {
         crashStore.set((s) => ({
           ...s,
-          lastOutcome: { outcome: "loss", profit: -activeBet.amount, nonce },
+          lastOutcome: { outcome: "loss", profit: -amount, nonce },
           activeRound: null,
         }));
-        recordSessionOutcome({ outcome: "loss", profit: -activeBet.amount });
+        recordSessionOutcome({ outcome: "loss", profit: -amount });
         sfx.play("loss");
         setFlashKey((k) => k + 1);
-        liveBetsStore.update(activeBet.liveBetId, {
-          multiplier: null,
-          profit: -activeBet.amount,
-          status: "bust",
-        });
+        liveBetsStore.settle(
+          liveBetId,
+          {
+            multiplier: null,
+            profit: -amount,
+            status: "bust",
+          },
+          feedFallback,
+        );
       }
     } else {
       // 베팅 없이 BUST — activeRound도 null (no-op safety)
@@ -377,11 +417,22 @@ export function CrashScreen() {
   const handleCashout = useCallback(() => {
     if (phase !== "running" || !betRef.current || betRef.current.cashedAt !== null) return;
     const m = multiplierAt6(performance.now() - startedAt);
+    const prev = betRef.current;
     crashStore.set((s) =>
       s.activeRound ? { ...s, activeRound: { ...s.activeRound, cashedAt: m } } : s,
     );
-    setBet((prev) => (prev ? { ...prev, cashedAt: m } : prev));
-  }, [phase, startedAt]);
+    setBet((b) => (b ? { ...b, cashedAt: m } : b));
+    const profit = profitOf(prev.amount, m, mode);
+    liveBetsStore.settle(
+      prev.liveBetId,
+      {
+        multiplier: m,
+        profit: +profit.toFixed(2),
+        status: "cashout",
+      },
+      userLiveBetFallback("crash", prev.amount, mode),
+    );
+  }, [phase, startedAt, mode]);
 
   const getCurrentMultiplier = useCallback(() => {
     if (phase !== "running") return bet?.cashedAt ?? 1.0;
@@ -402,11 +453,11 @@ export function CrashScreen() {
       void refundRef
         .current(ar.amount, { game: "crash", roundId: `n${ar.nonce}` })
         .catch(() => undefined);
-      liveBetsStore.update(ar.liveBetId, {
-        multiplier: null,
-        profit: 0,
-        status: "bust",
-      });
+      liveBetsStore.settle(
+        ar.liveBetId,
+        { multiplier: null, profit: 0, status: "bust" },
+        userLiveBetFallback("crash", ar.amount, mode),
+      );
     }
     crashStore.set((s) => ({
       ...s,
@@ -426,7 +477,7 @@ export function CrashScreen() {
     setPhase("betting");
     appToast.game.bet({ amount: "시드 변경됨 · nonce 0 리셋" });
     setShowFair(false);
-  }, [seedDraft]);
+  }, [seedDraft, mode]);
 
   // ─── Hotkeys ──────────────────────────────────────────────────────
   // Space는 즉시 베팅. C/Enter는 BetSummaryPanel 내부에서 keydown hold 처리.
@@ -555,7 +606,6 @@ export function CrashScreen() {
               busted={false}
               cashedAt={bet.cashedAt}
               onCashout={bet.cashedAt === null ? handleCashout : undefined}
-              holdConfirmMs={HOLD_CONFIRM_MS}
             />
           ) : (
             <BetSummaryPanel

@@ -35,6 +35,7 @@ import { recordSessionOutcome } from "@/shared/games/ui/sessionStats";
 import { WHEEL_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
+import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { profitOf } from "@/shared/games/engine/houseEdge";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
@@ -107,9 +108,23 @@ export function WheelScreen() {
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
-    if (wheelStore.get().activeRound) round.place();
+    const ar = wheelStore.get().activeRound;
+    if (ar) {
+      liveBetsStore.ensureUserPending({
+        id: ar.liveBetId,
+        user: "나의_베팅",
+        game: "wheel",
+        amount: ar.amount,
+        multiplier: null,
+        profit: null,
+        status: "pending",
+        mode,
+        isMe: true,
+      });
+      round.place();
+    }
     // No tryDebit / liveBetsStore.push.
-  }, [round]);
+  }, [round, mode]);
 
   // Settle: rolling phase → spin & resolve.
   useEffect(() => {
@@ -160,11 +175,15 @@ export function WheelScreen() {
           ].slice(0, 30),
           lastOutcome: outcome,
         }));
-        liveBetsStore.update(ar.liveBetId, {
-          multiplier: won ? mult : null,
-          profit: won ? +profit.toFixed(2) : -ar.amount,
-          status: won ? "win" : "loss",
-        });
+        liveBetsStore.settle(
+          ar.liveBetId,
+          {
+            multiplier: won ? mult : null,
+            profit: won ? +profit.toFixed(2) : -ar.amount,
+            status: won ? "win" : "loss",
+          },
+          userLiveBetFallback("wheel", ar.amount, mode),
+        );
         recordSessionOutcome({
           outcome: won ? "win" : "loss",
           profit,

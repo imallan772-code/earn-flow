@@ -53,7 +53,11 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
       result: ReturnType<PlinkoEngine["dropPath"]>,
       onLand: (slot: number, multiplier: number) => void,
     ) => {
-      rendererRef.current?.playDrop(result, engineRef.current!, onLand);
+      if (rendererRef.current && engineRef.current) {
+        rendererRef.current.playDrop(result, engineRef.current, onLand);
+        return;
+      }
+      onLand(result.finalSlot, result.multiplier);
     },
     [],
   );
@@ -79,6 +83,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    const wrap = wrapRef.current;
     if (!canvas) return;
     if (!engineRef.current) engineRef.current = new PlinkoEngine();
     rendererRef.current = new PlinkoRenderer(canvas, {
@@ -87,6 +92,12 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
       risk,
       onPegHit: (vel) => getPlinkoSFX().pegHit(vel),
     });
+    if (wrap) {
+      const rect = wrap.getBoundingClientRect();
+      if (rect.width >= 1 && rect.height >= 1) {
+        rendererRef.current.resize(rect.width, rect.height, window.devicePixelRatio || 1);
+      }
+    }
     return () => {
       rendererRef.current?.destroy();
       rendererRef.current = null;
