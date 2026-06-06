@@ -49,6 +49,7 @@ import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
 import { GameRulesCard } from "@/shared/games/ui/GameRulesCard";
 import { HistoryPillStrip } from "@/shared/games/ui/HistoryPillStrip";
 import { ProvablyFairModal, type ProvablyFairRow } from "@/shared/games/ui/ProvablyFairModal";
+import { PfVerifyPageLink } from "@/shared/games/ui/PfVerifyPageLink";
 import { SessionStatsBar } from "@/shared/games/ui/SessionStatsBar";
 import { recordSessionOutcome } from "@/shared/games/ui/sessionStats";
 import { CRASH_RULES } from "@/shared/games/rules/gameRules";
@@ -704,7 +705,18 @@ export function CrashScreen() {
         onClose={() => setShowFair(false)}
         rows={fairRows}
         onApply={applySeed}
-        footer="진행 중 베팅이 있으면 시드 변경 불가. 라운드 종료 후 nonce 0 리셋."
+        footer={
+          <>
+            <p>진행 중 베팅이 있으면 시드 변경 불가. 라운드 종료 후 nonce 0 리셋.</p>
+            <PfVerifyPageLink
+              game="crash"
+              serverSeed={SERVER_SEED}
+              serverSeedHash={commit}
+              clientSeed={seedDraft.trim() || DEFAULT_CLIENT_SEED}
+              nonce={nonce}
+            />
+          </>
+        }
       />
     </div>
   );
