@@ -22,10 +22,9 @@ import {
 import { startBotFeed } from "./botGenerator";
 import { LiveBetsVirtualList } from "./LiveBetsVirtualList";
 import { LiveBetRow, ROW_GRID } from "./LiveBetRow";
+import { applyFeedFilter, type FeedFilter } from "./feedFilter";
 import { cn } from "@/lib/utils";
 import { RollingCountUp } from "@/shared/motion/RollingCountUp";
-
-type FilterId = "all" | "big" | "me";
 
 interface Props {
   /** Max rows to render (default 12). */
@@ -41,21 +40,7 @@ interface Props {
   virtualHeight?: number;
 }
 
-export const BIG_WIN_MULTIPLIER = 10;
-
-/** Big wins / Me only derive — exported for unit tests. */
-export function applyFeedFilter(bets: LiveBet[], filter: FilterId): LiveBet[] {
-  if (filter === "all") return bets;
-  if (filter === "me") return bets.filter((b) => b.isMe === true);
-  return bets.filter(
-    (b) =>
-      (b.status === "win" || b.status === "cashout") &&
-      b.multiplier != null &&
-      b.multiplier >= BIG_WIN_MULTIPLIER,
-  );
-}
-
-const CHIPS: ReadonlyArray<{ id: FilterId; label: string }> = [
+const CHIPS: ReadonlyArray<{ id: FeedFilter; label: string }> = [
   { id: "all", label: "전체" },
   { id: "big", label: "Big wins" },
   { id: "me", label: "나만" },
