@@ -1,7 +1,13 @@
 import { useState } from "react";
-import { CheckCircle2, Send } from "lucide-react";
+import { CheckCircle2, Send, Zap } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { usePromoAdmin } from "../hooks/usePromoAdmin";
 import { ADMIN_KO, PROMO_CHANNEL_LABELS_KO } from "@/shared/admin/labels.ko";
+import {
+  runPromoCronTick,
+  testChannel as testChannelFn,
+} from "@/lib/promo/promo.functions";
 import type { PromoChannelId } from "../types";
 
 const CHANNELS: { id: PromoChannelId; warn?: string }[] = [
@@ -16,44 +22,89 @@ const CHANNELS: { id: PromoChannelId; warn?: string }[] = [
   { id: "copy", warn: "네이버·카카오·IG 수동 발행 · 이용약관 준수" },
 ];
 
-interface AdapterResult {
-  ok: boolean;
-  msg: string;
-}
-
-function mockVerify(id: PromoChannelId): AdapterResult {
-  const name = PROMO_CHANNEL_LABELS_KO[id] ?? id;
-  return { ok: true, msg: `[데모] ${name} 연결 확인됨 (Z-2에서 실연동)` };
-}
-function mockSend(id: PromoChannelId): AdapterResult {
-  const name = PROMO_CHANNEL_LABELS_KO[id] ?? id;
-  return { ok: true, msg: `[데모] ${name} 발송 대기열에 추가됨` };
+function settingsPayload(s: {
+  webhookUrl?: string;
+  telegramBotToken?: string;
+  telegramChatId?: string;
+}) {
+  return {
+    webhookUrl: s.webhookUrl,
+    telegramBotToken: s.telegramBotToken,
+    telegramChatId: s.telegramChatId,
+  };
 }
 
 export function ChannelMatrix() {
-  const { dispatches, campaigns, addDispatch, configured } = usePromoAdmin();
-  const [log, setLog] = useState<string[]>([]);
+  const { dispatches, settings, configured } = usePromoAdmin();
   const ko = ADMIN_KO.promo.channels;
+  const koPub = ADMIN_KO.promo.publish;
 
-  const handleTest = (id: PromoChannelId, mode: "verify" | "send") => {
-    const r = mode === "verify" ? mockVerify(id) : mockSend(id);
-    setLog((l) => [`${new Date().toLocaleTimeString("ko-KR")} · ${r.msg}`, ...l].slice(0, 20));
-    if (mode === "send" && campaigns[0]) {
-      addDispatch({
-        id: configured ? crypto.randomUUID() : `d-${Date.now()}`,
-        campaignId: campaigns[0].id,
-        channel: id,
-        variantId: campaigns[0].variants[0]?.id ?? "v-mock",
-        sentAt: new Date().toISOString(),
-        status: "sent",
+  const testFn = useServerFn(testChannelFn);
+  const cronFn = useServerFn(runPromoCronTick);
+  const [log, setLog] = useState<string[]>([]);
+  const [publishing, setPublishing] = useState(false);
+
+  function pushLog(msg: string) {
+    setLog((l) =>
+      [`${new Date().toLocaleTimeString("ko-KR")} · ${msg}`, ...l].slice(0, 20),
+    );
+  }
+
+  async function handleVerify(id: PromoChannelId) {
+    const name = PROMO_CHANNEL_LABELS_KO[id] ?? id;
+    try {
+      const res = await testFn({
+        data: { channel: id, settings: settingsPayload(settings) },
       });
+      if (res.ok) {
+        pushLog(`${name} · ${koPub.testOk}`);
+        toast.success(`${name} · ${koPub.testOk}`);
+      } else {
+        const msg = res.code === "OAUTH_REQUIRED" ? koPub.oauthRequired
+          : res.code === "SSRF_BLOCKED" ? koPub.ssrfBlocked
+          : `${koPub.testFail} (${res.code})`;
+        pushLog(`${name} · ${msg}`);
+        toast.error(`${name} · ${msg}`);
+      }
+    } catch (e) {
+      pushLog(`${name} · ${(e as Error).message}`);
+      toast.error(`${name} · ${koPub.testFail}`);
     }
-  };
+  }
+
+  async function handlePublishNow() {
+    // 「지금 발행」 = runPromoCronTick (scheduled due 캠페인 fan-out 전용)
+    setPublishing(true);
+    try {
+      const res = await cronFn({ data: { settings: settingsPayload(settings) } });
+      if (res.ok) {
+        pushLog(`${koPub.publishNow} · ${koPub.sent(res.sent)} · ${koPub.failed(res.failed)}`);
+        toast.success(`${koPub.sent(res.sent)} · ${koPub.failed(res.failed)}`);
+      } else {
+        pushLog(`${koPub.publishNow} · ${koPub.dbNotConfigured}`);
+        toast.error(koPub.dbNotConfigured);
+      }
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setPublishing(false);
+    }
+  }
 
   return (
     <section className="grid gap-4 lg:grid-cols-[2fr_1fr]">
       <div className="glass-2 rounded-3xl p-5">
-        <h2 className="mb-3 text-base font-bold">{ko.title}</h2>
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="text-base font-bold">{ko.title}</h2>
+          <button
+            type="button"
+            onClick={handlePublishNow}
+            disabled={publishing}
+            className="ml-auto flex items-center gap-1.5 rounded-2xl bg-holographic px-3 py-1.5 text-xs font-bold text-(--color-bg-0) disabled:opacity-50"
+          >
+            <Zap size={12} /> {publishing ? koPub.sending : koPub.publishNow}
+          </button>
+        </div>
         <div className="grid gap-2 sm:grid-cols-2">
           {CHANNELS.map(({ id, warn }) => (
             <div key={id} className="glass-1 flex flex-col gap-2 rounded-2xl p-3">
@@ -64,26 +115,20 @@ export function ChannelMatrix() {
                 </span>
               </div>
               {warn && <p className="text-[10px] text-(--color-muted)">⚠ {warn}</p>}
-              <div className="flex gap-1.5">
-                <button
-                  onClick={() => handleTest(id, "verify")}
-                  className="glass-1 flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1 text-[11px]"
-                >
-                  <CheckCircle2 size={11} /> {ko.verify}
-                </button>
-                <button
-                  onClick={() => handleTest(id, "send")}
-                  className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-holographic px-2 py-1 text-[11px] font-bold text-(--color-bg-0)"
-                >
-                  <Send size={11} /> {ko.send}
-                </button>
-              </div>
+              <button
+                onClick={() => handleVerify(id)}
+                className="glass-1 flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-[11px]"
+              >
+                <CheckCircle2 size={11} /> {ko.verify}
+              </button>
             </div>
           ))}
         </div>
       </div>
       <div className="glass-2 rounded-3xl p-5">
-        <h3 className="mb-2 text-sm font-bold">{ko.logTitle}</h3>
+        <h3 className="mb-2 flex items-center gap-1.5 text-sm font-bold">
+          <Send size={12} /> {ko.logTitle}
+        </h3>
         <p className="mb-2 text-[10px] text-(--color-muted)">
           {ko.logMeta(dispatches.length, log.length)}
         </p>
