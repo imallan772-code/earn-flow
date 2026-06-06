@@ -1,107 +1,148 @@
-# ROUND L-2-pre — Limbo 1-slot Revert + Legacy Migrate
+## ROUND L-2 PR2 — Real Money Mid-Round Cancel (Lovable)
 
-SSOT: [`docs/lovable/rounds/ROUND-L-2-PRE-LIMBO.md`](docs/lovable/rounds/ROUND-L-2-PRE-LIMBO.md) (on `main`). 본 플랜과 충돌 시 SSOT 문서 우선.
+SSOT: `docs/lovable/rounds/ROUND-L-2.md` · prerequisites L-2-pre (Limbo 1-slot) merged · Cursor PR1 refund RPC merged.
 
-L-2 PR2 진입 전 선행 라운드. Limbo를 단일 슬롯으로 환원하고 기존 2-slot 저장본을 마이그레이트 (양 슬롯 refund 후 단일화).
+### Scope (5 games + 1 hook + 1 panel)
 
-## Locked decisions (SSOT 반영 3건)
+| Game | PF (applySeed) | Unmount | Notes |
+|------|----------------|---------|-------|
+| Crash | refund RPC + meta | refund RPC + meta | 현재 refund 있으나 meta 없음 → meta 부착 |
+| Mines | refund RPC + meta | refund RPC + meta | 둘 다 신규 |
+| Limbo | refund RPC + meta | refund RPC + meta | 둘 다 신규 (L-2-pre는 legacy drain만) |
+| Dice  | **block** while active | — | 시드 변경 차단 + toast |
+| Wheel | **block** while active | — | 시드 변경 차단 + toast |
 
-| 항목 | 결정 |
-|---|---|
-| 구조 | `activeRound: ActiveLimboRound \| null` + 단일 `lastOutcome` (Crash/Mines 동형) |
-| refund `roundId` | **`` `n${nonce}` ``** (debit과 동일). `liveBetId` 금지 — RPC `MONEY_ROUND_NOT_FOUND` 방지 |
-| refund 타이밍 | sync `hydrate` 내부 금지 (auth 없음). migrate는 `pendingLegacyRefunds`만 채우고, **LimboScreen mount effect**에서 `useGameWallet.refund` drain |
-| Store version | limbo **v2** (`phonara.gamestate.limbo.v2`) 신규. v1 multi-slot은 1회 read → migrate → v2 persist |
-| Legacy fold | 양 슬롯 active면 둘 다 refund. `activeRound = null` (UI carry-over 없음). `lastOutcome = lastOutcomeBySlot.find(Boolean) ?? lastOutcome ?? null` |
+### Files
 
-## Files
+| 구분 | 경로 |
+|------|------|
+| 신규 | `src/shared/wallet/useUnmountRefund.ts` |
+| 신규 | `src/shared/wallet/__tests__/useUnmountRefund.spec.ts` |
+| 수정 | `src/features/games/crash/CrashScreen.tsx` |
+| 수정 | `src/features/games/mines/MinesScreen.tsx` |
+| 수정 | `src/features/games/limbo/LimboScreen.tsx` |
+| 수정 | `src/features/games/dice/DiceScreen.tsx` |
+| 수정 | `src/features/games/wheel/WheelScreen.tsx` |
+| 수정 | `src/shared/games/ui/StakeBetPanel.tsx` |
 
-### 변경
-1. **`src/shared/games/shell/createGameStore.ts`**
-   - Optional `migrate?: (parsed: unknown, initial: T) => T` 파라미터 추가 (기본: 기존 `{ ...initial, ...parsed }`)
-   - 다른 게임 호출부 0-diff
+### Non-touch (PR2)
 
-2. **`src/shared/games/state/persistedGameState.ts`**
-   - `LimboPersisted`: `activeRounds` / `lastOutcomeBySlot` / `activeSlot` 제거
-   - 추가: `activeRound: ActiveLimboRound | null`, `pendingLegacyRefunds?: { amount: number; nonce: number }[]`
-   - `ActiveLimboRound`: `slot` 제거
-   - `limboStore` version `1 → 2`. migrate 콜백:
-     - v2 키 없으면 v1 (`phonara.gamestate.limbo.v1`) 1회 read 시도
-     - `parsed.activeRounds`가 튜플이면 non-null 항목별 `{ amount, nonce }` → `pendingLegacyRefunds` push
-     - `lastOutcome = parsed.lastOutcomeBySlot?.find(Boolean) ?? parsed.lastOutcome ?? null`
-     - `activeRound = null`
-     - legacy 키들 드롭
+`supabase/**`, `src/integrations/supabase/types.ts`, `src/lib/api/**`, `walletStore.ts` 스키마, `useGameWallet.ts`(API 0-diff — `refund(amount, { game, roundId })`은 이미 존재).
 
-3. **`src/features/games/limbo/LimboScreen.tsx`**
-   - `LimboMultiSlot` import/사용 제거
-   - 단일 `useGameRound`, 단일 `LimboDisplay` + 단일 `StakeBetPanel` (Crash 패턴)
-   - `activeSlot` / 듀얼 settled refs / 듀얼 settle effect 제거
-   - `placeSlot`/`settleSlot` → single `place`/`settle` (`roundId: \`n${nonce}\``)
-   - PF `applySeed`: `activeRound = null`만 (full refund RPC는 L-2 PR2)
-   - **신규 mount effect (1회)**:
-     - `pendingLegacyRefunds` 순회 → `void refund(amount, { game: 'limbo', roundId: \`n${nonce}\` }).catch()`
-     - drain 후 **즉시** `limboStore.set((s) => ({ ...s, pendingLegacyRefunds: [] }))` → v2 persist
-     - → 재진입/재마운트 시 이중 refund 방지 (idempotent + 클리어 둘 다)
-   - hotkey `1`/`2` (슬롯 전환) 제거
+---
 
-### 삭제
-4. **`src/features/games/limbo/LimboMultiSlot.tsx`**
+### Technical details
 
-### Tests
-5. `src/shared/games/state/__tests__/limboStore.persist.spec.ts` — v2 단일 슬롯 필드로 재작성
-6. `src/shared/games/state/__tests__/limboStore.restore.spec.ts` — 단일 `activeRound` 라이프사이클로 재작성
-7. **신규** `src/shared/games/state/__tests__/limboStore.migrate.spec.ts`
-   - 양 슬롯 active v1 저장본 → `pendingLegacyRefunds.length === 2`, `activeRound === null`
-   - slot[0]만 active → `pendingLegacyRefunds.length === 1`
-   - 이미 v2 shape → mutation 없음
-   - **스코프 한정**: 본 spec은 `pendingLegacyRefunds` 채움만 검증. 실제 `refund()` RPC 호출 검증은 LimboScreen mount effect (별도 컴포넌트 spec 또는 manual QA) 담당. `useGameWallet` mock 불필요 — AC-pre-6 충족 가능.
+#### 1. `useUnmountRefund` (SSOT for Crash/Mines/Limbo)
 
-## Acceptance
+```ts
+// src/shared/wallet/useUnmountRefund.ts
+import { useEffect, useRef } from "react";
+import type { GameWalletMeta } from "./useGameWallet";
 
-| AC | 내용 |
-|---|---|
-| AC-pre-1 | `LimboPersisted`에 `activeRounds` / `lastOutcomeBySlot` / `activeSlot` 부재 |
-| AC-pre-2 | legacy v1 hydrate → `pendingLegacyRefunds` 채워짐. mount drain은 `roundId: \`n${nonce}\`` 호출 + 직후 store에서 클리어 |
-| AC-pre-3 | `LimboScreen` 단일 패널. real/demo 모드 격리 |
-| AC-pre-4 | `LimboMultiSlot.tsx` 삭제 + import 0 |
-| AC-pre-5 | `bun run check` GREEN |
-| AC-pre-6 | migrate + persist + restore spec 통과 |
+type RefundFn = (amount: number, meta?: GameWalletMeta) => Promise<boolean>;
 
-## Manual QA
+interface PendingRefund {
+  amount: number;
+  meta: GameWalletMeta; // { game, roundId } REQUIRED for real RPC
+}
 
-1. localStorage `phonara.gamestate.limbo.v1` 양 슬롯 active 상태 수동 주입
-2. `/games/limbo` 진입 → 단일 패널. 잔액에 양 슬롯 stake 환불 반영 (demo 즉시 / real RPC 후)
-3. 새로고침 재진입 → `pendingLegacyRefunds` 비어있음, refund 재호출 없음 (이중 차감 방지 확인)
-4. 신규 place → settle 정상
-5. PF seed 변경 → nonce 0, `activeRound = null`
-6. real ↔ demo 토글 → 잔존 라운드 없음
-
-## Boundaries (0-diff)
-
-- `supabase/**`
-- `src/integrations/supabase/types.ts`
-- `src/lib/api/**`
-- 다른 게임 (Dice/Crash/Mines/Wheel/Plinko) 화면/스토어
-
-## Non-goals (L-2 PR2)
-
-- `useUnmountRefund` 훅 추출 (Crash + Mines + Limbo)
-- StakeBetPanel mode-aware integer clamp
-- Dice/Wheel PF block toast
-- Crash/Mines/Limbo PF refund with meta (legacy pending drain 제외)
-- hold 350ms (L-3)
-
-## Workflow
-
-```text
-L-2-pre (Lovable) → review → merge
-    ↓
-L-2 PR2 (Lovable) — 5-game cancel matrix
-    ↓
-L-3 (hold 350ms)
+/**
+ * On unmount: if `getPending()` returns a non-null bet, call refund() fire-and-forget.
+ * Idempotent on server (refund_phon_for_bet_v2 — same roundId as debit).
+ */
+export function useUnmountRefund(
+  refund: RefundFn,
+  getPending: () => PendingRefund | null,
+) {
+  const refundRef = useRef(refund);
+  const getRef = useRef(getPending);
+  refundRef.current = refund;
+  getRef.current = getPending;
+  useEffect(() => {
+    return () => {
+      const p = getRef.current();
+      if (!p || p.amount <= 0) return;
+      void refundRef.current(p.amount, p.meta).catch(() => undefined);
+    };
+  }, []);
+}
 ```
 
-## Risk
+Spec (`useUnmountRefund.spec.ts`, 3 cases):
+- pending null → refund 0회
+- pending set → unmount 시 refund 1회 with meta
+- refund reject → no throw (fire-and-forget)
 
-- mount drain refund Promise는 fire-and-forget. 실패 시 다음 reload에 재시도 (idempotent RPC + 클리어). orphan reconciliation job은 L-3+ defer.
-- v1 → v2 키 전환: v1 잔여 localStorage는 migrate 1회 read 후 그대로 둠 (덮어쓰지 않음). 향후 cleanup 라운드에서 제거.
+#### 2. CrashScreen
+
+- 기존 unmount effect (line 129–134): `refundRef.current(b.amount)` → **meta 부착**. `useUnmountRefund(refund, () => { const ar = crashStore.get().activeRound; return ar && ar.cashedAt === null ? { amount: ar.amount, meta: { game: "crash", roundId: \`n${ar.nonce}\` } } : null; })`로 교체. 기존 ad-hoc effect 삭제.
+- `applySeed` (line 392~): `refundRef.current(ar.amount)` → `void refund(ar.amount, { game: "crash", roundId: \`n${ar.nonce}\` }).catch(() => undefined)`. activeRound의 nonce 사용 (현재 store nonce ≠ active nonce일 수 있음).
+
+#### 3. MinesScreen
+
+- 신규: `useUnmountRefund(refund, () => { const ar = minesStore.get().activeRound; return ar ? { amount: ar.amount, meta: { game: "mines", roundId: \`n${ar.nonce}\` } } : null; })`.
+- `applySeed`: clientSeed 변경 분기에서 activeRound 있으면 refund 1회 후 `activeRound: null`. roundId = `n${ar.nonce}`.
+
+#### 4. LimboScreen
+
+- 신규: `useUnmountRefund(...)` — activeRound 있고 settle 미수행이면 refund.
+- `applySeed`: activeRound 있으면 refund 1회 후 nonce 0 리셋 + `activeRound: null`. roundId = `n${ar.nonce}`.
+- L-2-pre의 legacy drain effect는 그대로 유지 (별개).
+
+#### 5. DiceScreen — PF block
+
+`applySeed` 진입 시 `if (!round.isIdle || activeBet)` → `appToast.raw.error("진행 중인 라운드가 있어 시드를 변경할 수 없습니다")` 후 return. RPC 호출 없음.
+
+#### 6. WheelScreen — PF block
+
+`applySeed` 진입 시 `if (!round.isIdle || wheelStore.get().activeRound)` → 동일 토스트 후 return. 기존 `activeRound: null` 분기 삭제.
+
+#### 7. StakeBetPanel — real integer clamp
+
+`useMode()` 추가:
+```ts
+import { useMode } from "@/shared/mode/ModeContext";
+const { mode } = useMode();
+const isReal = mode === "real";
+const minBet = isReal ? 1 : 0.01;
+const step = isReal ? 1 : 0.01;
+```
+- input: `min={minBet}`, `step={step}`.
+- onChange: real → `Math.max(0, Math.floor(Number(e.target.value) || 0))`; demo → 기존.
+- ½ / 2x: real → `Math.max(minBet, Math.floor(...))`; demo → 기존 `+(...).toFixed(2)`.
+- MAX: real → `Math.floor(balance)`.
+- 베팅 버튼 disabled 조건: real → `amount < 1`도 disable. 토글 시 amount < 1 이면 클램프 표시 (단순 floor + min 적용 useEffect 1회).
+- 잔액 표시 단위: 기존 "USDT" 유지 (mode 분기 표시는 별개 — 본 PR scope 외).
+
+---
+
+### Acceptance criteria (per ROUND-L-2.md)
+
+- AC-3: real `tryDebit(0.49)` → false (이미 `toIntegerPhonAmount`로 처리). StakeBetPanel real <1 / non-integer 입력 차단 — **UI 단에서 차단**.
+- AC-4: Crash PF betting 중 → refund RPC 1회 `{ game:'crash', roundId }`.
+- AC-5: Mines unmount mid-round → refund RPC 1회.
+- AC-6: Limbo activeRound + PF → refund RPC 1회.
+- AC-7: Dice/Wheel PF while active → blocked + toast, RPC 0회.
+- Gate: `bun run check` GREEN. supabase / lib/api / types 0-diff.
+
+### Manual QA (PR2 complete)
+
+- [ ] Crash PF mid-betting → 잔액 복원 (real)
+- [ ] Crash navigate away mid-round → refund 1회 (network 탭 `refund_phon_for_bet_v2`)
+- [ ] Mines PF + unmount 각 1회
+- [ ] Limbo single-slot PF + unmount 각 1회
+- [ ] Dice/Wheel PF spin 중 시도 → toast 차단, RPC 0회
+- [ ] StakeBetPanel real: 0.49 입력 → 0 으로 클램프, 베팅 disabled
+- [ ] StakeBetPanel demo: 0.49 그대로
+- [ ] Demo 5게임 1라운드씩 무이상
+
+### Risk
+
+- `useGameWallet.refund`는 PR1에서 이미 meta 지원. meta 없이 호출하면 legacy local cache fallback (gap window) — PR2 후로는 모든 call site meta 부착이라 fallback 미진입.
+- Crash applySeed의 nonce: 현재 `nonce` (store top) 사용 가능하지만 betting phase 중 nonce가 active와 동일하므로 `ar.nonce` 명시 안전.
+- Unmount effect는 fire-and-forget. RPC idempotent (same roundId) — 사용자가 빠르게 mount/unmount 반복해도 서버에서 1회만 적용.
+
+### Out of scope (defer)
+
+- Path A hotfix · hold-to-confirm 350ms (L-3) · Mines 812 refactor · Plinko · orphan debit reconciliation · HistoryPillStrip Dice 'x' bug.
