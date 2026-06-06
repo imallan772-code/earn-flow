@@ -137,6 +137,9 @@ export function CrashScreen() {
   const restoredRef = useRef(false);
   const tickIntervalRef = useRef<number | null>(null);
   const sfx = useSfx();
+  const isDesktop = useDesktopLayout();
+  const rightRailNode = useMemo(() => <CrashRightRail />, []);
+  useRegisterRightRail(rightRailNode);
 
   // PF commit hash
   useEffect(() => {
