@@ -70,7 +70,7 @@ import { cn } from "@/lib/utils";
 
 const SERVER_SEED = "phonara-crash-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
-const HOLD_CONFIRM_MS = 150;
+const HOLD_CONFIRM_MS = 350;
 
 type Phase = "betting" | "running" | "crashed" | "cooldown";
 
