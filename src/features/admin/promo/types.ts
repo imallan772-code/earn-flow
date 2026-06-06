@@ -22,6 +22,8 @@ export interface PromoVariant {
   hashtags: string[];
   cta?: string;
   weight: number;
+  /** Z-1: 이미지 생성용 프롬프트 텍스트 (실제 생성은 Z-2) */
+  imagePrompt?: string;
 }
 
 export interface PromoCampaign {
