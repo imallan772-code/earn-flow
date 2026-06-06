@@ -105,12 +105,15 @@ export function usePromoAdmin() {
           hmacSecret: "",
           defaultUtmSource: "phonara-promo",
         };
+      const next = { ...current, ...patch };
       return promoUpsertSettings({
         default_utm: {
-          webhookUrl: patch.webhookUrl ?? current.webhookUrl,
-          hmacSecret: patch.hmacSecret ?? current.hmacSecret,
-          defaultUtmSource: patch.defaultUtmSource ?? current.defaultUtmSource,
-          utm_source: patch.defaultUtmSource ?? current.defaultUtmSource,
+          webhookUrl: next.webhookUrl,
+          hmacSecret: next.hmacSecret,
+          defaultUtmSource: next.defaultUtmSource,
+          utm_source: next.defaultUtmSource,
+          telegramBotToken: next.telegramBotToken ?? "",
+          telegramChatId: next.telegramChatId ?? "",
         },
       });
     },
