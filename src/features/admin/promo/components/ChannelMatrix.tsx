@@ -5,10 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { usePromoAdmin, PROMO_QUERY_KEYS } from "../hooks/usePromoAdmin";
 import { ADMIN_KO, PROMO_CHANNEL_LABELS_KO } from "@/shared/admin/labels.ko";
-import {
-  runPromoCronTick,
-  testChannel as testChannelFn,
-} from "@/lib/promo/promo.functions";
+import { runPromoCronTick, testChannel as testChannelFn } from "@/lib/promo/promo.functions";
 import { getAdminAuthHeaders } from "@/lib/admin/session";
 import type { OAuthChannelId } from "@/lib/promo/oauth/types";
 import type { PromoChannelId } from "../types";
@@ -39,7 +36,10 @@ function settingsPayload(s: {
   };
 }
 
-function isOAuthConnected(id: PromoChannelId, settings: ReturnType<typeof usePromoAdmin>["settings"]) {
+function isOAuthConnected(
+  id: PromoChannelId,
+  settings: ReturnType<typeof usePromoAdmin>["settings"],
+) {
   if (id === "x") return settings.xConnected;
   if (id === "linkedin") return settings.linkedinConnected;
   if (id === "tiktok") return settings.tiktokConnected;
@@ -71,9 +71,7 @@ export function ChannelMatrix() {
     if (!oauth) return;
     const channel = params.get("channel");
     if (oauth === "ok" && channel) {
-      toast.success(
-        koPub.oauthCallbackOk(PROMO_CHANNEL_LABELS_KO[channel] ?? channel),
-      );
+      toast.success(koPub.oauthCallbackOk(PROMO_CHANNEL_LABELS_KO[channel] ?? channel));
       void qc.invalidateQueries({ queryKey: PROMO_QUERY_KEYS.settings });
     } else if (oauth === "error") {
       toast.error(oauthErrorMessage(params.get("reason")));
@@ -88,9 +86,7 @@ export function ChannelMatrix() {
   }, [qc]);
 
   function pushLog(msg: string) {
-    setLog((l) =>
-      [`${new Date().toLocaleTimeString("ko-KR")} · ${msg}`, ...l].slice(0, 20),
-    );
+    setLog((l) => [`${new Date().toLocaleTimeString("ko-KR")} · ${msg}`, ...l].slice(0, 20));
   }
 
   async function startOAuthConnect(channel: OAuthChannelId) {
@@ -191,8 +187,7 @@ export function ChannelMatrix() {
             const isConnecting = oauthChannel && connecting === id;
             // Badge: OAuth channels in persisting mode get 3-state pill; others keep live/mock.
             let badgeText: string;
-            let badgeCls =
-              "ml-auto rounded-full px-2 py-0.5 text-[9px] font-bold border";
+            let badgeCls = "ml-auto rounded-full px-2 py-0.5 text-[9px] font-bold border";
             if (oauthChannel && persisting) {
               if (connected) {
                 badgeText = koPub.oauthConnected;
@@ -207,10 +202,7 @@ export function ChannelMatrix() {
               badgeCls += " bg-white/8 border-white/10";
             }
             return (
-              <div
-                key={id}
-                className="glass-1 flex min-h-[128px] flex-col gap-2 rounded-2xl p-3"
-              >
+              <div key={id} className="glass-1 flex min-h-[128px] flex-col gap-2 rounded-2xl p-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold">{PROMO_CHANNEL_LABELS_KO[id]}</span>
                   <span className={badgeCls}>{badgeText}</span>

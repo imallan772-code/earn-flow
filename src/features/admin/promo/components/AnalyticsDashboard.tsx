@@ -57,8 +57,7 @@ export function AnalyticsDashboard() {
   const filteredCount = filteredDispatches.length;
   const filteredClickCount = filteredClicks.length;
   const filteredImpressions = filteredCount * 100;
-  const ctr =
-    filteredImpressions > 0 ? (filteredClickCount / filteredImpressions) * 100 : 0;
+  const ctr = filteredImpressions > 0 ? (filteredClickCount / filteredImpressions) * 100 : 0;
   const isEmpty = filteredCount === 0 && filteredClickCount === 0;
 
   return (
@@ -247,8 +246,7 @@ function ClickDispatchSparkline({
   const clickPts = toPoints(clickBuckets);
   const first = dispatchBuckets[0]?.ymd ?? clickBuckets[0]?.ymd;
   const last =
-    dispatchBuckets[dispatchBuckets.length - 1]?.ymd ??
-    clickBuckets[clickBuckets.length - 1]?.ymd;
+    dispatchBuckets[dispatchBuckets.length - 1]?.ymd ?? clickBuckets[clickBuckets.length - 1]?.ymd;
   return (
     <div className="glass-2 rounded-3xl p-5">
       <div className="mb-2 flex items-center justify-between">

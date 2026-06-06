@@ -120,7 +120,6 @@ export function dailyClickBuckets(
   return buckets;
 }
 
-
 export function topCampaignByDispatches(
   campaigns: PromoCampaign[],
   dispatches: PromoDispatch[],
