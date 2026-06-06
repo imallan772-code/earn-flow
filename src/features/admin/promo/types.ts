@@ -22,8 +22,10 @@ export interface PromoVariant {
   hashtags: string[];
   cta?: string;
   weight: number;
-  /** Z-1: 이미지 생성용 프롬프트 텍스트 (실제 생성은 Z-2) */
+  /** Z-1: 이미지 생성용 프롬프트 텍스트 */
   imagePrompt?: string;
+  /** Z-2: 생성된 이미지 URL (data URL or Storage URL). features mapCampaign SSOT. */
+  imageUrl?: string;
 }
 
 export interface PromoCampaign {
@@ -69,6 +71,10 @@ export interface PromoSettings {
   webhookUrl: string;
   hmacSecret: string;
   defaultUtmSource: string;
+  /** Z-2: Telegram Bot API token (default_utm JSON SSOT, no DB migration). */
+  telegramBotToken?: string;
+  /** Z-2: Telegram chat id (number or @channel). */
+  telegramChatId?: string;
 }
 
 import { PROMO_CHANNEL_LABELS_KO } from "@/shared/admin/labels.ko";
