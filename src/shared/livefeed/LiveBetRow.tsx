@@ -41,29 +41,24 @@ interface Props {
 }
 
 function LiveBetRowImpl({ bet, asDiv, style }: Props) {
+  const isPending = bet.status === "pending";
   const profitColor =
-    bet.profit == null || bet.status === "pending"
+    bet.profit == null || isPending
       ? "var(--color-muted-2)"
       : bet.profit > 0
         ? "var(--color-emerald)"
         : "var(--color-rose)";
-
-  const profitText =
-    bet.status === "pending"
-      ? "—"
-      : bet.profit != null && bet.profit > 0
-        ? `+${bet.profit.toFixed(2)}`
-        : bet.profit != null
-          ? `${bet.profit.toFixed(2)}`
-          : "—";
-
+  const profitText = isPending
+    ? "—"
+    : bet.profit != null
+      ? `${bet.profit > 0 ? "+" : ""}${bet.profit.toFixed(2)}`
+      : "—";
   const multText =
     bet.multiplier != null && bet.multiplier > 0
       ? `${bet.multiplier.toFixed(2)}x`
       : bet.status === "bust"
         ? "BUST"
         : "—";
-
   const meWin = bet.isMe && (bet.status === "win" || bet.status === "cashout");
 
   const className = cn(
