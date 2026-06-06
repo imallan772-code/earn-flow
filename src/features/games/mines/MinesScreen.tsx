@@ -96,6 +96,13 @@ export function MinesScreen() {
     commitServerSeed(SERVER_SEED).then(setCommit);
   }, []);
 
+  // ───────── Refund unsettled mid-round bet on unmount (SSOT)
+  useUnmountRefund(refund, () => {
+    const ar = minesStore.get().activeRound;
+    if (!ar) return null;
+    return { amount: ar.amount, meta: { game: "mines", roundId: `n${ar.nonce}` } };
+  });
+
   // ───────── Restore active round (1회) — handlePlace 재호출 금지
   useEffect(() => {
     if (restoredRef.current) return;
