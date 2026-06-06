@@ -86,8 +86,7 @@ export function MinesDisplay({
         {tiles.map((tile) => {
           const isRevealed = revealed.includes(tile);
           const isHit = hitTile === tile;
-          const isMineRevealed =
-            showAll && active != null && active.mines.includes(tile) && !isHit;
+          const isMineRevealed = showAll && active != null && active.mines.includes(tile) && !isHit;
           return (
             <div key={tile} data-tile={tile} className="contents">
               <MinesTile

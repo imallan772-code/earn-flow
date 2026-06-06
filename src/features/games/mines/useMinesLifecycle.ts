@@ -13,12 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { profitOf } from "@/shared/games/engine/houseEdge";
-import {
-  TOTAL_TILES,
-  isMine,
-  nextMultiplier,
-  placeMines,
-} from "@/shared/games/mines/MinesEngine";
+import { TOTAL_TILES, isMine, nextMultiplier, placeMines } from "@/shared/games/mines/MinesEngine";
 import { type ActiveMinesRound, minesStore } from "@/shared/games/state/persistedGameState";
 import { recordSessionOutcome } from "@/shared/games/ui/sessionStats";
 import { useSfx } from "@/shared/sfx/useSfx";
@@ -52,7 +47,11 @@ interface RoundLike {
 interface WalletLike {
   mode: string;
   tryDebit: (amount: number, meta: { game: string; roundId: string }) => Promise<boolean>;
-  credit: (amount: number, mult: number, meta: { game: string; roundId: string }) => Promise<unknown> | unknown;
+  credit: (
+    amount: number,
+    mult: number,
+    meta: { game: string; roundId: string },
+  ) => Promise<unknown> | unknown;
 }
 
 interface Args {

@@ -50,7 +50,11 @@ import { useMinesLifecycle, type RecentResult } from "./useMinesLifecycle";
 const SERVER_SEED = "phonara-mines-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
 
-function paintResultCanvas(recent: RecentResult, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+function paintResultCanvas(
+  recent: RecentResult,
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D,
+) {
   const w = canvas.width;
   const h = canvas.height;
   ctx.fillStyle = recent.outcome === "win" ? "oklch(0.78 0.18 90)" : "oklch(0.62 0.2 25)";
@@ -94,9 +98,22 @@ export function MinesScreen() {
     defaultClientSeed: DEFAULT_CLIENT_SEED,
   });
   const {
-    active, revealed, hitTile, shakeKey, flashKey, recent, setRecent,
-    currentMult, nextSafeChance, nextMultPreview, sfx,
-    handlePlace, handleReveal, handleCashout, handleRandomPick, resetForSeedChange,
+    active,
+    revealed,
+    hitTile,
+    shakeKey,
+    flashKey,
+    recent,
+    setRecent,
+    currentMult,
+    nextSafeChance,
+    nextMultPreview,
+    sfx,
+    handlePlace,
+    handleReveal,
+    handleCashout,
+    handleRandomPick,
+    resetForSeedChange,
   } = life;
 
   useEffect(() => {
@@ -116,15 +133,27 @@ export function MinesScreen() {
   // Hotkeys: 1–0 / R / C / ESC / M
   const hotkeys = useMemo<HotkeyMap>(() => {
     const map: HotkeyMap = {
-      c: (e) => { e.preventDefault(); handleCashout(); },
-      r: (e) => { e.preventDefault(); handleRandomPick(); },
+      c: (e) => {
+        e.preventDefault();
+        handleCashout();
+      },
+      r: (e) => {
+        e.preventDefault();
+        handleRandomPick();
+      },
       Escape: () => setShowFair((v) => !v),
       m: () => sfx.toggleMute(),
     };
     for (let i = 1; i <= 9; i++) {
-      map[String(i)] = (e) => { e.preventDefault(); handleReveal(i - 1); };
+      map[String(i)] = (e) => {
+        e.preventDefault();
+        handleReveal(i - 1);
+      };
     }
-    map["0"] = (e) => { e.preventDefault(); handleReveal(9); };
+    map["0"] = (e) => {
+      e.preventDefault();
+      handleReveal(9);
+    };
     return map;
   }, [handleReveal, handleCashout, handleRandomPick, sfx]);
   useHotkeys(hotkeys);
@@ -138,7 +167,10 @@ export function MinesScreen() {
 
   const applySeed = useCallback(() => {
     const next = seedDraft.trim().slice(0, 32) || DEFAULT_CLIENT_SEED;
-    if (next === clientSeed) { setShowFair(false); return; }
+    if (next === clientSeed) {
+      setShowFair(false);
+      return;
+    }
     const ar = minesStore.get().activeRound;
     if (ar) {
       void refund(ar.amount, { game: "mines", roundId: `n${ar.nonce}` }).catch(() => undefined);
@@ -160,7 +192,11 @@ export function MinesScreen() {
     () => [
       {
         label: "서버 시드 (해시)",
-        content: <code className="break-all text-[10px] text-(--color-cyan)">{commit || "로딩 중..."}</code>,
+        content: (
+          <code className="break-all text-[10px] text-(--color-cyan)">
+            {commit || "로딩 중..."}
+          </code>
+        ),
         copyText: commit || undefined,
       },
       {
@@ -176,7 +212,10 @@ export function MinesScreen() {
         ),
       },
       { label: "다음 라운드 번호", content: <code className="font-numeric">{nonce}</code> },
-      { label: "현재 지뢰 수", content: <code className="font-numeric text-(--color-rose)">{mineCount}</code> },
+      {
+        label: "현재 지뢰 수",
+        content: <code className="font-numeric text-(--color-rose)">{mineCount}</code>,
+      },
     ],
     [commit, seedDraft, nonce, mineCount],
   );
@@ -192,7 +231,11 @@ export function MinesScreen() {
       <GameShell
         header={
           <header className="flex items-center gap-2">
-            <Link to="/earn" className="glass-1 grid h-9 w-9 place-items-center rounded-full" aria-label="뒤로">
+            <Link
+              to="/earn"
+              className="glass-1 grid h-9 w-9 place-items-center rounded-full"
+              aria-label="뒤로"
+            >
               <ArrowLeft size={16} />
             </Link>
             <div className="min-w-0">
@@ -226,13 +269,24 @@ export function MinesScreen() {
           <div className="glass-2 rounded-2xl p-3">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px]">
               <span className="font-bold text-(--color-muted)">
-                지뢰 <span className="font-numeric text-(--color-rose)">{active?.mineCount ?? mineCount}</span>
+                지뢰{" "}
+                <span className="font-numeric text-(--color-rose)">
+                  {active?.mineCount ?? mineCount}
+                </span>
                 {" · "}
-                보석 <span className="font-numeric text-emerald">{revealed.length}/{safeRevealable}</span>
+                보석{" "}
+                <span className="font-numeric text-emerald">
+                  {revealed.length}/{safeRevealable}
+                </span>
                 {" · "}
-                다음 승률 <span className="font-numeric text-(--color-cyan)">{(nextSafeChance * 100).toFixed(1)}%</span>
+                다음 승률{" "}
+                <span className="font-numeric text-(--color-cyan)">
+                  {(nextSafeChance * 100).toFixed(1)}%
+                </span>
               </span>
-              <span className="font-numeric font-extrabold text-gold">{currentMult.toFixed(2)}x</span>
+              <span className="font-numeric font-extrabold text-gold">
+                {currentMult.toFixed(2)}x
+              </span>
             </div>
             <MinesDisplay
               tiles={tiles}
@@ -245,7 +299,9 @@ export function MinesScreen() {
               nextMultPreview={nextMultPreview}
               onReveal={handleReveal}
             />
-            <span id={liveRegionId} aria-live="polite" className="sr-only">{announce}</span>
+            <span id={liveRegionId} aria-live="polite" className="sr-only">
+              {announce}
+            </span>
           </div>
         }
         controls={
@@ -260,14 +316,28 @@ export function MinesScreen() {
             onRandomPick={handleRandomPick}
           />
         }
-        summaryPanel={<BetSummaryPanel variant="static" amount={pendingAmount} targetMultiplier={nextMultiplier(1, mineCount)} />}
+        summaryPanel={
+          <BetSummaryPanel
+            variant="static"
+            amount={pendingAmount}
+            targetMultiplier={nextMultiplier(1, mineCount)}
+          />
+        }
         banner={<DemoLowBanner />}
         betPanel={
           <StakeBetPanel
             canPlace={round.isIdle}
             hasActiveBet={round.phase === "playing"}
             balance={balance}
-            lastOutcome={lastOutcome ? { outcome: lastOutcome.outcome, profit: lastOutcome.profit, nonce: lastOutcome.nonce } : null}
+            lastOutcome={
+              lastOutcome
+                ? {
+                    outcome: lastOutcome.outcome,
+                    profit: lastOutcome.profit,
+                    nonce: lastOutcome.nonce,
+                  }
+                : null
+            }
             bettingRoundKey={active?.nonce ?? nonce}
             variant="compact"
             showAutoTarget={false}
@@ -293,7 +363,9 @@ export function MinesScreen() {
             onDone={() => setRecent(null)}
           />
           <div className="pointer-events-auto absolute right-4 top-[calc(33%+4.5rem)] z-20">
-            <ShareResultButton renderToCanvas={(canvas, ctx) => paintResultCanvas(recent, canvas, ctx)} />
+            <ShareResultButton
+              renderToCanvas={(canvas, ctx) => paintResultCanvas(recent, canvas, ctx)}
+            />
           </div>
         </>
       )}
@@ -306,7 +378,8 @@ export function MinesScreen() {
         footer={
           <span className="flex items-start gap-1">
             <Bomb size={10} className="mt-0.5 shrink-0" />
-            시드 변경 시 nonce 0 리셋 + 진행 중 라운드 폐기. 동일 시드/라운드는 항상 같은 배치를 만듭니다.
+            시드 변경 시 nonce 0 리셋 + 진행 중 라운드 폐기. 동일 시드/라운드는 항상 같은 배치를
+            만듭니다.
           </span>
         }
       />
