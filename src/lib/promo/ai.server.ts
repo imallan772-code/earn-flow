@@ -198,7 +198,7 @@ export async function callPromoBundle(
         ? await callGeminiDirect(resolved, prompt, ac.signal)
         : await callLovableGateway(resolved, prompt, ac.signal);
 
-    if (!raw.ok) return raw;
+    if (!raw.ok) return { ok: false, code: raw.code, message: raw.message };
     const bundle = parseAiBundle(raw.text, { brief: input.brief, channels: input.channels });
     return { ok: true, data: bundle, provider: resolved.provider };
   } catch (e) {
