@@ -27,13 +27,13 @@ export const testChannel = createServerFn({ method: "POST" })
 
 export const listCampaigns = createServerFn({ method: "GET" }).handler(async () => {
   // Z-DB 머지 후 supabase select. 지금은 빈 배열.
-  return { campaigns: [] as unknown[] };
+  return { campaigns: [] as string[] };
 });
 
 export const listDispatches = createServerFn({ method: "GET" }).handler(async () => {
-  return { dispatches: [] as unknown[] };
+  return { dispatches: [] as string[] };
 });
 
 export const listAssets = createServerFn({ method: "GET" }).handler(async () => {
-  return { assets: [] as unknown[] };
+  return { assets: [] as string[] };
 });

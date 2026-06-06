@@ -52,6 +52,8 @@ import { Route as AppGamesDiceRouteImport } from './routes/_app/games.dice'
 import { Route as AppGamesCrashRouteImport } from './routes/_app/games.crash'
 import { Route as AppExchangeSymbolRouteImport } from './routes/_app/exchange.$symbol'
 import { Route as AppEventIdRouteImport } from './routes/_app/event.$id'
+import { Route as ApiPublicRSlugRouteImport } from './routes/api/public/r.$slug'
+import { Route as ApiPublicCronPromoTickRouteImport } from './routes/api/public/cron.promo-tick'
 
 const TransferRoute = TransferRouteImport.update({
   id: '/transfer',
@@ -267,6 +269,16 @@ const AppEventIdRoute = AppEventIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppEventRoute,
 } as any)
+const ApiPublicRSlugRoute = ApiPublicRSlugRouteImport.update({
+  id: '/api/public/r/$slug',
+  path: '/api/public/r/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCronPromoTickRoute = ApiPublicCronPromoTickRouteImport.update({
+  id: '/api/public/cron/promo-tick',
+  path: '/api/public/cron/promo-tick',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -311,6 +323,8 @@ export interface FileRoutesByFullPath {
   '/admin/promo/settings': typeof AdminPromoSettingsRoute
   '/admin/promo/studio': typeof AdminPromoStudioRoute
   '/admin/promo/': typeof AdminPromoIndexRoute
+  '/api/public/cron/promo-tick': typeof ApiPublicCronPromoTickRoute
+  '/api/public/r/$slug': typeof ApiPublicRSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -353,6 +367,8 @@ export interface FileRoutesByTo {
   '/admin/promo/settings': typeof AdminPromoSettingsRoute
   '/admin/promo/studio': typeof AdminPromoStudioRoute
   '/admin/promo': typeof AdminPromoIndexRoute
+  '/api/public/cron/promo-tick': typeof ApiPublicCronPromoTickRoute
+  '/api/public/r/$slug': typeof ApiPublicRSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -399,6 +415,8 @@ export interface FileRoutesById {
   '/admin/promo/settings': typeof AdminPromoSettingsRoute
   '/admin/promo/studio': typeof AdminPromoStudioRoute
   '/admin/promo/': typeof AdminPromoIndexRoute
+  '/api/public/cron/promo-tick': typeof ApiPublicCronPromoTickRoute
+  '/api/public/r/$slug': typeof ApiPublicRSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -445,6 +463,8 @@ export interface FileRouteTypes {
     | '/admin/promo/settings'
     | '/admin/promo/studio'
     | '/admin/promo/'
+    | '/api/public/cron/promo-tick'
+    | '/api/public/r/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -487,6 +507,8 @@ export interface FileRouteTypes {
     | '/admin/promo/settings'
     | '/admin/promo/studio'
     | '/admin/promo'
+    | '/api/public/cron/promo-tick'
+    | '/api/public/r/$slug'
   id:
     | '__root__'
     | '/'
@@ -532,6 +554,8 @@ export interface FileRouteTypes {
     | '/admin/promo/settings'
     | '/admin/promo/studio'
     | '/admin/promo/'
+    | '/api/public/cron/promo-tick'
+    | '/api/public/r/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -552,6 +576,8 @@ export interface RootRouteChildren {
   WithdrawalPhonRoute: typeof WithdrawalPhonRoute
   DepositIndexRoute: typeof DepositIndexRoute
   WithdrawalIndexRoute: typeof WithdrawalIndexRoute
+  ApiPublicCronPromoTickRoute: typeof ApiPublicCronPromoTickRoute
+  ApiPublicRSlugRoute: typeof ApiPublicRSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -857,6 +883,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEventIdRouteImport
       parentRoute: typeof AppEventRoute
     }
+    '/api/public/r/$slug': {
+      id: '/api/public/r/$slug'
+      path: '/api/public/r/$slug'
+      fullPath: '/api/public/r/$slug'
+      preLoaderRoute: typeof ApiPublicRSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/promo-tick': {
+      id: '/api/public/cron/promo-tick'
+      path: '/api/public/cron/promo-tick'
+      fullPath: '/api/public/cron/promo-tick'
+      preLoaderRoute: typeof ApiPublicCronPromoTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -980,6 +1020,8 @@ const rootRouteChildren: RootRouteChildren = {
   WithdrawalPhonRoute: WithdrawalPhonRoute,
   DepositIndexRoute: DepositIndexRoute,
   WithdrawalIndexRoute: WithdrawalIndexRoute,
+  ApiPublicCronPromoTickRoute: ApiPublicCronPromoTickRoute,
+  ApiPublicRSlugRoute: ApiPublicRSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
