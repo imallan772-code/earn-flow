@@ -5,12 +5,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePromoAdmin } from "../hooks/usePromoAdmin";
 import {
   channelBreakdown,
+  dailyClickBuckets,
   dailyDispatchBuckets,
   filterByPeriod,
   periodRange,
   resolveCampaignTitle,
   topCampaignByDispatches,
   topChannelFromClicks,
+  type DailyBucket,
   type PeriodKey,
 } from "@/lib/promo/analyticsAggregate";
 import type { PromoCampaign, PromoDispatch } from "../types";
@@ -33,9 +35,14 @@ export function AnalyticsDashboard() {
   );
 
   const breakdown = useMemo(() => channelBreakdown(filteredDispatches), [filteredDispatches]);
-  const buckets = useMemo(
-    () => dailyDispatchBuckets(filteredDispatches, period === "30d" ? 30 : 7),
-    [filteredDispatches, period],
+  const sparkDays = period === "30d" ? 30 : 7;
+  const dispatchBuckets = useMemo(
+    () => dailyDispatchBuckets(filteredDispatches, sparkDays),
+    [filteredDispatches, sparkDays],
+  );
+  const clickBuckets = useMemo(
+    () => dailyClickBuckets(filteredClicks, sparkDays),
+    [filteredClicks, sparkDays],
   );
   const top = useMemo(
     () => topCampaignByDispatches(campaigns, filteredDispatches),
