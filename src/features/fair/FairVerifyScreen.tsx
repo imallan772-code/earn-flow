@@ -1,25 +1,24 @@
 /**
- * Standalone Provably Fair verify page — ROUND Q-PR1.
+ * Standalone Provably Fair verify page — ROUND Q-PR1 + Q-c i18n polish.
  * Public route: /fair/verify?game=crash&serverSeed=...&hash=...
  */
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ShieldCheck, Copy, Link2, ArrowLeft } from "lucide-react";
 import { verifyProvablyFair, buildVerifyShareUrl, type VerifyOutcome } from "@/lib/pf/verifyPublic";
-import {
-  verifyGameSchema,
-  type VerifyGame,
-  type VerifySearch,
-} from "@/lib/pf/verifySchemas";
+import { verifyGameSchema, type VerifyGame, type VerifySearch } from "@/lib/pf/verifySchemas";
+import { t } from "@/shared/i18n";
 import { appToast } from "@/shared/ui/toast";
 
-const GAMES: { id: VerifyGame; label: string }[] = [
-  { id: "crash", label: "Crash" },
-  { id: "dice", label: "Dice" },
-  { id: "limbo", label: "Limbo" },
-  { id: "wheel", label: "Wheel" },
-  { id: "mines", label: "Mines" },
-];
+const GAME_LABEL_KEYS = {
+  crash: "fair.verify.game.crash",
+  dice: "fair.verify.game.dice",
+  limbo: "fair.verify.game.limbo",
+  wheel: "fair.verify.game.wheel",
+  mines: "fair.verify.game.mines",
+} as const satisfies Record<VerifyGame, Parameters<typeof t>[0]>;
+
+const GAME_IDS: VerifyGame[] = ["crash", "dice", "limbo", "wheel", "mines"];
 
 interface Props {
   initial: VerifySearch;
@@ -60,11 +59,22 @@ export function FairVerifyScreen({ initial }: Props) {
       setOutcome(result);
     } catch (e) {
       setOutcome(null);
-      setError(e instanceof Error ? e.message : "검증 실패");
+      setError(e instanceof Error ? e.message : t("fair.verify.error.fallback"));
     } finally {
       setLoading(false);
     }
-  }, [game, serverSeed, serverSeedHash, clientSeed, nonce, mineCount, segments, risk, showMines, showWheel]);
+  }, [
+    game,
+    serverSeed,
+    serverSeedHash,
+    clientSeed,
+    nonce,
+    mineCount,
+    segments,
+    risk,
+    showMines,
+    showWheel,
+  ]);
 
   const shareUrl = useMemo(() => {
     if (!formReady || typeof window === "undefined") return "";
@@ -82,7 +92,19 @@ export function FairVerifyScreen({ initial }: Props) {
     } catch {
       return "";
     }
-  }, [formReady, game, serverSeed, serverSeedHash, clientSeed, nonce, mineCount, segments, risk, showMines, showWheel]);
+  }, [
+    formReady,
+    game,
+    serverSeed,
+    serverSeedHash,
+    clientSeed,
+    nonce,
+    mineCount,
+    segments,
+    risk,
+    showMines,
+    showWheel,
+  ]);
 
   async function copyText(text: string) {
     try {
@@ -102,15 +124,13 @@ export function FairVerifyScreen({ initial }: Props) {
             className="mb-4 inline-flex items-center gap-1.5 text-sm text-(--color-muted) hover:text-foreground"
           >
             <ArrowLeft className="size-4" aria-hidden />
-            홈으로
+            {t("fair.verify.home")}
           </Link>
           <div className="flex items-center gap-3">
             <ShieldCheck className="size-8 text-(--color-accent)" aria-hidden />
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Provably Fair 검증</h1>
-              <p className="mt-1 text-sm text-(--color-muted)">
-                공개된 server seed + client seed + nonce로 라운드 결과를 직접 재현합니다.
-              </p>
+              <h1 className="text-2xl font-bold tracking-tight">{t("fair.verify.title")}</h1>
+              <p className="mt-1 text-sm text-(--color-muted)">{t("fair.verify.subtitle")}</p>
             </div>
           </div>
         </header>
@@ -118,7 +138,7 @@ export function FairVerifyScreen({ initial }: Props) {
         <div className="glass-3 flex flex-1 flex-col gap-6 rounded-3xl p-6 shadow-depth-2">
           <fieldset className="grid gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-              <span className="font-medium">게임</span>
+              <span className="font-medium">{t("fair.verify.field.game")}</span>
               <select
                 value={game}
                 onChange={(e) => {
@@ -127,36 +147,36 @@ export function FairVerifyScreen({ initial }: Props) {
                 }}
                 className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 outline-none focus:border-(--color-accent)"
               >
-                {GAMES.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.label}
+                {GAME_IDS.map((id) => (
+                  <option key={id} value={id}>
+                    {t(GAME_LABEL_KEYS[id])}
                   </option>
                 ))}
               </select>
             </label>
 
             <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-              <span className="font-medium">Server seed (공개)</span>
+              <span className="font-medium">{t("fair.verify.field.serverSeed")}</span>
               <input
                 value={serverSeed}
                 onChange={(e) => setServerSeed(e.target.value)}
                 className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 font-mono text-xs outline-none focus:border-(--color-accent)"
-                placeholder="라운드 종료 후 공개된 시드"
+                placeholder={t("fair.verify.field.serverSeed.placeholder")}
               />
             </label>
 
             <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-              <span className="font-medium">Server seed hash (선택 — 사전 커밋)</span>
+              <span className="font-medium">{t("fair.verify.field.serverSeedHash")}</span>
               <input
                 value={serverSeedHash}
                 onChange={(e) => setServerSeedHash(e.target.value)}
                 className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 font-mono text-xs outline-none focus:border-(--color-accent)"
-                placeholder="SHA256(serverSeed)"
+                placeholder={t("fair.verify.field.serverSeedHash.placeholder")}
               />
             </label>
 
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium">Client seed</span>
+              <span className="font-medium">{t("fair.verify.field.clientSeed")}</span>
               <input
                 value={clientSeed}
                 onChange={(e) => setClientSeed(e.target.value)}
@@ -165,7 +185,7 @@ export function FairVerifyScreen({ initial }: Props) {
             </label>
 
             <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium">Nonce</span>
+              <span className="font-medium">{t("fair.verify.field.nonce")}</span>
               <input
                 type="number"
                 min={0}
@@ -177,7 +197,7 @@ export function FairVerifyScreen({ initial }: Props) {
 
             {showMines && (
               <label className="flex flex-col gap-1.5 text-sm">
-                <span className="font-medium">Mine count</span>
+                <span className="font-medium">{t("fair.verify.field.mineCount")}</span>
                 <input
                   type="number"
                   min={1}
@@ -192,7 +212,7 @@ export function FairVerifyScreen({ initial }: Props) {
             {showWheel && (
               <>
                 <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium">Risk</span>
+                  <span className="font-medium">{t("fair.verify.field.risk")}</span>
                   <select
                     value={risk}
                     onChange={(e) => setRisk(e.target.value as "low" | "medium" | "high")}
@@ -204,7 +224,7 @@ export function FairVerifyScreen({ initial }: Props) {
                   </select>
                 </label>
                 <label className="flex flex-col gap-1.5 text-sm">
-                  <span className="font-medium">Segments</span>
+                  <span className="font-medium">{t("fair.verify.field.segments")}</span>
                   <select
                     value={segments}
                     onChange={(e) => setSegments(e.target.value)}
@@ -226,7 +246,7 @@ export function FairVerifyScreen({ initial }: Props) {
               onClick={() => void runVerify()}
               className="rounded-xl bg-(--color-accent) px-5 py-2.5 text-sm font-semibold text-black disabled:opacity-50"
             >
-              {loading ? "검증 중…" : "결과 재현"}
+              {loading ? t("fair.verify.running") : t("fair.verify.run")}
             </button>
             {shareUrl && (
               <button
@@ -235,7 +255,7 @@ export function FairVerifyScreen({ initial }: Props) {
                 className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-4 py-2.5 text-sm hover:bg-white/5"
               >
                 <Link2 className="size-4" aria-hidden />
-                링크 복사
+                {t("fair.verify.shareLink")}
               </button>
             )}
           </div>
@@ -249,16 +269,16 @@ export function FairVerifyScreen({ initial }: Props) {
           {outcome && (
             <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-(--color-muted)">
-                검증 결과
+                {t("fair.verify.result.legend")}
               </h2>
               <dl className="mt-4 space-y-3 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <dt className="text-(--color-muted)">SHA256(server seed)</dt>
+                  <dt className="text-(--color-muted)">{t("fair.verify.result.commitHash")}</dt>
                   <dd className="flex items-center gap-2 font-mono text-xs break-all">
                     {outcome.commitHash}
                     <button
                       type="button"
-                      aria-label="커밋 해시 복사"
+                      aria-label={t("fair.verify.result.copyHash")}
                       onClick={() => void copyText(outcome.commitHash)}
                       className="shrink-0 rounded-lg p-1 hover:bg-white/10"
                     >
@@ -268,9 +288,11 @@ export function FairVerifyScreen({ initial }: Props) {
                 </div>
                 {outcome.commitValid !== null && (
                   <div className="flex justify-between gap-4">
-                    <dt className="text-(--color-muted)">커밋 일치</dt>
+                    <dt className="text-(--color-muted)">{t("fair.verify.result.commitMatch")}</dt>
                     <dd className={outcome.commitValid ? "text-emerald-400" : "text-red-400"}>
-                      {outcome.commitValid ? "일치 ✓" : "불일치 ✗"}
+                      {outcome.commitValid
+                        ? t("fair.verify.result.match")
+                        : t("fair.verify.result.mismatch")}
                     </dd>
                   </div>
                 )}
@@ -284,7 +306,7 @@ export function FairVerifyScreen({ initial }: Props) {
         </div>
 
         <p className="mt-6 text-center text-xs text-(--color-muted)">
-          Stake.com 동일 HMAC-SHA256 스킴 · 라운드 시작 전 커밋 해시 공개
+          {t("fair.verify.footer.stake")}
         </p>
       </div>
     </div>

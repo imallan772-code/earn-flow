@@ -26,6 +26,7 @@ import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
 import { GameRulesCard } from "@/shared/games/ui/GameRulesCard";
 import { HistoryPillStrip } from "@/shared/games/ui/HistoryPillStrip";
 import { ProvablyFairModal, type ProvablyFairRow } from "@/shared/games/ui/ProvablyFairModal";
+import { PfVerifyPageLink } from "@/shared/games/ui/PfVerifyPageLink";
 import { RoundResultCard } from "@/shared/games/ui/RoundResultCard";
 import { SessionStatsBar } from "@/shared/games/ui/SessionStatsBar";
 import { ShareResultButton } from "@/shared/games/ui/ShareResultButton";
@@ -379,11 +380,21 @@ export function MinesScreen() {
         rows={fairRows}
         onApply={applySeed}
         footer={
-          <span className="flex items-start gap-1">
-            <Bomb size={10} className="mt-0.5 shrink-0" />
-            시드 변경은 라운드 종료 후 가능. 이탈 시 진행 상태가 저장되어 돌아오면 이어서
-            플레이합니다.
-          </span>
+          <>
+            <span className="flex items-start gap-1">
+              <Bomb size={10} className="mt-0.5 shrink-0" />
+              시드 변경은 라운드 종료 후 가능. 이탈 시 진행 상태가 저장되어 돌아오면 이어서
+              플레이합니다.
+            </span>
+            <PfVerifyPageLink
+              game="mines"
+              serverSeed={SERVER_SEED}
+              serverSeedHash={commit}
+              clientSeed={seedDraft.trim() || clientSeed || DEFAULT_CLIENT_SEED}
+              nonce={nonce}
+              mineCount={mineCount}
+            />
+          </>
         }
       />
     </div>

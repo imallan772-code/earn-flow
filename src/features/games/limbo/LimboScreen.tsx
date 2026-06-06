@@ -29,6 +29,7 @@ import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
 import { GameRulesCard } from "@/shared/games/ui/GameRulesCard";
 import { HistoryPillStrip } from "@/shared/games/ui/HistoryPillStrip";
 import { ProvablyFairModal, type ProvablyFairRow } from "@/shared/games/ui/ProvablyFairModal";
+import { PfVerifyPageLink } from "@/shared/games/ui/PfVerifyPageLink";
 import { RoundResultCard } from "@/shared/games/ui/RoundResultCard";
 import { SessionStatsBar } from "@/shared/games/ui/SessionStatsBar";
 import { ShareResultButton } from "@/shared/games/ui/ShareResultButton";
@@ -545,7 +546,20 @@ export function LimboScreen() {
         onClose={() => setShowFair(false)}
         rows={fairRows}
         onApply={applySeed}
-        footer="진행 중 라운드가 있으면 시드 변경 불가. 이탈 시 라운드는 저장되어 복귀 시 이어집니다."
+        footer={
+          <>
+            <p>
+              진행 중 라운드가 있으면 시드 변경 불가. 이탈 시 라운드는 저장되어 복귀 시 이어집니다.
+            </p>
+            <PfVerifyPageLink
+              game="limbo"
+              serverSeed={SERVER_SEED}
+              serverSeedHash={commit}
+              clientSeed={seedDraft.trim() || DEFAULT_CLIENT_SEED}
+              nonce={nonce}
+            />
+          </>
+        }
       />
     </div>
   );

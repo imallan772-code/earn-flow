@@ -24,6 +24,7 @@ import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
 import { GameRulesCard } from "@/shared/games/ui/GameRulesCard";
 import { HistoryPillStrip } from "@/shared/games/ui/HistoryPillStrip";
 import { ProvablyFairModal, type ProvablyFairRow } from "@/shared/games/ui/ProvablyFairModal";
+import { PfVerifyPageLink } from "@/shared/games/ui/PfVerifyPageLink";
 import { PF_BLOCK_ACTIVE_ROUND_MSG } from "@/shared/games/ui/pfPolicy";
 import { SessionStatsBar } from "@/shared/games/ui/SessionStatsBar";
 import { recordSessionOutcome } from "@/shared/games/ui/sessionStats";
@@ -385,7 +386,18 @@ export function DiceScreen() {
         onClose={() => setShowFair(false)}
         rows={fairRows}
         onApply={applySeed}
-        footer="시드 변경 시 nonce 0 리셋. 동일 시드/라운드는 항상 같은 결과를 만듭니다."
+        footer={
+          <>
+            <p>시드 변경 시 nonce 0 리셋. 동일 시드/라운드는 항상 같은 결과를 만듭니다.</p>
+            <PfVerifyPageLink
+              game="dice"
+              serverSeed={SERVER_SEED}
+              serverSeedHash={commit}
+              clientSeed={seedDraft.trim() || DEFAULT_CLIENT_SEED}
+              nonce={nonce}
+            />
+          </>
+        }
       />
     </div>
   );
