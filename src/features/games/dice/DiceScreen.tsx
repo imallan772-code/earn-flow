@@ -45,10 +45,12 @@ import { diceStore } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { useHotkeys, type HotkeyMap } from "@/shared/hooks/useHotkeys";
-import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
+import { useRegisterMainMode, useRegisterRightRail } from "@/shared/layout/useGameLayout";
+import { useDesktopLayout } from "@/shared/hooks/useDesktopLayout";
 import { useSfx } from "@/shared/sfx/useSfx";
 import { notifyPfSeedChanged } from "@/shared/games/ui/gameOutcomePolicy";
 import { appToast } from "@/shared/ui/toast";
+import { DiceRightRail } from "./DiceRightRail";
 
 const SERVER_SEED = "phonara-dice-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
