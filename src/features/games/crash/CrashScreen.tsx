@@ -60,6 +60,7 @@ import { commitServerSeed } from "@/shared/games/engine/provablyFair";
 import { reachedTarget } from "@/shared/games/engine/clamp";
 import { type ActiveCrashRound, crashStore } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
+import { useUnmountRefund } from "@/shared/wallet/useUnmountRefund";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { useHotkeys, type HotkeyMap } from "@/shared/hooks/useHotkeys";
 import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
@@ -397,8 +398,10 @@ export function CrashScreen() {
     }
     const ar = crashStore.get().activeRound;
     if (ar && ar.cashedAt === null) {
-      // place 시 즉시 debit이라 seed reset만 하면 돈이 샘 → refund 1회.
-      refundRef.current(ar.amount);
+      // place 시 즉시 debit이라 seed reset만 하면 돈이 샘 → refund RPC 1회 (idempotent).
+      void refundRef
+        .current(ar.amount, { game: "crash", roundId: `n${ar.nonce}` })
+        .catch(() => undefined);
       liveBetsStore.update(ar.liveBetId, {
         multiplier: null,
         profit: 0,
