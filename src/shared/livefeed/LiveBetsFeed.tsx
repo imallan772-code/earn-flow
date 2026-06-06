@@ -6,8 +6,12 @@
  * - Highlights the current user's own bets with a cyan accent.
  * - When `virtualized` (or limit > 50) is set, uses LiveBetsVirtualList
  *   (react-window) so 500-row scenarios stay smooth.
+ *
+ * ROUND P-PR2: filter chips (memory state)
+ *  - `game` prop이 있으면 칩 렌더 X (게임 dock/inline 0 변화).
+ *  - All / Big wins (multiplier ≥ 10) / Me only (isMe).
  */
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Users, Globe2 } from "lucide-react";
 import {
   liveBetsStore,
@@ -20,6 +24,8 @@ import { LiveBetsVirtualList } from "./LiveBetsVirtualList";
 import { LiveBetRow, ROW_GRID } from "./LiveBetRow";
 import { cn } from "@/lib/utils";
 import { RollingCountUp } from "@/shared/motion/RollingCountUp";
+
+type FilterId = "all" | "big" | "me";
 
 interface Props {
   /** Max rows to render (default 12). */
@@ -34,6 +40,26 @@ interface Props {
   /** Pixel height for the virtualized list. Default 360. */
   virtualHeight?: number;
 }
+
+export const BIG_WIN_MULTIPLIER = 10;
+
+/** Big wins / Me only derive — exported for unit tests. */
+export function applyFeedFilter(bets: LiveBet[], filter: FilterId): LiveBet[] {
+  if (filter === "all") return bets;
+  if (filter === "me") return bets.filter((b) => b.isMe === true);
+  return bets.filter(
+    (b) =>
+      (b.status === "win" || b.status === "cashout") &&
+      b.multiplier != null &&
+      b.multiplier >= BIG_WIN_MULTIPLIER,
+  );
+}
+
+const CHIPS: ReadonlyArray<{ id: FilterId; label: string }> = [
+  { id: "all", label: "전체" },
+  { id: "big", label: "Big wins" },
+  { id: "me", label: "나만" },
+];
 
 export function LiveBetsFeed({
   limit = 12,
@@ -58,9 +84,16 @@ export function LiveBetsFeed({
     liveBetsStore.getTotalVolume(),
   );
 
-  const filtered = orderLiveBetsForView(bets, game);
+  const [filter, setFilter] = useState<FilterId>("all");
+  const showChips = !game;
+
+  const view = useMemo(() => {
+    const ordered = orderLiveBetsForView(bets, game);
+    const filtered = showChips ? applyFeedFilter(ordered, filter) : ordered;
+    return filtered.slice(0, limit);
+  }, [bets, game, showChips, filter, limit]);
+
   const useVirtual = virtualized ?? limit > 50;
-  const view = useVirtual ? filtered.slice(0, limit) : filtered.slice(0, limit);
 
   return (
     <section className={cn("glass-2 rounded-2xl p-3", className)}>
@@ -81,6 +114,34 @@ export function LiveBetsFeed({
             </span>
           </span>
         </header>
+      )}
+
+      {showChips && (
+        <div
+          role="tablist"
+          aria-label="라이브 피드 필터"
+          className="mb-2 flex items-center gap-1"
+        >
+          {CHIPS.map((c) => {
+            const active = filter === c.id;
+            return (
+              <button
+                key={c.id}
+                role="tab"
+                aria-selected={active}
+                onClick={() => setFilter(c.id)}
+                className={cn(
+                  "rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition-colors",
+                  active
+                    ? "bg-(--color-cyan) text-(--color-bg-0)"
+                    : "bg-(--color-surface-hi) text-(--color-muted) hover:text-(--color-foreground)",
+                )}
+              >
+                {c.label}
+              </button>
+            );
+          })}
+        </div>
       )}
 
       <div
