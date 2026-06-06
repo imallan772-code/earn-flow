@@ -23,14 +23,14 @@ describe("LiveBetsVirtualList", () => {
 
   it("renders empty state when no bets", () => {
     render(<LiveBetsVirtualList bets={[]} height={200} />);
-    expect(screen.getByText("베팅 대기 중...")).toBeInTheDocument();
+    expect(screen.getByText("베팅 대기 중...")).toBeTruthy();
   });
 
   it("renders rows for provided bets (windowed)", () => {
     const bets = Array.from({ length: 500 }, (_, i) => makeBet(i));
     render(<LiveBetsVirtualList bets={bets} height={200} />);
     // first few rows should be present; tail row index 499 should be windowed-out
-    expect(screen.getByText("user_0")).toBeInTheDocument();
+    expect(screen.getByText("user_0")).toBeTruthy();
     expect(screen.queryByText("user_499")).toBeNull();
   });
 });
