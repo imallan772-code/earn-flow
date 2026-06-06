@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import type { CSSProperties } from "react";
 import type { LiveBet } from "./LiveBetsStore";
 
-
 export const ROW_GRID =
   "grid grid-cols-[0.375rem_minmax(0,1fr)_5rem_3.25rem_5.5rem] items-center gap-x-2";
 
