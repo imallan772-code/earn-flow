@@ -1,6 +1,10 @@
 /**
  * LiveBetRow — single bet row used by both LiveBetsFeed (li list) and
  * LiveBetsVirtualList (react-window list). Memoized.
+ *
+ * ROUND P-PR2: ME emphasis
+ *  - 좌측 2px cyan glow bar (absolute, ROW_GRID 컬럼 0-diff)
+ *  - ME win/cashout: 1회성 emerald pulse ring (reduced-motion ON → 정적, CSS 미디어 쿼리)
  */
 import { memo } from "react";
 import { cn } from "@/lib/utils";
@@ -63,16 +67,25 @@ function LiveBetRowImpl({ bet, asDiv, style }: Props) {
         ? "BUST"
         : "—";
 
+  const meWin = bet.isMe && (bet.status === "win" || bet.status === "cashout");
+
   const className = cn(
     ROW_GRID,
-    "text-xs",
+    "relative text-xs",
     bet.isMe
       ? "my-1 rounded-lg border-b-0 py-2.5 bg-[color-mix(in_oklab,var(--color-cyan)_8%,transparent)] ring-1 ring-inset ring-[color-mix(in_oklab,var(--color-cyan)_45%,transparent)]"
       : "border-b border-(--color-border) py-1.5 last:border-b-0",
+    meWin && "live-row-me-win",
   );
 
   const content = (
     <>
+      {bet.isMe && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute left-0 inset-y-0 w-[2px] rounded-r-sm bg-(--color-cyan) shadow-[0_0_6px_color-mix(in_oklab,var(--color-cyan)_70%,transparent)]"
+        />
+      )}
       <span
         className="h-1.5 w-1.5 shrink-0 rounded-full"
         style={{ background: GAME_ACCENT[bet.game] }}
@@ -81,7 +94,7 @@ function LiveBetRowImpl({ bet, asDiv, style }: Props) {
       <span className="min-w-0 truncate text-(--color-muted)">
         {bet.isMe && (
           <span className="mr-1 rounded-sm bg-(--color-cyan) px-1 py-px text-[8px] font-bold text-(--color-bg-0)">
-            ME
+            나
           </span>
         )}
         {bet.user}
