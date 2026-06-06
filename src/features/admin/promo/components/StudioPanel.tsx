@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Sparkles, Wand2, XCircle } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { promoMockStore, usePromoState } from "../store/mockStore";
+import { usePromoAdmin } from "../hooks/usePromoAdmin";
 import { scanRiskLocal } from "@/lib/promo/risk";
 import { composePromoVariants } from "@/lib/promo/promo.functions";
 import { buildFallbackVariants } from "@/lib/promo/fallbackVariants";
@@ -34,7 +34,7 @@ export function StudioPanel() {
   const abortRef = useRef<AbortController | null>(null);
   const revealTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  const campaigns = usePromoState((s) => s.campaigns);
+  const { campaigns, upsertCampaign } = usePromoAdmin();
   const composeFn = useServerFn(composePromoVariants);
   const status = usePromoAiStatus();
 
@@ -115,7 +115,7 @@ export function StudioPanel() {
 
   const onSaveCampaign = () => {
     if (!title.trim() || revealed.length === 0) return;
-    promoMockStore.upsertCampaign({
+    upsertCampaign({
       id: `camp-${Date.now()}`,
       title,
       brief,

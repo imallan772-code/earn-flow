@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, Send } from "lucide-react";
-import { promoMockStore, usePromoState } from "../store/mockStore";
+import { usePromoAdmin } from "../hooks/usePromoAdmin";
 import { ADMIN_KO, PROMO_CHANNEL_LABELS_KO } from "@/shared/admin/labels.ko";
 import type { PromoChannelId } from "../types";
 
@@ -23,7 +23,7 @@ interface AdapterResult {
 
 function mockVerify(id: PromoChannelId): AdapterResult {
   const name = PROMO_CHANNEL_LABELS_KO[id] ?? id;
-  return { ok: true, msg: `[데모] ${name} 연결 확인됨 (Z-1에서 실연동)` };
+  return { ok: true, msg: `[데모] ${name} 연결 확인됨 (Z-2에서 실연동)` };
 }
 function mockSend(id: PromoChannelId): AdapterResult {
   const name = PROMO_CHANNEL_LABELS_KO[id] ?? id;
@@ -31,8 +31,7 @@ function mockSend(id: PromoChannelId): AdapterResult {
 }
 
 export function ChannelMatrix() {
-  const dispatches = usePromoState((s) => s.dispatches);
-  const campaigns = usePromoState((s) => s.campaigns);
+  const { dispatches, campaigns, addDispatch, configured } = usePromoAdmin();
   const [log, setLog] = useState<string[]>([]);
   const ko = ADMIN_KO.promo.channels;
 
@@ -40,8 +39,8 @@ export function ChannelMatrix() {
     const r = mode === "verify" ? mockVerify(id) : mockSend(id);
     setLog((l) => [`${new Date().toLocaleTimeString("ko-KR")} · ${r.msg}`, ...l].slice(0, 20));
     if (mode === "send" && campaigns[0]) {
-      promoMockStore.addDispatch({
-        id: `d-${Date.now()}`,
+      addDispatch({
+        id: configured ? crypto.randomUUID() : `d-${Date.now()}`,
         campaignId: campaigns[0].id,
         channel: id,
         variantId: campaigns[0].variants[0]?.id ?? "v-mock",
@@ -61,7 +60,7 @@ export function ChannelMatrix() {
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold">{PROMO_CHANNEL_LABELS_KO[id]}</span>
                 <span className="ml-auto rounded-full bg-white/8 px-2 py-0.5 text-[9px] font-bold">
-                  {ko.mockBadge}
+                  {configured ? ko.liveBadge : ko.mockBadge}
                 </span>
               </div>
               {warn && <p className="text-[10px] text-(--color-muted)">⚠ {warn}</p>}
@@ -84,15 +83,13 @@ export function ChannelMatrix() {
         </div>
       </div>
       <div className="glass-2 rounded-3xl p-5">
-        <h2 className="mb-2 text-sm font-bold">{ko.logTitle}</h2>
+        <h3 className="mb-2 text-sm font-bold">{ko.logTitle}</h3>
         <p className="mb-2 text-[10px] text-(--color-muted)">
           {ko.logMeta(dispatches.length, log.length)}
         </p>
-        <ul className="font-numeric flex max-h-80 flex-col gap-1 overflow-auto text-[11px]">
-          {log.map((l, i) => (
-            <li key={i} className="rounded-lg bg-white/5 px-2 py-1">
-              {l}
-            </li>
+        <ul className="flex max-h-64 flex-col gap-1 overflow-y-auto text-[10px] text-(--color-muted)">
+          {log.map((line, i) => (
+            <li key={`${line}-${i}`}>{line}</li>
           ))}
         </ul>
       </div>

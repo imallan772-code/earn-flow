@@ -71,8 +71,10 @@ describe("ai.server.callPromoBundle", () => {
     };
     vi.stubGlobal(
       "fetch",
-      vi.fn(async (url: string) => {
+      vi.fn(async (url: string, init?: RequestInit) => {
         expect(url).toContain("generativelanguage.googleapis.com");
+        expect(url).not.toContain("key=");
+        expect((init?.headers as Record<string, string>)["x-goog-api-key"]).toBe("k");
         return new Response(
           JSON.stringify({
             candidates: [{ content: { parts: [{ text: JSON.stringify(payload) }] } }],

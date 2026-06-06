@@ -253,11 +253,14 @@ async function callGeminiDirect(
   prompt: string,
   signal: AbortSignal,
 ): Promise<RawResult> {
-  const url = `${DIRECT_ENDPOINT}/${encodeURIComponent(r.model)}:generateContent?key=${encodeURIComponent(r.apiKey)}`;
+  const url = `${DIRECT_ENDPOINT}/${encodeURIComponent(r.model)}:generateContent`;
   const res = await fetch(url, {
     method: "POST",
     signal,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": r.apiKey,
+    },
     body: JSON.stringify({
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       generationConfig: { responseMimeType: "application/json", temperature: 0.7 },

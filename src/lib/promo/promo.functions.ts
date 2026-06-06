@@ -19,7 +19,7 @@ import {
   type PromoAiProvider,
 } from "./ai.server";
 import { mergeRiskScores, scanRiskLocal } from "./risk";
-import type { PromoChannelId } from "@/features/admin/promo/types";
+import type { PromoAsset, PromoCampaign, PromoChannelId, PromoDispatch } from "@/features/admin/promo/types";
 
 // ── 1) AI provider status (키 노출 0) ─────────────────────────
 export const getPromoAiStatus = createServerFn({ method: "GET" }).handler(async () => {
@@ -114,19 +114,16 @@ export const translatePromo = createServerFn({ method: "POST" })
 
 // ── 5) listings (기존 lib/api 유지) ───────────────────────────
 export const listCampaigns = createServerFn({ method: "GET" }).handler(async () => {
-  if (!isSupabaseConfigured()) return { campaigns: [] as string[] };
-  const campaigns = await promoListCampaigns();
-  return { campaigns };
+  if (!isSupabaseConfigured()) return [] as PromoCampaign[];
+  return promoListCampaigns();
 });
 
 export const listDispatches = createServerFn({ method: "GET" }).handler(async () => {
-  if (!isSupabaseConfigured()) return { dispatches: [] as string[] };
-  const dispatches = await promoListDispatches();
-  return { dispatches };
+  if (!isSupabaseConfigured()) return [] as PromoDispatch[];
+  return promoListDispatches();
 });
 
 export const listAssets = createServerFn({ method: "GET" }).handler(async () => {
-  if (!isSupabaseConfigured()) return { assets: [] as string[] };
-  const assets = await promoListAssets();
-  return { assets };
+  if (!isSupabaseConfigured()) return [] as PromoAsset[];
+  return promoListAssets();
 });

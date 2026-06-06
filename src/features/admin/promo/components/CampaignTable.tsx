@@ -1,15 +1,17 @@
 import { Trash2 } from "lucide-react";
-import { promoMockStore, usePromoState } from "../store/mockStore";
+import { usePromoAdmin } from "../hooks/usePromoAdmin";
 import { ADMIN_KO, promoStatusLabel } from "@/shared/admin/labels.ko";
 import { RiskBadge } from "./RiskBadge";
 
 export function CampaignTable() {
-  const campaigns = usePromoState((s) => s.campaigns);
+  const { campaigns, removeCampaign, loading } = usePromoAdmin();
   const ko = ADMIN_KO.promo.campaigns;
   return (
     <section className="glass-2 rounded-3xl p-5">
       <h2 className="mb-3 text-base font-bold">{ko.title}</h2>
-      {campaigns.length === 0 ? (
+      {loading ? (
+        <p className="text-xs text-(--color-muted)">{ko.loading}</p>
+      ) : campaigns.length === 0 ? (
         <p className="text-xs text-(--color-muted)">{ko.empty}</p>
       ) : (
         <div className="grid gap-2">
@@ -24,7 +26,7 @@ export function CampaignTable() {
                 {c.scheduledAt.slice(0, 16).replace("T", " ")}
               </span>
               <button
-                onClick={() => promoMockStore.removeCampaign(c.id)}
+                onClick={() => removeCampaign(c.id)}
                 className="rounded-lg p-1.5 text-(--color-rose) hover:bg-white/8"
                 aria-label={ko.delete}
               >

@@ -41,7 +41,11 @@ function toVariant(row: {
   hashtags?: string[] | null;
   cta?: string | null;
   weight: number;
+  utm?: Record<string, unknown> | null;
 }): PromoVariant {
+  const utm = row.utm ?? undefined;
+  const imagePrompt =
+    utm && typeof utm.imagePrompt === "string" ? utm.imagePrompt : undefined;
   return {
     id: row.id,
     channel: row.channel as PromoChannelId,
@@ -49,6 +53,7 @@ function toVariant(row: {
     hashtags: row.hashtags ?? [],
     cta: row.cta ?? undefined,
     weight: row.weight,
+    imagePrompt,
   };
 }
 
@@ -61,6 +66,7 @@ function toCampaign(row: ReturnType<typeof promoCampaignRowSchema.parse>): Promo
       hashtags: v.hashtags,
       cta: v.cta,
       weight: v.weight,
+      utm: v.utm,
     }),
   );
   return {
@@ -225,6 +231,22 @@ export async function promoUpsertSettings(input: unknown): Promise<PromoSettings
   });
   if (error) throw error;
   return toSettings(promoSettingsRowSchema.parse(data));
+}
+
+export async function promoUpsertAsset(input: {
+  id: string;
+  kind: PromoAsset["kind"];
+  url: string;
+  alt?: string;
+  prompt?: string;
+  campaign_id?: string;
+}): Promise<PromoAsset> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.rpc("admin_upsert_promo_asset", {
+    p_payload: input as Json,
+  });
+  if (error) throw error;
+  return toAsset(promoAssetRowSchema.parse(data));
 }
 
 export async function promoAnalyticsSummary() {

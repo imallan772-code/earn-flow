@@ -1,12 +1,12 @@
 import { Upload } from "lucide-react";
-import { promoMockStore, usePromoState } from "../store/mockStore";
+import { usePromoAdmin } from "../hooks/usePromoAdmin";
 import { ADMIN_KO } from "@/shared/admin/labels.ko";
 
 export function AssetGrid() {
-  const assets = usePromoState((s) => s.assets);
+  const { assets, addAsset, loading } = usePromoAdmin();
   const ko = ADMIN_KO.promo.assets;
   const addPlaceholder = () => {
-    promoMockStore.addAsset({
+    addAsset({
       id: `a-${Date.now()}`,
       kind: "image",
       url: `https://placehold.co/600x400?text=Promo+${assets.length + 1}`,
@@ -25,7 +25,9 @@ export function AssetGrid() {
           <Upload size={12} /> {ko.addPlaceholder}
         </button>
       </div>
-      {assets.length === 0 ? (
+      {loading ? (
+        <p className="text-xs text-(--color-muted)">{ko.loading}</p>
+      ) : assets.length === 0 ? (
         <p className="text-xs text-(--color-muted)">{ko.empty}</p>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
