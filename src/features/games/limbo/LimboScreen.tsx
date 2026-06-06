@@ -67,11 +67,13 @@ import {
 } from "@/shared/games/ui/gameOutcomePolicy";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { useHotkeys, type HotkeyMap } from "@/shared/hooks/useHotkeys";
-import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
+import { useRegisterMainMode, useRegisterRightRail } from "@/shared/layout/useGameLayout";
+import { useDesktopLayout } from "@/shared/hooks/useDesktopLayout";
 import { useSfx } from "@/shared/sfx/useSfx";
 import { appToast } from "@/shared/ui/toast";
 import { LimboDisplay } from "./LimboDisplay";
 import { LimboTargetStepper } from "./LimboTargetStepper";
+import { LimboRightRail } from "./LimboRightRail";
 
 const SERVER_SEED = "phonara-limbo-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
@@ -86,6 +88,9 @@ interface Result {
 export function LimboScreen() {
   useRegisterMainMode("game");
   const { mode, balance, tryDebit, credit } = useGameWallet();
+  const isDesktop = useDesktopLayout();
+  const rightRailNode = useMemo(() => <LimboRightRail />, []);
+  useRegisterRightRail(rightRailNode);
   const nonce = limboStore.use((s) => s.nonce);
   const history = limboStore.use((s) => s.history);
   const target = limboStore.use((s) => s.target);
@@ -498,7 +503,7 @@ export function LimboScreen() {
         }
       />
 
-      <LiveBetsFeed game="limbo" limit={10} />
+      {!isDesktop && <LiveBetsFeed game="limbo" limit={10} />}
 
       {flashResult && (
         <>
