@@ -46,10 +46,12 @@ import {
 } from "@/shared/games/ui/gameOutcomePolicy";
 import { appToast } from "@/shared/ui/toast";
 import { formatPHON } from "@/lib/format";
-import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
+import { useRegisterMainMode, useRegisterRightRail } from "@/shared/layout/useGameLayout";
+import { useDesktopLayout } from "@/shared/hooks/useDesktopLayout";
 import { MinesDisplay } from "./MinesDisplay";
 import { MinesControls } from "./MinesControls";
 import { useMinesLifecycle, type RecentResult } from "./useMinesLifecycle";
+import { MinesRightRail } from "./MinesRightRail";
 
 const SERVER_SEED = "phonara-mines-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
