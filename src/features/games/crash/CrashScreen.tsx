@@ -123,15 +123,14 @@ export function CrashScreen() {
     if (showFair) setSeedDraft(crashStore.get().clientSeed);
   }, [showFair]);
 
-  // Refund unsettled bet on unmount (user left mid-round) — 보존
+  // Refund unsettled bet on unmount — SSOT useUnmountRefund (Crash/Mines/Limbo).
   const refundRef = useRef(refund);
   refundRef.current = refund;
-  useEffect(() => {
-    return () => {
-      const b = betRef.current;
-      if (b && b.cashedAt === null) refundRef.current(b.amount);
-    };
-  }, []);
+  useUnmountRefund(refund, () => {
+    const ar = crashStore.get().activeRound;
+    if (!ar || ar.cashedAt !== null) return null;
+    return { amount: ar.amount, meta: { game: "crash", roundId: `n${ar.nonce}` } };
+  });
 
   // ─── 마운트 복원 (1회) ────────────────────────────────────────────
   // activeRound != null && 미settle → bet/phase/crashPoint/startedAt hydrate만.
