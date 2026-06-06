@@ -68,8 +68,8 @@ function LiveBetRowImpl({ bet, asDiv, style }: Props) {
       )}
       <span
         className="h-1.5 w-1.5 shrink-0 rounded-full"
-        style={{ background: GAME_ACCENT[bet.game] }}
-        title={GAME_LABEL[bet.game]}
+        style={{ background: GAME_META[bet.game].accent }}
+        title={GAME_META[bet.game].label}
       />
       <span className="min-w-0 truncate text-(--color-muted)">
         {bet.isMe && (
