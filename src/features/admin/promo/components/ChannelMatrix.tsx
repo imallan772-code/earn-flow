@@ -58,6 +58,13 @@ export function ChannelMatrix() {
   const [publishing, setPublishing] = useState(false);
   const [connecting, setConnecting] = useState<OAuthChannelId | null>(null);
 
+  function oauthErrorMessage(reason: string | null): string {
+    const map = koPub.oauthErrorReasons;
+    if (reason && map[reason]) return map[reason];
+    if (reason && reason.length <= 40) return `${koPub.oauthCallbackFail}: ${reason}`;
+    return koPub.oauthCallbackFail;
+  }
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const oauth = params.get("oauth");
@@ -69,14 +76,16 @@ export function ChannelMatrix() {
       );
       void qc.invalidateQueries({ queryKey: PROMO_QUERY_KEYS.settings });
     } else if (oauth === "error") {
-      toast.error(koPub.oauthCallbackFail);
+      toast.error(oauthErrorMessage(params.get("reason")));
     }
     params.delete("oauth");
     params.delete("channel");
     params.delete("reason");
     const qs = params.toString();
     window.history.replaceState({}, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
-  }, [qc, koPub]);
+    // koPub is stable (ADMIN_KO const).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qc]);
 
   function pushLog(msg: string) {
     setLog((l) =>
