@@ -280,7 +280,7 @@ async function callLovableGateway(
   r: ResolvedProvider,
   prompt: string,
   signal: AbortSignal,
-): Promise<RawResponse | AiEnvelope<never>> {
+): Promise<RawResult> {
   const res = await fetch(GATEWAY_ENDPOINT, {
     method: "POST",
     signal,
