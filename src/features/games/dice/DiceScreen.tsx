@@ -307,7 +307,8 @@ export function DiceScreen() {
         historyStrip={
           <div className="flex flex-col gap-1.5">
             <HistoryPillStrip
-              items={history.map((h) => ({ id: h.id, multiplier: h.roll }))}
+              displayMode="value"
+              items={history.map((h) => ({ id: h.id, multiplier: h.roll, won: h.win }))}
               onPillClick={() => setShowFair(true)}
             />
             <SessionStatsBar />
