@@ -113,4 +113,23 @@ describe("analyticsAggregate", () => {
     expect(topChannelFromClicks(clicks)).toBe("telegram");
     expect(topChannelFromClicks([])).toBeNull();
   });
+
+  it("dailyClickBuckets returns N buckets with counts assigned", () => {
+    const now = new Date(2026, 5, 10);
+    const clicks: PromoClick[] = [
+      { id: "1", campaignId: "a", channel: "telegram", ts: new Date(2026, 5, 10, 9).toISOString() },
+      { id: "2", campaignId: "a", channel: "x", ts: new Date(2026, 5, 10, 18).toISOString() },
+      { id: "3", campaignId: "a", channel: "telegram", ts: new Date(2026, 5, 8, 12).toISOString() },
+    ];
+    const buckets = dailyClickBuckets(clicks, 7, now);
+    expect(buckets).toHaveLength(7);
+    expect(buckets[buckets.length - 1].count).toBe(2);
+    expect(buckets[buckets.length - 3].count).toBe(1);
+  });
+
+  it("dailyClickBuckets returns all-zero for empty input", () => {
+    const buckets = dailyClickBuckets([], 7, new Date(2026, 5, 10));
+    expect(buckets).toHaveLength(7);
+    expect(buckets.every((b) => b.count === 0)).toBe(true);
+  });
 });
