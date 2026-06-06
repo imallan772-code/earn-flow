@@ -120,16 +120,16 @@ export function StakeBetPanel({
         <div className="flex items-center gap-1">
           <input
             type="number"
-            min={0.01}
-            step={0.01}
+            min={minBet}
+            step={step}
             value={amount}
-            onChange={(e) => setAmount(Math.max(0, Number(e.target.value) || 0))}
+            onChange={(e) => setAmount(clampStake(Number(e.target.value) || 0))}
             className="font-numeric flex-1 rounded-lg bg-(--color-bg-0) px-2 py-1.5 text-sm outline-none"
           />
           {[
-            { lbl: "½", fn: () => setAmount((a) => +(a / 2).toFixed(2)) },
-            { lbl: "2x", fn: () => setAmount((a) => +(a * 2).toFixed(2)) },
-            { lbl: "MAX", fn: () => setAmount(balance) },
+            { lbl: "½", fn: () => setAmount((a) => clampStake(a / 2)) },
+            { lbl: "2x", fn: () => setAmount((a) => clampStake(a * 2)) },
+            { lbl: "MAX", fn: () => setAmount(clampStake(balance)) },
           ].map((b) => (
             <button
               key={b.lbl}
@@ -141,6 +141,11 @@ export function StakeBetPanel({
             </button>
           ))}
         </div>
+        {isReal && (
+          <span className="mt-1 text-[10px] text-(--color-muted)">
+            리얼 모드는 1 PHON 단위 정수만 가능합니다.
+          </span>
+        )}
       </Field>
 
       {showAutoTarget && (
@@ -196,10 +201,10 @@ export function StakeBetPanel({
         ) : (
           <button
             type="button"
-            disabled={!canPlace || amount <= 0}
+            disabled={!canPlace || amount < minBet}
             onClick={() => {
               if (placingRef.current) return;
-              if (!canPlace || amount <= 0) return;
+              if (!canPlace || amount < minBet) return;
               placingRef.current = true;
               onPlace(amount, target);
               window.setTimeout(() => {
@@ -208,7 +213,7 @@ export function StakeBetPanel({
             }}
             className={cn(
               "relative overflow-hidden rounded-xl py-3 text-sm font-extrabold transition active:scale-[0.98]",
-              canPlace && amount > 0
+              canPlace && amount >= minBet
                 ? "bg-(--color-cyan) text-(--color-bg-0) shadow-glow-cyan"
                 : "bg-(--color-surface-hi) text-muted-2",
             )}
