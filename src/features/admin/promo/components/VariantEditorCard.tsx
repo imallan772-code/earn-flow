@@ -1,4 +1,8 @@
+import { useRef, useState } from "react";
+import { Image as ImageIcon, Loader2, XCircle } from "lucide-react";
+import { toast } from "sonner";
 import { PROMO_CHANNEL_LABELS_KO, ADMIN_KO } from "@/shared/admin/labels.ko";
+import { usePromoAdmin } from "../hooks/usePromoAdmin";
 import type { PromoVariant } from "../types";
 
 interface Props {
@@ -6,8 +10,102 @@ interface Props {
   onChange: (next: PromoVariant) => void;
 }
 
+interface SseDone {
+  ok: true;
+  mimeType: string;
+  base64: string;
+}
+
+interface SseErr {
+  ok: false;
+  code: string;
+}
+
+function parseSseEvents(buffer: string): { events: Array<{ name: string; data: string }>; rest: string } {
+  const out: Array<{ name: string; data: string }> = [];
+  const chunks = buffer.split("\n\n");
+  const rest = chunks.pop() ?? "";
+  for (const chunk of chunks) {
+    let name = "message";
+    let data = "";
+    for (const line of chunk.split("\n")) {
+      if (line.startsWith("event:")) name = line.slice(6).trim();
+      else if (line.startsWith("data:")) data += line.slice(5).trim();
+    }
+    if (data) out.push({ name, data });
+  }
+  return { events: out, rest };
+}
+
 export function VariantEditorCard({ variant, onChange }: Props) {
   const ko = ADMIN_KO.promo.studio.variantCard;
+  const koImg = ADMIN_KO.promo.image;
+  const { addAsset } = usePromoAdmin();
+  const [genState, setGenState] = useState<"idle" | "loading">("idle");
+  const abortRef = useRef<AbortController | null>(null);
+
+  async function onGenerateImage() {
+    const prompt = variant.imagePrompt?.trim();
+    if (!prompt) {
+      toast.error(koImg.promptEmpty);
+      return;
+    }
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
+    setGenState("loading");
+    try {
+      const res = await fetch("/api/admin/promo/image-stream", {
+        method: "POST",
+        signal: ac.signal,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+      if (!res.ok || !res.body) {
+        toast.error(koImg.error);
+        setGenState("idle");
+        return;
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const { events, rest } = parseSseEvents(buf);
+        buf = rest;
+        for (const e of events) {
+          if (e.name === "done") {
+            const payload = JSON.parse(e.data) as SseDone;
+            const dataUrl = `data:${payload.mimeType};base64,${payload.base64}`;
+            onChange({ ...variant, imageUrl: dataUrl });
+            addAsset({
+              id: `img-${variant.id}-${Date.now()}`,
+              kind: "image",
+              url: dataUrl,
+              alt: prompt.slice(0, 80),
+              createdAt: new Date().toISOString(),
+            });
+            toast.success(koImg.done);
+          } else if (e.name === "error") {
+            const err = JSON.parse(e.data) as SseErr;
+            toast.error(err.code === "IMAGE_NOT_CONFIGURED" ? koImg.notConfigured : koImg.error);
+          }
+        }
+      }
+    } catch (e) {
+      if ((e as Error).name !== "AbortError") toast.error(koImg.error);
+    } finally {
+      setGenState("idle");
+    }
+  }
+
+  function onCancelImage() {
+    abortRef.current?.abort();
+    setGenState("idle");
+  }
+
   return (
     <article className="glass-1 flex flex-col gap-2 rounded-2xl p-3">
       <header className="flex items-center justify-between">
@@ -60,6 +158,40 @@ export function VariantEditorCard({ variant, onChange }: Props) {
         placeholder={ko.imagePromptPh}
         className="glass-1 rounded-lg px-2 py-1.5 text-[11px] text-(--color-muted)"
       />
+      <div className="flex items-center gap-2">
+        {genState === "loading" ? (
+          <button
+            type="button"
+            onClick={onCancelImage}
+            className="glass-1 flex items-center gap-1 rounded-lg px-2 py-1 text-[11px]"
+          >
+            <XCircle size={11} /> {koImg.cancel}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onGenerateImage}
+            className="glass-1 flex items-center gap-1 rounded-lg px-2 py-1 text-[11px]"
+          >
+            <ImageIcon size={11} /> {koImg.generate}
+          </button>
+        )}
+        {genState === "loading" && (
+          <span className="flex items-center gap-1 text-[11px] text-(--color-muted)">
+            <Loader2 size={11} className="animate-spin" /> {koImg.generating}
+          </span>
+        )}
+        {variant.imageUrl && (
+          <span className="ml-auto text-[10px] text-(--color-muted)">{koImg.done}</span>
+        )}
+      </div>
+      {variant.imageUrl && (
+        <img
+          src={variant.imageUrl}
+          alt={variant.imagePrompt ?? ""}
+          className="mt-1 max-h-48 w-full rounded-lg object-cover"
+        />
+      )}
     </article>
   );
 }

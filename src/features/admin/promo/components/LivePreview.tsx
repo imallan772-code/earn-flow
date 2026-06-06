@@ -45,6 +45,13 @@ export function LivePreview({
               <span>{PROMO_CHANNEL_LABELS_KO[t] ?? t}</span>
               <span className="font-numeric opacity-70">w {v.weight} · {ratio}%</span>
             </header>
+            {v.imageUrl && (
+              <img
+                src={v.imageUrl}
+                alt=""
+                className="mb-2 max-h-40 w-full rounded-lg object-cover"
+              />
+            )}
             <p className="text-sm whitespace-pre-wrap">{v.body}</p>
             <p className="mt-1 text-[11px] text-(--color-muted)">
               {v.hashtags.join(" ")}
