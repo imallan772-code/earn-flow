@@ -4,6 +4,8 @@
  * - Subscribes to LiveBetsStore via useSyncExternalStore.
  * - Auto-starts the bot generator + initial seed on mount (ref-counted).
  * - Highlights the current user's own bets with a cyan accent.
+ * - When `virtualized` (or limit > 50) is set, uses LiveBetsVirtualList
+ *   (react-window) so 500-row scenarios stay smooth.
  */
 import { useEffect, useSyncExternalStore } from "react";
 import { Users, Globe2 } from "lucide-react";
@@ -14,32 +16,10 @@ import {
   type LiveBet,
 } from "./LiveBetsStore";
 import { startBotFeed } from "./botGenerator";
+import { LiveBetsVirtualList } from "./LiveBetsVirtualList";
+import { LiveBetRow, ROW_GRID } from "./LiveBetRow";
 import { cn } from "@/lib/utils";
 import { RollingCountUp } from "@/shared/motion/RollingCountUp";
-
-const GAME_LABEL: Record<LiveBet["game"], string> = {
-  crash: "Crash",
-  dice: "Dice",
-  plinko: "Plinko",
-  slots: "Slots",
-  mines: "Mines",
-  roulette: "Roulette",
-  limbo: "Limbo",
-  wheel: "Wheel",
-};
-
-const GAME_ACCENT: Record<LiveBet["game"], string> = {
-  crash: "var(--color-cyan)",
-  dice: "var(--color-emerald)",
-  plinko: "var(--color-gold)",
-  slots: "var(--color-pink)",
-  mines: "var(--color-warning)",
-  roulette: "var(--color-purple)",
-  limbo: "var(--color-purple)",
-  wheel: "var(--color-gold)",
-};
-
-const ROW_GRID = "grid grid-cols-[0.375rem_minmax(0,1fr)_5rem_3.25rem_5.5rem] items-center gap-x-2";
 
 interface Props {
   /** Max rows to render (default 12). */
@@ -49,9 +29,20 @@ interface Props {
   /** Filter by game. */
   game?: LiveBet["game"];
   className?: string;
+  /** Force virtualization on. Auto-on when limit > 50. */
+  virtualized?: boolean;
+  /** Pixel height for the virtualized list. Default 360. */
+  virtualHeight?: number;
 }
 
-export function LiveBetsFeed({ limit = 12, showHeader = true, game, className }: Props) {
+export function LiveBetsFeed({
+  limit = 12,
+  showHeader = true,
+  game,
+  className,
+  virtualized,
+  virtualHeight = 360,
+}: Props) {
   useEffect(() => {
     seedInitialBets(24);
     const stop = startBotFeed();
@@ -68,7 +59,8 @@ export function LiveBetsFeed({ limit = 12, showHeader = true, game, className }:
   );
 
   const filtered = orderLiveBetsForView(bets, game);
-  const view = filtered.slice(0, limit);
+  const useVirtual = virtualized ?? limit > 50;
+  const view = useVirtual ? filtered.slice(0, limit) : filtered.slice(0, limit);
 
   return (
     <section className={cn("glass-2 rounded-2xl p-3", className)}>
@@ -105,82 +97,17 @@ export function LiveBetsFeed({ limit = 12, showHeader = true, game, className }:
         <span className="text-right">손익</span>
       </div>
 
-      <ul className="flex flex-col">
-        {view.length === 0 ? (
-          <li className="py-4 text-center text-[11px] text-muted-2">베팅 대기 중...</li>
-        ) : (
-          view.map((b) => <LiveBetRow key={b.id} bet={b} />)
-        )}
-      </ul>
-    </section>
-  );
-}
-
-function LiveBetRow({ bet }: { bet: LiveBet }) {
-  const profitColor =
-    bet.profit == null || bet.status === "pending"
-      ? "var(--color-muted-2)"
-      : bet.profit > 0
-        ? "var(--color-emerald)"
-        : "var(--color-rose)";
-
-  const profitText =
-    bet.status === "pending"
-      ? "—"
-      : bet.profit != null && bet.profit > 0
-        ? `+${bet.profit.toFixed(2)}`
-        : bet.profit != null
-          ? `${bet.profit.toFixed(2)}`
-          : "—";
-
-  const multText =
-    bet.multiplier != null && bet.multiplier > 0
-      ? `${bet.multiplier.toFixed(2)}x`
-      : bet.status === "bust"
-        ? "BUST"
-        : "—";
-
-  return (
-    <li
-      className={cn(
-        ROW_GRID,
-        "text-xs",
-        bet.isMe
-          ? "my-1 rounded-lg border-b-0 py-2.5 bg-[color-mix(in_oklab,var(--color-cyan)_8%,transparent)] ring-1 ring-inset ring-[color-mix(in_oklab,var(--color-cyan)_45%,transparent)]"
-          : "border-b border-(--color-border) py-1.5 last:border-b-0",
+      {useVirtual ? (
+        <LiveBetsVirtualList bets={view} height={virtualHeight} />
+      ) : (
+        <ul className="flex flex-col">
+          {view.length === 0 ? (
+            <li className="py-4 text-center text-[11px] text-muted-2">베팅 대기 중...</li>
+          ) : (
+            view.map((b) => <LiveBetRow key={b.id} bet={b} />)
+          )}
+        </ul>
       )}
-    >
-      <span
-        className="h-1.5 w-1.5 shrink-0 rounded-full"
-        style={{ background: GAME_ACCENT[bet.game] }}
-        title={GAME_LABEL[bet.game]}
-      />
-      <span className="min-w-0 truncate text-(--color-muted)">
-        {bet.isMe && (
-          <span className="mr-1 rounded-sm bg-(--color-cyan) px-1 py-px text-[8px] font-bold text-(--color-bg-0)">
-            ME
-          </span>
-        )}
-        {bet.user}
-        <span className="ml-1 text-[9px] uppercase text-muted-2">
-          {bet.mode === "demo" ? "·데모" : ""}
-        </span>
-      </span>
-      <span className="font-numeric shrink-0 text-right tabular-nums">{bet.amount.toFixed(2)}</span>
-      <span
-        className={cn(
-          "font-numeric shrink-0 text-right tabular-nums",
-          bet.status === "bust" ? "font-semibold text-(--color-rose)" : "text-(--color-muted)",
-        )}
-      >
-        {multText}
-      </span>
-      <span
-        className="font-numeric shrink-0 text-right font-bold tabular-nums"
-        style={{ color: profitColor }}
-      >
-        {profitText}
-      </span>
-    </li>
+    </section>
   );
 }
