@@ -70,11 +70,13 @@ import {
 } from "@/shared/games/gameSessionHelpers";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { useHotkeys, type HotkeyMap } from "@/shared/hooks/useHotkeys";
-import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
+import { useRegisterMainMode, useRegisterRightRail } from "@/shared/layout/useGameLayout";
+import { useDesktopLayout } from "@/shared/hooks/useDesktopLayout";
 import { useSfx } from "@/shared/sfx/useSfx";
 import { notifyPfSeedChanged } from "@/shared/games/ui/gameOutcomePolicy";
 import { appToast } from "@/shared/ui/toast";
 import { cn } from "@/lib/utils";
+import { CrashRightRail } from "./CrashRightRail";
 
 const SERVER_SEED = "phonara-crash-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
@@ -135,6 +137,9 @@ export function CrashScreen() {
   const restoredRef = useRef(false);
   const tickIntervalRef = useRef<number | null>(null);
   const sfx = useSfx();
+  const isDesktop = useDesktopLayout();
+  const rightRailNode = useMemo(() => <CrashRightRail />, []);
+  useRegisterRightRail(rightRailNode);
 
   // PF commit hash
   useEffect(() => {
@@ -689,7 +694,7 @@ export function CrashScreen() {
         }
       />
 
-      <LiveBetsFeed game="crash" limit={10} />
+      {!isDesktop && <LiveBetsFeed game="crash" limit={10} />}
 
       <ProvablyFairModal
         open={showFair}

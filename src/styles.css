@@ -435,6 +435,27 @@
     color: var(--color-rose);
   }
 
+  @keyframes live-row-me-win-pulse {
+    0% {
+      box-shadow:
+        0 0 0 0 color-mix(in oklab, var(--color-emerald) 70%, transparent),
+        inset 0 0 0 1px color-mix(in oklab, var(--color-emerald) 55%, transparent);
+    }
+    70% {
+      box-shadow:
+        0 0 0 6px color-mix(in oklab, var(--color-emerald) 0%, transparent),
+        inset 0 0 0 1px color-mix(in oklab, var(--color-emerald) 30%, transparent);
+    }
+    100% {
+      box-shadow:
+        0 0 0 0 transparent,
+        inset 0 0 0 1px transparent;
+    }
+  }
+  .live-row-me-win {
+    animation: live-row-me-win-pulse 1.4s ease-out 1;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .animate-marquee,
     .animate-marquee-rev,
@@ -443,7 +464,8 @@
     .animate-crash-flash,
     .animate-result-pop,
     .animate-float-up,
-    .animate-limbo-jackpot-ring {
+    .animate-limbo-jackpot-ring,
+    .live-row-me-win {
       animation: none;
     }
   }

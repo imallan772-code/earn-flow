@@ -46,10 +46,12 @@ import {
 } from "@/shared/games/ui/gameOutcomePolicy";
 import { appToast } from "@/shared/ui/toast";
 import { formatPHON } from "@/lib/format";
-import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
+import { useRegisterMainMode, useRegisterRightRail } from "@/shared/layout/useGameLayout";
+import { useDesktopLayout } from "@/shared/hooks/useDesktopLayout";
 import { MinesDisplay } from "./MinesDisplay";
 import { MinesControls } from "./MinesControls";
 import { useMinesLifecycle, type RecentResult } from "./useMinesLifecycle";
+import { MinesRightRail } from "./MinesRightRail";
 
 const SERVER_SEED = "phonara-mines-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
@@ -78,6 +80,9 @@ function paintResultCanvas(
 
 export function MinesScreen() {
   useRegisterMainMode("game");
+  const isDesktop = useDesktopLayout();
+  const rightRailNode = useMemo(() => <MinesRightRail />, []);
+  useRegisterRightRail(rightRailNode);
   const wallet = useGameWallet();
   const { balance } = wallet;
   const nonce = minesStore.use((s) => s.nonce);
@@ -351,7 +356,7 @@ export function MinesScreen() {
         }
       />
 
-      <LiveBetsFeed game="mines" limit={10} />
+      {!isDesktop && <LiveBetsFeed game="mines" limit={10} />}
 
       {flashRecent && (
         <>
