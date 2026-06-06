@@ -139,6 +139,24 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
     });
   }, []);
 
+  // ROUND M: ←/→ = risk cycle (only when queue empty). Mute = M. Hotkeys
+  // auto-ignore input/textarea/contentEditable (useHotkeys guard) — AC-M-7.
+  const cycleRisk = useCallback(
+    (dir: 1 | -1) => {
+      if (phase !== "idle") return;
+      const idx = RISK_OPTIONS.indexOf(risk);
+      const nextRisk = RISK_OPTIONS[(idx + dir + RISK_OPTIONS.length) % RISK_OPTIONS.length];
+      plinkoStore.set((s) => ({ ...s, risk: nextRisk }));
+    },
+    [phase, risk],
+  );
+  useHotkeys({
+    ArrowLeft: () => cycleRisk(-1),
+    ArrowRight: () => cycleRisk(1),
+    m: () => toggleMute(),
+  });
+
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
