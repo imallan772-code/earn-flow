@@ -3,6 +3,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useMode } from "@/shared/mode/ModeContext";
 import { AutoBetConfigFields } from "./AutoBetConfigFields";
 import { useAutoBetController } from "./useAutoBetController";
 
@@ -37,6 +38,15 @@ export function StakeBetPanel({
   variant = "full",
   showAutoTarget = true,
 }: Props) {
+  const { mode } = useMode();
+  const isReal = mode === "real";
+  const minBet = isReal ? 1 : 0.01;
+  const step = isReal ? 1 : 0.01;
+  const clampStake = (n: number): number => {
+    if (!Number.isFinite(n) || n <= 0) return 0;
+    return isReal ? Math.max(0, Math.floor(n)) : +n.toFixed(2);
+  };
+
   const compact = variant === "compact";
   const [tab, setTab] = useState<"manual" | "auto">("manual");
   const effectiveTab: "manual" | "auto" = compact ? "manual" : tab;
@@ -54,6 +64,11 @@ export function StakeBetPanel({
     bettingRoundKey,
     onPlace,
   });
+
+  // Real mode → floor to integer when mode flips (avoid stale 0.49 from demo).
+  useEffect(() => {
+    if (isReal) setAmount((a) => Math.max(0, Math.floor(a)));
+  }, [isReal]);
 
   useEffect(() => {
     if (!canPlace) placingRef.current = false;
