@@ -10,6 +10,8 @@ import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { useTilt } from "@/shared/hooks/useTilt";
 import { gamePath, type GameRegistryEntry } from "@/shared/games/registry/gameRegistry";
+import { useGameLobbyLiveCount } from "@/shared/games/lobby/lobbyLiveDisplay";
+import { CountUp } from "@/shared/motion/CountUp";
 import { GameMiniStats } from "./GameMiniStats";
 import type { LiveGame } from "@/shared/livefeed/LiveBetsStore";
 
@@ -37,6 +39,7 @@ export const GameCard3D = forwardRef<HTMLAnchorElement | HTMLDivElement, Props>(
   const tiltRef = useTilt<HTMLDivElement>(6);
   const accent = `var(--color-${card.accent})`;
   const liveGame = KNOWN_LIVE_GAMES.has(card.id as LiveGame) ? (card.id as LiveGame) : null;
+  const liveCount = useGameLobbyLiveCount(liveGame ?? "crash", card.liveBets);
 
   const inner = (
     <div
@@ -79,7 +82,16 @@ export const GameCard3D = forwardRef<HTMLAnchorElement | HTMLDivElement, Props>(
         <div className="min-w-0">
           <div className="text-sm font-extrabold">{card.name}</div>
           <div className="font-numeric text-[10px] text-(--color-muted)">
-            RTP {card.rtp} · {card.liveBets > 0 ? `${card.liveBets} live` : "준비중"}
+            RTP {card.rtp}
+            {card.liveBets > 0 && liveGame ? (
+              <>
+                {" · "}
+                <CountUp value={liveCount} duration={650} format={(n) => String(Math.round(n))} />
+                {" live"}
+              </>
+            ) : (
+              " · 준비중"
+            )}
           </div>
         </div>
         {liveGame && card.open && (

@@ -7,6 +7,9 @@
 import { useCallback, useEffect, useRef } from "react";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { GAME_REGISTRY } from "@/shared/games/registry/gameRegistry";
+import { seedLobbySparklines } from "@/shared/games/lobby/lobbyLiveDisplay";
+import { seedInitialBets } from "@/shared/livefeed/LiveBetsStore";
+import { startBotFeed } from "@/shared/livefeed/botGenerator";
 import { useHotkeys } from "@/shared/hooks/useHotkeys";
 import { GameCard3D } from "./GameCard3D";
 
@@ -54,6 +57,13 @@ export function GameLobby() {
   useEffect(() => {
     const first = gridRef.current?.querySelector<HTMLElement>("[data-game-card]");
     if (first && first.tabIndex < 0) first.tabIndex = 0;
+  }, []);
+
+  // Seed sparkline data + bot activity so lobby cards feel live (ref-counted with feed).
+  useEffect(() => {
+    seedInitialBets(32);
+    seedLobbySparklines();
+    return startBotFeed();
   }, []);
 
   return (

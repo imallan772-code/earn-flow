@@ -1,10 +1,14 @@
 /**
  * GameMiniStats — sparkline of recent multipliers per game.
  *
- * Memory-derived only (no persistence): subscribes to LiveBetsStore and renders
- * the last N multipliers as an SVG polyline. Static when reduced-motion is on.
+ * Subscribes to LiveBetsStore; falls back to deterministic mock series (FOMO)
+ * until enough settled wins exist. Dashed line was the old empty-state placeholder.
  */
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  lobbySparklineSeries,
+  polylineFromSeries,
+} from "@/shared/games/lobby/lobbyLiveDisplay";
 import { liveBetsStore, type LiveGame } from "@/shared/livefeed/LiveBetsStore";
 
 interface Props {
@@ -28,6 +32,8 @@ export function GameMiniStats({
     liveBetsStore.getSnapshot(),
   );
   const [reduced, setReduced] = useState(false);
+  const [mockTick, setMockTick] = useState(0);
+
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -37,25 +43,24 @@ export function GameMiniStats({
     return () => mq.removeEventListener?.("change", apply);
   }, []);
 
-  const points = useMemo(() => {
-    const series = bets
+  const liveSeries = useMemo(() => {
+    return bets
       .filter((b) => b.game === game && b.multiplier != null && b.multiplier > 0)
       .slice(0, limit)
       .reverse()
       .map((b) => b.multiplier as number);
-    if (series.length < 2) return "";
-    const max = Math.max(...series, 2);
-    const min = Math.min(...series, 1);
-    const span = Math.max(0.01, max - min);
-    const step = width / (series.length - 1);
-    return series
-      .map((v, i) => {
-        const x = i * step;
-        const y = height - ((v - min) / span) * height;
-        return `${x.toFixed(1)},${y.toFixed(1)}`;
-      })
-      .join(" ");
-  }, [bets, game, width, height, limit]);
+  }, [bets, game, limit]);
+
+  const useLive = liveSeries.length >= 2;
+
+  useEffect(() => {
+    if (useLive || reduced) return;
+    const id = window.setInterval(() => setMockTick((t) => t + 1), 2_200);
+    return () => window.clearInterval(id);
+  }, [useLive, reduced]);
+
+  const series = useLive ? liveSeries : lobbySparklineSeries(game, limit, mockTick);
+  const points = polylineFromSeries(series, width, height);
 
   if (!points) {
     return (
