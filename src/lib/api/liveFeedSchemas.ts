@@ -8,7 +8,7 @@ export const liveBetStatusSchema = z.enum(["pending", "cashout", "bust", "win", 
 export const liveBetRowSchema = z.object({
   id: z.string().uuid(),
   event_key: z.string(),
-  user_id: z.string().uuid(),
+  user_id: z.string().uuid().optional(),
   display_name: z.string(),
   game: z.string(),
   amount: z.number().int().nonnegative(),

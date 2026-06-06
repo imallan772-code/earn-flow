@@ -32,7 +32,10 @@ export function liveFeedBetIdForRound(game: string, roundId: string): string {
 export function mapLiveBetRow(row: LiveBetRow, currentUserId: string | null): LiveBet | null {
   if (!isLiveGame(row.game)) return null;
 
-  const isMe = currentUserId !== null && row.user_id === currentUserId;
+  const isMe =
+    currentUserId !== null &&
+    row.user_id !== undefined &&
+    row.user_id === currentUserId;
   const status = row.status as LiveStatus;
 
   return {

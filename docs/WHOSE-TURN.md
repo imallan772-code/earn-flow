@@ -8,9 +8,9 @@
 
 | | |
 |---|---|
-| **지금** | 🤖 **Lovable AI** — **대기** (또는 ROUND Q polish) |
-| **당신** | Q plan 붙이거나 v2.2 후속 UI 지시 |
-| **Cursor** | **P-PR1 완료** — sanitation ✅ |
+| **지금** | 🔧 **Cursor** — Supabase hardening Part 1–4 완료 · Lovable 대기 |
+| **당신** | Part 5 (dashboard leaked-password) 또는 ROUND Q 지시 |
+| **Cursor** | **Hardening Part 1–4** ✅ · check GREEN 확인 중 |
 
 ### ROUND P-PR1 완료 (Cursor)
 

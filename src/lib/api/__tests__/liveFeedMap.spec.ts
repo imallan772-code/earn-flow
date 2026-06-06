@@ -34,7 +34,7 @@ describe("liveFeedMap", () => {
   });
 
   it("maps own row with ME label", () => {
-    const bet = mapLiveBetRow(baseRow, baseRow.user_id);
+    const bet = mapLiveBetRow(baseRow, baseRow.user_id ?? null);
     expect(bet?.user).toBe("나의_베팅");
     expect(bet?.isMe).toBe(true);
   });
