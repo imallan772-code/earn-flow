@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { ADMIN_KO } from "@/shared/admin/labels.ko";
+import { usePromoAiStatus } from "../hooks/usePromoAiStatus";
 import {
   Wand2,
   ListChecks,
@@ -24,13 +25,22 @@ const TABS = [
 
 export function PromoShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const status = usePromoAiStatus();
+  const koAi = ADMIN_KO.promo.ai;
+  const subtitle = status.loading
+    ? ADMIN_KO.promo.subtitle
+    : status.configured
+      ? koAi.subtitleConfigured(
+          status.provider === "gemini-direct" ? koAi.providerGemini : koAi.providerGateway,
+        )
+      : koAi.subtitleFallback;
   return (
     <div className="min-h-dvh bg-cosmic text-(--color-foreground)">
       <header className="glass-2 sticky top-0 z-30 border-b border-white/5 px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-sm font-extrabold">{ADMIN_KO.promo.title}</div>
-            <div className="text-[11px] text-(--color-muted)">{ADMIN_KO.promo.subtitle}</div>
+            <div className="text-[11px] text-(--color-muted)">{subtitle}</div>
           </div>
           <Link
             to="/admin"
