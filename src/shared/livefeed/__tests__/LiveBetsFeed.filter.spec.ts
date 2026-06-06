@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { applyFeedFilter, BIG_WIN_MULTIPLIER } from "../LiveBetsFeed";
+import { applyFeedFilter, BIG_WIN_MULTIPLIER } from "../feedFilter";
 import type { LiveBet } from "../LiveBetsStore";
 
 function bet(over: Partial<LiveBet>): LiveBet {

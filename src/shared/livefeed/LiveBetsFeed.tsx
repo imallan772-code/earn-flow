@@ -69,7 +69,7 @@ export function LiveBetsFeed({
     liveBetsStore.getTotalVolume(),
   );
 
-  const [filter, setFilter] = useState<FilterId>("all");
+  const [filter, setFilter] = useState<FeedFilter>("all");
   const showChips = !game;
 
   const view = useMemo(() => {
