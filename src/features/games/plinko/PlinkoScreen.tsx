@@ -1,7 +1,7 @@
 /**
  * PlinkoScreen — page-level composition: header, rules, board, live feed.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ShieldCheck, X } from "lucide-react";
 import { useMode } from "@/shared/mode/ModeContext";
@@ -10,12 +10,18 @@ import { PlinkoBoard } from "@/shared/games/plinko/PlinkoBoard";
 import { GameRulesCard } from "@/shared/games/ui/GameRulesCard";
 import { PLINKO_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
-import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
+import { useRegisterMainMode, useRegisterRightRail } from "@/shared/layout/useGameLayout";
+import { useDesktopLayout } from "@/shared/hooks/useDesktopLayout";
+import { PlinkoRightRail } from "./PlinkoRightRail";
 
 export function PlinkoScreen() {
   useRegisterMainMode("game");
   const { mode } = useMode();
   const [showFair, setShowFair] = useState(false);
+  const isDesktop = useDesktopLayout();
+  const rightRailNode = useMemo(() => <PlinkoRightRail />, []);
+  useRegisterRightRail(rightRailNode);
+
 
   return (
     <div className="flex flex-col gap-2">
@@ -44,7 +50,7 @@ export function PlinkoScreen() {
 
       <PlinkoBoard mode={mode} />
 
-      <LiveBetsFeed game="plinko" limit={10} />
+      {!isDesktop && <LiveBetsFeed game="plinko" limit={10} />}
 
       {showFair && (
         <div
