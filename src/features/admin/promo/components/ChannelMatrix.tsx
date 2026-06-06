@@ -188,28 +188,44 @@ export function ChannelMatrix() {
           {CHANNELS.map(({ id, warn }) => {
             const oauthChannel = OAUTH_CHANNELS.includes(id as OAuthChannelId);
             const connected = oauthChannel && isOAuthConnected(id, settings);
+            const isConnecting = oauthChannel && connecting === id;
+            // Badge: OAuth channels in persisting mode get 3-state pill; others keep live/mock.
+            let badgeText: string;
+            let badgeCls =
+              "ml-auto rounded-full px-2 py-0.5 text-[9px] font-bold border";
+            if (oauthChannel && persisting) {
+              if (connected) {
+                badgeText = koPub.oauthConnected;
+                badgeCls +=
+                  " bg-(--color-emerald)/15 text-(--color-emerald) border-(--color-emerald)/30";
+              } else {
+                badgeText = koPub.oauthDisconnected;
+                badgeCls += " bg-white/8 text-(--color-muted) border-white/10";
+              }
+            } else {
+              badgeText = persisting ? ko.liveBadge : ko.mockBadge;
+              badgeCls += " bg-white/8 border-white/10";
+            }
             return (
-              <div key={id} className="glass-1 flex flex-col gap-2 rounded-2xl p-3">
+              <div
+                key={id}
+                className="glass-1 flex min-h-[128px] flex-col gap-2 rounded-2xl p-3"
+              >
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold">{PROMO_CHANNEL_LABELS_KO[id]}</span>
-                  <span className="ml-auto rounded-full bg-white/8 px-2 py-0.5 text-[9px] font-bold">
-                    {connected
-                      ? koPub.oauthConnected
-                      : persisting
-                        ? ko.liveBadge
-                        : ko.mockBadge}
-                  </span>
+                  <span className={badgeCls}>{badgeText}</span>
                 </div>
                 {warn && <p className="text-[10px] text-(--color-muted)">⚠ {warn}</p>}
-                <div className="flex gap-1">
+                <div className="mt-auto flex flex-wrap gap-1">
                   {oauthChannel && persisting && !connected && (
                     <button
                       type="button"
                       onClick={() => handleConnect(id as OAuthChannelId)}
-                      disabled={connecting === id}
-                      className="glass-1 flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1 text-[11px]"
+                      disabled={isConnecting}
+                      className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-(--color-accent)/30 bg-(--color-accent)/15 px-2 py-1 text-[11px] font-semibold disabled:opacity-50"
                     >
-                      <Link2 size={11} /> {connecting === id ? "…" : koPub.oauthConnect}
+                      <Link2 size={11} />{" "}
+                      {isConnecting ? koPub.oauthConnecting : koPub.oauthConnect}
                     </button>
                   )}
                   <button
