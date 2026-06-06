@@ -1,16 +1,62 @@
 /**
  * GameLobby — earn tab game grid (SSOT: gameRegistry).
+ *
+ * Cards delegate visual + interaction to <GameCard3D/>; the lobby owns layout
+ * + keyboard navigation (↑↓←→ to move focus, Enter to follow link).
  */
-import { Link } from "@tanstack/react-router";
-import { cn } from "@/lib/utils";
+import { useCallback, useEffect, useRef } from "react";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
-import {
-  GAME_REGISTRY,
-  gamePath,
-  type GameRegistryEntry,
-} from "@/shared/games/registry/gameRegistry";
+import { GAME_REGISTRY } from "@/shared/games/registry/gameRegistry";
+import { useHotkeys } from "@/shared/hooks/useHotkeys";
+import { GameCard3D } from "./GameCard3D";
+
+const COLS = 2;
 
 export function GameLobby() {
+  const gridRef = useRef<HTMLDivElement | null>(null);
+
+  const focusByOffset = useCallback((offset: number) => {
+    const grid = gridRef.current;
+    if (!grid) return;
+    const cards = Array.from(
+      grid.querySelectorAll<HTMLElement>("[data-game-card]"),
+    );
+    if (cards.length === 0) return;
+    const active = document.activeElement as HTMLElement | null;
+    const currentIndex = active ? cards.indexOf(active) : -1;
+    const next = currentIndex < 0 ? 0 : Math.min(cards.length - 1, Math.max(0, currentIndex + offset));
+    cards[next]?.focus();
+  }, []);
+
+  useHotkeys({
+    ArrowDown: (e) => {
+      if (!gridRef.current?.contains(document.activeElement)) return;
+      e.preventDefault();
+      focusByOffset(COLS);
+    },
+    ArrowUp: (e) => {
+      if (!gridRef.current?.contains(document.activeElement)) return;
+      e.preventDefault();
+      focusByOffset(-COLS);
+    },
+    ArrowRight: (e) => {
+      if (!gridRef.current?.contains(document.activeElement)) return;
+      e.preventDefault();
+      focusByOffset(1);
+    },
+    ArrowLeft: (e) => {
+      if (!gridRef.current?.contains(document.activeElement)) return;
+      e.preventDefault();
+      focusByOffset(-1);
+    },
+  });
+
+  // Make first card tabbable; Enter is the browser default on Links.
+  useEffect(() => {
+    const first = gridRef.current?.querySelector<HTMLElement>("[data-game-card]");
+    if (first && first.tabIndex < 0) first.tabIndex = 0;
+  }, []);
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -19,57 +65,11 @@ export function GameLobby() {
         </span>
         <ModeBadge />
       </div>
-      <div className="grid grid-cols-2 gap-2.5">
-        {GAME_REGISTRY.map((g) => (
-          <GameTile key={g.id} card={g} />
+      <div ref={gridRef} className="grid grid-cols-2 gap-2.5" role="grid">
+        {GAME_REGISTRY.map((g, i) => (
+          <GameCard3D key={g.id} card={g} tabIndex={i === 0 ? 0 : -1} />
         ))}
       </div>
     </div>
-  );
-}
-
-function GameTile({ card }: { card: GameRegistryEntry }) {
-  const inner = (
-    <div
-      className={cn(
-        "glass-2 relative flex flex-col gap-2 rounded-2xl p-3 transition active:scale-[0.98]",
-        !card.open && "opacity-60",
-      )}
-    >
-      <div className="flex items-center justify-between">
-        <div
-          className="grid h-10 w-10 place-items-center rounded-xl"
-          style={{
-            background: `color-mix(in oklab, var(--color-${card.accent}) 18%, transparent)`,
-            color: `var(--color-${card.accent})`,
-          }}
-        >
-          <card.Icon size={20} />
-        </div>
-        {card.open ? (
-          <span className="rounded-full bg-[color-mix(in_oklab,var(--color-emerald)_22%,transparent)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald">
-            LIVE
-          </span>
-        ) : (
-          <span className="rounded-full bg-(--color-surface-hi) px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-(--color-muted)">
-            SOON
-          </span>
-        )}
-      </div>
-      <div>
-        <div className="text-sm font-extrabold">{card.name}</div>
-        <div className="font-numeric text-[10px] text-(--color-muted)">
-          RTP {card.rtp} · {card.liveBets > 0 ? `${card.liveBets} live` : "준비중"}
-        </div>
-      </div>
-    </div>
-  );
-
-  const path = gamePath(card.id);
-  if (!path) return inner;
-  return (
-    <Link to={path} className="block">
-      {inner}
-    </Link>
   );
 }
