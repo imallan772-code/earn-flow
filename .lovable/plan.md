@@ -1,136 +1,121 @@
 
-# Phase Z-2 v1.3 — Promo Engine (최종, Lovable 착수)
+# ROUND Z-3 v1.3.1 (SHIP) · Promo Calendar + Analytics Polish
 
-Z-1 v3.2 위 누적. v1.2 + 검토 4줄(경로 · publish fn 분리 · is_admin gate · imageUrl read-back TODO) 반영.
+운영 콘솔 수준의 시각화·탐색·집계 UI. 신규 DB/RPC/API/dependency **0**. `usePromoAdmin` 변경 **0**.
 
-## 1. 목표 (3축)
-- Studio `imagePrompt` → SSE 이미지 생성 → 미리보기 (Storage upload는 Cursor)
-- ChannelMatrix → webhook/telegram **실 adapter** (OAuth 채널 stub + 한글 안내, SSRF 차단)
-- `cron/promo-tick` → HMAC + dispatchTick pure 골격 (DB scan은 Cursor)
+## Data Contract (Z-3, 훅 변경 0 기준)
+- **SSOT for timeline/breakdown/top:** `dispatches[]` (+ `campaigns[]` join)
+- **clicks:** `analytics.clicks` scalar · `analytics.topChannel` · `clicks[]` 배열 없음
+- Pure fn: `dailyDispatchBuckets`, `topCampaignByDispatches`
+- **기간 필터 KPI 파생:**
+  - dispatches / impressions(= filteredDispatches.length × 100) / breakdown / timeline / top → **filtered dispatches 기준**
+  - clicks / CTR → **전체 집계 유지** + `analytics.clicksScopeNote`
+- **Loading UX (mock flash 가림):** `persisting && loading` → Calendar/Analytics **panel 전체 Skeleton**. (analyticsQuery.isLoading 미노출 + 로딩 중 mock fallback 반환은 Cursor TODO.)
+- **Empty state:** `analytics.dispatches === 0 && analytics.clicks === 0` (mock seed clicks 2 → demo 거의 비노출 정상)
 
-## 2. v1.3 추가 (검토 4줄)
+## Status 색 (semantic 토큰만, raw hex 0)
+- `draft` = muted
+- `scheduled` / `publishing` = accent
+- `done` = emerald
+- `failed` = rose
 
-| # | 항목 | 결정 |
-|---|------|------|
-| v1.3-1 | **mapCampaign 경로 SSOT** | 수정 파일은 **`src/features/admin/promo/lib/mapCampaign.ts`** (features `lib/` 하위, lib/api 아님). `image_url ↔ variant.imageUrl` 한 필드 SSOT |
-| v1.3-2 | **publish server fn 역할 분리 (이름 박기)** | ChannelMatrix **「지금 발행」** → `runPromoCronTick` (scheduled due 캠페인 fan-out 전용) · CampaignTable 행 **「발행」** → `publishPromoCampaign(campaignId, channel?)` (단건 발행). 두 fn은 별도 export, UI에서 절대 합치지 않음 |
-| v1.3-3 | **adminGate RPC SSOT = `is_admin`** | `adminGate.server.ts`: `supabase.auth.getUser(token)` → `supabase.rpc("is_admin")` boolean === true. client `fetchIsAdmin`과 동일 RPC. (`assert_is_admin` throw 방식 ❌, `is_admin` boolean 통일) |
-| v1.3-4 | **imageUrl read-back은 Cursor TODO** | 세션 내 `variant.imageUrl` preview OK. Supabase reload 후 유실은 **lib/api/promo.ts `toVariant` `image_url → imageUrl` 매핑** 필요 — Z-2 범위 밖, Cursor 큐 |
+## Red Line (MUST NOT)
+- `supabase/`, `src/integrations/supabase/`, `src/lib/api/`, `src/lib/promo/*.server.ts`, `src/routes/api/**` 수정 0
+- `usePromoAdmin` 내부 로직/계약 변경 0
+- 신규 chart npm 0 — CSS/SVG/Canvas 만
+- zustand 0 · vite.config 0 · walletStore 0 · 인라인 mock 0
+- CampaignTable / StudioPanel / ChannelMatrix 리팩터 0
 
-## 3. v1.2/v1.1 유지
+## A. CalendarBoard → 월간 운영 캘린더 (AC-CAL-*)
+**파일:** `CalendarBoard.tsx` (+ `CalendarMonthGrid.tsx`, `CalendarDayDetail.tsx`)
 
-| # | 결정 |
-|---|------|
-| v1.1-1 | 이미지 모델: Imagen/Gemini image endpoint (GEMINI_API_KEY). Flash text로 image 호출 ❌. 미지원/키 없음 → `IMAGE_NOT_CONFIGURED` + placeholder. base64 → data URL preview (Storage Cursor) |
-| v1.2-C/v1.1-2 | image-stream admin gate: `assertAdminRequest` 통과 전 stream 시작 ❌, 미인증/비admin → 401 JSON |
-| v1.1-3 | cron route → `{ok:true,enqueued:0,sent:0,failed:0,note:"CRON_DB_READ_CURSOR_TODO"}` 200. cron route에서 `promoListCampaigns` 호출 ❌. `runPromoCronTick` server fn은 admin UI 전용 |
-| v1.1-4 | `getPromoSettingsExtended` server fn → `admin_get_promo_settings` raw `default_utm` parse → telegram 필드 read-back. lib/api/promo.ts 수정 0 |
-| v1.1-5 | `channels/webhook.ts` outbound URL → `src/lib/promo/ssrf.ts` `assertSafeUrl` 필수. 실패 → `{ok:false,code:"SSRF_BLOCKED"}`. telegram(`api.telegram.org`) 고정 URL은 SSRF 대상 ❌ |
-| v1.2-A | `PromoVariant.imageUrl?: string` 타입 추가 |
-| v1.2-B | 「지금 발행」/「발행」 UI 배치 (v1.3-2 역할 분리) |
+- 7열 월간 그리드, 요일 헤더 = `labels.ko.calendar.weekdays`
+- 이전/다음 달 nav + "오늘" 버튼 (aria-label)
+- Day cell: scheduledAt 있는 모든 캠페인 pill (draft 포함), status 색 = 위 5종 매핑
+- **CAL-4 pill copy 규칙:**
+  - **pill 본문 = 캠페인 `title` truncate**
+  - status는 좌측 dot/보더 색 + legend의 `promoStatusLabel(status)`
+  - `title` 속성(툴팁) = `"{title} · {promoStatusLabel(status)} · {scheduledAt}"`
+- Pill/날짜 클릭 → Day detail: 캠페인 목록 + RiskBadge + 채널 수 + `datetime-local` → `scheduleCampaign(id, iso)`
+- 빈 날짜 → `calendar.dayEmpty`
+- 그리드/리스트 토글 — 기존 리스트 뷰 `listView` 분기 유지 (회귀 방지)
+- 모바일 390px: `overflow-x-auto`
+- 월 전환: **`__root.tsx` 전역 `LazyMotion` 사용 → `m.div` fade/slide만, nested wrap 0**
+- `persisting && loading` 시 panel 전체 Skeleton
+- `calendar.hintConfigured`: "Supabase에 저장 · cron이 due 시 발송"
 
-## 4. 구현 범위
+## B. Analytics → 성과 대시보드 (AC-ANA-*)
+**파일:** `AnalyticsDashboard.tsx` + sub (`KpiRow`, `ChannelBreakdown`, `DispatchTimeline`, `PeriodFilter`, `DispatchSparkline`). `AnalyticsKpis.tsx`는 thin re-export.
 
-### A. 이미지 생성 SSE
-- **신규** `src/lib/promo/image.server.ts` — `resolveImageProvider()` (Imagen/Gemini image, Flash 금지) · `streamPromoImage(prompt,{signal})` · envelope `{ok,data:{base64|url}}|{ok:false,code:"IMAGE_NOT_CONFIGURED"|"IMAGE_ERROR"|"IMAGE_TIMEOUT"}`
-- **신규** `src/lib/promo/adminGate.server.ts` — `assertAdminRequest(request)`: bearer/cookie 추출 → `supabase.auth.getUser(token)` → `supabase.rpc("is_admin")` boolean === true. 실패 → throw 401 envelope
-- **신규 route** `src/routes/api/admin/promo/image-stream.ts` — handler 진입 즉시 `await assertAdminRequest(request)` (실패 시 401 JSON before stream) → `text/event-stream` (`progress|chunk|done|error`) · 키/prompt leak 0
-- **VariantEditorCard** — 「이미지 생성」 + AbortController · 완료 → `usePromoAdmin().addAsset()` + variant `imageUrl` 반영
-- **LivePreview** — `variant.imageUrl` → `<img>`
+- **ANA-0:** `persisting && loading` → 대시보드 전체 Skeleton
+- KPI row: impressions / clicks / CTR / dispatches
+- Channel breakdown: filtered dispatches 기준, CSS flex bar, `PROMO_CHANNEL_LABELS_KO`
+- Timeline: filtered dispatches 최신 20건 (sentAt/channel + `promoStatusLabel` badge + 캠페인 title)
+- Top campaign: `topCampaignByDispatches` 1위 + `analytics.topChannel` 보조
+- PeriodFilter 7d/30d/all — Data Contract 규칙
+- Sparkline: SVG polyline `dailyDispatchBuckets`
+- Empty state: dispatches=0 && clicks=0 → `<Link to="/admin/promo/channels">` CTA
 
-### B. 채널 Adapter + 발행 fn 분리
-- **신규** `src/lib/promo/channels/{types,webhook,telegram,resend,index}.ts`
-  - `webhook.ts`: POST + `assertSafeUrl` 통과 필수
-  - `telegram.ts`: Bot API sendMessage (token/chatId는 settings `default_utm` JSON, DB migration 0)
-  - `resend.ts`: stub `NOT_IMPLEMENTED`
-  - OAuth(x/linkedin/tiktok): stub `{ok:false,code:"OAUTH_REQUIRED"}`
-- **promo.functions.ts** (export 2개 분리 유지)
-  - `publishPromoCampaign(campaignId, channel?)` — **단건 발행** (CampaignTable 행 「발행」 전용). adapter 호출 + `promoRecordDispatch`
-  - `runPromoCronTick()` — **scheduled due 캠페인 fan-out** (ChannelMatrix 「지금 발행」 전용, cron route 호출 ❌)
-  - `testChannel(channel)` — verify/dry-run
-  - `getPromoSettingsExtended` — telegram read-back
-  - handler 내부 `promoListCampaigns`/`promoRecordDispatch` import 호출 OK (lib/api 파일 수정 0)
-- **ChannelMatrix.tsx** — mockVerify/mockSend 제거 → `useServerFn` · 상단 「지금 발행」 = `runPromoCronTick` · `[데모]` 제거
-- **CampaignTable.tsx** — 행별 「발행」 액션 = `publishPromoCampaign(row.id)`
-- **SettingsPanel.tsx** — telegram bot token/chat id 입력 (save: updateSettings → default_utm merge / load: `getPromoSettingsExtended`)
-- **types.ts** — `PromoVariant.imageUrl?: string` · `PromoSettings.telegramBotToken? / telegramChatId?`
-- **`src/features/admin/promo/lib/mapCampaign.ts`** — `image_url ↔ variant.imageUrl` SSOT (`utm.heroUrl` 사용 시 둘 중 하나만)
+## C. Pure logic + tests
+**`src/lib/promo/calendarGrid.ts`** (server import 0)
+- `export type DayCell = { date: Date; ymd: string; inMonth: boolean; campaigns: PromoCampaign[] }`
+- `ymdKey(iso)` (local 일관)
+- `groupCampaignsByDay(campaigns)`
+- `buildMonthGrid(year, month, campaigns)` (6주 고정)
+- `shiftMonth(year, month, delta)`
 
-### C. Cron dispatch 골격
-- **신규** `src/lib/promo/dispatchTick.ts` — pure `(campaigns) => {campaignId,channel,variantId}[]`
-- **수정** `src/routes/api/public/cron/promo-tick.ts` — HMAC 유지 · `PROMO_CRON_SECRET` 없으면 503 · valid → `{ok:true,enqueued:0,sent:0,failed:0,note:"CRON_DB_READ_CURSOR_TODO"}` 200
-- pg_cron 실 등록 ❌ (Cursor)
+**`src/lib/promo/analyticsAggregate.ts`**
+- `channelBreakdown(dispatches)`
+- `filterByPeriod<T>(items, getDate, from, to)`
+- `periodRange(now, "7d"|"30d"|"all")`
+- `dailyDispatchBuckets(dispatches, days)`
+- `topCampaignByDispatches(campaigns, dispatches)`
+- `resolveCampaignTitle(campaigns, id)`
 
-### D. 한글 SSOT (`labels.ko.ts`)
-```
-promo.image.{generate,generating,cancel,done,notConfigured,error,timeout}
-promo.publish.{publishNow,publishRow,sending,sent,failed,oauthRequired,testOk,testFail,ssrfBlocked}
-promo.cron.{notConfigured,tickOk,dbReadCursorTodo}
-promo.settings.{telegramToken,telegramChat}
-```
+**Tests (vitest, ≥4 each):** `calendarGrid.spec.ts` · `analyticsAggregate.spec.ts`
 
-### E. 테스트 ≥8 신규
-| 파일 | 내용 |
-|---|---|
-| `channels/__tests__/webhook.spec.ts` | payload · URL 필수 · **SSRF 차단** |
-| `channels/__tests__/telegram.spec.ts` | truncate · token missing |
-| `lib/promo/__tests__/dispatchTick.spec.ts` | due filter · fan-out |
-| `lib/promo/__tests__/image.server.spec.ts` | mock fetch · NOT_CONFIGURED · SSE parse |
-| `lib/promo/__tests__/publish.spec.ts` | publishPromoCampaign vs runPromoCronTick 분리 · OAuth stub · webhook success mock · dispatch record |
+## D. labels.ko (AC-COPY-*)
+- `calendar.weekdays/today/prevMonth/nextMonth/gridView/listView/dayEmpty/statusLegend`
+- `analytics.period7d/30d/all/channelBreakdown/timeline/topCampaign/emptyCta/ctrTrend/clicksScopeNote`
+- Stale 정리: `calendar.hintConfigured`, `analytics.hintConfigured` — "Z-DB/Z-2/로컬 데모" 제거
+- `studio.composerHintConfigured`: persisting 시 "Supabase에 저장"
+- PromoShell subtitle은 Cursor 큐 (allowlist 밖)
 
-실 API/실 키 호출 0.
+## 파일 allowlist
+- `src/features/admin/promo/components/CalendarBoard.tsx` (+ `CalendarMonthGrid.tsx`, `CalendarDayDetail.tsx`)
+- `src/features/admin/promo/components/AnalyticsDashboard.tsx` (+ `KpiRow.tsx`, `ChannelBreakdown.tsx`, `DispatchTimeline.tsx`, `PeriodFilter.tsx`, `DispatchSparkline.tsx`)
+- `src/features/admin/promo/components/AnalyticsKpis.tsx` (thin re-export)
+- `src/shared/admin/labels.ko.ts`
+- `src/lib/promo/calendarGrid.ts`
+- `src/lib/promo/analyticsAggregate.ts`
+- `src/lib/promo/__tests__/calendarGrid.spec.ts`
+- `src/lib/promo/__tests__/analyticsAggregate.spec.ts`
+- `src/routes/admin/promo/calendar.tsx` (thin)
+- `src/routes/admin/promo/analytics.tsx` (thin)
 
-## 5. Red Line (FAIL)
-- `supabase/` · `src/integrations/supabase/types.ts` · `src/lib/api/promo.ts` **수정 0** (import 호출은 OK)
-- `apps/admin/` diff 0 · `messages.{ko,en}.ts` diff 0 · `nav.ts` additive only
-- features에서 `promoMockStore` 직접 import 0
-- zustand · 신규 npm dep · `VITE_*` secret · server in-memory store 0
-- `process.env` handler 내부 read only
-- **Flash text로 image 호출 0**
-- **cron route에서 `promoListCampaigns` 호출 0**
-- **image-stream route admin gate 통과 전 stream 시작 0**
-- **`publishPromoCampaign` ↔ `runPromoCronTick` UI 혼용 0** (역할 분리 강제)
+## Cursor TODO (handoff)
+- `// TODO(Cursor): list_promo_clicks RPC + usePromoAdmin clicks[] 노출 — real CTR sparkline`
+- `// TODO(Cursor): usePromoAdmin.loading에 analyticsQuery.isLoading 포함`
+- `// TODO(Cursor): persisting && loading 시 mock fallback 반환 금지 (mock flash 제거)`
+- `// TODO(Cursor): PromoShell subtitle persisting 분기 (ai.subtitleConfigured 완성)`
+- `// TODO(Cursor): promo analytics RPC with date range — client filter is Z-3 demo only`
+- `// TODO(Cursor): pg_cron schedule — docs/PROMO_CRON_SETUP.md`
 
-## 6. 파일
-```text
-신규
-  src/lib/promo/image.server.ts
-  src/lib/promo/adminGate.server.ts
-  src/lib/promo/dispatchTick.ts
-  src/lib/promo/channels/{types,webhook,telegram,resend,index}.ts
-  src/lib/promo/channels/__tests__/{webhook,telegram}.spec.ts
-  src/lib/promo/__tests__/{image.server,dispatchTick,publish}.spec.ts
-  src/routes/api/admin/promo/image-stream.ts
-  src/features/admin/promo/lib/mapCampaign.ts      ← features lib/ 하위
-수정
-  src/lib/promo/promo.functions.ts                 ← +publishPromoCampaign, +runPromoCronTick, +testChannel, +getPromoSettingsExtended
-  src/routes/api/public/cron/promo-tick.ts
-  src/features/admin/promo/components/{VariantEditorCard,LivePreview,ChannelMatrix,SettingsPanel,CampaignTable}.tsx
-  src/features/admin/promo/types.ts
-  src/shared/admin/labels.ko.ts
-  src/routeTree.gen.ts (자동)
-```
+## Acceptance Checklist
+- [ ] CAL-1 월간 그리드에 scheduledAt 캠페인 pill (status 5종 색)
+- [ ] CAL-2 pill/날짜 클릭 → Day detail + `scheduleCampaign`, 리스트 뷰 회귀 없음
+- [ ] CAL-3 `calendarGrid.spec` GREEN
+- [ ] CAL-4 pill 본문 = title truncate · legend/tooltip에 `promoStatusLabel`
+- [ ] ANA-0 `persisting && loading` → panel 전체 Skeleton
+- [ ] ANA-1 채널 breakdown + 발송 타임라인 (dispatches SSOT)
+- [ ] ANA-2 기간 필터 7d/30d/all — Data Contract 파생, clicks/CTR scopeNote
+- [ ] ANA-3 `analyticsAggregate.spec` GREEN
+- [ ] COPY-1 calendar/analytics/studio hintConfigured stale 제거 (PromoShell 제외)
+- [ ] GATE-1 eslint 0 warn · vitest GREEN · build GREEN
+- [ ] GATE-2 `supabase/` · `lib/api/` · `integrations/supabase/` · `lib/promo/*.server.ts` · `routes/api/**` diff 0
 
-## 7. 수락 기준
-- Studio imagePrompt → 「이미지 생성」 → SSE → preview 이미지 (키 없음 → 한글 `IMAGE_NOT_CONFIGURED` + placeholder)
-- ChannelMatrix 「지금 발행」 → `runPromoCronTick` 실행 / CampaignTable 행 「발행」 → `publishPromoCampaign` 실행 (UI 합쳐짐 0)
-- adapter 결과 토스트: webhook 성공 · telegram 성공 · OAuth 한글 안내 · SSRF 차단 메시지
-- Settings telegram 저장 → reload 후 입력값 복원
-- `POST /api/public/cron/promo-tick` + valid HMAC → `{...note:"CRON_DB_READ_CURSOR_TODO"}` 200 (no secret → 503)
-- `/api/admin/promo/image-stream` 미인증/비admin → 401 JSON before stream
-- `bun run lint:strict` 0 · `bun run check` GREEN · promo tests +8 후 전체 GREEN
-- UI 영문 하드코딩 0 (X·LinkedIn 등 고유명사만)
+## 디자인
+cosmic bg + glass-1/2, font-numeric KPI, status semantic 토큰, 60fps 월 전환, aria-label.
 
-## 8. 스코프 밖 (Cursor 큐)
-- `lib/api/promo.ts` `toVariant` **image_url → imageUrl read-back** (v1.3-4)
-- Cron 전용 service role RPC (DB scan)
-- `lib/api/toSettings` telegram 필드 정식화
-- `promo-assets` Storage upload (data URL → bucket)
-- Z-OAuth (X/LinkedIn/TikTok)
-- Resend Edge · pg_cron 실등록
-- supabase migration · types regen · A/B winner · ElevenLabs · shorts · apps/admin · vite.config
-
-## 9. 라운드 종료 보고
-변경 파일 목록 / Red Line Y·N 표 / lint·test·build 결과 / Cursor TODO
-
-한 줄: Z-2 v1.3 = imagePrompt SSE(Imagen, `is_admin` gate) + webhook(SSRF)·telegram 실 adapter + 「지금 발행」(`runPromoCronTick`)·행 「발행」(`publishPromoCampaign`) 분리 + cron HMAC 골격 + settings telegram read-back + `PromoVariant.imageUrl` SSOT(features `lib/mapCampaign.ts`) + 한글 + tests 8+. `toVariant` read-back은 Cursor.
+## 라운드 종료 보고 (ROUND_REPORT_TEMPLATE.md)
+변경 파일 · 비대상 Y/N · eslint/test/build · Cursor TODO.

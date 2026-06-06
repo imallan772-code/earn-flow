@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AnalyticsKpis } from "@/features/admin/promo/components/AnalyticsKpis";
+import { AnalyticsDashboard } from "@/features/admin/promo/components/AnalyticsDashboard";
 
 export const Route = createFileRoute("/admin/promo/analytics")({
   ssr: false,
-  component: AnalyticsKpis,
+  component: AnalyticsDashboard,
 });
