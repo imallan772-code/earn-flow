@@ -1,130 +1,123 @@
-# ROUND P-PR2 — Feed UI polish + RightRail dock (Lovable)
+# ROUND Z — Phase Z-0 실행 플랜 (최종 SSOT)
 
-SSOT: `docs/backlog/rounds/GAMES-ROADMAP-v2.2-v2.3.md § P` (Lovable PR2 영역)
-선행: Cursor ROUND O sanitation GREEN (`761c27f`)
-병렬: Cursor PR1 (Supabase Realtime + `lib/api/liveFeed.ts` + Store adapter) — UI-only 선행 가능
+승인된 SSOT 그대로 착수. AI 실호출·실발행·DB insert는 본 Phase에서 하지 않는다 (Z-1~3 / Cursor Z-DB 분리).
 
----
+## 1. Scope (Z-0 only)
 
-## Red Lines (0-diff)
+- `/admin/promo` 웹 SSOT, 7-tab shell
+- `features/admin/promo/*` 파일 트리
+- client mockStore (브라우저 인메모리, server in-memory 금지)
+- pure lib (`src/lib/promo/*`): utm, risk, abSplit, schedule
+- server fn / route **stub만** (실 dispatch·AI 호출·DB write 없음)
+- vitest ≥8 (pure lib + SSRF guard 1건)
+- `apps/admin` diff 0, `nav.ts` Promo additive only
 
-- `supabase/`, `src/integrations/supabase/`
-- `src/lib/api/**` 전체
-- `src/shared/livefeed/LiveBetsStore.ts` 코어 시그니처 + 내부 상태
-- `src/shared/livefeed/botGenerator.ts`
-- `orderLiveBetsForView`, `LiveBet` 타입
-- `useTilt`, `useHotkeys`, `useRegisterRightRail`, `useDesktopLayout` API
-- `walletStore`, game Engine/persist store
-- `LiveBetsFeed` 기존 props default 동작 0-diff
-- `WheelRightRail.tsx` 0-diff (`limit={10}` 유지)
-- 신규 npm dep = 0
-
----
-
-## Scope
-
-### 1) Desktop RightRail dock — 5종 (최우선)
-
-SSOT: WheelScreen 패턴 (`useDesktopLayout()` + `useRegisterRightRail(node)`).
-**desktop 분기 = `useDesktopLayout()` only** (useGameViewport는 px 측정용이라 미사용).
-
-신규 파일 (각 ≤ 60줄, feed-only — SessionStatsBar 미포함):
-
-- `src/features/games/crash/CrashRightRail.tsx`
-- `src/features/games/dice/DiceRightRail.tsx`
-- `src/features/games/mines/MinesRightRail.tsx`
-- `src/features/games/limbo/LimboRightRail.tsx`
-- `src/features/games/plinko/PlinkoRightRail.tsx`
-
-각 파일: `memo` + `<LiveBetsFeed game="<id>" limit={80} virtualized showHeader />` 단일 카드.
-
-각 Screen 수정 (5개): `useMemo` + `useRegisterRightRail(node)`. 본문 inline `<LiveBetsFeed game=…>`가 있으면 `useDesktopLayout()` true일 때만 숨김. 모바일 0-diff.
-
-### 2) LiveBetsFeed — 필터 칩 (메모리 state, **game prop 없을 때만 렌더**)
-
-`LiveBetsFeed.tsx` 헤더 아래 chip row:
-
-- `All` / `Big wins` / `Me only` — `SegmentedTabs` + compact override (`className="py-1.5 text-[10px]"`)
-- `useState`만, URL state 없음
-- **game prop 존재 시 칩 자체 렌더 X** → 게임 dock/inline에는 영향 0
-- 칩이 실제 보이는 곳: `FeedRightRail`의 `<LiveBetsFeed limit={10}/>` 등 global feed
-
-**Derive 정의 (고정):**
-
-```ts
-// orderLiveBetsForView 결과 위에 소비 측 derive
-All:      view
-Big wins: view.filter(b =>
-            (b.status === "win" || b.status === "cashout") &&
-            b.multiplier != null && b.multiplier >= 10)
-Me only:  view.filter(b => b.isMe === true)
-```
-
-라인 예산: `LiveBetsFeed.tsx` ≤ 200
-
-### 3) LiveBetRow — ME row 시각 강화
-
-`LiveBetRow.tsx`만 수정 — **ROW_GRID 컬럼 변경 금지**:
-
-- ME 행: `absolute left-0 inset-y-0 w-[2px]` cyan glow bar (grid 외부)
-- 승리 ME 행 (status win/cashout): emerald pulse ring 1회, reduced-motion ON 시 정적
-- row 컨테이너 `relative` 추가 외 grid·height 0-diff (ROW_HEIGHT=32 유지)
-- 클릭 핸들러 신규 X
-
-라인 예산: `LiveBetRow.tsx` ≤ 120
-
----
-
-## Acceptance Criteria
-
-- **AC-P2-1** 5개 신규 `*RightRail.tsx` 존재, 각 ≤ 60줄, feed-only (StatsBar 미포함)
-- **AC-P2-2** Crash/Dice/Mines/Limbo/Plinko Screen 각 `useRegisterRightRail` 1회 호출 (`rg useRegisterRightRail src/features/games --glob "*Screen*"` = 5 + wheel)
-- **AC-P2-3** desktop(`useDesktopLayout()=true`) 진입 시 5종 모두 우측 dock 노출, 모바일 0-diff
-- **AC-P2-4** `LiveBetsFeed`에 `game` prop 없을 때만 칩 렌더, 3 필터 동작 (Big wins=multiplier≥10, Me only=isMe)
-- **AC-P2-5** 기존 호출부 (FeedRightRail/Wheel/inline) 0 regression — WheelRightRail `limit={10}` 0-diff
-- **AC-P2-6** ME 행 absolute glow bar (ROW_GRID/ROW_HEIGHT=32 0-diff), virtual list 정렬 유지, 승리 시 pulse 1회, reduced-motion ON → 정적
-- **AC-P2-7** `LiveBetsStore.ts`, `botGenerator.ts`, `lib/api/**`, `supabase/**`, `WheelRightRail.tsx` git diff = 0
-- **AC-P2-8** `bun run lint:strict` 0 warnings
-- **AC-P2-9** `bun run check` 148+ GREEN (CrashRightRail mount smoke + 필터 칩 derive 단위 테스트 추가)
-- **AC-P2-10** `wc -l LiveBetsFeed.tsx` ≤ 200, `LiveBetRow.tsx` ≤ 120
-- **AC-P2-11** `package.json` / `bun.lock` diff = 0
-
----
-
-## Non-goal
-
-- Big win toast/marquee (LiveCashoutStrip 별도)
-- ME 클릭 → 본인 베팅 모달 (v2.3)
-- RightRail collapse/expand
-- Supabase Realtime, `lib/api/liveFeed.ts`, Store adapter → Cursor PR1
-
----
-
-## Exit Gate
+## 2. 파일 트리
 
 ```text
-1. bun run lint:strict          # 0 warnings
-2. bun run check                # 148+ GREEN
-3. git diff src/shared/livefeed/LiveBetsStore.ts      # 0
-4. git diff src/shared/livefeed/botGenerator.ts       # 0
-5. git diff src/features/games/wheel/WheelRightRail.tsx  # 0
-6. git diff src/lib/api/ supabase/                    # 0
-7. git diff package.json bun.lock                     # 0
-8. 수동 QA desktop (≥1024):
-   a. Crash/Dice/Mines/Limbo/Plinko 우측 dock 노출
-   b. 필터 칩 → /feed (FeedRightRail global feed, game prop 없음)에서
-      All / Big wins(×10+) / Me only 토글
-   c. ME 베팅 행 좌측 cyan bar + 승리 시 pulse 1회
-9. 수동 QA mobile (<1024): dock 미렌더, 본문 0-diff
+src/routes/admin/promo/
+  route.tsx                  # layout + 7-tab nav
+  index.tsx                  # → studio redirect
+  studio.tsx                 # AI Composer (mock)
+  campaigns.tsx
+  calendar.tsx
+  channels.tsx
+  assets.tsx
+  analytics.tsx
+  settings.tsx
+
+src/features/admin/promo/
+  components/
+    PromoTabs.tsx
+    StudioPanel.tsx
+    LivePreview.tsx          # 5 type preview (mock)
+    ChannelMatrix.tsx
+    CampaignTable.tsx
+    CalendarBoard.tsx
+    AssetGrid.tsx
+    AnalyticsKpis.tsx
+    RiskBadge.tsx
+    AbSplitBar.tsx
+  store/
+    mockStore.ts             # zustand client-only, 캠페인/변형/디스패치/클릭/에셋/세팅
+  types.ts                   # 로컬 stub (supabase types.ts 절대 import 금지)
+
+src/lib/promo/
+  utm.ts                     # buildUtmUrl(slug, ch, campaign)
+  risk.ts                    # scanRiskLocal(text) → {score, flags[]}
+  abSplit.ts                 # splitVariants(variants, ratio)
+  schedule.ts                # nextTickAt(cron, tz)
+  ssrf.ts                    # assertSafeUrl(url)
+  index.ts
+
+src/lib/promo/promo.functions.ts
+  composePromo (stub: throws "Z-1")
+  publishCampaign (stub)
+  testChannel (stub)
+  listCampaigns / listDispatches / listAssets (mock pass-through)
+
+src/routes/api/public/r.$slug.ts          # 302 to target (UTM merge), click insert는 stub log만
+src/routes/api/public/cron.promo-tick.ts  # HMAC 검증 + no-op 200
+
+src/lib/promo/__tests__/
+  utm.test.ts
+  risk.test.ts
+  abSplit.test.ts
+  schedule.test.ts
+  ssrf.test.ts               # SSRF guard (private IP/localhost 차단)
+  mockStore.test.ts
+  redirect.test.ts           # /r/$slug UTM merge
+  cron.test.ts               # HMAC reject
 ```
 
----
+총 8개 테스트.
 
-## Post-P2 queue
+## 3. 7-tab 구성
 
-```text
-[지금]   Lovable → ROUND P-PR2 (UI polish + dock)   ← 본 plan
-[병렬]   Cursor  → P-PR1 (Supabase Realtime + adapter)
-[다음]   Cursor  → P-PR2 sanitation grep
-[그다음] Cursor  → Q-PR1 (/fair/verify + SHA256) or Lovable Q polish
-```
+| Tab | 내용 (Z-0 mock) |
+|-----|-----------------|
+| Studio | brief 입력 → "Generate" → mockStore에 plan/variants/hero placeholder, LivePreview 5종 |
+| Campaigns | mockStore 캠페인 테이블, status badge, RiskBadge |
+| Calendar | 캠페인 scheduled_at drag (mockStore 업데이트) |
+| Channels | 9 채널 카드 (Telegram/Discord/Slack/X/LinkedIn/TikTok/Resend/Zapier/Copy-Mode), verify()/send() mock |
+| Assets | 그리드 + upload placeholder (mockStore) |
+| Analytics | KPI 카드 (impressions/clicks/CTR) — mockStore 집계 |
+| Settings | webhook URL / HMAC secret 입력 (mockStore, 저장 noop) |
+
+모바일 <1024px: 1-column + bottom sheet nav.
+
+## 4. AI / 채널 / DB 처리
+
+- AI: `composePromoBrief` / `composePromoVariants` / `scanPromoRisk` / `translatePromo` — **이번엔 stub 함수만 등록**, 실 호출은 Z-1.
+- 채널: 9 adapter 인터페이스 (`verify()`, `send()`)만 정의. 실 송신 X.
+- DB: 본 Phase는 `supabase/` migration 추가 금지. Cursor Z-DB PR이 병렬로 6 테이블 + RLS + `record_promo_click` RPC + `pg_cron` 처리.
+- click insert: `/r/$slug`는 redirect만, RPC insert는 Cursor Z-DB 머지 후 Z-1에서 연결.
+
+## 5. Red Line
+
+금지:
+- `supabase/`, `src/integrations/supabase/types.ts`, `src/lib/api/**` 수정
+- `apps/admin` 7-tab 중복
+- server fn 내 `new Map()` / module-level `let arr=[]` (in-memory store)
+- `package.json` 신규 dependency
+- 단일 `composePromo` 4-step sync (multi-fn 분리 유지)
+- `walletStore.ts`, `LiveBetsStore.ts`, `botGenerator.ts`, 기존 admin 3 화면 diff
+- `nav.ts` Promo additive 외 변경
+
+## 6. Acceptance
+
+- 7 tab 라우트 GREEN, mobile 1-col
+- pure lib 4종 + SSRF guard + redirect + cron 합쳐 ≥8 tests PASS
+- `bun run lint:strict` 0 warn
+- `bun run check` GREEN
+- `rg "new Map\\(|let .*=\\s*\\[\\]" src/lib/promo/promo.functions.ts src/routes/api/public/` → 0
+- `git diff supabase/ src/integrations/supabase/types.ts src/lib/api/ apps/admin/` → 0
+
+## 7. Out of scope (Z-1+ / Cursor)
+
+- 실제 Gemini/GPT/이미지 호출 (Z-1)
+- 실 채널 OAuth + 발행 (Cursor Z-OAuth)
+- DB migration / RLS / pg_cron / click RPC insert (Cursor Z-DB, 병렬)
+- A/B winner auto-pick, video shorts, ElevenLabs (Z-2~3)
+
+승인 시 Build 모드 전환 후 위 트리 그대로 작성.
