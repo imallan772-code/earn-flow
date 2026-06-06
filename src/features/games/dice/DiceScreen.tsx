@@ -86,7 +86,6 @@ export function DiceScreen() {
   const rightRailNode = useMemo(() => <DiceRightRail />, []);
   useRegisterRightRail(rightRailNode);
 
-
   useEffect(() => {
     commitServerSeed(SERVER_SEED).then(setCommit);
   }, []);

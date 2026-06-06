@@ -22,7 +22,6 @@ export function PlinkoScreen() {
   const rightRailNode = useMemo(() => <PlinkoRightRail />, []);
   useRegisterRightRail(rightRailNode);
 
-
   return (
     <div className="flex flex-col gap-2">
       <header className="flex items-center gap-2">

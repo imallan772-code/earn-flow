@@ -117,11 +117,7 @@ export function LiveBetsFeed({
       )}
 
       {showChips && (
-        <div
-          role="tablist"
-          aria-label="라이브 피드 필터"
-          className="mb-2 flex items-center gap-1"
-        >
+        <div role="tablist" aria-label="라이브 피드 필터" className="mb-2 flex items-center gap-1">
           {CHIPS.map((c) => {
             const active = filter === c.id;
             return (
