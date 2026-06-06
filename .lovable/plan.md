@@ -1,148 +1,106 @@
-## ROUND L-2 PR2 — Real Money Mid-Round Cancel (Lovable)
+# ROUND M — Plinko 끝판왕 (1 PR, Polish Only)
 
-SSOT: `docs/lovable/rounds/ROUND-L-2.md` · prerequisites L-2-pre (Limbo 1-slot) merged · Cursor PR1 refund RPC merged.
-
-### Scope (5 games + 1 hook + 1 panel)
-
-| Game | PF (applySeed) | Unmount | Notes |
-|------|----------------|---------|-------|
-| Crash | refund RPC + meta | refund RPC + meta | 현재 refund 있으나 meta 없음 → meta 부착 |
-| Mines | refund RPC + meta | refund RPC + meta | 둘 다 신규 |
-| Limbo | refund RPC + meta | refund RPC + meta | 둘 다 신규 (L-2-pre는 legacy drain만) |
-| Dice  | **block** while active | — | 시드 변경 차단 + toast |
-| Wheel | **block** while active | — | 시드 변경 차단 + toast |
-
-### Files
-
-| 구분 | 경로 |
-|------|------|
-| 신규 | `src/shared/wallet/useUnmountRefund.ts` |
-| 신규 | `src/shared/wallet/__tests__/useUnmountRefund.spec.ts` |
-| 수정 | `src/features/games/crash/CrashScreen.tsx` |
-| 수정 | `src/features/games/mines/MinesScreen.tsx` |
-| 수정 | `src/features/games/limbo/LimboScreen.tsx` |
-| 수정 | `src/features/games/dice/DiceScreen.tsx` |
-| 수정 | `src/features/games/wheel/WheelScreen.tsx` |
-| 수정 | `src/shared/games/ui/StakeBetPanel.tsx` |
-
-### Non-touch (PR2)
-
-`supabase/**`, `src/integrations/supabase/types.ts`, `src/lib/api/**`, `walletStore.ts` 스키마, `useGameWallet.ts`(API 0-diff — `refund(amount, { game, roundId })`은 이미 존재).
+**SSOT**: `docs/backlog/rounds/GAMES-ROADMAP-v2.1.md § ROUND M` + `docs/lovable/PROMPT_HEADER.md` + `docs/CURSOR_AUDIT_NOTES.md` + `docs/WHOSE-TURN.md`
+**Non-goal**: v2.2/v2.3 (Realtime/Race/Vault/PF Edge/Cashier) — **M은 Plinko 단일 게임 폴리시만**
 
 ---
 
-### Technical details
+## 🔴 레드라인 (위반 시 즉시 롤백)
 
-#### 1. `useUnmountRefund` (SSOT for Crash/Mines/Limbo)
-
-```ts
-// src/shared/wallet/useUnmountRefund.ts
-import { useEffect, useRef } from "react";
-import type { GameWalletMeta } from "./useGameWallet";
-
-type RefundFn = (amount: number, meta?: GameWalletMeta) => Promise<boolean>;
-
-interface PendingRefund {
-  amount: number;
-  meta: GameWalletMeta; // { game, roundId } REQUIRED for real RPC
-}
-
-/**
- * On unmount: if `getPending()` returns a non-null bet, call refund() fire-and-forget.
- * Idempotent on server (refund_phon_for_bet_v2 — same roundId as debit).
- */
-export function useUnmountRefund(
-  refund: RefundFn,
-  getPending: () => PendingRefund | null,
-) {
-  const refundRef = useRef(refund);
-  const getRef = useRef(getPending);
-  refundRef.current = refund;
-  getRef.current = getPending;
-  useEffect(() => {
-    return () => {
-      const p = getRef.current();
-      if (!p || p.amount <= 0) return;
-      void refundRef.current(p.amount, p.meta).catch(() => undefined);
-    };
-  }, []);
-}
-```
-
-Spec (`useUnmountRefund.spec.ts`, 3 cases):
-- pending null → refund 0회
-- pending set → unmount 시 refund 1회 with meta
-- refund reject → no throw (fire-and-forget)
-
-#### 2. CrashScreen
-
-- 기존 unmount effect (line 129–134): `refundRef.current(b.amount)` → **meta 부착**. `useUnmountRefund(refund, () => { const ar = crashStore.get().activeRound; return ar && ar.cashedAt === null ? { amount: ar.amount, meta: { game: "crash", roundId: \`n${ar.nonce}\` } } : null; })`로 교체. 기존 ad-hoc effect 삭제.
-- `applySeed` (line 392~): `refundRef.current(ar.amount)` → `void refund(ar.amount, { game: "crash", roundId: \`n${ar.nonce}\` }).catch(() => undefined)`. activeRound의 nonce 사용 (현재 store nonce ≠ active nonce일 수 있음).
-
-#### 3. MinesScreen
-
-- 신규: `useUnmountRefund(refund, () => { const ar = minesStore.get().activeRound; return ar ? { amount: ar.amount, meta: { game: "mines", roundId: \`n${ar.nonce}\` } } : null; })`.
-- `applySeed`: clientSeed 변경 분기에서 activeRound 있으면 refund 1회 후 `activeRound: null`. roundId = `n${ar.nonce}`.
-
-#### 4. LimboScreen
-
-- 신규: `useUnmountRefund(...)` — activeRound 있고 settle 미수행이면 refund.
-- `applySeed`: activeRound 있으면 refund 1회 후 nonce 0 리셋 + `activeRound: null`. roundId = `n${ar.nonce}`.
-- L-2-pre의 legacy drain effect는 그대로 유지 (별개).
-
-#### 5. DiceScreen — PF block
-
-`applySeed` 진입 시 `if (!round.isIdle || activeBet)` → `appToast.raw.error("진행 중인 라운드가 있어 시드를 변경할 수 없습니다")` 후 return. RPC 호출 없음.
-
-#### 6. WheelScreen — PF block
-
-`applySeed` 진입 시 `if (!round.isIdle || wheelStore.get().activeRound)` → 동일 토스트 후 return. 기존 `activeRound: null` 분기 삭제.
-
-#### 7. StakeBetPanel — real integer clamp
-
-`useMode()` 추가:
-```ts
-import { useMode } from "@/shared/mode/ModeContext";
-const { mode } = useMode();
-const isReal = mode === "real";
-const minBet = isReal ? 1 : 0.01;
-const step = isReal ? 1 : 0.01;
-```
-- input: `min={minBet}`, `step={step}`.
-- onChange: real → `Math.max(0, Math.floor(Number(e.target.value) || 0))`; demo → 기존.
-- ½ / 2x: real → `Math.max(minBet, Math.floor(...))`; demo → 기존 `+(...).toFixed(2)`.
-- MAX: real → `Math.floor(balance)`.
-- 베팅 버튼 disabled 조건: real → `amount < 1`도 disable. 토글 시 amount < 1 이면 클램프 표시 (단순 floor + min 적용 useEffect 1회).
-- 잔액 표시 단위: 기존 "USDT" 유지 (mode 분기 표시는 별개 — 본 PR scope 외).
+- `PlinkoEngine.ts` 수학 **0-diff** (MULTIPLIERS · dropPath · simulatePhysics 결과·시그니처 불변)
+- `usePlinkoRound` **export 시그니처 git diff 0** (return 객체 키/타입 그대로)
+- `StakeBetPanel` 계약 불변 (`onPlace` / `lastOutcome` / `bettingRoundKey`)
+- **미수정**: `supabase/`, `src/integrations/supabase/types.ts`, `src/lib/api/`, `walletStore` schema, `.cursor/`, `vitest.config.ts`, `routeTree.gen.ts`
+- 신규 npm 의존성 **금지** (react-window은 ROUND O)
 
 ---
 
-### Acceptance criteria (per ROUND-L-2.md)
+## 스코프
 
-- AC-3: real `tryDebit(0.49)` → false (이미 `toIntegerPhonAmount`로 처리). StakeBetPanel real <1 / non-integer 입력 차단 — **UI 단에서 차단**.
-- AC-4: Crash PF betting 중 → refund RPC 1회 `{ game:'crash', roundId }`.
-- AC-5: Mines unmount mid-round → refund RPC 1회.
-- AC-6: Limbo activeRound + PF → refund RPC 1회.
-- AC-7: Dice/Wheel PF while active → blocked + toast, RPC 0회.
-- Gate: `bun run check` GREEN. supabase / lib/api / types 0-diff.
+### 1. 5공 큐 (연타)
+- `PlinkoBoard.tsx`: 내부 queue (max 5), `handlePlace` 연타 허용
+- `usePlinkoRound`: **시그니처 동결**, 내부에서 동시 in-flight ≥1 지원
+  - `nonce++` = **enqueue 시점** (`debit roundId` 와 1:1 매칭)
+  - `roundId = plinko-n${nonce}` per-ball
+  - `canPlace` 키 유지, 의미만 `queue.length < 5 && !reducedMotion`
+  - `phase` semantics: 5공 중에도 `canPlace=true` 가능 → Board가 queue SSOT, hook은 export 키만 고정
+- live feed: 공마다 별도 `liveBetsStore.push` / `update`
 
-### Manual QA (PR2 complete)
+### 2. Visual Polish
+- `PlinkoRenderer.ts`: peg 충돌 글로우 (0.4s decay), 슬롯 잔광 (1.6s · jackpot 2.2s + ring)
+- `PlinkoCanvasView.tsx`: 잔광 레이어 prop wiring, jackpot overlay 유지
+- 신규: `PlinkoSlotRow.tsx` — 슬롯 배수 row 컴포넌트 분리
 
-- [ ] Crash PF mid-betting → 잔액 복원 (real)
-- [ ] Crash navigate away mid-round → refund 1회 (network 탭 `refund_phon_for_bet_v2`)
-- [ ] Mines PF + unmount 각 1회
-- [ ] Limbo single-slot PF + unmount 각 1회
-- [ ] Dice/Wheel PF spin 중 시도 → toast 차단, RPC 0회
-- [ ] StakeBetPanel real: 0.49 입력 → 0 으로 클램프, 베팅 disabled
-- [ ] StakeBetPanel demo: 0.49 그대로
-- [ ] Demo 5게임 1라운드씩 무이상
+### 3. SFX 통합
+- `PlinkoSFX.ts`: 자체 AudioContext **제거** → `SfxEngine` 위임
+- mute key (`phonara.plinko.muted`) ↔ SfxEngine 글로벌 mute 동기화
 
-### Risk
+### 4. 인프라 Wiring (Crash/Mines/Limbo 동일 패턴)
+- `gameRules.ts` PLINKO_RULES: PF · HistoryPillStrip · RoundResultCard · ShareResultButton · SessionStatsBar 후크
+- `PlinkoScreen.tsx`: 위 컴포넌트 마운트
 
-- `useGameWallet.refund`는 PR1에서 이미 meta 지원. meta 없이 호출하면 legacy local cache fallback (gap window) — PR2 후로는 모든 call site meta 부착이라 fallback 미진입.
-- Crash applySeed의 nonce: 현재 `nonce` (store top) 사용 가능하지만 betting phase 중 nonce가 active와 동일하므로 `ar.nonce` 명시 안전.
-- Unmount effect는 fire-and-forget. RPC idempotent (same roundId) — 사용자가 빠르게 mount/unmount 반복해도 서버에서 1회만 적용.
+### 5. Persist
+- `persistedGameState.ts`: `plinkoStore` **v1 유지** + `{ ...initial, ...parsed }` merge 가드 (L-2 패턴) — `clientSeed` 등 신규 필드 안전
+- migrate 함수 작성 X
+- 신규: `src/shared/games/state/__tests__/plinkoStore.persist.spec.ts`
 
-### Out of scope (defer)
+### 6. UX / 접근성
+- Space = 발사, ←/→ = risk 사이클 — `useHotkeys` (input/textarea/contentEditable 자동 제외)
+- `useReducedMotion` ON → 큐 비활성, 단일 공만 낙하 + 트레일 off
+- `useRngWorker` 로 dropPath 사전계산 (메인 스레드 jank 방지, 동기 fallback)
 
-- Path A hotfix · hold-to-confirm 350ms (L-3) · Mines 812 refactor · Plinko · orphan debit reconciliation · HistoryPillStrip Dice 'x' bug.
+---
+
+## 💰 Money 정책 (Plinko-specific)
+
+| 상황 | 동작 |
+|---|---|
+| 큐 full (5공) | toast "라운드 진행 중", enqueue 차단 |
+| Risk/Rows 변경 | 큐 비었을 때만 허용, 진행 중 → toast |
+| **Real unmount** | 새 enqueue 차단 + in-flight 정산 완료까지 drain, **refund RPC 호출 0** |
+| Demo unmount | 즉시 큐 클리어 OK |
+| `useUnmountRefund` | **미장착** (long-round 전용 hook) |
+
+근거: 1공 ~800ms · 5공 큐 ~3-4s → Crash/Mines/Limbo refund 패턴 부적합, Dice/Wheel block-only 패턴 채택
+
+---
+
+## ✅ Acceptance Criteria
+
+- **AC-M-1**: 5연타 → 5공 큐 정산, 잔액 정확
+- **AC-M-2**: `usePlinkoRound` export 시그니처 git diff 0
+- **AC-M-3**: 큐 비었을 때만 risk/rows 변경, 진행 중 → toast
+- **AC-M-4**: real unmount → 새 enqueue 차단 + in-flight settle 완료, RPC refund 호출 0 (테스트 + 주석 명시)
+- **AC-M-5**: plinkoStore v1 유지, persist 파괴 시 `{ ...initial, ...parsed }` 복원
+- **AC-M-6**: AudioContext 인스턴스 = 1 (SfxEngine), `getPlinkoSFX` 는 wrapper
+- **AC-M-7**: hotkey input/textarea/contentEditable 무시
+- **AC-M-8**: reduced-motion ON → 큐 비활성, 단일 공만 낙하
+
+---
+
+## 🚪 Exit Gate
+
+- `bun run lint:strict` — 0 warn
+- `bun run check` — GREEN (test + build)
+- SSR 가드 (window / AudioContext 접근 모두 effect 내부)
+- 수동 QA 6항목: 5연타 / risk-during-queue block / unmount drain / reduced-motion / mute persistence / jackpot overlay
+- **회귀 0건**: Crash · Mines · Limbo · Dice · Wheel auto 3 라운드 통과, StakeBetPanel dedupe 유지
+
+---
+
+## 📋 보고
+
+`docs/lovable/ROUND_REPORT_TEMPLATE.md` 양식. 보고서 말미에 **"Cursor 차례"** 명시 (WHOSE-TURN.md 갱신은 Cursor 담당)
+
+---
+
+## Post-M 큐 (참고, 본 PR 범위 아님)
+
+```text
+[지금]   Lovable  → ROUND M (Plinko)        ← 진행
+[다음]   Cursor   → M sanitation + WHOSE-TURN.md 갱신
+[그다음] Lovable  → L-3 + L1-E (small PR)
+[그그다음] Lovable → ROUND N (Mines 분리)
+[그그그] Lovable  → ROUND O (react-window)
+[병렬]   Cursor   → ROUND P (Realtime, M과 충돌 거의 없음)
+```
