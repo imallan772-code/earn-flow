@@ -12,7 +12,7 @@
  *  - All / Big wins (multiplier ≥ 10) / Me only (isMe).
  */
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { Users, Globe2 } from "lucide-react";
+import { Users, Globe2, Zap } from "lucide-react";
 import {
   liveBetsStore,
   seedInitialBets,
@@ -24,7 +24,8 @@ import { LiveBetsVirtualList } from "./LiveBetsVirtualList";
 import { LiveBetRow, ROW_GRID } from "./LiveBetRow";
 import { applyFeedFilter, type FeedFilter } from "./feedFilter";
 import { cn } from "@/lib/utils";
-import { RollingCountUp } from "@/shared/motion/RollingCountUp";
+import { formatCompact } from "@/lib/format";
+import { globalLiveStats } from "./globalLiveStats";
 
 interface Props {
   /** Max rows to render (default 12). */
@@ -55,7 +56,7 @@ export function LiveBetsFeed({
   virtualHeight = 360,
 }: Props) {
   useEffect(() => {
-    seedInitialBets(24);
+    seedInitialBets(32);
     const stop = startBotFeed();
     return () => {
       stop();
@@ -65,8 +66,20 @@ export function LiveBetsFeed({
   const bets = useSyncExternalStore(liveBetsStore.subscribe, liveBetsStore.getSnapshot, () =>
     liveBetsStore.getSnapshot(),
   );
-  const total = useSyncExternalStore(liveBetsStore.subscribe, liveBetsStore.getTotalVolume, () =>
-    liveBetsStore.getTotalVolume(),
+  const concurrent = useSyncExternalStore(
+    globalLiveStats.subscribe,
+    globalLiveStats.getConcurrentBettors,
+    globalLiveStats.getConcurrentBettors,
+  );
+  const volume = useSyncExternalStore(
+    globalLiveStats.subscribe,
+    globalLiveStats.getSessionVolumeUsdt,
+    globalLiveStats.getSessionVolumeUsdt,
+  );
+  const bps = useSyncExternalStore(
+    globalLiveStats.subscribe,
+    globalLiveStats.getBetsPerSecond,
+    globalLiveStats.getBetsPerSecond,
   );
 
   const [filter, setFilter] = useState<FeedFilter>("all");
@@ -83,19 +96,25 @@ export function LiveBetsFeed({
   return (
     <section className={cn("glass-2 rounded-2xl p-3", className)}>
       {showHeader && (
-        <header className="mb-2 flex items-center justify-between">
+        <header className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
           <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-(--color-muted)">
             <span className="inline-flex h-2 w-2 animate-phon-pulse rounded-full bg-emerald" />
             <Globe2 size={12} /> 글로벌 라이브 베팅
           </h3>
-          <span className="flex items-center gap-2 text-[10px] text-muted-2">
-            <Users size={10} />
-            <span className="font-numeric font-bold text-(--color-foreground)">
-              <RollingCountUp base={1_240_000} />
+          <span className="flex flex-wrap items-center justify-end gap-x-2 gap-y-0.5 text-[10px] text-muted-2">
+            <span className="inline-flex items-center gap-1">
+              <Users size={10} />
+              <span className="font-numeric font-bold text-(--color-foreground)">
+                {formatCompact(concurrent)}
+              </span>
+              <span>live</span>
             </span>
-            <span>· 누적</span>
-            <span className="font-numeric font-bold text-gold">
-              {(total / 1000).toFixed(1)}K USDT
+            <span className="text-(--color-border)">·</span>
+            <span className="font-numeric font-bold text-gold">{formatCompact(volume)} USDT</span>
+            <span className="text-(--color-border)">·</span>
+            <span className="inline-flex items-center gap-0.5">
+              <Zap size={9} className="text-(--color-cyan)" />
+              <span className="font-numeric font-bold text-(--color-cyan)">{formatCompact(bps)}/s</span>
             </span>
           </span>
         </header>

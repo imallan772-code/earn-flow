@@ -27,9 +27,10 @@ const GAMES: LiveGame[] = [
 
 function lognormalAmount(): number {
   const r = Math.random();
-  if (r < 0.82) return 5 + Math.random() * 95;
-  if (r < 0.96) return 100 + Math.random() * 400;
-  return 500 + Math.random() * 2500;
+  if (r < 0.78) return 5 + Math.random() * 120;
+  if (r < 0.94) return 100 + Math.random() * 900;
+  if (r < 0.99) return 500 + Math.random() * 3500;
+  return 2_000 + Math.random() * 18_000;
 }
 
 function rollOutcome(game: LiveGame, amount: number) {
@@ -66,9 +67,9 @@ function tick() {
     game,
     amount,
     ...outcome,
-    mode: Math.random() < 0.82 ? "real" : "demo",
+    mode: Math.random() < 0.88 ? "real" : "demo",
   });
-  const nextDelay = 250 + Math.random() * 800;
+  const nextDelay = 90 + Math.random() * 280;
   timer = window.setTimeout(tick, nextDelay);
 }
 

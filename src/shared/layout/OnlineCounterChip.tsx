@@ -16,7 +16,7 @@ export function OnlineCounterChip({ compact }: { compact?: boolean }) {
       <span className="font-numeric text-sm font-semibold text-(--color-foreground)">
         <CountUp value={value} duration={1400} format={(n) => KO.format(Math.round(n))} />
       </span>
-      {!compact && <span className="text-xs text-(--color-muted)">실시간 접속</span>}
+      {!compact && <span className="text-xs text-(--color-muted)">· 10M+ online</span>}
     </div>
   );
 }

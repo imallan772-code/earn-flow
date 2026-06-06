@@ -278,6 +278,20 @@
     animation: phon-pulse 1.6s ease-in-out infinite;
   }
 
+  @keyframes feed-enter {
+    from {
+      opacity: 0;
+      transform: translate3d(0, -10px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+  .animate-feed-enter {
+    animation: feed-enter 0.32s ease-out both;
+  }
+
   @keyframes phon-marquee {
     0% {
       transform: translate3d(0, 0, 0);
@@ -287,6 +301,7 @@
     }
   }
   .animate-marquee,
+  .animate-marquee-slow,
   .animate-marquee-rev {
     will-change: transform;
     backface-visibility: hidden;
@@ -294,6 +309,9 @@
   }
   .animate-marquee {
     animation: phon-marquee 32s linear infinite;
+  }
+  .animate-marquee-slow {
+    animation: phon-marquee 56s linear infinite;
   }
   .animate-marquee-rev {
     animation: phon-marquee 38s linear infinite reverse;
@@ -458,6 +476,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .animate-marquee,
+    .animate-marquee-slow,
     .animate-marquee-rev,
     .animate-phon-pulse,
     .animate-crash-shake,
@@ -465,6 +484,7 @@
     .animate-result-pop,
     .animate-float-up,
     .animate-limbo-jackpot-ring,
+    .animate-feed-enter,
     .live-row-me-win {
       animation: none;
     }

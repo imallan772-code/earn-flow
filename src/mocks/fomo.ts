@@ -1,11 +1,11 @@
 // Visual Lab mock SSOT — Cursor `viral-display.ts`로 강화 병합 (축소 금지)
 
 export const MOCK_ONLINE_BASE = 10_048_293;
-export const MOCK_CONCURRENT_PEAK = 327_412; // 32만 명 동시 접속
+export const MOCK_CONCURRENT_PEAK = 327_412;
 export const MOCK_EVENT_BONUS_PERCENT = 150;
-export const MOCK_TOTAL_PAID_TODAY_PHON = 1_240_000_000;
-export const MOCK_REALTIME_CASHOUT_PHON = 5_290_000;
-export const MOCK_REALTIME_CASHOUT_USDT = 3_950;
+export const MOCK_TOTAL_PAID_TODAY_PHON = 2_840_000_000;
+export const MOCK_REALTIME_CASHOUT_PHON = 128_400_000;
+export const MOCK_REALTIME_CASHOUT_USDT = 847_200;
 /** @deprecated use MOCK_REALTIME_CASHOUT_PHON */
 export const MOCK_REALTIME_CASHOUT_KRW = MOCK_REALTIME_CASHOUT_PHON;
 
@@ -17,7 +17,7 @@ export interface MarqueeRow {
 
 export const MOCK_MARQUEE_ROWS: MarqueeRow[] = [
   { id: "m1", text: "🔥 Park*** 님이 방금 1,240,000 PHON 출금 완료", accent: "gold" },
-  { id: "m2", text: "⚡ 지금 32만 명이 동시에 PHONARA에서 돈 벌고 있어요", accent: "cyan" },
+  { id: "m2", text: "⚡ 32.7만 명이 지금 동시에 베팅 중 — Stake급 볼륨", accent: "cyan" },
   { id: "m3", text: "💎 Tanaka*** 님 크래시 27.4× 캐시아웃 성공", accent: "purple" },
   { id: "m4", text: "🎁 오늘만 150% 보너스 — 마감 임박", accent: "pink" },
   { id: "m5", text: "🚀 Lee*** 님 슬롯에서 잭팟 8,400,000 PHON", accent: "gold" },
@@ -85,7 +85,7 @@ export const MOCK_LANDING_HERO_STATS: LandingHeroStat[] = [
     label: "오늘 지급된 PHON",
     accent: "gold",
     sub: "마감까지 남은 시간",
-    live: { base: 1_240_000_000, amplitudeRatio: 0.005, bias: 0.62, mode: "eok", suffix: "+" },
+    live: { base: 2_840_000_000, amplitudeRatio: 0.005, bias: 0.62, mode: "eok", suffix: "+" },
   },
   {
     label: "이벤트 보너스",

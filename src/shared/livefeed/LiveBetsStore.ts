@@ -6,6 +6,7 @@
  * - `isMe` flag highlights the current user's own bets in the feed.
  */
 import { randomMaskedNick } from "./nicknames";
+import { globalLiveStats } from "./globalLiveStats";
 
 export type LiveGame =
   | "crash"
@@ -36,7 +37,7 @@ export const ME_USER_LABEL = "나의_베팅";
 const MAX_BETS = 200;
 
 let buffer: LiveBet[] = [];
-let totalVolume = 0;
+let totalVolume = 8_470_000;
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -90,6 +91,7 @@ export const liveBetsStore = {
     const full: LiveBet = { ...bet, id, ts };
     buffer = [full, ...buffer].slice(0, MAX_BETS);
     totalVolume += bet.amount;
+    globalLiveStats.onBet(bet.amount);
     emit();
     return id;
   },
@@ -146,7 +148,7 @@ export const liveBetsStore = {
   /** Test/dev only */
   __reset(): void {
     buffer = [];
-    totalVolume = 0;
+    totalVolume = 8_470_000;
     emit();
   },
 };
@@ -154,9 +156,13 @@ export const liveBetsStore = {
 /**
  * Seed initial mock bets so the feed isn't empty on first paint.
  */
-export function seedInitialBets(count = 20): void {
+export function seedInitialBets(count = 32): void {
   if (buffer.length > 0) return;
-  const games: LiveGame[] = ["crash", "crash", "crash", "dice", "dice", "slots", "mines"];
+  const games: LiveGame[] = [
+    "crash", "crash", "crash", "crash",
+    "dice", "dice", "plinko", "plinko",
+    "slots", "mines", "limbo", "wheel",
+  ];
   for (let i = 0; i < count; i++) {
     const game = games[Math.floor(Math.random() * games.length)];
     const amount = Math.round(lognormalAmount() * 100) / 100;
@@ -170,17 +176,17 @@ export function seedInitialBets(count = 20): void {
       profit: isWin ? +(amount * (mult - 1)).toFixed(2) : -amount,
       status: isWin ? (game === "crash" ? "cashout" : "win") : game === "crash" ? "bust" : "loss",
       mode: Math.random() < 0.8 ? "real" : "demo",
-      ts: Date.now() - (count - i) * 2000,
+      ts: Date.now() - (count - i) * (400 + Math.random() * 600),
     });
   }
 }
 
 function lognormalAmount(): number {
-  // shape: mostly 5-100, occasional 500-3000 whales
   const r = Math.random();
-  if (r < 0.85) return 5 + Math.random() * 95;
-  if (r < 0.97) return 100 + Math.random() * 400;
-  return 500 + Math.random() * 2500;
+  if (r < 0.78) return 5 + Math.random() * 120;
+  if (r < 0.94) return 100 + Math.random() * 900;
+  if (r < 0.99) return 500 + Math.random() * 3500;
+  return 2_000 + Math.random() * 18_000;
 }
 
 /** Feed ordering: pin ME bets (pending first) so updates stay visible. */
