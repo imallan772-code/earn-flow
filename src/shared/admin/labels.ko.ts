@@ -137,7 +137,42 @@ export const ADMIN_KO = {
       emptyBrief: "Brief를 입력해 주세요.",
       generic: "오류가 발생했습니다.",
     },
+    image: {
+      generate: "이미지 생성",
+      generating: "이미지 생성 중…",
+      cancel: "취소",
+      done: "이미지 생성 완료",
+      notConfigured: "이미지 생성 키가 없습니다. GEMINI_API_KEY를 등록하면 활성화됩니다.",
+      error: "이미지 생성 실패 — 잠시 후 다시 시도하세요.",
+      timeout: "이미지 생성 시간 초과",
+      promptEmpty: "이미지 프롬프트를 먼저 입력하세요.",
+      placeholder: "이미지 미리보기",
+    },
+    publish: {
+      publishNow: "지금 발행",
+      publishRow: "발행",
+      sending: "발행 중…",
+      sent: (n: number) => `발행 성공 ${n}건`,
+      failed: (n: number) => `실패 ${n}건`,
+      oauthRequired: "OAuth 연동 필요 — Cursor Z-OAuth 큐",
+      testOk: "연결 확인됨",
+      testFail: "연결 확인 실패",
+      ssrfBlocked: "내부 호스트로 발행 차단 (SSRF)",
+      dbNotConfigured: "Supabase 미연결 — 데모 모드",
+      campaignMissing: "캠페인을 찾지 못했습니다.",
+    },
+    cron: {
+      notConfigured: "PROMO_CRON_SECRET이 등록되지 않았습니다.",
+      tickOk: "Cron tick 성공",
+      dbReadCursorTodo: "Cron DB 스캔은 Cursor 큐 (service-role RPC).",
+    },
   },
+} as const;
+
+// Standalone settings labels (kept outside main block to preserve const-ness).
+export const PROMO_SETTINGS_KO_EXTRA = {
+  telegramToken: "Telegram Bot 토큰",
+  telegramChat: "Telegram Chat ID (@channel 또는 숫자)",
 } as const;
 
 export const PROMO_CHANNEL_LABELS_KO: Record<string, string> = {
