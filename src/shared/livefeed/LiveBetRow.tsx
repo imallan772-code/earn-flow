@@ -1,15 +1,12 @@
 /**
- * LiveBetRow — single bet row used by both LiveBetsFeed (li list) and
- * LiveBetsVirtualList (react-window list). Memoized.
- *
- * ROUND P-PR2: ME emphasis
- *  - 좌측 2px cyan glow bar (absolute, ROW_GRID 컬럼 0-diff)
- *  - ME win/cashout: 1회성 emerald pulse ring (reduced-motion ON → 정적, CSS 미디어 쿼리)
+ * LiveBetRow — row used by LiveBetsFeed (li) and LiveBetsVirtualList (div).
+ * ROUND P-PR2: ME left glow bar (absolute, ROW_GRID 0-diff) + win pulse.
  */
 import { memo } from "react";
 import { cn } from "@/lib/utils";
 import type { CSSProperties } from "react";
 import type { LiveBet } from "./LiveBetsStore";
+
 
 export const ROW_GRID =
   "grid grid-cols-[0.375rem_minmax(0,1fr)_5rem_3.25rem_5.5rem] items-center gap-x-2";
