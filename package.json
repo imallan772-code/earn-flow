@@ -20,6 +20,7 @@
     "test:e2e:report": "playwright show-report",
     "test:e2e:install": "playwright install chromium",
     "test:e2e:verify-creds": "bun scripts/verify-e2e-creds.ts",
+    "test:e2e:complete-onboarding": "bun scripts/complete-e2e-onboarding.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "bun run typecheck && bun run test && bun run build",

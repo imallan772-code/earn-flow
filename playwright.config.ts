@@ -4,23 +4,36 @@ import { defineConfig, devices } from "@playwright/test";
 import { getE2eBaseUrl, hasE2eCredentials } from "./e2e/utils/env";
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
+const authFile = path.join(rootDir, "e2e/.auth/user.json");
 
 const baseURL = getE2eBaseUrl();
 const hasAuthCreds = hasE2eCredentials();
 
-const projects: Parameters<typeof defineConfig>[0]["projects"] = [
-  {
-    name: "public",
-    testMatch: /.*\.public\.spec\.ts/,
-    use: { ...devices["iPhone 14"] },
-  },
-];
+const projects: NonNullable<Parameters<typeof defineConfig>[0]["projects"]> = [];
+
+if (hasAuthCreds) {
+  projects.push({
+    name: "setup",
+    testMatch: /auth\.setup\.ts/,
+  });
+}
+
+projects.push({
+  name: "public",
+  testMatch: /.*\.public\.spec\.ts/,
+  dependencies: hasAuthCreds ? ["setup"] : undefined,
+  use: { ...devices["iPhone 14"] },
+});
 
 if (hasAuthCreds) {
   projects.push({
     name: "authenticated",
     testMatch: /.*\.auth-ed\.spec\.ts/,
-    use: { ...devices["iPhone 14"] },
+    dependencies: ["setup"],
+    use: {
+      ...devices["iPhone 14"],
+      storageState: authFile,
+    },
   });
 }
 
