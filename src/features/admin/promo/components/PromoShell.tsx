@@ -1,7 +1,15 @@
 import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import { Wand2, ListChecks, CalendarDays, Radio, Image as ImageIcon, BarChart3, Settings } from "lucide-react";
+import {
+  Wand2,
+  ListChecks,
+  CalendarDays,
+  Radio,
+  Image as ImageIcon,
+  BarChart3,
+  Settings,
+} from "lucide-react";
 
 const TABS = [
   { to: "/admin/promo/studio", label: "Studio", Icon: Wand2 },
@@ -34,16 +42,15 @@ export function PromoShell({ children }: { children: ReactNode }) {
         </div>
         <nav className="mt-3 flex gap-1 overflow-x-auto">
           {TABS.map(({ to, label, Icon }) => {
-            const active = pathname === to || (to === "/admin/promo/studio" && pathname === "/admin/promo");
+            const active =
+              pathname === to || (to === "/admin/promo/studio" && pathname === "/admin/promo");
             return (
               <Link
                 key={to}
                 to={to}
                 className={cn(
                   "flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs transition",
-                  active
-                    ? "bg-white/10 font-semibold"
-                    : "text-(--color-muted) hover:bg-white/5",
+                  active ? "bg-white/10 font-semibold" : "text-(--color-muted) hover:bg-white/5",
                 )}
               >
                 <Icon size={13} />

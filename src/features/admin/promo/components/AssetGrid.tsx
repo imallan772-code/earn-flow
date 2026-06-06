@@ -29,7 +29,12 @@ export function AssetGrid() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {assets.map((a) => (
             <figure key={a.id} className="glass-1 overflow-hidden rounded-2xl">
-              <img src={a.url} alt={a.alt ?? ""} loading="lazy" className="aspect-[3/2] w-full object-cover" />
+              <img
+                src={a.url}
+                alt={a.alt ?? ""}
+                loading="lazy"
+                className="aspect-[3/2] w-full object-cover"
+              />
               <figcaption className="font-numeric p-2 text-[10px] text-(--color-muted)">
                 {a.kind} · {a.createdAt.slice(0, 10)}
               </figcaption>

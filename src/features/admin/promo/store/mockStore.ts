@@ -129,8 +129,11 @@ export const promoMockStore = {
       dispatches: seed?.dispatches ?? [],
       clicks: seed?.clicks ?? [],
       assets: seed?.assets ?? [],
-      settings:
-        seed?.settings ?? { webhookUrl: "", hmacSecret: "", defaultUtmSource: "phonara-promo" },
+      settings: seed?.settings ?? {
+        webhookUrl: "",
+        hmacSecret: "",
+        defaultUtmSource: "phonara-promo",
+      },
     };
     emit();
   },

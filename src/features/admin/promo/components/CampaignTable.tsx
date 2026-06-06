@@ -8,7 +8,9 @@ export function CampaignTable() {
     <section className="glass-2 rounded-3xl p-5">
       <h2 className="mb-3 text-base font-bold">Campaigns</h2>
       {campaigns.length === 0 ? (
-        <p className="text-xs text-(--color-muted)">캠페인이 아직 없습니다. Studio에서 생성하세요.</p>
+        <p className="text-xs text-(--color-muted)">
+          캠페인이 아직 없습니다. Studio에서 생성하세요.
+        </p>
       ) : (
         <div className="grid gap-2">
           {campaigns.map((c) => (
