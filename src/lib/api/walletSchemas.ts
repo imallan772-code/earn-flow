@@ -49,6 +49,14 @@ export function toIntegerPhonAmount(amount: number): number | null {
   return rounded;
 }
 
+/** Real-mode gross payout credit — rounds to nearest PHON; sub-min payouts return null (no credit). */
+export function toCreditPhonAmount(amount: number): number | null {
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  const rounded = Math.round(amount);
+  if (rounded < MIN_PHON_BET) return null;
+  return rounded;
+}
+
 /** @deprecated Debit/credit always use v2 RPCs; kept for docs/tests only. */
 export const useMoneyRpcV2 = true;
 

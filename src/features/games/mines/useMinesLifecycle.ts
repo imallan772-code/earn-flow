@@ -189,16 +189,19 @@ export function useMinesLifecycle({
   }, [round.phase]);
 
   const handlePlace = useCallback(
-    async (amount: number) => {
-      if (!round.isIdle || amount <= 0) return;
+    async (amount: number): Promise<boolean> => {
+      if (!round.isIdle || amount <= 0) return false;
 
       if (wallet.mode === "real") {
-        if (!restoreReadyRef.current || placeInFlightRef.current) return;
+        if (!restoreReadyRef.current || placeInFlightRef.current) return false;
         placeInFlightRef.current = true;
         const roundId = `n${nonce}`;
         const seed = minesStore.get().clientSeed || defaultClientSeed;
         const betAmount = toIntegerPhonAmount(amount);
-        if (betAmount == null) return;
+        if (betAmount == null) {
+          placeInFlightRef.current = false;
+          return false;
+        }
 
         try {
           const existing = await getGameActiveSession("mines");
@@ -206,7 +209,7 @@ export function useMinesLifecycle({
             const local = minesStore.get().activeRound;
             const ar = activeMinesRoundFromSession(existing, mineCount, local?.liveBetId);
             hydrateActiveRound(ar, { resumed: true });
-            return;
+            return true;
           }
 
           const liveBetId = liveBetsStore.push({
@@ -246,6 +249,7 @@ export function useMinesLifecycle({
           if (!res.resumed) {
             sfx.play("bet");
           }
+          return true;
         } catch (err) {
           if (isMinesSessionConflict(err)) {
             try {
@@ -254,21 +258,23 @@ export function useMinesLifecycle({
                 const local = minesStore.get().activeRound;
                 const ar = activeMinesRoundFromSession(row, mineCount, local?.liveBetId);
                 hydrateActiveRound(ar, { resumed: true });
-                return;
+                return true;
               }
             } catch {
               /* fall through */
             }
           }
           appToast.raw.error("베팅에 실패했습니다 (진행 중 라운드가 있거나 네트워크 오류)");
+          return false;
         } finally {
           placeInFlightRef.current = false;
         }
-        return;
       }
 
       const roundId = `n${nonce}`;
       const seed = minesStore.get().clientSeed || defaultClientSeed;
+      const ok = await wallet.tryDebit(amount, { game: "mines", roundId });
+      if (!ok) return false;
       const liveBetId = liveBetsStore.push({
         id: liveFeedBetIdForRound("mines", roundId),
         user: "나의_베팅",
@@ -280,8 +286,6 @@ export function useMinesLifecycle({
         mode: wallet.mode as never,
         isMe: true,
       });
-      const ok = await wallet.tryDebit(amount, { game: "mines", roundId });
-      if (!ok) return;
       minesStore.set((s) => ({ ...s, pendingAmount: amount }));
       const mines = await placeMines({ serverSeed, clientSeed: seed, nonce }, mineCount);
       const activeRound: ActiveMinesRound = {
@@ -300,6 +304,7 @@ export function useMinesLifecycle({
       setHitTile(null);
       round.place();
       sfx.play("bet");
+      return true;
     },
     [
       round,

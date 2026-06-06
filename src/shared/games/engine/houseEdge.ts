@@ -26,3 +26,17 @@ export function profitOf(bet: number, multiplier: number, mode: GameMode): numbe
 export function payoutOf(bet: number, multiplier: number, mode: GameMode): number {
   return bet * applyEdge(multiplier, mode);
 }
+
+/**
+ * Wallet-ready gross payout — real mode rounds to nearest integer PHON (Stake-like).
+ * Demo keeps full float precision for sub-PHON stakes.
+ */
+export function settlementPayout(bet: number, multiplier: number, mode: GameMode): number {
+  const raw = payoutOf(bet, multiplier, mode);
+  return mode === "real" ? Math.round(raw) : raw;
+}
+
+/** Net profit after settlement rounding — matches credited payout − stake. */
+export function settlementProfit(bet: number, multiplier: number, mode: GameMode): number {
+  return settlementPayout(bet, multiplier, mode) - bet;
+}

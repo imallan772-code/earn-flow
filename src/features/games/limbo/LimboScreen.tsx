@@ -263,12 +263,12 @@ export function LimboScreen() {
 
   // Place
   const place = useCallback(
-    async (amount: number) => {
-      if (!round.isIdle || amount <= 0) return;
+    async (amount: number): Promise<boolean> => {
+      if (!round.isIdle || amount <= 0) return false;
       const currentNonce = limboStore.get().nonce;
       const roundId = `n${currentNonce}`;
       const ok = await tryDebit(amount, { game: "limbo", roundId });
-      if (!ok) return;
+      if (!ok) return false;
       const t = limboStore.get().target;
       const liveBetId = liveBetsStore.push({
         id: liveFeedBetIdForRound("limbo", roundId),
@@ -306,6 +306,7 @@ export function LimboScreen() {
       setResultCrash(null);
       round.place();
       sfx.play("bet");
+      return true;
     },
     [round, tryDebit, mode, sfx],
   );
@@ -496,9 +497,7 @@ export function LimboScreen() {
             bettingRoundKey={activeRound?.nonce ?? nonce}
             defaultAmount={pendingAmount}
             onAmountChange={(amount) => limboStore.set((s) => ({ ...s, pendingAmount: amount }))}
-            onPlace={(amount) => {
-              void place(amount);
-            }}
+            onPlace={(amount) => place(amount)}
             onCashout={() => {
               /* single-step: cashout not used */
             }}

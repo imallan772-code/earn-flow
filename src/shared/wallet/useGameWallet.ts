@@ -5,7 +5,7 @@ import { useProfile } from "@/features/profile/useProfile";
 import { useAuth } from "@/features/auth/AuthContext";
 import { creditPhonForPayout, debitPhonForBet, refundPhonForBet } from "@/lib/api/wallet";
 import { isBenignRefundError } from "@/lib/api/walletErrors";
-import { toIntegerPhonAmount } from "@/lib/api/walletSchemas";
+import { toCreditPhonAmount, toIntegerPhonAmount } from "@/lib/api/walletSchemas";
 import { logGameRound } from "@/lib/api/trading";
 import { appToast } from "@/shared/ui/toast";
 
@@ -77,7 +77,7 @@ export function useGameWallet() {
       }
       if (!isConfigured || status !== "authenticated") return;
 
-      const payoutAmount = toIntegerPhonAmount(amount);
+      const payoutAmount = toCreditPhonAmount(amount);
       if (payoutAmount == null) return;
 
       try {

@@ -1,0 +1,53 @@
+---
+description: Playwright E2E SSOT — Page Object, fixture, env, 실행·작성 모범 사례
+globs: e2e/**,playwright.config.ts
+alwaysApply: false
+---
+
+# E2E Standards (Playwright SSOT)
+
+earn-flow E2E는 **Playwright Test + Page Object Model + fixture 분리**. 새 테스트·수정 시 아래를 따른다.
+
+## 실행 (에이전트)
+
+```bash
+bun run test:e2e:verify-creds   # auth 테스트 전 1회
+bun run test:e2e:public           # smoke·비로그인 (빠름, 기본)
+bun run test:e2e                  # public + authenticated (cred 있을 때)
+```
+
+- **직접** `npx playwright test` 금지 — `package.json` `test:e2e*` 사용 (cleanup 체인 포함).
+- 로컬: `webServer.reuseExistingServer` — dev 이미 떠 있으면 재사용.
+- CI: `retries: 2`, `workers: 2` (`playwright.config.ts`).
+
+## 파일·네이밍
+
+| 패턴 | 용도 |
+|------|------|
+| `*.public.spec.ts` | 비로그인 (`public` project) |
+| `*.auth-ed.spec.ts` | 로그인 필요 (`authenticated` project) |
+| `e2e/pages/*.page.ts` | Page Object — selector·action 캡슐화 |
+| `e2e/fixtures/authenticated.ts` | Supabase 세션 주입 fixture |
+| `e2e/utils/env.ts` | **유일한** E2E secret 진입점 |
+
+## 작성 규칙 (Stake/Playwright 모범)
+
+1. **Page Object만** raw selector — spec에서 `page.locator('...')` 남발 금지.
+2. **Locator 우선순위**: `getByRole` → `getByTestId` → text → CSS ( brittle class 최후 ).
+3. **`page.waitForTimeout` / 고정 sleep 금지** — `expect(locator).toBeVisible()`, `expect.poll`, `toPass`.
+4. **네트워크·5xx**: `expectHealthyPage`, `response?.status() < 500` (기존 `assertions.ts`).
+5. **Auth**: `getE2eCredentials()` / `injectSupabaseSession` — `process.env.E2E_*` 직접 읽기 **금지** (`.cursor/rules/e2e-env.mdc`).
+6. **Money path**: demo 모드 UI smoke만; real RPC·잔액 assertion은 vitest/RPC 테스트 SSOT.
+7. **병렬 안전**: 테스트 간 shared mutable state·같은 계정 동시 mutation 금지.
+8. **실패 아티팩트**: `trace: on-first-retry`, `screenshot/video: only-on-failure` — config 변경 최소화.
+
+## 새 게임 E2E 추가
+
+1. `e2e/utils/routes.ts`에 route 등록.
+2. `GamePage` / 전용 page에 bet·phase helper 추가.
+3. smoke: `loads bet panel` → interaction: `demo bet starts a round` (Mines 패턴).
+4. `bun run test:e2e:public`로 green 확인 → **에이전트 cleanup** (`test-cleanup-agent.mdc`).
+
+## 완료 후 (필수)
+
+`test-cleanup-agent.mdc` — `test:e2e:cleanup` + 필요 시 `cleanup:workspace`.

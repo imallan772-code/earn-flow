@@ -18,10 +18,11 @@ import { getPlinkoSFX } from "./PlinkoSFX";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
 import { liveFeedBetIdForRound } from "@/lib/api/liveFeedMap";
-import { profitOf, payoutOf } from "@/shared/games/engine/houseEdge";
+import { settlementPayout, settlementProfit } from "@/shared/games/engine/houseEdge";
 import { plinkoStore, type PlinkoOutcome } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
 import type { GameMode } from "@/shared/mode/ModeContext";
+import { clearRealSession, syncRealSession } from "@/shared/games/gameSessionHelpers";
 
 export type PlinkoPhase = "idle" | "rolling" | "settled";
 
@@ -143,11 +144,24 @@ export function usePlinkoRound(
       settled = true;
       clearTimeout(fallbackTimer);
 
-      const payout = payoutOf(next.amount, multiplier, curMode);
-      const profit = profitOf(next.amount, multiplier, curMode);
+      // SSOT: engine table must match landed slot (zero drift vs renderer).
+      const table = MULTIPLIERS[curRisk][curRows];
+      const engineMult = table[slot];
+      if (engineMult === undefined || engineMult !== multiplier) {
+        multiplier = engineMult ?? multiplier;
+      }
+
+      const payout = settlementPayout(next.amount, multiplier, curMode);
+      const profit = settlementProfit(next.amount, multiplier, curMode);
       const won = profit >= 0;
 
-      void credit(payout, multiplier, { game: "plinko", roundId: next.roundId });
+      if (payout > 0) {
+        void credit(payout, multiplier, { game: "plinko", roundId: next.roundId });
+      }
+
+      if (curMode === "real") {
+        clearRealSession("plinko", next.roundId);
+      }
 
       const max = Math.max(...MULTIPLIERS[curRisk][curRows]);
       const isJackpot = multiplier >= max * 0.5 && multiplier >= 5;
@@ -216,25 +230,35 @@ export function usePlinkoRound(
   }, [engineRef, playDrop, credit, refreshQueueSize]);
 
   const handlePlace = useCallback(
-    async (amount: number) => {
-      if (amount <= 0) return;
-      if (unmountedRef.current) return;
+    async (amount: number): Promise<boolean> => {
+      if (amount <= 0) return false;
+      if (unmountedRef.current) return false;
       const cap = reducedMotion ? 1 : QUEUE_MAX;
-      if (queueRef.current.length + (inFlightRef.current ? 1 : 0) >= cap) return;
-      if (!engineRef.current) return;
+      if (queueRef.current.length + (inFlightRef.current ? 1 : 0) >= cap) return false;
+      if (!engineRef.current) return false;
 
       // Enqueue-time nonce: 1:1 with debit roundId.
       const enqueueNonce = plinkoStore.get().nonce;
       const roundId = `plinko-n${enqueueNonce}`;
       const ok = await tryDebit(amount, { game: "plinko", roundId });
-      if (!ok) return;
+      if (!ok) return false;
       // Real unmount mid-debit: money is gone (matches policy — no refund RPC on Plinko).
-      if (unmountedRef.current) return;
+      if (unmountedRef.current) return false;
+
+      if (modeRef.current === "real") {
+        syncRealSession("plinko", roundId, amount, {
+          nonce: enqueueNonce,
+          amount,
+          rows: rowsRef.current,
+          risk: riskRef.current,
+        });
+      }
 
       queueRef.current.push({ nonce: enqueueNonce, amount, roundId });
       plinkoStore.set((s) => ({ ...s, nonce: s.nonce + 1, pendingAmount: amount }));
       refreshQueueSize();
       drain();
+      return true;
     },
     [reducedMotion, tryDebit, engineRef, refreshQueueSize, drain],
   );
@@ -255,6 +279,7 @@ export function usePlinkoRound(
 
   const cap = reducedMotion ? 1 : QUEUE_MAX;
   const canPlace = queueSize < cap;
+  const autoCanPlace = phase === "idle" && queueSize === 0;
 
   return {
     phase,
@@ -267,5 +292,6 @@ export function usePlinkoRound(
     balance,
     handlePlace,
     canPlace,
+    autoCanPlace,
   };
 }

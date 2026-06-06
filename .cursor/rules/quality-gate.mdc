@@ -32,9 +32,16 @@ Supabase changes: `get_advisors` + `types.ts` regen.
 
 ## E2E artifact cleanup (Cursor 렉 방지)
 
+- **Agent SSOT:** `.cursor/rules/test-cleanup-agent.mdc` — 테스트/빌드 후 에이전트가 **반드시** 청소까지 실행·보고.
 - `test:e2e*` 종료 후 `playwright-report/`, `test-results/`, `blob-report/` **자동 삭제** (`globalTeardown` + `test:e2e:cleanup`).
+- `bun run test` / `bun run check` / `bun run build` 후 `bun run cleanup:workspace`.
 - 디버그 시만: `E2E_KEEP_ARTIFACTS=1 bun run test:e2e` → `test:e2e:report` → `bun run test:e2e:cleanup`.
-- Rule file: `.cursor/rules/e2e-cleanup.mdc`
+- Rule files: `e2e-cleanup.mdc`, `e2e-standards.mdc`, `test-cleanup-agent.mdc`
+
+## E2E standards
+
+- 작성·실행 SSOT: `.cursor/rules/e2e-standards.mdc` (Page Object, fixture, env, no sleep).
+- Cred verify: `bun run test:e2e:verify-creds` before auth E2E.
 
 ## Money Path Testing
 

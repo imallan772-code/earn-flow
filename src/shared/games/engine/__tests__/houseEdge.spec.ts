@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyEdge, profitOf, payoutOf, RTP } from "../houseEdge";
+import { applyEdge, profitOf, payoutOf, settlementPayout, settlementProfit, RTP } from "../houseEdge";
 
 describe("houseEdge", () => {
   it("demo applies 3% edge (same as real)", () => {
@@ -22,5 +22,15 @@ describe("houseEdge", () => {
 
   it("payoutOf: real 2x on 10 = 19.4", () => {
     expect(payoutOf(10, 2.0, "real")).toBeCloseTo(19.4, 6);
+  });
+
+  it("settlementPayout: real rounds to nearest PHON", () => {
+    expect(settlementPayout(10, 2.0, "real")).toBe(19);
+    expect(settlementPayout(10, 2.0, "demo")).toBeCloseTo(19.4, 6);
+  });
+
+  it("settlementProfit matches payout minus stake", () => {
+    expect(settlementProfit(10, 2.0, "real")).toBe(9);
+    expect(settlementProfit(10, 0.5, "real")).toBe(-5);
   });
 });

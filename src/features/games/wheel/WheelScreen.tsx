@@ -277,12 +277,12 @@ export function WheelScreen() {
   }, []);
 
   const handlePlace = useCallback(
-    async (amount: number) => {
-      if (!round.isIdle || amount <= 0) return;
+    async (amount: number): Promise<boolean> => {
+      if (!round.isIdle || amount <= 0) return false;
       const currentNonce = wheelStore.get().nonce;
       const roundId = `n${currentNonce}`;
       const ok = await tryDebit(amount, { game: "wheel", roundId });
-      if (!ok) return;
+      if (!ok) return false;
       const s0 = wheelStore.get();
       const liveBetId = liveBetsStore.push({
         id: liveFeedBetIdForRound("wheel", roundId),
@@ -323,7 +323,7 @@ export function WheelScreen() {
       setResultMult(null);
       round.place();
       sfx.play("bet");
-      // bet 토스트 제거 (Limbo 정렬).
+      return true;
     },
     [round, tryDebit, mode, sfx],
   );
@@ -506,9 +506,7 @@ export function WheelScreen() {
             }
             defaultAmount={pendingAmount}
             onAmountChange={(amount) => wheelStore.set((s) => ({ ...s, pendingAmount: amount }))}
-            onPlace={(amount) => {
-              void handlePlace(amount);
-            }}
+            onPlace={(amount) => handlePlace(amount)}
             onCashout={() => {}}
           />
         }

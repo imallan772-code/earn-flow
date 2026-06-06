@@ -348,9 +348,7 @@ export function MinesScreen() {
             suppressCashoutButton
             defaultAmount={pendingAmount}
             onAmountChange={(amount) => minesStore.set((s) => ({ ...s, pendingAmount: amount }))}
-            onPlace={(amount) => {
-              void handlePlace(amount);
-            }}
+            onPlace={(amount) => handlePlace(amount)}
             onCashout={handleCashout}
           />
         }

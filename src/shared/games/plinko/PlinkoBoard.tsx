@@ -62,7 +62,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
     [],
   );
 
-  const { phase, jackpot, setJackpot, lastOutcome, nonce, balance, handlePlace, canPlace } =
+  const { phase, jackpot, setJackpot, lastOutcome, nonce, balance, handlePlace, canPlace, autoCanPlace } =
     usePlinkoRound(mode, engineRef, playDrop, onOutcome);
 
   useEffect(() => {
@@ -251,8 +251,10 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
       <StakeBetPanel
         showAutoTarget={false}
         canPlace={canPlace}
-        hasActiveBet={false}
+        autoCanPlace={autoCanPlace}
+        hasActiveBet={phase !== "idle"}
         balance={balance}
+        bettingRoundKey={nonce}
         lastOutcome={
           lastOutcome
             ? { outcome: lastOutcome.outcome, profit: lastOutcome.profit, nonce: lastOutcome.nonce }
@@ -260,7 +262,7 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
         }
         defaultAmount={pendingAmount}
         onAmountChange={(amount) => plinkoStore.set((s) => ({ ...s, pendingAmount: amount }))}
-        onPlace={(amount) => void handlePlace(amount)}
+        onPlace={(amount) => handlePlace(amount)}
         onCashout={() => {}}
       />
 

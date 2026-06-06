@@ -4,17 +4,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useMode } from "@/shared/mode/ModeContext";
+import { canAffordBet, getMinBetForMode } from "@/shared/wallet/walletStore";
 import { AutoBetConfigFields } from "./AutoBetConfigFields";
 import { useAutoBetController } from "./useAutoBetController";
 
 export interface BetCallbacks {
   /** Return false when the bet did not land (e.g. debit failed) so auto-bet can retry. */
-  onPlace: (amount: number, autoTarget: number) => void | Promise<boolean>;
+  onPlace: (amount: number, autoTarget: number) => boolean | Promise<boolean>;
   onCashout: () => void;
 }
 
 interface Props extends BetCallbacks {
   canPlace: boolean;
+  /** Auto-bet readiness — when omitted, uses canPlace. */
+  autoCanPlace?: boolean;
   hasActiveBet: boolean;
   balance: number;
   lastOutcome?: { outcome: "win" | "loss"; profit: number; nonce: number } | null;
@@ -32,6 +35,7 @@ interface Props extends BetCallbacks {
 
 export function StakeBetPanel({
   canPlace,
+  autoCanPlace,
   hasActiveBet,
   balance,
   lastOutcome,
@@ -49,7 +53,7 @@ export function StakeBetPanel({
 }: Props) {
   const { mode } = useMode();
   const isReal = mode === "real";
-  const minBet = isReal ? 1 : 0.01;
+  const minBet = getMinBetForMode(mode);
   const step = isReal ? 1 : 0.01;
   const clampStake = useCallback(
     (n: number): number => {
@@ -88,12 +92,17 @@ export function StakeBetPanel({
     setTarget(Math.max(1.01, defaultTarget));
   }, [defaultTarget, canPlace]);
 
+  const canAfford = canAffordBet(mode, balance, amount);
+  const canSubmitBet = canPlace && amount >= minBet && canAfford;
+
   const { cfg, setCfg, autoRunning, autoState, startAuto, stopAuto } = useAutoBetController({
     canPlace,
+    autoCanPlace,
     hasActiveBet,
     balance,
     amount,
     target,
+    minBet,
     lastOutcome,
     bettingRoundKey,
     onPlace,
@@ -236,10 +245,10 @@ export function StakeBetPanel({
         ) : (
           <button
             type="button"
-            disabled={!canPlace || amount < minBet}
+            disabled={!canSubmitBet}
             onClick={() => {
               if (placingRef.current) return;
-              if (!canPlace || amount < minBet) return;
+              if (!canSubmitBet) return;
               placingRef.current = true;
               onPlace(amount, target);
               window.setTimeout(() => {
@@ -248,19 +257,27 @@ export function StakeBetPanel({
             }}
             className={cn(
               "relative overflow-hidden rounded-xl py-3 text-sm font-extrabold transition active:scale-[0.98]",
-              canPlace && amount >= minBet
+              canSubmitBet
                 ? "bg-(--color-cyan) text-(--color-bg-0) shadow-glow-cyan"
                 : "bg-(--color-surface-hi) text-muted-2",
             )}
           >
-            {bettingProgress != null && canPlace && (
+            {bettingProgress != null && canSubmitBet && (
               <span
                 aria-hidden
                 className="pointer-events-none absolute inset-y-0 left-0 bg-[color-mix(in_oklab,var(--color-bg-0)_28%,transparent)] transition-[width] duration-100"
                 style={{ width: `${progressPct}%` }}
               />
             )}
-            <span className="relative">{canPlace ? "베팅" : "라운드 진행 중"}</span>
+            <span className="relative">
+              {!canPlace
+                ? "라운드 진행 중"
+                : !canAfford
+                  ? balance < minBet
+                    ? "체험 크레딧 부족"
+                    : "잔액 부족"
+                  : "베팅"}
+            </span>
           </button>
         )
       ) : autoRunning ? (
@@ -274,8 +291,14 @@ export function StakeBetPanel({
       ) : (
         <button
           type="button"
+          disabled={!canPlace || balance < minBet}
           onClick={startAuto}
-          className="rounded-xl bg-emerald py-3 text-sm font-extrabold text-(--color-bg-0) shadow-glow-cyan"
+          className={cn(
+            "rounded-xl py-3 text-sm font-extrabold text-(--color-bg-0) shadow-glow-cyan",
+            canPlace && balance >= minBet
+              ? "bg-emerald"
+              : "cursor-not-allowed bg-(--color-surface-hi) text-muted-2 shadow-none",
+          )}
         >
           자동 시작
         </button>

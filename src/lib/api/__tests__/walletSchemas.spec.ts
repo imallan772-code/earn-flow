@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toIntegerPhonAmount, walletBetInputSchema } from "../walletSchemas";
+import { toCreditPhonAmount, toIntegerPhonAmount, walletBetInputSchema } from "../walletSchemas";
 
 describe("walletBetInputSchema", () => {
   it("accepts valid bet input", () => {
@@ -40,5 +40,17 @@ describe("toIntegerPhonAmount", () => {
   it("accepts positive integers >= 1", () => {
     expect(toIntegerPhonAmount(1)).toBe(1);
     expect(toIntegerPhonAmount(100)).toBe(100);
+  });
+});
+
+describe("toCreditPhonAmount", () => {
+  it("rounds fractional payouts to nearest PHON", () => {
+    expect(toCreditPhonAmount(19.4)).toBe(19);
+    expect(toCreditPhonAmount(19.6)).toBe(20);
+  });
+
+  it("returns null for sub-min payout", () => {
+    expect(toCreditPhonAmount(0.4)).toBeNull();
+    expect(toCreditPhonAmount(0)).toBeNull();
   });
 });

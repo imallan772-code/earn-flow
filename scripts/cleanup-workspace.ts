@@ -20,10 +20,32 @@ const WORKSPACE_DIRS = [
   ".wrangler",
   "coverage",
   "node_modules/.vite",
+  "node_modules/.cache",
+  "node_modules/.vitest",
   "apps/admin/dist",
   "apps/admin/node_modules/.vite",
+  "apps/admin/node_modules/.cache",
   "supabase/.temp",
 ] as const;
+
+/** Glob-free: remove tsbuildinfo under known roots only. */
+function rmTsBuildInfo(): number {
+  const roots = [ROOT, path.join(ROOT, "apps", "admin")];
+  let removed = 0;
+  for (const base of roots) {
+    if (!fs.existsSync(base)) continue;
+    for (const name of fs.readdirSync(base)) {
+      if (!name.endsWith(".tsbuildinfo")) continue;
+      try {
+        fs.rmSync(path.join(base, name), { force: true });
+        removed++;
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  return removed;
+}
 
 const CURSOR_PROJECT = path.join(
   process.env.USERPROFILE ?? process.env.HOME ?? "",
@@ -101,6 +123,11 @@ function main() {
     console.log(`✓ Removed workspace: ${removedWorkspace.join(", ")}`);
   } else {
     console.log("○ No workspace build/cache dirs to remove");
+  }
+
+  const tsbuildinfoRemoved = rmTsBuildInfo();
+  if (tsbuildinfoRemoved > 0) {
+    console.log(`✓ Removed ${tsbuildinfoRemoved} tsbuildinfo file(s)`);
   }
 
   if (fs.existsSync(CURSOR_PROJECT)) {

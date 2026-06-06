@@ -157,12 +157,12 @@ export function DiceScreen() {
   }, [round.phase]);
 
   const handlePlace = useCallback(
-    async (amount: number) => {
-      if (!round.isIdle || activeBet || amount <= 0) return;
+    async (amount: number): Promise<boolean> => {
+      if (!round.isIdle || activeBet || amount <= 0) return false;
       const currentNonce = diceStore.get().nonce;
       const roundId = `n${currentNonce}`;
       const ok = await tryDebit(amount, { game: "dice", roundId });
-      if (!ok) return;
+      if (!ok) return false;
       diceStore.set((s) => ({ ...s, pendingAmount: amount }));
       const liveBetId = liveBetsStore.push({
         id: liveFeedBetIdForRound("dice", roundId),
@@ -184,6 +184,7 @@ export function DiceScreen() {
       });
       sfx.play("bet");
       round.place();
+      return true;
     },
     [round, activeBet, mode, tryDebit, sfx],
   );
@@ -371,9 +372,7 @@ export function DiceScreen() {
             showAutoTarget={false}
             defaultAmount={pendingAmount}
             onAmountChange={(amount) => diceStore.set((s) => ({ ...s, pendingAmount: amount }))}
-            onPlace={(amount) => {
-              void handlePlace(amount);
-            }}
+            onPlace={(amount) => handlePlace(amount)}
             onCashout={() => {}}
           />
         }

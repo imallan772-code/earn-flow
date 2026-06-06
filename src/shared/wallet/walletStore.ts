@@ -15,7 +15,45 @@ import { useSyncExternalStore } from "react";
 import type { GameMode } from "@/shared/mode/ModeContext";
 
 export const INITIAL_DEMO_GRANT = 10_000;
+export const MIN_DEMO_BET = 0.01;
 export const DEMO_LOW_RATIO = 0.3;
+
+/** Demo wallet uses 2-decimal stakes — floor balance checks so dust cannot round up into bets. */
+export function roundDemoStake(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.round(n * 100) / 100;
+}
+
+function demoBalanceCents(n: number): number {
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.floor(n * 100 + 1e-9);
+}
+
+function centsToDemo(cents: number): number {
+  return cents / 100;
+}
+
+/** @deprecated Use roundDemoStake — kept for tests/exports. */
+export function roundDemoMoney(n: number): number {
+  return roundDemoStake(n);
+}
+
+export function getMinBetForMode(mode: GameMode): number {
+  return mode === "demo" ? MIN_DEMO_BET : 1;
+}
+
+export function canAffordBet(mode: GameMode, balance: number, amount: number): boolean {
+  const minBet = getMinBetForMode(mode);
+  if (mode === "demo") {
+    const balCents = demoBalanceCents(balance);
+    const stakeCents = Math.round(roundDemoStake(amount) * 100);
+    const minCents = Math.round(minBet * 100);
+    return balCents >= minCents && stakeCents >= minCents && stakeCents <= balCents;
+  }
+  const bal = Math.floor(balance);
+  const stake = Math.floor(amount);
+  return bal >= minBet && stake >= minBet && stake <= bal;
+}
 
 const LEGACY_STORAGE_KEY = "phonara.wallet.v1";
 const VAULT_STORAGE_KEY = "phonara.wallet.v2";
@@ -232,21 +270,26 @@ export const wallet = {
   },
   tryDebit(mode: GameMode, amount: number): boolean {
     if (amount <= 0) return false;
-    const current = mode === "demo" ? state.demoBalance : state.realBalance;
-    if (amount > current) {
-      if (mode === "demo") openOutOfDemoModal(amount);
-      return false;
-    }
     if (mode === "demo") {
+      const stakeCents = Math.round(roundDemoStake(amount) * 100);
+      const minCents = Math.round(MIN_DEMO_BET * 100);
+      const balanceCents = demoBalanceCents(state.demoBalance);
+      if (stakeCents < minCents) return false;
+      if (balanceCents < minCents || stakeCents > balanceCents) {
+        openOutOfDemoModal(centsToDemo(stakeCents));
+        return false;
+      }
       set({
-        demoBalance: state.demoBalance - amount,
+        demoBalance: centsToDemo(balanceCents - stakeCents),
         totalBets: state.totalBets + 1,
-        totalWagered: state.totalWagered + amount,
-        netResult: state.netResult - amount,
+        totalWagered: state.totalWagered + centsToDemo(stakeCents),
+        netResult: state.netResult - centsToDemo(stakeCents),
       });
-    } else {
-      set({ realBalance: state.realBalance - amount });
+      return true;
     }
+    const current = state.realBalance;
+    if (amount > current) return false;
+    set({ realBalance: state.realBalance - amount });
     return true;
   },
   credit(mode: GameMode, amount: number, multiplier?: number) {
@@ -255,7 +298,7 @@ export const wallet = {
       const nextMax =
         multiplier && multiplier > state.maxMultiplier ? multiplier : state.maxMultiplier;
       set({
-        demoBalance: state.demoBalance + amount,
+        demoBalance: centsToDemo(demoBalanceCents(state.demoBalance) + demoBalanceCents(amount)),
         netResult: state.netResult + amount,
         maxMultiplier: nextMax,
       });
@@ -266,10 +309,11 @@ export const wallet = {
   refund(mode: GameMode, amount: number) {
     if (amount <= 0) return;
     if (mode === "demo") {
+      const refundCents = Math.round(roundDemoStake(amount) * 100);
       set({
-        demoBalance: state.demoBalance + amount,
-        totalWagered: Math.max(0, state.totalWagered - amount),
-        netResult: state.netResult + amount,
+        demoBalance: centsToDemo(demoBalanceCents(state.demoBalance) + refundCents),
+        totalWagered: Math.max(0, state.totalWagered - centsToDemo(refundCents)),
+        netResult: state.netResult + centsToDemo(refundCents),
         totalBets: Math.max(0, state.totalBets - 1),
       });
     } else {
