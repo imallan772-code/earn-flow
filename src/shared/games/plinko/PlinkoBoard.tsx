@@ -12,6 +12,7 @@ import { StakeBetPanel } from "@/shared/games/ui/StakeBetPanel";
 import { BetSummaryPanel } from "@/shared/games/ui/BetSummaryPanel";
 import { plinkoStore } from "@/shared/games/state/persistedGameState";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
+import { useHotkeys } from "@/shared/hooks/useHotkeys";
 import { cn } from "@/lib/utils";
 import { Volume2, VolumeX } from "lucide-react";
 
@@ -137,6 +138,24 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
       return next;
     });
   }, []);
+
+  // ROUND M: ←/→ = risk cycle (only when queue empty). Mute = M. Hotkeys
+  // auto-ignore input/textarea/contentEditable (useHotkeys guard) — AC-M-7.
+  const cycleRisk = useCallback(
+    (dir: 1 | -1) => {
+      if (phase !== "idle") return;
+      const idx = RISK_OPTIONS.indexOf(risk);
+      const nextRisk = RISK_OPTIONS[(idx + dir + RISK_OPTIONS.length) % RISK_OPTIONS.length];
+      plinkoStore.set((s) => ({ ...s, risk: nextRisk }));
+    },
+    [phase, risk],
+  );
+  useHotkeys({
+    ArrowLeft: () => cycleRisk(-1),
+    ArrowRight: () => cycleRisk(1),
+    m: () => toggleMute(),
+  });
+
 
   return (
     <div className="flex flex-col gap-2">
