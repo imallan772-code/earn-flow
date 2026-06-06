@@ -18,8 +18,12 @@ describe("walletBetInputSchema", () => {
   });
 
   it("AC-3: rejects non-integer amount", () => {
-    expect(() => walletBetInputSchema.parse({ amount: 0.49, game: "dice", roundId: "n1" })).toThrow();
-    expect(() => walletBetInputSchema.parse({ amount: 1.5, game: "dice", roundId: "n1" })).toThrow();
+    expect(() =>
+      walletBetInputSchema.parse({ amount: 0.49, game: "dice", roundId: "n1" }),
+    ).toThrow();
+    expect(() =>
+      walletBetInputSchema.parse({ amount: 1.5, game: "dice", roundId: "n1" }),
+    ).toThrow();
   });
 
   it("rejects amount below minimum PHON bet", () => {

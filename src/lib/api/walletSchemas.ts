@@ -6,7 +6,12 @@ import { z } from "zod";
 /** Minimum real-mode PHON bet (integer). Demo may use decimals via walletStore. */
 export const MIN_PHON_BET = 1;
 
-export const betAmountSchema = z.number().int().positive().min(MIN_PHON_BET).max(Number.MAX_SAFE_INTEGER);
+export const betAmountSchema = z
+  .number()
+  .int()
+  .positive()
+  .min(MIN_PHON_BET)
+  .max(Number.MAX_SAFE_INTEGER);
 
 export const gameIdSchema = z.string().trim().min(1).max(32);
 

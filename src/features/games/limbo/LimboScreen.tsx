@@ -122,9 +122,7 @@ export function LimboScreen() {
     const pending = limboStore.get().pendingLegacyRefunds;
     if (!pending || pending.length === 0) return;
     for (const { amount, nonce: n } of pending) {
-      void refundRef
-        .current(amount, { game: "limbo", roundId: `n${n}` })
-        .catch(() => undefined);
+      void refundRef.current(amount, { game: "limbo", roundId: `n${n}` }).catch(() => undefined);
     }
     // 즉시 클리어 → 재마운트/재진입 시 이중 refund 방지.
     limboStore.set((s) => ({ ...s, pendingLegacyRefunds: [] }));
@@ -135,7 +133,6 @@ export function LimboScreen() {
     if (!ar) return null;
     return { amount: ar.amount, meta: { game: "limbo", roundId: `n${ar.nonce}` } };
   });
-
 
   const settle = useCallback(async () => {
     const ar = limboStore.get().activeRound;
@@ -450,9 +447,7 @@ export function LimboScreen() {
               renderToCanvas={(_c, ctx) => {
                 const w = _c.width;
                 const h = _c.height;
-                ctx.fillStyle = recentResult.won
-                  ? "oklch(0.78 0.18 90)"
-                  : "oklch(0.62 0.2 25)";
+                ctx.fillStyle = recentResult.won ? "oklch(0.78 0.18 90)" : "oklch(0.62 0.2 25)";
                 ctx.font = "bold 28px system-ui";
                 ctx.textAlign = "center";
                 ctx.fillText(recentResult.won ? "LIMBO WIN" : "LIMBO LOSS", w / 2, 60);
