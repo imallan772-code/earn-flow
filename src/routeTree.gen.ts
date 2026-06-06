@@ -21,6 +21,7 @@ import { Route as DepositIndexRouteImport } from './routes/deposit/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as WithdrawalPhonRouteImport } from './routes/withdrawal/phon'
 import { Route as WithdrawalCryptoRouteImport } from './routes/withdrawal/crypto'
+import { Route as FairVerifyRouteImport } from './routes/fair.verify'
 import { Route as DepositGiftRouteImport } from './routes/deposit/gift'
 import { Route as DepositCryptoRouteImport } from './routes/deposit/crypto'
 import { Route as DepositBankRouteImport } from './routes/deposit/bank'
@@ -98,6 +99,11 @@ const WithdrawalPhonRoute = WithdrawalPhonRouteImport.update({
 const WithdrawalCryptoRoute = WithdrawalCryptoRouteImport.update({
   id: '/withdrawal/crypto',
   path: '/withdrawal/crypto',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FairVerifyRoute = FairVerifyRouteImport.update({
+  id: '/fair/verify',
+  path: '/fair/verify',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DepositGiftRoute = DepositGiftRouteImport.update({
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/deposit/bank': typeof DepositBankRoute
   '/deposit/crypto': typeof DepositCryptoRoute
   '/deposit/gift': typeof DepositGiftRoute
+  '/fair/verify': typeof FairVerifyRoute
   '/withdrawal/crypto': typeof WithdrawalCryptoRoute
   '/withdrawal/phon': typeof WithdrawalPhonRoute
   '/admin/': typeof AdminIndexRoute
@@ -244,6 +251,7 @@ export interface FileRoutesByTo {
   '/deposit/bank': typeof DepositBankRoute
   '/deposit/crypto': typeof DepositCryptoRoute
   '/deposit/gift': typeof DepositGiftRoute
+  '/fair/verify': typeof FairVerifyRoute
   '/withdrawal/crypto': typeof WithdrawalCryptoRoute
   '/withdrawal/phon': typeof WithdrawalPhonRoute
   '/admin': typeof AdminIndexRoute
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/deposit/bank': typeof DepositBankRoute
   '/deposit/crypto': typeof DepositCryptoRoute
   '/deposit/gift': typeof DepositGiftRoute
+  '/fair/verify': typeof FairVerifyRoute
   '/withdrawal/crypto': typeof WithdrawalCryptoRoute
   '/withdrawal/phon': typeof WithdrawalPhonRoute
   '/admin/': typeof AdminIndexRoute
@@ -312,6 +321,7 @@ export interface FileRouteTypes {
     | '/deposit/bank'
     | '/deposit/crypto'
     | '/deposit/gift'
+    | '/fair/verify'
     | '/withdrawal/crypto'
     | '/withdrawal/phon'
     | '/admin/'
@@ -343,6 +353,7 @@ export interface FileRouteTypes {
     | '/deposit/bank'
     | '/deposit/crypto'
     | '/deposit/gift'
+    | '/fair/verify'
     | '/withdrawal/crypto'
     | '/withdrawal/phon'
     | '/admin'
@@ -376,6 +387,7 @@ export interface FileRouteTypes {
     | '/deposit/bank'
     | '/deposit/crypto'
     | '/deposit/gift'
+    | '/fair/verify'
     | '/withdrawal/crypto'
     | '/withdrawal/phon'
     | '/admin/'
@@ -403,6 +415,7 @@ export interface RootRouteChildren {
   DepositBankRoute: typeof DepositBankRoute
   DepositCryptoRoute: typeof DepositCryptoRoute
   DepositGiftRoute: typeof DepositGiftRoute
+  FairVerifyRoute: typeof FairVerifyRoute
   WithdrawalCryptoRoute: typeof WithdrawalCryptoRoute
   WithdrawalPhonRoute: typeof WithdrawalPhonRoute
   DepositIndexRoute: typeof DepositIndexRoute
@@ -493,6 +506,13 @@ declare module '@tanstack/react-router' {
       path: '/withdrawal/crypto'
       fullPath: '/withdrawal/crypto'
       preLoaderRoute: typeof WithdrawalCryptoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fair/verify': {
+      id: '/fair/verify'
+      path: '/fair/verify'
+      fullPath: '/fair/verify'
+      preLoaderRoute: typeof FairVerifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/deposit/gift': {
@@ -716,6 +736,7 @@ const rootRouteChildren: RootRouteChildren = {
   DepositBankRoute: DepositBankRoute,
   DepositCryptoRoute: DepositCryptoRoute,
   DepositGiftRoute: DepositGiftRoute,
+  FairVerifyRoute: FairVerifyRoute,
   WithdrawalCryptoRoute: WithdrawalCryptoRoute,
   WithdrawalPhonRoute: WithdrawalPhonRoute,
   DepositIndexRoute: DepositIndexRoute,
