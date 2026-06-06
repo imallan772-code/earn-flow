@@ -44,7 +44,9 @@ Lovable: **매 라운드 시작 시 본 문서를 읽고 `blocking = Yes` 행을
 
 ## Next (non-blocking)
 
-- **ROUND Q:** PF verify page (`/fair/verify` + SHA256)
+- ~~**ROUND Q-PR1:** PF verify page (`/fair/verify` + SHA256)~~ **done** (Cursor)
+- ~~**ROUND Q-c:** PF modal → `/fair/verify` CTA + i18n~~ **done** (Lovable `fd208bf`)
+- **Q-d:** Plinko verify (deferred)
 - Orphan debit reconciliation job (deferred)
 
 ## 차례 SSOT

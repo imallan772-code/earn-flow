@@ -9,27 +9,19 @@
 | | |
 |---|---|
 | **지금** | 👤 **당신** — 홍보 전 수동 설정 → [`docs/PROMO_LAUNCH_CHECKLIST.md`](./PROMO_LAUNCH_CHECKLIST.md) |
-| **Cursor** | **Z-5 sanitation** ✅ `usePromoAdmin` analytics `queryFn` sig fix (Z-4 잔여) |
-| **Lovable** | **Z-5** ✅ Channels OAuth UI + dual sparkline (`7ea08dc`) |
+| **Cursor** | **Q-c sanitation** ✅ `routeTree.gen.ts` Register 복원 |
+| **Lovable** | **ROUND Q-c** ✅ PF modal → `/fair/verify` prefill + i18n (`fd208bf`) |
 
-### ROUND Z-5 (Lovable v1.1 + Cursor sanitation)
+### ROUND Q-c (Lovable v1.2 + Cursor sanitation)
 
-- ChannelMatrix: OAuth 3-state (미연동/연동됨/connecting) · reason toast · accent CTA
-- AnalyticsDashboard: `dailyClickBuckets` + `ClickDispatchSparkline` (발송·클릭 dual line)
-- `analyticsAggregate.ts` pure fn + vitest 10 cases (promo suite 95/95)
-- Cursor: `promoAnalyticsSummary` → `queryFn: () => promoAnalyticsSummary()` (TanStack Query sig)
+- `PfVerifyPageLink` — 5게임 PF 모달 footer CTA · `hash` prefill · commit 전 disabled
+- `FairVerifyScreen` — `t("fair.verify.*")` i18n SSOT
+- Promo GATE-2 · verifyPublic/Modal/Engine 변경 0
 
-### ROUND Z-OAuth (Cursor)
+### ROUND Z-5 (Promo — 완료)
 
-- `channels/x.ts` · `linkedin.ts` · `tiktok.ts` (verify + send)
-- `/api/admin/promo/oauth/$channel/start|callback` · `promo_settings.default_utm` token SSOT
-- ChannelMatrix 「연결」버튼 · `resolveChannelSettings` server merge
-
-### ROUND Z-4 Analytics RPC (Cursor)
-
-- Migration `20260607210000_promo_analytics_clicks_rpc.sql`
-- `admin_list_promo_clicks` · `admin_promo_analytics_summary(p_from, p_to)`
-- `usePromoAdmin.clicks[]` · AnalyticsDashboard 기간별 클릭/CTR
+- ChannelMatrix OAuth 3-state · Analytics dual sparkline · vitest promo 95/95
+- Cursor: `usePromoAdmin` analytics `queryFn` sig (`101eba5`)
 
 ---
 
@@ -41,14 +33,20 @@
 [대기] Z-6+ — 백엔드 필요 시 Cursor가 새 라운드 정의
 ```
 
+## ROUND Q 큐
+
+```text
+[완료] Q-PR1 (verify lib + /fair/verify page) · Q-c (modal CTA + i18n)
+[대기] Q-d Plinko verify (deferred)
+```
+
 ---
 
 ## 변경 이력
 
 | 날짜 | 현재 차례 |
 |------|-----------|
-| 2026-06-07 | **Z-5 완료** → 수동 PROMO_LAUNCH_CHECKLIST |
+| 2026-06-07 | **Q-c 완료** → 수동 PROMO_LAUNCH_CHECKLIST |
+| 2026-06-07 | **Z-5 완료** → Lovable Q-c |
 | 2026-06-07 | **Z-OAuth 완료** → Lovable Z-5 |
 | 2026-06-07 | **Z-4 완료** → Cursor Z-OAuth |
-| 2026-06-07 | **Z-3 완료** → Cursor Z-4 RPC |
-| 2026-06-07 | **Z-2 완료** → Lovable Z-3 |
