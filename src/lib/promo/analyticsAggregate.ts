@@ -93,6 +93,32 @@ export function dailyDispatchBuckets(
   return buckets;
 }
 
+/**
+ * Daily click buckets (real CTR sparkline once Z-4 clicks RPC is wired).
+ * Returns `days` rows ending at `now` (newest last).
+ */
+export function dailyClickBuckets(
+  clicks: PromoClick[],
+  days: number,
+  now: Date = new Date(),
+): DailyBucket[] {
+  const buckets: DailyBucket[] = [];
+  const keys: string[] = [];
+  const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() - i);
+    const k = ymdKey(d);
+    keys.push(k);
+    buckets.push({ ymd: k, count: 0 });
+  }
+  const idx = new Map(keys.map((k, i) => [k, i]));
+  for (const c of clicks) {
+    const k = ymdKey(c.ts);
+    const i = idx.get(k);
+    if (typeof i === "number") buckets[i].count += 1;
+  }
+  return buckets;
+
 export function topCampaignByDispatches(
   campaigns: PromoCampaign[],
   dispatches: PromoDispatch[],
