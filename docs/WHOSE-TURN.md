@@ -8,9 +8,15 @@
 
 | | |
 |---|---|
-| **지금** | 🤖 **Cursor** — **Z-OAuth** (X / LinkedIn / TikTok) |
-| **당신** | migration `20260607210000` phonara-gb apply · pg_cron 등록 (`docs/PROMO_CRON_SETUP.md`) |
-| **Cursor** | **Z-4** ✅ clicks RPC + analytics date-range · **Z-3** ✅ |
+| **지금** | 🤖 **Lovable** — **Z-5** Channels OAuth UI polish (연결 상태 · callback toast · sparkline) |
+| **당신** | 홍보 전 수동 설정 → [`docs/PROMO_LAUNCH_CHECKLIST.md`](./PROMO_LAUNCH_CHECKLIST.md) |
+| **Cursor** | **Z-OAuth** ✅ X/LinkedIn/TikTok adapters + routes · **Z-4** ✅ |
+
+### ROUND Z-OAuth (Cursor)
+
+- `channels/x.ts` · `linkedin.ts` · `tiktok.ts` (verify + send)
+- `/api/admin/promo/oauth/$channel/start|callback` · `promo_settings.default_utm` token SSOT
+- ChannelMatrix 「연결」버튼 · `resolveChannelSettings` server merge
 
 ### ROUND Z-4 Analytics RPC (Cursor)
 
@@ -20,24 +26,17 @@
 
 ### ROUND Z-3 완료 (Lovable v1.3.1 + Cursor sanitation)
 
-- `calendarGrid.ts` · `analyticsAggregate.ts` + vitest 13 cases
-- CalendarBoard 월간 그리드 + listView · AnalyticsDashboard
+- CalendarBoard · AnalyticsDashboard UI
 - Cursor: mock flash 제거 · PromoShell persisting subtitle
-
-### ROUND Z-2 Supabase (Cursor)
-
-- Migration `20260607180000_promo_cron_service_role.sql` applied (phonara-gb)
-- service_role cron RPCs + `/api/public/cron/promo-tick` 실 dispatch
-- `promo-assets` Storage upload (image-stream → public URL)
 
 ---
 
 ## ROUND Z 큐
 
 ```text
-[완료] Z-0 · Z-DB · Z-1 · Z-SWAP · Z-2 · Z-3 · Z-4
-[지금] Cursor → Z-OAuth
-[수동] pg_cron + PROMO_CRON_SECRET · Z-4 migration apply
+[완료] Z-0 · Z-DB · Z-1 · Z-SWAP · Z-2 · Z-3 · Z-4 · Z-OAuth
+[지금] Lovable → Z-5 UI polish (GATE-2: supabase/lib/api/channels/server diff 0)
+[수동] 홍보 전 → `docs/PROMO_LAUNCH_CHECKLIST.md`
 ```
 
 ---
@@ -46,7 +45,7 @@
 
 | 날짜 | 현재 차례 |
 |------|-----------|
+| 2026-06-07 | **Z-OAuth 완료** → Lovable Z-5 |
 | 2026-06-07 | **Z-4 완료** → Cursor Z-OAuth |
 | 2026-06-07 | **Z-3 완료** → Cursor Z-4 RPC |
 | 2026-06-07 | **Z-2 완료** → Lovable Z-3 |
-| 2026-06-07 | **Z-SWAP 완료** → Lovable Z-2 |

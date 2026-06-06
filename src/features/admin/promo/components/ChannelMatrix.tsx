@@ -1,22 +1,27 @@
-import { useState } from "react";
-import { CheckCircle2, Send, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CheckCircle2, Link2, Send, Zap } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { usePromoAdmin } from "../hooks/usePromoAdmin";
+import { usePromoAdmin, PROMO_QUERY_KEYS } from "../hooks/usePromoAdmin";
 import { ADMIN_KO, PROMO_CHANNEL_LABELS_KO } from "@/shared/admin/labels.ko";
 import {
   runPromoCronTick,
   testChannel as testChannelFn,
 } from "@/lib/promo/promo.functions";
+import { getAdminAuthHeaders } from "@/lib/admin/session";
+import type { OAuthChannelId } from "@/lib/promo/oauth/types";
 import type { PromoChannelId } from "../types";
+
+const OAUTH_CHANNELS: OAuthChannelId[] = ["x", "linkedin", "tiktok"];
 
 const CHANNELS: { id: PromoChannelId; warn?: string }[] = [
   { id: "telegram" },
   { id: "discord" },
   { id: "slack" },
-  { id: "x", warn: "OAuth 연동 필요 (Cursor Z-OAuth)" },
-  { id: "linkedin", warn: "OAuth 연동 필요 (Cursor Z-OAuth)" },
-  { id: "tiktok", warn: "콘텐츠 API 연동 (Cursor)" },
+  { id: "x" },
+  { id: "linkedin" },
+  { id: "tiktok", warn: "텍스트 발행 미지원 · OAuth 연결 + copy 채널로 캡션 사용" },
   { id: "resend", warn: "수신 동의·광고 정책 확인 필수" },
   { id: "zapier", warn: "웹훅으로 IG·FB·Threads 분기" },
   { id: "copy", warn: "네이버·카카오·IG 수동 발행 · 이용약관 준수" },
@@ -34,20 +39,83 @@ function settingsPayload(s: {
   };
 }
 
+function isOAuthConnected(id: PromoChannelId, settings: ReturnType<typeof usePromoAdmin>["settings"]) {
+  if (id === "x") return settings.xConnected;
+  if (id === "linkedin") return settings.linkedinConnected;
+  if (id === "tiktok") return settings.tiktokConnected;
+  return false;
+}
+
 export function ChannelMatrix() {
   const { dispatches, settings, persisting } = usePromoAdmin();
   const ko = ADMIN_KO.promo.channels;
   const koPub = ADMIN_KO.promo.publish;
+  const qc = useQueryClient();
 
   const testFn = useServerFn(testChannelFn);
   const cronFn = useServerFn(runPromoCronTick);
   const [log, setLog] = useState<string[]>([]);
   const [publishing, setPublishing] = useState(false);
+  const [connecting, setConnecting] = useState<OAuthChannelId | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const oauth = params.get("oauth");
+    if (!oauth) return;
+    const channel = params.get("channel");
+    if (oauth === "ok" && channel) {
+      toast.success(
+        koPub.oauthCallbackOk(PROMO_CHANNEL_LABELS_KO[channel] ?? channel),
+      );
+      void qc.invalidateQueries({ queryKey: PROMO_QUERY_KEYS.settings });
+    } else if (oauth === "error") {
+      toast.error(koPub.oauthCallbackFail);
+    }
+    params.delete("oauth");
+    params.delete("channel");
+    params.delete("reason");
+    const qs = params.toString();
+    window.history.replaceState({}, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
+  }, [qc, koPub]);
 
   function pushLog(msg: string) {
     setLog((l) =>
       [`${new Date().toLocaleTimeString("ko-KR")} · ${msg}`, ...l].slice(0, 20),
     );
+  }
+
+  async function startOAuthConnect(channel: OAuthChannelId) {
+    const headers = await getAdminAuthHeaders();
+    const res = await fetch(`/api/admin/promo/oauth/${channel}/start`, {
+      method: "POST",
+      headers,
+      redirect: "manual",
+    });
+    if (res.status === 302) {
+      const loc = res.headers.get("Location");
+      if (loc) {
+        window.location.href = loc;
+        return;
+      }
+    }
+    let message = `OAuth start failed (${res.status})`;
+    try {
+      const json = (await res.json()) as { code?: string };
+      if (json.code) message = json.code;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(message);
+  }
+
+  async function handleConnect(id: OAuthChannelId) {
+    setConnecting(id);
+    try {
+      await startOAuthConnect(id);
+    } catch (e) {
+      toast.error(`${koPub.oauthStartFail}: ${(e as Error).message}`);
+      setConnecting(null);
+    }
   }
 
   async function handleVerify(id: PromoChannelId) {
@@ -60,9 +128,12 @@ export function ChannelMatrix() {
         pushLog(`${name} · ${koPub.testOk}`);
         toast.success(`${name} · ${koPub.testOk}`);
       } else {
-        const msg = res.code === "OAUTH_REQUIRED" ? koPub.oauthRequired
-          : res.code === "SSRF_BLOCKED" ? koPub.ssrfBlocked
-          : `${koPub.testFail} (${res.code})`;
+        const msg =
+          res.code === "OAUTH_REQUIRED"
+            ? koPub.oauthRequired
+            : res.code === "SSRF_BLOCKED"
+              ? koPub.ssrfBlocked
+              : `${koPub.testFail} (${res.code})`;
         pushLog(`${name} · ${msg}`);
         toast.error(`${name} · ${msg}`);
       }
@@ -73,7 +144,6 @@ export function ChannelMatrix() {
   }
 
   async function handlePublishNow() {
-    // 「지금 발행」 = runPromoCronTick (scheduled due 캠페인 fan-out 전용)
     setPublishing(true);
     try {
       const res = await cronFn({ data: { settings: settingsPayload(settings) } });
@@ -106,23 +176,44 @@ export function ChannelMatrix() {
           </button>
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
-          {CHANNELS.map(({ id, warn }) => (
-            <div key={id} className="glass-1 flex flex-col gap-2 rounded-2xl p-3">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold">{PROMO_CHANNEL_LABELS_KO[id]}</span>
-                <span className="ml-auto rounded-full bg-white/8 px-2 py-0.5 text-[9px] font-bold">
-                  {persisting ? ko.liveBadge : ko.mockBadge}
-                </span>
+          {CHANNELS.map(({ id, warn }) => {
+            const oauthChannel = OAUTH_CHANNELS.includes(id as OAuthChannelId);
+            const connected = oauthChannel && isOAuthConnected(id, settings);
+            return (
+              <div key={id} className="glass-1 flex flex-col gap-2 rounded-2xl p-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold">{PROMO_CHANNEL_LABELS_KO[id]}</span>
+                  <span className="ml-auto rounded-full bg-white/8 px-2 py-0.5 text-[9px] font-bold">
+                    {connected
+                      ? koPub.oauthConnected
+                      : persisting
+                        ? ko.liveBadge
+                        : ko.mockBadge}
+                  </span>
+                </div>
+                {warn && <p className="text-[10px] text-(--color-muted)">⚠ {warn}</p>}
+                <div className="flex gap-1">
+                  {oauthChannel && persisting && !connected && (
+                    <button
+                      type="button"
+                      onClick={() => handleConnect(id as OAuthChannelId)}
+                      disabled={connecting === id}
+                      className="glass-1 flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1 text-[11px]"
+                    >
+                      <Link2 size={11} /> {connecting === id ? "…" : koPub.oauthConnect}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleVerify(id)}
+                    className="glass-1 flex flex-1 items-center justify-center gap-1 rounded-lg px-2 py-1 text-[11px]"
+                  >
+                    <CheckCircle2 size={11} /> {ko.verify}
+                  </button>
+                </div>
               </div>
-              {warn && <p className="text-[10px] text-(--color-muted)">⚠ {warn}</p>}
-              <button
-                onClick={() => handleVerify(id)}
-                className="glass-1 flex items-center justify-center gap-1 rounded-lg px-2 py-1 text-[11px]"
-              >
-                <CheckCircle2 size={11} /> {ko.verify}
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
       <div className="glass-2 rounded-3xl p-5">

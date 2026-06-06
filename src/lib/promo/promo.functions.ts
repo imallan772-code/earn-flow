@@ -12,6 +12,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { isSupabaseConfigured } from "@/integrations/supabase/env";
 import {
+  promoGetChannelSettings,
   promoListAssets,
   promoListCampaigns,
   promoListDispatches,
@@ -162,6 +163,18 @@ const channelSettingsSchema = z
   })
   .partial();
 
+async function resolveChannelSettings(
+  partial?: z.infer<typeof channelSettingsSchema>,
+): Promise<ChannelSettings> {
+  if (!isSupabaseConfigured()) return partial ?? {};
+  try {
+    const full = await promoGetChannelSettings();
+    return { ...full, ...partial };
+  } catch {
+    return partial ?? {};
+  }
+}
+
 const publishInputSchema = z.object({
   campaignId: z.string().min(1).max(200),
   channel: CHANNEL_ENUM.optional(),
@@ -205,7 +218,7 @@ export const publishPromoCampaign = createServerFn({ method: "POST" })
     const targetChannels: PromoChannelId[] = data.channel
       ? [data.channel as PromoChannelId]
       : campaign.channels;
-    const settings: ChannelSettings = data.settings ?? {};
+    const settings = await resolveChannelSettings(data.settings);
     const results = await Promise.all(
       targetChannels.map((ch) =>
         publishPromoChannel(campaign, ch, settings, recordAdminDispatch),
@@ -235,7 +248,7 @@ export const runPromoCronTick = createServerFn({ method: "POST" })
     }
     const campaigns = await promoListCampaigns();
     const plan = planDispatch(campaigns);
-    const settings: ChannelSettings = data?.settings ?? {};
+    const settings = await resolveChannelSettings(data?.settings);
     const byId = new Map(campaigns.map((c) => [c.id, c]));
     const results = await Promise.all(
       plan.map(async (item) => {
@@ -267,7 +280,8 @@ export const testChannel = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const adapter = getChannelAdapter(data.channel as PromoChannelId);
-    const result = await adapter.verify({ settings: data.settings ?? {} });
+    const settings = await resolveChannelSettings(data.settings);
+    const result = await adapter.verify({ settings });
     return result.ok
       ? { ok: true as const, message: result.message ?? "" }
       : { ok: false as const, code: result.code, message: result.message };

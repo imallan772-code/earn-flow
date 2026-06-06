@@ -75,6 +75,10 @@ export interface PromoSettings {
   telegramBotToken?: string;
   /** Z-2: Telegram chat id (number or @channel). */
   telegramChatId?: string;
+  /** Z-OAuth: connected flags only (tokens stay server-side in default_utm). */
+  xConnected?: boolean;
+  linkedinConnected?: boolean;
+  tiktokConnected?: boolean;
 }
 
 import { PROMO_CHANNEL_LABELS_KO } from "@/shared/admin/labels.ko";

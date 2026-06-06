@@ -46,6 +46,17 @@ function isDevAdminOpen(): boolean {
 export async function assertAdminRequest(
   request: Request,
 ): Promise<Response | null> {
+  const denied = await resolveAdminPrincipal(request);
+  if (typeof denied === "object" && denied !== null && "status" in denied) {
+    return denied as Response;
+  }
+  return null;
+}
+
+/** Returns AdminPrincipal or 401 Response. */
+export async function resolveAdminPrincipal(
+  request: Request,
+): Promise<AdminPrincipal | Response> {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const key =
     process.env.SUPABASE_PUBLISHABLE_KEY ||
@@ -53,7 +64,7 @@ export async function assertAdminRequest(
     process.env.VITE_SUPABASE_ANON_KEY;
   if (!url || !key) return unauthorized("supabase not configured");
 
-  if (isDevAdminOpen()) return null;
+  if (isDevAdminOpen()) return { userId: "dev-admin-open" };
 
   const token = readBearer(request);
   if (!token) return unauthorized("missing bearer token");
@@ -69,7 +80,7 @@ export async function assertAdminRequest(
   const { data: isAdmin, error: rpcErr } = await supabase.rpc("is_admin");
   if (rpcErr) return unauthorized("admin check failed");
   if (isAdmin !== true) return unauthorized("not admin");
-  return null;
+  return { userId: userRes.user.id };
 }
 
 /** Test-only helper for unit tests. */

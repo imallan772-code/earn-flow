@@ -46,6 +46,9 @@ export function mapPromoSettingsRow(utm: Record<string, string>): PromoSettings 
     defaultUtmSource: utm.defaultUtmSource ?? utm.utm_source ?? "phonara-promo",
     telegramBotToken: utm.telegramBotToken ?? undefined,
     telegramChatId: utm.telegramChatId ?? undefined,
+    xConnected: Boolean(utm.xAccessToken),
+    linkedinConnected: Boolean(utm.linkedinAccessToken),
+    tiktokConnected: Boolean(utm.tiktokAccessToken),
   };
 }
 
@@ -99,4 +102,24 @@ export function mapPromoCampaignRow(row: {
 export function mapPromoSettingsFromRow(defaultUtm: Record<string, unknown> | null | undefined): PromoSettings {
   const utm = (defaultUtm ?? {}) as Record<string, string>;
   return mapPromoSettingsRow(utm);
+}
+
+/** Server-only — includes OAuth tokens from default_utm for channel adapters. */
+export function mapPromoChannelSettingsFromUtm(
+  defaultUtm: Record<string, unknown> | null | undefined,
+): import("@/lib/promo/channels/types").ChannelSettings {
+  const u = (defaultUtm ?? {}) as Record<string, string>;
+  return {
+    webhookUrl: u.webhookUrl,
+    telegramBotToken: u.telegramBotToken,
+    telegramChatId: u.telegramChatId,
+    xAccessToken: u.xAccessToken,
+    xRefreshToken: u.xRefreshToken,
+    linkedinAccessToken: u.linkedinAccessToken,
+    linkedinRefreshToken: u.linkedinRefreshToken,
+    linkedinMemberUrn: u.linkedinMemberUrn,
+    tiktokAccessToken: u.tiktokAccessToken,
+    tiktokRefreshToken: u.tiktokRefreshToken,
+    tiktokOpenId: u.tiktokOpenId,
+  };
 }

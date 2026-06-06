@@ -3,14 +3,13 @@
  * Invoked from /api/public/cron/promo-tick after HMAC verification.
  */
 import {
-  cronGetPromoSettings,
+  cronGetPromoChannelSettings,
   cronListDuePromoCampaigns,
   cronMarkPromoCampaignStatus,
   cronRecordPromoDispatch,
 } from "@/lib/api/promo/cron.server";
 import { isServiceRoleConfigured } from "@/integrations/supabase/serviceRole.server";
 import {
-  channelSettingsFromPromoSettings,
   publishPromoChannel,
   type PublishOneResult,
 } from "@/lib/promo/dispatch.server";
@@ -38,8 +37,7 @@ export async function executePromoCronTick(now?: Date): Promise<CronTickResult> 
   }
 
   const campaigns = await cronListDuePromoCampaigns(now);
-  const settingsRow = await cronGetPromoSettings();
-  const settings = channelSettingsFromPromoSettings(settingsRow);
+  const settings = await cronGetPromoChannelSettings();
   const plan = planDispatch(campaigns, now ?? new Date());
   const byId = new Map(campaigns.map((c) => [c.id, c]));
 

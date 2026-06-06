@@ -15,6 +15,14 @@ export interface ChannelSettings {
   webhookUrl?: string;
   telegramBotToken?: string;
   telegramChatId?: string;
+  xAccessToken?: string;
+  xRefreshToken?: string;
+  linkedinAccessToken?: string;
+  linkedinRefreshToken?: string;
+  linkedinMemberUrn?: string;
+  tiktokAccessToken?: string;
+  tiktokRefreshToken?: string;
+  tiktokOpenId?: string;
 }
 
 export interface ChannelSendInput {

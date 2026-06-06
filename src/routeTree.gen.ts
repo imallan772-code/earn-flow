@@ -55,6 +55,8 @@ import { Route as AppEventIdRouteImport } from './routes/_app/event.$id'
 import { Route as ApiPublicRSlugRouteImport } from './routes/api/public/r.$slug'
 import { Route as ApiPublicCronPromoTickRouteImport } from './routes/api/public/cron/promo-tick'
 import { Route as ApiAdminPromoImageStreamRouteImport } from './routes/api/admin/promo/image-stream'
+import { Route as ApiAdminPromoOauthChannelStartRouteImport } from './routes/api/admin/promo/oauth.$channel.start'
+import { Route as ApiAdminPromoOauthChannelCallbackRouteImport } from './routes/api/admin/promo/oauth.$channel.callback'
 
 const TransferRoute = TransferRouteImport.update({
   id: '/transfer',
@@ -286,6 +288,18 @@ const ApiAdminPromoImageStreamRoute =
     path: '/api/admin/promo/image-stream',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiAdminPromoOauthChannelStartRoute =
+  ApiAdminPromoOauthChannelStartRouteImport.update({
+    id: '/api/admin/promo/oauth/$channel/start',
+    path: '/api/admin/promo/oauth/$channel/start',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAdminPromoOauthChannelCallbackRoute =
+  ApiAdminPromoOauthChannelCallbackRouteImport.update({
+    id: '/api/admin/promo/oauth/$channel/callback',
+    path: '/api/admin/promo/oauth/$channel/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -333,6 +347,8 @@ export interface FileRoutesByFullPath {
   '/api/admin/promo/image-stream': typeof ApiAdminPromoImageStreamRoute
   '/api/public/cron/promo-tick': typeof ApiPublicCronPromoTickRoute
   '/api/public/r/$slug': typeof ApiPublicRSlugRoute
+  '/api/admin/promo/oauth/$channel/callback': typeof ApiAdminPromoOauthChannelCallbackRoute
+  '/api/admin/promo/oauth/$channel/start': typeof ApiAdminPromoOauthChannelStartRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -378,6 +394,8 @@ export interface FileRoutesByTo {
   '/api/admin/promo/image-stream': typeof ApiAdminPromoImageStreamRoute
   '/api/public/cron/promo-tick': typeof ApiPublicCronPromoTickRoute
   '/api/public/r/$slug': typeof ApiPublicRSlugRoute
+  '/api/admin/promo/oauth/$channel/callback': typeof ApiAdminPromoOauthChannelCallbackRoute
+  '/api/admin/promo/oauth/$channel/start': typeof ApiAdminPromoOauthChannelStartRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -427,6 +445,8 @@ export interface FileRoutesById {
   '/api/admin/promo/image-stream': typeof ApiAdminPromoImageStreamRoute
   '/api/public/cron/promo-tick': typeof ApiPublicCronPromoTickRoute
   '/api/public/r/$slug': typeof ApiPublicRSlugRoute
+  '/api/admin/promo/oauth/$channel/callback': typeof ApiAdminPromoOauthChannelCallbackRoute
+  '/api/admin/promo/oauth/$channel/start': typeof ApiAdminPromoOauthChannelStartRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -476,6 +496,8 @@ export interface FileRouteTypes {
     | '/api/admin/promo/image-stream'
     | '/api/public/cron/promo-tick'
     | '/api/public/r/$slug'
+    | '/api/admin/promo/oauth/$channel/callback'
+    | '/api/admin/promo/oauth/$channel/start'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -521,6 +543,8 @@ export interface FileRouteTypes {
     | '/api/admin/promo/image-stream'
     | '/api/public/cron/promo-tick'
     | '/api/public/r/$slug'
+    | '/api/admin/promo/oauth/$channel/callback'
+    | '/api/admin/promo/oauth/$channel/start'
   id:
     | '__root__'
     | '/'
@@ -569,6 +593,8 @@ export interface FileRouteTypes {
     | '/api/admin/promo/image-stream'
     | '/api/public/cron/promo-tick'
     | '/api/public/r/$slug'
+    | '/api/admin/promo/oauth/$channel/callback'
+    | '/api/admin/promo/oauth/$channel/start'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -592,6 +618,8 @@ export interface RootRouteChildren {
   ApiAdminPromoImageStreamRoute: typeof ApiAdminPromoImageStreamRoute
   ApiPublicCronPromoTickRoute: typeof ApiPublicCronPromoTickRoute
   ApiPublicRSlugRoute: typeof ApiPublicRSlugRoute
+  ApiAdminPromoOauthChannelCallbackRoute: typeof ApiAdminPromoOauthChannelCallbackRoute
+  ApiAdminPromoOauthChannelStartRoute: typeof ApiAdminPromoOauthChannelStartRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -918,6 +946,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAdminPromoImageStreamRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/promo/oauth/$channel/start': {
+      id: '/api/admin/promo/oauth/$channel/start'
+      path: '/api/admin/promo/oauth/$channel/start'
+      fullPath: '/api/admin/promo/oauth/$channel/start'
+      preLoaderRoute: typeof ApiAdminPromoOauthChannelStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/promo/oauth/$channel/callback': {
+      id: '/api/admin/promo/oauth/$channel/callback'
+      path: '/api/admin/promo/oauth/$channel/callback'
+      fullPath: '/api/admin/promo/oauth/$channel/callback'
+      preLoaderRoute: typeof ApiAdminPromoOauthChannelCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1044,6 +1086,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminPromoImageStreamRoute: ApiAdminPromoImageStreamRoute,
   ApiPublicCronPromoTickRoute: ApiPublicCronPromoTickRoute,
   ApiPublicRSlugRoute: ApiPublicRSlugRoute,
+  ApiAdminPromoOauthChannelCallbackRoute:
+    ApiAdminPromoOauthChannelCallbackRoute,
+  ApiAdminPromoOauthChannelStartRoute: ApiAdminPromoOauthChannelStartRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

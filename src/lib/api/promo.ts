@@ -28,8 +28,10 @@ import {
 } from "@/lib/api/promo/schemas";
 import {
   mapPromoCampaignRow,
+  mapPromoChannelSettingsFromUtm,
   mapPromoSettingsRow,
 } from "@/lib/api/promo/mappers";
+import type { ChannelSettings } from "@/lib/promo/channels/types";
 
 function toCampaign(row: ReturnType<typeof promoCampaignRowSchema.parse>): PromoCampaign {
   return mapPromoCampaignRow(row);
@@ -172,6 +174,15 @@ export async function promoGetSettings(): Promise<PromoSettings> {
   const { data, error } = await supabase.rpc("admin_get_promo_settings");
   if (error) throw error;
   return toSettings(promoSettingsRowSchema.parse(data));
+}
+
+/** Server-side channel dispatch — includes OAuth tokens from default_utm. */
+export async function promoGetChannelSettings(): Promise<ChannelSettings> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.rpc("admin_get_promo_settings");
+  if (error) throw error;
+  const row = promoSettingsRowSchema.parse(data);
+  return mapPromoChannelSettingsFromUtm(row.default_utm);
 }
 
 export async function promoUpsertSettings(input: unknown): Promise<PromoSettings> {

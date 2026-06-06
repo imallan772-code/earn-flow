@@ -80,10 +80,26 @@ export function channelSettingsFromPromoSettings(s: {
   webhookUrl?: string;
   telegramBotToken?: string;
   telegramChatId?: string;
+  xAccessToken?: string;
+  xRefreshToken?: string;
+  linkedinAccessToken?: string;
+  linkedinRefreshToken?: string;
+  linkedinMemberUrn?: string;
+  tiktokAccessToken?: string;
+  tiktokRefreshToken?: string;
+  tiktokOpenId?: string;
 }): ChannelSettings {
   return {
     webhookUrl: s.webhookUrl,
     telegramBotToken: s.telegramBotToken,
     telegramChatId: s.telegramChatId,
+    xAccessToken: s.xAccessToken,
+    xRefreshToken: s.xRefreshToken,
+    linkedinAccessToken: s.linkedinAccessToken,
+    linkedinRefreshToken: s.linkedinRefreshToken,
+    linkedinMemberUrn: s.linkedinMemberUrn,
+    tiktokAccessToken: s.tiktokAccessToken,
+    tiktokRefreshToken: s.tiktokRefreshToken,
+    tiktokOpenId: s.tiktokOpenId,
   };
 }

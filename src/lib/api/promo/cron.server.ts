@@ -7,6 +7,7 @@ import { getServiceRoleClient } from "@/integrations/supabase/serviceRole.server
 import type { PromoCampaign, PromoChannelId, PromoSettings } from "@/features/admin/promo/types";
 import {
   mapPromoCampaignRow,
+  mapPromoChannelSettingsFromUtm,
   mapPromoSettingsFromRow,
 } from "@/lib/api/promo/mappers";
 import { promoCampaignRowSchema, promoCampaignsSchema } from "@/lib/api/promo/schemas";
@@ -30,6 +31,17 @@ export async function cronGetPromoSettings(): Promise<PromoSettings> {
   if (error) throw error;
   const row = (data ?? {}) as { default_utm?: Record<string, unknown> | null };
   return mapPromoSettingsFromRow(row.default_utm);
+}
+
+export async function cronGetPromoChannelSettings(): Promise<
+  import("@/lib/promo/channels/types").ChannelSettings
+> {
+  const supabase = getServiceRoleClient();
+  if (!supabase) throw new Error("SUPABASE_SERVICE_ROLE_KEY not configured");
+  const { data, error } = await supabase.rpc("cron_get_promo_settings");
+  if (error) throw error;
+  const row = (data ?? {}) as { default_utm?: Record<string, unknown> | null };
+  return mapPromoChannelSettingsFromUtm(row.default_utm);
 }
 
 export async function cronRecordPromoDispatch(input: {
