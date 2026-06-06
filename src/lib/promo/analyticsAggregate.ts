@@ -118,6 +118,8 @@ export function dailyClickBuckets(
     if (typeof i === "number") buckets[i].count += 1;
   }
   return buckets;
+}
+
 
 export function topCampaignByDispatches(
   campaigns: PromoCampaign[],
