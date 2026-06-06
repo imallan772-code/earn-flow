@@ -5,12 +5,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePromoAdmin } from "../hooks/usePromoAdmin";
 import {
   channelBreakdown,
+  dailyClickBuckets,
   dailyDispatchBuckets,
   filterByPeriod,
   periodRange,
   resolveCampaignTitle,
   topCampaignByDispatches,
   topChannelFromClicks,
+  type DailyBucket,
   type PeriodKey,
 } from "@/lib/promo/analyticsAggregate";
 import type { PromoCampaign, PromoDispatch } from "../types";
@@ -33,9 +35,14 @@ export function AnalyticsDashboard() {
   );
 
   const breakdown = useMemo(() => channelBreakdown(filteredDispatches), [filteredDispatches]);
-  const buckets = useMemo(
-    () => dailyDispatchBuckets(filteredDispatches, period === "30d" ? 30 : 7),
-    [filteredDispatches, period],
+  const sparkDays = period === "30d" ? 30 : 7;
+  const dispatchBuckets = useMemo(
+    () => dailyDispatchBuckets(filteredDispatches, sparkDays),
+    [filteredDispatches, sparkDays],
+  );
+  const clickBuckets = useMemo(
+    () => dailyClickBuckets(filteredClicks, sparkDays),
+    [filteredClicks, sparkDays],
   );
   const top = useMemo(
     () => topCampaignByDispatches(campaigns, filteredDispatches),
@@ -50,8 +57,7 @@ export function AnalyticsDashboard() {
   const filteredCount = filteredDispatches.length;
   const filteredClickCount = filteredClicks.length;
   const filteredImpressions = filteredCount * 100;
-  const ctr =
-    filteredImpressions > 0 ? (filteredClickCount / filteredImpressions) * 100 : 0;
+  const ctr = filteredImpressions > 0 ? (filteredClickCount / filteredImpressions) * 100 : 0;
   const isEmpty = filteredCount === 0 && filteredClickCount === 0;
 
   return (
@@ -87,7 +93,7 @@ export function AnalyticsDashboard() {
               topChannel={periodTopChannel ?? analytics.topChannel ?? null}
             />
           </div>
-          <DispatchSparkline buckets={buckets} />
+          <ClickDispatchSparkline dispatchBuckets={dispatchBuckets} clickBuckets={clickBuckets} />
           <DispatchTimeline dispatches={filteredDispatches} campaigns={campaigns} />
         </>
       )}
@@ -217,29 +223,74 @@ function TopCampaignCard({
   );
 }
 
-function DispatchSparkline({ buckets }: { buckets: Array<{ ymd: string; count: number }> }) {
+function ClickDispatchSparkline({
+  dispatchBuckets,
+  clickBuckets,
+}: {
+  dispatchBuckets: DailyBucket[];
+  clickBuckets: DailyBucket[];
+}) {
   const ko = ADMIN_KO.promo.analytics;
-  const max = Math.max(1, ...buckets.map((b) => b.count));
+  const max = Math.max(
+    1,
+    ...dispatchBuckets.map((b) => b.count),
+    ...clickBuckets.map((b) => b.count),
+  );
   const w = 320;
   const h = 60;
-  const stepX = buckets.length > 1 ? w / (buckets.length - 1) : 0;
-  const points = buckets.map((b, i) => `${i * stepX},${h - (b.count / max) * h}`).join(" ");
+  const n = Math.max(dispatchBuckets.length, clickBuckets.length);
+  const stepX = n > 1 ? w / (n - 1) : 0;
+  const toPoints = (rows: DailyBucket[]) =>
+    rows.map((b, i) => `${i * stepX},${h - (b.count / max) * h}`).join(" ");
+  const dispatchPts = toPoints(dispatchBuckets);
+  const clickPts = toPoints(clickBuckets);
+  const first = dispatchBuckets[0]?.ymd ?? clickBuckets[0]?.ymd;
+  const last =
+    dispatchBuckets[dispatchBuckets.length - 1]?.ymd ?? clickBuckets[clickBuckets.length - 1]?.ymd;
   return (
     <div className="glass-2 rounded-3xl p-5">
-      <h3 className="mb-3 text-sm font-bold">{ko.ctrTrend}</h3>
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-sm font-bold">{ko.trendTitle}</h3>
+        <div className="flex items-center gap-3 text-[10px] text-(--color-muted)">
+          <span className="flex items-center gap-1">
+            <span
+              aria-hidden
+              className="h-2 w-2 rounded-full"
+              style={{ background: "var(--color-accent)" }}
+            />
+            {ko.legendDispatch}
+          </span>
+          <span className="flex items-center gap-1">
+            <span
+              aria-hidden
+              className="h-2 w-2 rounded-full"
+              style={{ background: "var(--color-emerald)" }}
+            />
+            {ko.legendClick}
+          </span>
+        </div>
+      </div>
       <svg viewBox={`0 0 ${w} ${h}`} className="h-16 w-full" preserveAspectRatio="none">
         <polyline
-          points={points}
+          points={dispatchPts}
           fill="none"
-          stroke="oklch(0.7 0.2 295)"
+          stroke="var(--color-accent)"
+          strokeWidth={1.5}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+        <polyline
+          points={clickPts}
+          fill="none"
+          stroke="var(--color-emerald)"
           strokeWidth={1.5}
           strokeLinejoin="round"
           strokeLinecap="round"
         />
       </svg>
       <div className="mt-1 flex justify-between text-[9px] text-(--color-muted)">
-        <span>{buckets[0]?.ymd}</span>
-        <span>{buckets[buckets.length - 1]?.ymd}</span>
+        <span>{first}</span>
+        <span>{last}</span>
       </div>
     </div>
   );
