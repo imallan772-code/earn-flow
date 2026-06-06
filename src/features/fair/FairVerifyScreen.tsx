@@ -6,11 +6,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ShieldCheck, Copy, Link2, ArrowLeft } from "lucide-react";
 import { verifyProvablyFair, buildVerifyShareUrl, type VerifyOutcome } from "@/lib/pf/verifyPublic";
-import {
-  verifyGameSchema,
-  type VerifyGame,
-  type VerifySearch,
-} from "@/lib/pf/verifySchemas";
+import { verifyGameSchema, type VerifyGame, type VerifySearch } from "@/lib/pf/verifySchemas";
 import { t } from "@/shared/i18n";
 import { appToast } from "@/shared/ui/toast";
 
@@ -67,7 +63,18 @@ export function FairVerifyScreen({ initial }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [game, serverSeed, serverSeedHash, clientSeed, nonce, mineCount, segments, risk, showMines, showWheel]);
+  }, [
+    game,
+    serverSeed,
+    serverSeedHash,
+    clientSeed,
+    nonce,
+    mineCount,
+    segments,
+    risk,
+    showMines,
+    showWheel,
+  ]);
 
   const shareUrl = useMemo(() => {
     if (!formReady || typeof window === "undefined") return "";
@@ -85,7 +92,19 @@ export function FairVerifyScreen({ initial }: Props) {
     } catch {
       return "";
     }
-  }, [formReady, game, serverSeed, serverSeedHash, clientSeed, nonce, mineCount, segments, risk, showMines, showWheel]);
+  }, [
+    formReady,
+    game,
+    serverSeed,
+    serverSeedHash,
+    clientSeed,
+    nonce,
+    mineCount,
+    segments,
+    risk,
+    showMines,
+    showWheel,
+  ]);
 
   async function copyText(text: string) {
     try {

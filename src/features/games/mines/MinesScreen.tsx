@@ -390,7 +390,7 @@ export function MinesScreen() {
               game="mines"
               serverSeed={SERVER_SEED}
               serverSeedHash={commit}
-              clientSeed={(seedDraft.trim() || clientSeed) || DEFAULT_CLIENT_SEED}
+              clientSeed={seedDraft.trim() || clientSeed || DEFAULT_CLIENT_SEED}
               nonce={nonce}
               mineCount={mineCount}
             />

@@ -110,6 +110,5 @@ export const messages_ko = {
   "fair.verify.result.mismatch": "불일치 ✗",
   "fair.verify.result.copyHash": "커밋 해시 복사",
   "fair.verify.error.fallback": "검증 실패",
-  "fair.verify.footer.stake":
-    "Stake.com 동일 HMAC-SHA256 스킴 · 라운드 시작 전 커밋 해시 공개",
+  "fair.verify.footer.stake": "Stake.com 동일 HMAC-SHA256 스킴 · 라운드 시작 전 커밋 해시 공개",
 } as const;

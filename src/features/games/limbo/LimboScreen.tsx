@@ -548,7 +548,9 @@ export function LimboScreen() {
         onApply={applySeed}
         footer={
           <>
-            <p>진행 중 라운드가 있으면 시드 변경 불가. 이탈 시 라운드는 저장되어 복귀 시 이어집니다.</p>
+            <p>
+              진행 중 라운드가 있으면 시드 변경 불가. 이탈 시 라운드는 저장되어 복귀 시 이어집니다.
+            </p>
             <PfVerifyPageLink
               game="limbo"
               serverSeed={SERVER_SEED}

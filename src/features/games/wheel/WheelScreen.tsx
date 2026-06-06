@@ -522,7 +522,10 @@ export function WheelScreen() {
         onApply={applySeed}
         footer={
           <>
-            <p>시드 변경 시 nonce 0 리셋 + 진행 중 라운드 폐기. 동일 시드/라운드는 항상 같은 결과를 만듭니다.</p>
+            <p>
+              시드 변경 시 nonce 0 리셋 + 진행 중 라운드 폐기. 동일 시드/라운드는 항상 같은 결과를
+              만듭니다.
+            </p>
             <PfVerifyPageLink
               game="wheel"
               serverSeed={SERVER_SEED}
