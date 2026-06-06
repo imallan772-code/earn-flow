@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildMonthGrid,
-  groupCampaignsByDay,
-  shiftMonth,
-  ymdKey,
-} from "../calendarGrid";
+import { buildMonthGrid, groupCampaignsByDay, shiftMonth, ymdKey } from "../calendarGrid";
 import type { PromoCampaign } from "@/features/admin/promo/types";
 
 function camp(id: string, isoLocal: string): PromoCampaign {

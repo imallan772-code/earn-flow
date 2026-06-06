@@ -9,7 +9,12 @@ import {
 } from "../analyticsAggregate";
 import type { PromoCampaign, PromoDispatch } from "@/features/admin/promo/types";
 
-function disp(id: string, campaignId: string, channel: PromoDispatch["channel"], sentAt: string): PromoDispatch {
+function disp(
+  id: string,
+  campaignId: string,
+  channel: PromoDispatch["channel"],
+  sentAt: string,
+): PromoDispatch {
   return { id, campaignId, channel, variantId: "v", sentAt, status: "sent" };
 }
 
