@@ -40,7 +40,7 @@ export const ADMIN_KO = {
     studio: {
       composer: "AI 카피 작성",
       composerHint: "Brief를 입력하고 「카피 생성」을 눌러 5개 채널 카피를 한 번에 만드세요.",
-      composerHintConfigured: "AI 연결됨 · 캠페인은 로컬 데모로 저장됩니다.",
+      composerHintConfigured: "AI 연결됨 · 캠페인은 Supabase에 저장됩니다.",
       composerHintFallback: "AI 미연결 — 키 등록 전엔 로컬 fallback 카피가 표시됩니다.",
       livePreview: "실시간 미리보기",
       generate: "카피 생성",
