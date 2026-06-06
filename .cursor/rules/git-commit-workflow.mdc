@@ -1,0 +1,49 @@
+---
+description: Git commit workflow — only commit when user asks; safety protocol
+alwaysApply: true
+---
+
+# Git Commit Workflow
+
+Only create commits when requested by the user. If unclear, ask first. When the user asks you to create a new git commit, follow these steps carefully:
+
+## Git Safety Protocol
+
+- NEVER update the git config
+- NEVER run destructive/irreversible git commands (like push --force, hard reset, etc) unless the user explicitly requests them in the user query or in a different user rule
+- NEVER skip hooks (--no-verify, --no-gpg-sign, etc) unless the user explicitly requests it in the user query or in a different user rule
+- NEVER run force push to main/master, warn the user if they request it
+- Avoid git commit --amend. ONLY use --amend when ALL conditions are met:
+  1. User explicitly requested amend, OR commit SUCCEEDED but pre-commit hook auto-modified files that need including
+  2. HEAD commit was created by you in this conversation (verify: `git log -1 --format='%an %ae'`)
+  3. Commit has NOT been pushed to remote (verify: `git status` shows "Your branch is ahead")
+- CRITICAL: If commit FAILED or was REJECTED by hook, NEVER amend - fix the issue and create a NEW commit
+- CRITICAL: If you already pushed to remote, NEVER amend unless the user explicitly requests it in the user query or in a different user rule (requires force push)
+- NEVER commit changes unless the user explicitly asks you to in the user query or in a different user rule. It is VERY IMPORTANT to only commit when explicitly asked, otherwise the user will feel that you are being too proactive.
+
+## Commit Steps
+
+1. Run in parallel:
+   - `git status` — untracked files
+   - `git diff` — staged and unstaged changes
+   - `git log` — recent commit messages (match repo style)
+2. Analyze staged changes; draft a 1–2 sentence message focused on **why**, not just what
+3. Do not commit files that likely contain secrets (`.env`, `credentials.json`, etc). Warn the user if they request committing those files
+4. Sequentially: `git add` relevant files → commit → `git status` to verify
+5. If pre-commit hook fails, fix and create a **NEW** commit (never amend per rules above)
+
+Pass commit message via HEREDOC:
+
+```bash
+git commit -m "$(cat <<'EOF'
+Commit message here.
+
+EOF
+)"
+```
+
+## Additional Notes
+
+- DO NOT push to remote unless the user explicitly asks
+- NEVER use git commands with the `-i` flag (interactive input not supported)
+- If no changes to commit, do not create an empty commit

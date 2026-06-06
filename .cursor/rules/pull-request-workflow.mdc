@@ -1,0 +1,43 @@
+---
+description: Pull request workflow — gh CLI, branch push, PR body format
+alwaysApply: true
+---
+
+# Pull Request Workflow
+
+Use the `gh` command via the Shell tool for ALL GitHub-related tasks including working with issues, pull requests, checks, and releases. If given a Github URL use the `gh` command to get the information needed.
+
+## Create PR Steps
+
+When the user asks you to create a pull request:
+
+1. Run in parallel:
+   - `git status` — untracked files
+   - `git diff` — staged and unstaged changes
+   - Check if branch tracks remote and is up to date
+   - `git log` and `git diff [base-branch]...HEAD` — full commit history since diverging from base
+2. Analyze **ALL** commits that will be included (not just the latest); draft PR summary
+3. Sequentially:
+   - Create new branch if needed
+   - Push with `-u` if needed
+   - `gh pr create` with HEREDOC body
+
+```bash
+git push -u origin HEAD
+
+gh pr create --title "the pr title" --body "$(cat <<'EOF'
+## Summary
+<1-3 bullet points>
+
+## Test plan
+[Checklist of TODOs for testing the pull request...]
+
+EOF
+)"
+```
+
+## Important
+
+- NEVER update the git config
+- Do NOT use the TodoWrite or Task tools when creating PRs
+- Return the PR URL when done

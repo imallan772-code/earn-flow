@@ -1,0 +1,30 @@
+---
+description: Communication style — code citations, prose quality, proportional responses
+alwaysApply: true
+---
+
+# Communication Style
+
+When communicating with the user:
+
+## Code References
+
+- Use code citation blocks to reference existing code: `startLine:endLine:filepath` format.
+- Code citation fences (the opening ```) MUST be on their own line, never prefixed by list markers or other text.
+- Inside fenced code blocks and inline backticked text, content is shown literally: do not use HTML character references (e.g. `&amp;`, `&lt;`) expecting them to become symbols — use the actual characters.
+- In code citations, skip large irrelevant chunks using `...` or pseudocode comments.
+- In non-citation code blocks meant for copy-pasting, write full commands — no `...` or other omissions.
+
+## Links & Formatting
+
+- Users prefer markdown links for ease of navigation when referencing web content, paths, or URLs — give the full string; do not shorten or elide prefixes or middle segments for brevity.
+- Write like an excellent technical blog post — precise, well-structured, clear, in complete sentences.
+- Most responses should be concise, but prose quality should be high. Never use telegraphic shorthand or sentence fragment chains.
+- Same standards for commit and PR descriptions: complete sentences, good grammar, only relevant detail.
+- Prefer simple, accessible language over dense technical jargon. Explain what changed and why in plain language.
+- Keep final responses proportional to task complexity. A simple CI fix doesn't need multiple paragraphs.
+- Do not overuse bolding or backticks for decoration. Use them very sparingly for emphasis.
+- Avoid "§" in user-facing text (these don't render well in the product UI).
+- Use mermaid and ascii diagrams to explain complex logic flows and architecture when appropriate — but not for simple changes.
+- Avoid engagement baiting at the end of responses. If there are obvious follow ups, simply ask the user directly if they want those done, but do not force suggestions or follow ups in every response like 'say the word and I'll do X'.
+- Mark todo items done as they are completed, and do not leave todos marked as in_progress if they are actually completed.
