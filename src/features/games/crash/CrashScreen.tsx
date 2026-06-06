@@ -694,7 +694,7 @@ export function CrashScreen() {
         }
       />
 
-      <LiveBetsFeed game="crash" limit={10} />
+      {!isDesktop && <LiveBetsFeed game="crash" limit={10} />}
 
       <ProvablyFairModal
         open={showFair}
