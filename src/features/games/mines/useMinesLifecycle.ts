@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
+import { liveFeedBetIdForRound } from "@/lib/api/liveFeedMap";
 import { profitOf } from "@/shared/games/engine/houseEdge";
 import { TOTAL_TILES, isMine, nextMultiplier, placeMines } from "@/shared/games/mines/MinesEngine";
 import { type ActiveMinesRound, minesStore } from "@/shared/games/state/persistedGameState";
@@ -209,6 +210,7 @@ export function useMinesLifecycle({
           }
 
           const liveBetId = liveBetsStore.push({
+            id: liveFeedBetIdForRound("mines", roundId),
             user: "나의_베팅",
             game: "mines",
             amount: betAmount,
@@ -268,6 +270,7 @@ export function useMinesLifecycle({
       const roundId = `n${nonce}`;
       const seed = minesStore.get().clientSeed || defaultClientSeed;
       const liveBetId = liveBetsStore.push({
+        id: liveFeedBetIdForRound("mines", roundId),
         user: "나의_베팅",
         game: "mines",
         amount,

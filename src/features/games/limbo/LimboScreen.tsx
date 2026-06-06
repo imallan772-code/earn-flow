@@ -37,6 +37,7 @@ import { LIMBO_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
+import { liveFeedBetIdForRound } from "@/lib/api/liveFeedMap";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { profitOf } from "@/shared/games/engine/houseEdge";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
@@ -265,10 +266,12 @@ export function LimboScreen() {
     async (amount: number) => {
       if (!round.isIdle || amount <= 0) return;
       const currentNonce = limboStore.get().nonce;
-      const ok = await tryDebit(amount, { game: "limbo", roundId: `n${currentNonce}` });
+      const roundId = `n${currentNonce}`;
+      const ok = await tryDebit(amount, { game: "limbo", roundId });
       if (!ok) return;
       const t = limboStore.get().target;
       const liveBetId = liveBetsStore.push({
+        id: liveFeedBetIdForRound("limbo", roundId),
         user: "나의_베팅",
         game: "limbo",
         amount,

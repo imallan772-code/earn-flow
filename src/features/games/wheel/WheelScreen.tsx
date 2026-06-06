@@ -37,6 +37,7 @@ import { WHEEL_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
+import { liveFeedBetIdForRound } from "@/lib/api/liveFeedMap";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { profitOf } from "@/shared/games/engine/houseEdge";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
@@ -279,10 +280,12 @@ export function WheelScreen() {
     async (amount: number) => {
       if (!round.isIdle || amount <= 0) return;
       const currentNonce = wheelStore.get().nonce;
-      const ok = await tryDebit(amount, { game: "wheel", roundId: `n${currentNonce}` });
+      const roundId = `n${currentNonce}`;
+      const ok = await tryDebit(amount, { game: "wheel", roundId });
       if (!ok) return;
       const s0 = wheelStore.get();
       const liveBetId = liveBetsStore.push({
+        id: liveFeedBetIdForRound("wheel", roundId),
         user: "나의_베팅",
         game: "wheel",
         amount,

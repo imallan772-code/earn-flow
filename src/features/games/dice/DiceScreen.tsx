@@ -31,6 +31,7 @@ import { DICE_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
+import { liveFeedBetIdForRound } from "@/lib/api/liveFeedMap";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { profitOf } from "@/shared/games/engine/houseEdge";
 import {
@@ -159,10 +160,12 @@ export function DiceScreen() {
     async (amount: number) => {
       if (!round.isIdle || activeBet || amount <= 0) return;
       const currentNonce = diceStore.get().nonce;
-      const ok = await tryDebit(amount, { game: "dice", roundId: `n${currentNonce}` });
+      const roundId = `n${currentNonce}`;
+      const ok = await tryDebit(amount, { game: "dice", roundId });
       if (!ok) return;
       diceStore.set((s) => ({ ...s, pendingAmount: amount }));
       const liveBetId = liveBetsStore.push({
+        id: liveFeedBetIdForRound("dice", roundId),
         user: "나의_베팅",
         game: "dice",
         amount,

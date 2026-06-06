@@ -46,7 +46,11 @@ const KR: RegionProfile = {
     "육아맘_수익",
   ],
   posts: [
-    { body: "크래시 {mult}배 캐시아웃 성공 🔥 한 판 더 갑니다", rewardRange: [80_000, 2_400_000], weight: 3 },
+    {
+      body: "크래시 {mult}배 캐시아웃 성공 🔥 한 판 더 갑니다",
+      rewardRange: [80_000, 2_400_000],
+      weight: 3,
+    },
     { body: "출석 {days}일째! 보너스 받고 시작 🚀", rewardRange: [500, 10_000], weight: 2 },
     { body: "친구 {n}명 초대로 즉시 PHON 입금됨 💸", rewardRange: [10_000, 55_000], weight: 2 },
     { body: "육아하면서 한 달 누적 PHON 모음 👶", rewardRange: [50_000, 380_000], weight: 2 },
@@ -74,14 +78,34 @@ const EN = (id: string, flag: string, weight: number, nicknames: string[]): Regi
   weight,
   nicknames,
   posts: [
-    { body: "Just cashed out {mult}x on Crash 🔥 one more round!", rewardRange: [50_000, 2_500_000], weight: 3 },
-    { body: "Day {days} check-in streak — bonus unlocked 🚀", rewardRange: [500, 15_000], weight: 2 },
-    { body: "Invited {n} friends and got instant PHON 💸", rewardRange: [5_000, 50_000], weight: 2 },
+    {
+      body: "Just cashed out {mult}x on Crash 🔥 one more round!",
+      rewardRange: [50_000, 2_500_000],
+      weight: 3,
+    },
+    {
+      body: "Day {days} check-in streak — bonus unlocked 🚀",
+      rewardRange: [500, 15_000],
+      weight: 2,
+    },
+    {
+      body: "Invited {n} friends and got instant PHON 💸",
+      rewardRange: [5_000, 50_000],
+      weight: 2,
+    },
     { body: "Slots jackpot!!! Still shaking 🎰", rewardRange: [500_000, 12_000_000], weight: 1 },
     { body: "Mines cleared {n} tiles — clean run 💎", rewardRange: [8_000, 420_000], weight: 2 },
-    { body: "Hit {mult}x on Plinko while waiting for coffee ☕", rewardRange: [12_000, 890_000], weight: 2 },
+    {
+      body: "Hit {mult}x on Plinko while waiting for coffee ☕",
+      rewardRange: [12_000, 890_000],
+      weight: 2,
+    },
     { body: "VIP tier up! The grind paid off 👑", rewardRange: [25_000, 200_000], weight: 1 },
-    { body: "Limbo {mult}x from a small bet — insane", rewardRange: [30_000, 1_800_000], weight: 2 },
+    {
+      body: "Limbo {mult}x from a small bet — insane",
+      rewardRange: [30_000, 1_800_000],
+      weight: 2,
+    },
   ],
   hotActions: [
     { action: "Crash {mult}× Cash out", amountRange: [800_000, 12_000_000], weight: 3 },
@@ -99,7 +123,11 @@ const ES = (id: string, flag: string, weight: number, nicknames: string[]): Regi
   weight,
   nicknames,
   posts: [
-    { body: "¡Retiré {mult}x en Crash! 🔥 otra ronda más", rewardRange: [40_000, 2_000_000], weight: 3 },
+    {
+      body: "¡Retiré {mult}x en Crash! 🔥 otra ronda más",
+      rewardRange: [40_000, 2_000_000],
+      weight: 3,
+    },
     { body: "Racha de {days} días — bono desbloqueado 🚀", rewardRange: [500, 12_000], weight: 2 },
     { body: "Invité {n} amigos — PHON instantáneo 💰", rewardRange: [8_000, 45_000], weight: 2 },
     { body: "Jackpot en slots 🎰 no puedo creerlo", rewardRange: [600_000, 9_000_000], weight: 1 },
@@ -137,13 +165,32 @@ const JP: RegionProfile = {
   id: "jp",
   flag: "🇯🇵",
   weight: 10,
-  nicknames: ["サトシ_777", "ゆきトレーダー", "ハルキング", "れんプレイ", "あきマネー", "カイト_勝", "りなスロ", "ソラ投資", "タカ_win", "ミキちゃん"],
+  nicknames: [
+    "サトシ_777",
+    "ゆきトレーダー",
+    "ハルキング",
+    "れんプレイ",
+    "あきマネー",
+    "カイト_勝",
+    "りなスロ",
+    "ソラ投資",
+    "タカ_win",
+    "ミキちゃん",
+  ],
   posts: [
-    { body: "Crashで{mult}倍キャッシュアウト成功！🔥", rewardRange: [60_000, 2_200_000], weight: 3 },
+    {
+      body: "Crashで{mult}倍キャッシュアウト成功！🔥",
+      rewardRange: [60_000, 2_200_000],
+      weight: 3,
+    },
     { body: "連続{days}日ログインボーナス 🎁", rewardRange: [500, 12_000], weight: 2 },
     { body: "友達{n}人招待でPHON即入金 💸", rewardRange: [8_000, 48_000], weight: 2 },
     { body: "Plinkoで大当たり 💫", rewardRange: [20_000, 750_000], weight: 2 },
-    { body: "スロットジャックポット 🎰 震えが止まらない", rewardRange: [520_000, 10_000_000], weight: 1 },
+    {
+      body: "スロットジャックポット 🎰 震えが止まらない",
+      rewardRange: [520_000, 10_000_000],
+      weight: 1,
+    },
     { body: "VIPランクアップ 👑", rewardRange: [22_000, 190_000], weight: 1 },
   ],
   hotActions: [
@@ -158,7 +205,15 @@ const CN: RegionProfile = {
   id: "cn",
   flag: "🇨🇳",
   weight: 8,
-  nicknames: ["_crypto小王", "赚钱达人", "夜猫子玩家", "深圳交易员", "幸运星88", "挖矿高手", "金币猎人"],
+  nicknames: [
+    "_crypto小王",
+    "赚钱达人",
+    "夜猫子玩家",
+    "深圳交易员",
+    "幸运星88",
+    "挖矿高手",
+    "金币猎人",
+  ],
   posts: [
     { body: "Crash {mult}倍提现成功 🔥 再来一局", rewardRange: [45_000, 2_100_000], weight: 3 },
     { body: "连续{days}天签到奖励 🎁", rewardRange: [500, 11_000], weight: 2 },
@@ -194,7 +249,15 @@ const VI: RegionProfile = {
   id: "vn",
   flag: "🇻🇳",
   weight: 7,
-  nicknames: ["Minh_Trader", "Linh_Crypto", "Trung_Win", "Quan_88", "Thao_PHON", "Hanoi_King", "SaigonFlip"],
+  nicknames: [
+    "Minh_Trader",
+    "Linh_Crypto",
+    "Trung_Win",
+    "Quan_88",
+    "Thao_PHON",
+    "Hanoi_King",
+    "SaigonFlip",
+  ],
   posts: [
     { body: "Rút {mult}x trên Crash — quá đỉnh 🔥", rewardRange: [20_000, 1_200_000], weight: 3 },
     { body: "Check-in {days} ngày liên tiếp 🎁", rewardRange: [500, 9_000], weight: 2 },
@@ -264,7 +327,11 @@ const FR: RegionProfile = {
   weight: 5,
   nicknames: ["Lucas_FR", "Marie_Crypto", "ParisWin", "Trader_Lyon", "CoinKing_FR"],
   posts: [
-    { body: "Cashout {mult}x sur Crash 🔥 encore une", rewardRange: [50_000, 2_100_000], weight: 3 },
+    {
+      body: "Cashout {mult}x sur Crash 🔥 encore une",
+      rewardRange: [50_000, 2_100_000],
+      weight: 3,
+    },
     { body: "Série de {days} jours — bonus débloqué 🎁", rewardRange: [500, 10_000], weight: 2 },
     { body: "{n} amis invités — PHON instantané 💸", rewardRange: [8_000, 43_000], weight: 2 },
     { body: "Jackpot slots — je tremble encore 🎰", rewardRange: [400_000, 8_500_000], weight: 1 },
@@ -315,7 +382,11 @@ const HI: RegionProfile = {
   weight: 8,
   nicknames: ["Arjun_Patel", "Priya_Crypto", "MumbaiKing", "DesiTrader", "Rahul_Win", "CoinBhai"],
   posts: [
-    { body: "Crash mein {mult}x cashout — mazaa aa gaya 🔥", rewardRange: [25_000, 1_500_000], weight: 3 },
+    {
+      body: "Crash mein {mult}x cashout — mazaa aa gaya 🔥",
+      rewardRange: [25_000, 1_500_000],
+      weight: 3,
+    },
     { body: "{days} din streak — bonus mil gaya 🎁", rewardRange: [500, 9_000], weight: 2 },
     { body: "{n} dost invite — PHON turant aaya 💸", rewardRange: [6_500, 39_000], weight: 2 },
     { body: "Slots jackpot 🎰 ab bhi yakeen nahi", rewardRange: [440_000, 7_600_000], weight: 1 },
@@ -332,7 +403,11 @@ const AR: RegionProfile = {
   weight: 6,
   nicknames: ["Khalid_SA", "Omar_EG", "Ahmed_DXB", "Yusuf_Win", "Fawaz_Crypto", "RiyadhKing"],
   posts: [
-    { body: "Cashout {mult}x fi Crash — mashallah 🔥", rewardRange: [30_000, 1_600_000], weight: 3 },
+    {
+      body: "Cashout {mult}x fi Crash — mashallah 🔥",
+      rewardRange: [30_000, 1_600_000],
+      weight: 3,
+    },
     { body: "سلسلة {days} أيام — المكافأة وصلت 🎁", rewardRange: [500, 10_000], weight: 2 },
     { body: "دعوت {n} أصدقاء — PHON فوراً 💸", rewardRange: [7_200, 41_000], weight: 2 },
     { body: "جاكبوت السلوت 🎰 لا أصدق", rewardRange: [500_000, 9_500_000], weight: 1 },
@@ -393,8 +468,16 @@ function IT(id: string, flag: string, weight: number, nicknames: string[]): Regi
     weight,
     nicknames,
     posts: [
-      { body: "Cashout {mult}x su Crash 🔥 ancora un round", rewardRange: [42_000, 1_950_000], weight: 3 },
-      { body: "Serie di {days} giorni — bonus sbloccato 🎁", rewardRange: [500, 10_000], weight: 2 },
+      {
+        body: "Cashout {mult}x su Crash 🔥 ancora un round",
+        rewardRange: [42_000, 1_950_000],
+        weight: 3,
+      },
+      {
+        body: "Serie di {days} giorni — bonus sbloccato 🎁",
+        rewardRange: [500, 10_000],
+        weight: 2,
+      },
       { body: "Invitati {n} amici — PHON istantaneo 💸", rewardRange: [7_800, 43_500], weight: 2 },
       { body: "Jackpot slot 🎰 ancora scosso", rewardRange: [430_000, 8_300_000], weight: 1 },
     ],
@@ -416,7 +499,11 @@ function SE(id: string, flag: string, weight: number, nicknames: string[]): Regi
       { body: "{mult}x Crash cashout — kör igen 🔥", rewardRange: [40_000, 1_800_000], weight: 3 },
       { body: "{days} dagars streak — bonus upplåst 🎁", rewardRange: [500, 10_000], weight: 2 },
       { body: "Bjöd in {n} vänner — PHON direkt 💸", rewardRange: [7_500, 42_000], weight: 2 },
-      { body: "Slots jackpot 🎰 chockad fortfarande", rewardRange: [460_000, 8_600_000], weight: 1 },
+      {
+        body: "Slots jackpot 🎰 chockad fortfarande",
+        rewardRange: [460_000, 8_600_000],
+        weight: 1,
+      },
     ],
     hotActions: [
       { action: "Crash {mult}× Cashout", amountRange: [730_000, 11_000_000], weight: 3 },
@@ -429,9 +516,17 @@ function PL(id: string, flag: string, weight: number, nicknames: string[]): Regi
   return {
     ...EN(id, flag, weight, nicknames),
     posts: [
-      { body: "Cashout {mult}x na Crash 🔥 jeszcze jedna runda", rewardRange: [38_000, 1_750_000], weight: 3 },
+      {
+        body: "Cashout {mult}x na Crash 🔥 jeszcze jedna runda",
+        rewardRange: [38_000, 1_750_000],
+        weight: 3,
+      },
       { body: "Seria {days} dni — bonus odblokowany 🎁", rewardRange: [500, 9_800], weight: 2 },
-      { body: "Zaprosiłem {n} znajomych — PHON od razu 💸", rewardRange: [7_200, 41_500], weight: 2 },
+      {
+        body: "Zaprosiłem {n} znajomych — PHON od razu 💸",
+        rewardRange: [7_200, 41_500],
+        weight: 2,
+      },
       { body: "Jackpot slotów 🎰 wciąż w szoku", rewardRange: [450_000, 8_400_000], weight: 1 },
     ],
     hotActions: [
@@ -463,7 +558,11 @@ function BD(id: string, flag: string, weight: number, nicknames: string[]): Regi
     weight,
     nicknames,
     posts: [
-      { body: "Crash e {mult}x cashout — daraun lageni 🔥", rewardRange: [20_000, 1_100_000], weight: 3 },
+      {
+        body: "Crash e {mult}x cashout — daraun lageni 🔥",
+        rewardRange: [20_000, 1_100_000],
+        weight: 3,
+      },
       { body: "{days} din streak — bonus peyechi 🎁", rewardRange: [500, 8_500], weight: 2 },
       { body: "{n} jon bondhu invite — PHON ekhnui 💸", rewardRange: [6_000, 36_000], weight: 2 },
     ],
@@ -478,8 +577,16 @@ function MY(id: string, flag: string, weight: number, nicknames: string[]): Regi
     weight,
     nicknames,
     posts: [
-      { body: "Cashout {mult}x kat Crash — power gila 🔥", rewardRange: [24_000, 1_150_000], weight: 3 },
-      { body: "Check-in {days} hari berturut — bonus masuk 🎁", rewardRange: [500, 9_200], weight: 2 },
+      {
+        body: "Cashout {mult}x kat Crash — power gila 🔥",
+        rewardRange: [24_000, 1_150_000],
+        weight: 3,
+      },
+      {
+        body: "Check-in {days} hari berturut — bonus masuk 🎁",
+        rewardRange: [500, 9_200],
+        weight: 2,
+      },
       { body: "Jemput {n} kawan — PHON terus masuk 💸", rewardRange: [6_800, 40_000], weight: 2 },
     ],
   };
@@ -554,7 +661,10 @@ function fillTemplate(text: string): string {
 }
 
 function avatarFromName(name: string): string {
-  const cleaned = name.replace(/[^a-zA-Z\u3040-\u30ff\u4e00-\u9fff\uac00-\ud7af\u0600-\u06ff]/g, "");
+  const cleaned = name.replace(
+    /[^a-zA-Z\u3040-\u30ff\u4e00-\u9fff\uac00-\ud7af\u0600-\u06ff]/g,
+    "",
+  );
   if (cleaned.length > 0) return cleaned.slice(0, 1).toUpperCase();
   return name.slice(0, 1) || "P";
 }
@@ -607,7 +717,17 @@ export function generateFeedPost(): {
   const { likes, comments } = randomEngagement();
   const body = fillTemplate(tpl.body);
   const avatar = avatarFromName(user);
-  return { user, flag: region.flag, avatar, body, reward, currency, likes, comments, regionId: region.id };
+  return {
+    user,
+    flag: region.flag,
+    avatar,
+    body,
+    reward,
+    currency,
+    likes,
+    comments,
+    regionId: region.id,
+  };
 }
 
 export function generateHotMoment(): {

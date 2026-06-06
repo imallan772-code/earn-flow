@@ -5,10 +5,7 @@
  * until enough settled wins exist. Dashed line was the old empty-state placeholder.
  */
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import {
-  lobbySparklineSeries,
-  polylineFromSeries,
-} from "@/shared/games/lobby/lobbyLiveDisplay";
+import { lobbySparklineSeries, polylineFromSeries } from "@/shared/games/lobby/lobbyLiveDisplay";
 import { liveBetsStore, type LiveGame } from "@/shared/livefeed/LiveBetsStore";
 
 interface Props {

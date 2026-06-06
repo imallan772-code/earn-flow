@@ -34,7 +34,8 @@ function FeedPostCard({ post, now, isNew }: { post: FeedPost; now: number; isNew
     <Premium3DCard
       className={cn(
         "box-border shrink-0 overflow-hidden p-3",
-        isNew && "animate-feed-enter ring-1 ring-[color-mix(in_oklab,var(--color-cyan)_35%,transparent)]",
+        isNew &&
+          "animate-feed-enter ring-1 ring-[color-mix(in_oklab,var(--color-cyan)_35%,transparent)]",
       )}
     >
       <div style={{ height: ROW_H }} className="flex flex-col">
@@ -42,7 +43,9 @@ function FeedPostCard({ post, now, isNew }: { post: FeedPost; now: number; isNew
           <div className="flex min-w-0 items-center gap-2">
             <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-holographic text-[11px] font-bold text-(--color-bg-0)">
               {post.avatar}
-              <span className="absolute -bottom-0.5 -right-0.5 text-[9px] leading-none">{post.flag}</span>
+              <span className="absolute -bottom-0.5 -right-0.5 text-[9px] leading-none">
+                {post.flag}
+              </span>
             </div>
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold">{post.user}</div>
@@ -58,13 +61,22 @@ function FeedPostCard({ post, now, isNew }: { post: FeedPost; now: number; isNew
         </div>
         <p className="mt-1.5 line-clamp-1 text-sm leading-snug">{post.body}</p>
         <div className="mt-2 flex items-center gap-3 text-(--color-muted)">
-          <button type="button" className="inline-flex items-center gap-1 text-[11px] hover:text-pink">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 text-[11px] hover:text-pink"
+          >
             <Heart size={12} /> {formatCompact(post.likes)}
           </button>
-          <button type="button" className="inline-flex items-center gap-1 text-[11px] hover:text-(--color-cyan)">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 text-[11px] hover:text-(--color-cyan)"
+          >
             <MessageCircle size={12} /> {formatCompact(post.comments)}
           </button>
-          <button type="button" className="inline-flex items-center gap-1 text-[11px] hover:text-(--color-foreground)">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 text-[11px] hover:text-(--color-foreground)"
+          >
             <Share2 size={12} /> Share
           </button>
         </div>

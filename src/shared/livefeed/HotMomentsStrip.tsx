@@ -50,7 +50,9 @@ export function HotMomentsStrip() {
           </span>
           <span>{formatCompact(concurrent)} betting</span>
           <span className="text-(--color-border)">·</span>
-          <span className="font-numeric font-bold text-gold">{formatCompact(winsToday)} wins today</span>
+          <span className="font-numeric font-bold text-gold">
+            {formatCompact(winsToday)} wins today
+          </span>
         </span>
       </header>
       <div
@@ -72,7 +74,9 @@ export function HotMomentsStrip() {
               </div>
               <div
                 className="mt-1.5 font-numeric text-sm font-extrabold"
-                style={{ color: h.currency === "USDT" ? "var(--color-emerald)" : "var(--color-gold)" }}
+                style={{
+                  color: h.currency === "USDT" ? "var(--color-emerald)" : "var(--color-gold)",
+                }}
               >
                 {formatHotAmount(h)}
               </div>

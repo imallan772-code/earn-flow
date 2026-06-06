@@ -6,14 +6,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { liveBetsStore, type LiveGame } from "@/shared/livefeed/LiveBetsStore";
 import { randomMaskedNick } from "@/shared/livefeed/nicknames";
 
-const OPEN_LOBBY_GAMES: LiveGame[] = [
-  "crash",
-  "dice",
-  "plinko",
-  "mines",
-  "limbo",
-  "wheel",
-];
+const OPEN_LOBBY_GAMES: LiveGame[] = ["crash", "dice", "plinko", "mines", "limbo", "wheel"];
 
 function hashGame(game: LiveGame): number {
   return game.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
@@ -50,8 +43,9 @@ export function polylineFromSeries(series: number[], width: number, height: numb
 export function seedLobbySparklines(): void {
   const snap = liveBetsStore.getSnapshot();
   for (const game of OPEN_LOBBY_GAMES) {
-    const wins = snap.filter((b) => b.game === game && b.multiplier != null && b.multiplier > 0)
-      .length;
+    const wins = snap.filter(
+      (b) => b.game === game && b.multiplier != null && b.multiplier > 0,
+    ).length;
     const need = Math.max(0, 24 - wins);
     for (let i = 0; i < need; i++) {
       const mult = lobbySparklineSeries(game, 1, i + wins)[0] ?? 1.5;

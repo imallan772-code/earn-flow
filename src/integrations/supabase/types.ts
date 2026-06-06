@@ -1,4 +1,4 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+﻿export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   __InternalSupabase: {
@@ -275,6 +275,51 @@ export type Database = {
         Update: Record<string, unknown>;
         Relationships: [];
       };
+      live_bets: {
+        Row: {
+          amount: number;
+          created_at: string;
+          display_name: string;
+          event_key: string;
+          game: string;
+          id: string;
+          mode: string;
+          multiplier: number | null;
+          profit: number | null;
+          status: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          display_name: string;
+          event_key: string;
+          game: string;
+          id?: string;
+          mode?: string;
+          multiplier?: number | null;
+          profit?: number | null;
+          status: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          display_name?: string;
+          event_key?: string;
+          game?: string;
+          id?: string;
+          mode?: string;
+          multiplier?: number | null;
+          profit?: number | null;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -306,6 +351,7 @@ export type Database = {
         Returns: Json;
       };
       list_user_missions: { Args: never; Returns: Json };
+      live_bet_mask_display: { Args: { p_user_id: string }; Returns: string };
       record_mission_progress: {
         Args: { p_mission_id: string; p_delta?: number };
         Returns: Json;

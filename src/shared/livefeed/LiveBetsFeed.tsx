@@ -20,6 +20,7 @@ import {
   type LiveBet,
 } from "./LiveBetsStore";
 import { startBotFeed } from "./botGenerator";
+import { bootLiveBetsRealtime } from "./liveBetsRealtimeAdapter";
 import { LiveBetsVirtualList } from "./LiveBetsVirtualList";
 import { LiveBetRow, ROW_GRID } from "./LiveBetRow";
 import { applyFeedFilter, type FeedFilter } from "./feedFilter";
@@ -57,9 +58,11 @@ export function LiveBetsFeed({
 }: Props) {
   useEffect(() => {
     seedInitialBets(32);
-    const stop = startBotFeed();
+    const stopBot = startBotFeed();
+    const stopRealtime = bootLiveBetsRealtime();
     return () => {
-      stop();
+      stopBot();
+      stopRealtime();
     };
   }, []);
 
@@ -114,7 +117,9 @@ export function LiveBetsFeed({
             <span className="text-(--color-border)">·</span>
             <span className="inline-flex items-center gap-0.5">
               <Zap size={9} className="text-(--color-cyan)" />
-              <span className="font-numeric font-bold text-(--color-cyan)">{formatCompact(bps)}/s</span>
+              <span className="font-numeric font-bold text-(--color-cyan)">
+                {formatCompact(bps)}/s
+              </span>
             </span>
           </span>
         </header>

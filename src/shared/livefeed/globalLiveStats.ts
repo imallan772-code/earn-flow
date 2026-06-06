@@ -25,7 +25,10 @@ function emit() {
 function jitterConcurrent() {
   const delta = Math.floor((Math.random() - 0.42) * 4_200);
   concurrentBettors = Math.max(298_000, Math.min(356_000, concurrentBettors + delta));
-  betsPerSecond = Math.max(2_100, Math.min(4_800, betsPerSecond + Math.floor((Math.random() - 0.48) * 180)));
+  betsPerSecond = Math.max(
+    2_100,
+    Math.min(4_800, betsPerSecond + Math.floor((Math.random() - 0.48) * 180)),
+  );
   winsToday += Math.floor(18 + Math.random() * 42);
   emit();
 }

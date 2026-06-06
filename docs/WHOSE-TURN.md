@@ -8,9 +8,15 @@
 
 | | |
 |---|---|
-| **지금** | ⚙️ **Cursor** — **ROUND P-PR1** (Supabase Realtime + `lib/api/liveFeed.ts` + Store adapter) |
-| **당신** | Cursor PR1 착수 · Lovable **대기** (P-PR2 완료) |
-| **Lovable** | P-PR2 완료 (`9769da3`) · 다음 Q polish 또는 v2.2 후속 |
+| **지금** | 🤖 **Lovable AI** — **대기** (또는 ROUND Q polish) |
+| **당신** | Q plan 붙이거나 v2.2 후속 UI 지시 |
+| **Cursor** | **P-PR1 완료** — sanitation ✅ |
+
+### ROUND P-PR1 완료 (Cursor)
+
+- `live_bets` table + game_rounds trigger + Realtime publication
+- `lib/api/liveFeed.ts` + `liveBetsRealtimeAdapter` (additive merge, bot 0-diff)
+- `VITE_LIVE_FEED_REALTIME` flag (default ON, `false`로 dev disable)
 
 ### ROUND P-PR2 완료 (Cursor sanitation ✅)
 
@@ -27,9 +33,9 @@
 ## 전체 큐
 
 ```text
-[완료] L-2 · M · L-3+L1-E · N · O · P-PR2 (Feed dock + filter + ME row)
-[지금] Cursor → P-PR1 (Supabase Realtime + adapter)
-[다음]  Q-PR1 (/fair/verify) 또는 Lovable Q polish
+[완료] … · P-PR2 (Feed dock) · P-PR1 (Realtime additive merge)
+[지금] Lovable → Q polish 또는 v2.2 후속 · Cursor 대기
+[다음] Q-PR1 (/fair/verify + SHA256)
 ```
 
 ---
@@ -38,6 +44,7 @@
 
 | 날짜 | 현재 차례 |
 |------|-----------|
+| 2026-06-06 | **P-PR1 완료** → Lovable Q 또는 후속 |
 | 2026-06-06 | **P-PR2 완료** → Cursor P-PR1 |
 | 2026-06-06 | **O 완료** → Lovable P · Cursor game session hardening |
 | 2026-06-06 | **N 완료** → Lovable O · Cursor P 병렬 가능 |

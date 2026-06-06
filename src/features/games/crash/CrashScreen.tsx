@@ -55,6 +55,7 @@ import { CRASH_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
+import { liveFeedBetIdForRound } from "@/lib/api/liveFeedMap";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { profitOf, payoutOf } from "@/shared/games/engine/houseEdge";
 import { commitServerSeed } from "@/shared/games/engine/provablyFair";
@@ -433,9 +434,11 @@ export function CrashScreen() {
   const handlePlace = useCallback(
     async (amount: number, autoTarget: number): Promise<boolean> => {
       if (phase !== "betting" || betRef.current || amount <= 0) return false;
-      const ok = await tryDebit(amount, { game: "crash", roundId: `n${nonce}` });
+      const roundId = `n${nonce}`;
+      const ok = await tryDebit(amount, { game: "crash", roundId });
       if (!ok) return false;
       const liveBetId = liveBetsStore.push({
+        id: liveFeedBetIdForRound("crash", roundId),
         user: "나의_베팅",
         game: "crash",
         amount,

@@ -159,9 +159,18 @@ export const liveBetsStore = {
 export function seedInitialBets(count = 32): void {
   if (buffer.length > 0) return;
   const games: LiveGame[] = [
-    "crash", "crash", "crash", "crash",
-    "dice", "dice", "plinko", "plinko",
-    "slots", "mines", "limbo", "wheel",
+    "crash",
+    "crash",
+    "crash",
+    "crash",
+    "dice",
+    "dice",
+    "plinko",
+    "plinko",
+    "slots",
+    "mines",
+    "limbo",
+    "wheel",
   ];
   for (let i = 0; i < count; i++) {
     const game = games[Math.floor(Math.random() * games.length)];

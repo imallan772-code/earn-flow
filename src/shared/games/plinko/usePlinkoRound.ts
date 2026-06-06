@@ -17,6 +17,7 @@ import { PlinkoEngine, MULTIPLIERS, type RiskLevel, type RowCount } from "./Plin
 import { getPlinkoSFX } from "./PlinkoSFX";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
+import { liveFeedBetIdForRound } from "@/lib/api/liveFeedMap";
 import { profitOf, payoutOf } from "@/shared/games/engine/houseEdge";
 import { plinkoStore, type PlinkoOutcome } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
@@ -125,6 +126,7 @@ export function usePlinkoRound(
     const result = engineRef.current.dropPath(seed, curRows, curRisk);
 
     const liveBetId = liveBetsStore.push({
+      id: liveFeedBetIdForRound("plinko", next.roundId),
       user: "나의_베팅",
       game: "plinko",
       amount: next.amount,
