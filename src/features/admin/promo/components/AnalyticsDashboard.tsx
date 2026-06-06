@@ -287,7 +287,7 @@ function DispatchTimeline({
                   d.status === "failed"
                     ? "bg-(--color-rose)/20 text-(--color-rose)"
                     : d.status === "sent"
-                      ? "bg-(--color-emerald)/20 text-(--color-emerald)"
+                      ? "bg-emerald/20 text-emerald"
                       : "bg-white/10 text-(--color-muted)"
                 }`}
               >
