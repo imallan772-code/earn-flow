@@ -1,6 +1,6 @@
 /**
  * Local risk scan — keyword + heuristic only.
- * Z-1에서 AI scanPromoRisk로 보강.
+ * Z-1: mergeRiskScores로 AI 점수와 병합.
  */
 const HIGH_FLAGS = [
   "guaranteed",
@@ -39,6 +39,25 @@ export function scanRiskLocal(text: string): RiskResult {
     }
   }
   score = Math.min(100, score);
-  const level: RiskResult["level"] = score >= 60 ? "high" : score >= 25 ? "medium" : "low";
-  return { score, flags: hits, level };
+  return { score, flags: hits, level: levelFromScore(score) };
+}
+
+export function levelFromScore(score: number): RiskResult["level"] {
+  return score >= 60 ? "high" : score >= 25 ? "medium" : "low";
+}
+
+/**
+ * local + AI 결과 병합.
+ * - score: max
+ * - flags: union (중복 제거)
+ * - level: merged score 기준 재계산
+ */
+export function mergeRiskScores(
+  local: RiskResult,
+  ai: { score: number; flags?: string[] } | null | undefined,
+): RiskResult {
+  if (!ai) return local;
+  const score = Math.min(100, Math.max(local.score, Math.max(0, Math.round(ai.score))));
+  const flags = Array.from(new Set([...local.flags, ...(ai.flags ?? [])]));
+  return { score, flags, level: levelFromScore(score) };
 }
