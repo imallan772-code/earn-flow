@@ -5,7 +5,7 @@
 -- REVOKE direct writes: money mutations only via SECURITY DEFINER RPCs.
 -- (No FORCE RLS — avoids breaking SECURITY DEFINER signup trigger / service paths.)
 
--- wallet_balances (existing: wallet_select_own from 20260605120000)
+-- wallet_balances (existing: wallet_select_own from initial_schema)
 ALTER TABLE public.wallet_balances ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS wallet_select_own ON public.wallet_balances;
