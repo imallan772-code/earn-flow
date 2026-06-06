@@ -3,6 +3,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import { ADMIN_KO } from "@/shared/admin/labels.ko";
 import { usePromoAiStatus } from "../hooks/usePromoAiStatus";
+import { usePromoAdmin } from "../hooks/usePromoAdmin";
 import { promoAiProviderLabelKo } from "../lib/promoAiLabel";
 import {
   Wand2,
@@ -27,11 +28,15 @@ const TABS = [
 export function PromoShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const status = usePromoAiStatus();
+  const { persisting } = usePromoAdmin();
   const koAi = ADMIN_KO.promo.ai;
+  const provider = promoAiProviderLabelKo(status.provider);
   const subtitle = status.loading
     ? ADMIN_KO.promo.subtitle
     : status.configured
-      ? koAi.subtitleConfigured(promoAiProviderLabelKo(status.provider))
+      ? persisting
+        ? koAi.subtitlePersisting(provider)
+        : koAi.subtitleConfigured(provider)
       : koAi.subtitleFallback;
   return (
     <div className="min-h-dvh bg-cosmic text-(--color-foreground)">

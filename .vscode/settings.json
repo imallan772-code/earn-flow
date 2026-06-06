@@ -36,5 +36,11 @@
     "**/coverage/**": true,
     "**/supabase/.temp/**": true
   },
-  "cSpell.enabled": false
+  "cSpell.enabled": false,
+
+  // VPN 사용 시 터미널 git/bun/npm이 OS 프록시 상속 (Cursor User settings와 함께)
+  "terminal.integrated.inheritEnv": true,
+  "terminal.integrated.env.windows": {
+    "NO_PROXY": "localhost,127.0.0.1,::1,192.168.0.0/16,10.0.0.0/8"
+  }
 }

@@ -151,8 +151,8 @@ export const ADMIN_KO = {
       providerGemini: "Gemini Flash (무료)",
       providerOpenRouter: "OpenRouter (무료)",
       providerGateway: "Lovable Gateway",
-      subtitleConfigured: (provider: string) =>
-        `${provider} 연결 · 캠페인은 로컬 데모로 저장됩니다.`,
+      subtitleConfigured: (provider: string) => `${provider} 연결 · 로컬 데모 저장`,
+      subtitlePersisting: (provider: string) => `${provider} · Supabase 저장`,
       subtitleFallback: "AI 미연결 · 로컬 fallback 카피만 표시",
     },
     errors: {

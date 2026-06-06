@@ -91,11 +91,36 @@ export function usePromoAdmin() {
     retry: false,
   });
 
-  const campaigns = persisting && campaignsQuery.data ? campaignsQuery.data : mockCampaigns;
-  const dispatches =
-    persisting && dispatchesQuery.data ? dispatchesQuery.data : mockDispatches;
-  const assets = persisting && assetsQuery.data ? assetsQuery.data : mockAssets;
-  const settings = persisting && settingsQuery.data ? settingsQuery.data : mockSettings;
+  const queriesPending =
+    persisting &&
+    (campaignsQuery.isLoading ||
+      dispatchesQuery.isLoading ||
+      assetsQuery.isLoading ||
+      settingsQuery.isLoading ||
+      analyticsQuery.isLoading);
+
+  const campaigns = persisting
+    ? queriesPending
+      ? []
+      : (campaignsQuery.data ?? [])
+    : mockCampaigns;
+  const dispatches = persisting
+    ? queriesPending
+      ? []
+      : (dispatchesQuery.data ?? [])
+    : mockDispatches;
+  const assets = persisting
+    ? queriesPending
+      ? []
+      : (assetsQuery.data ?? [])
+    : mockAssets;
+  const settings = persisting
+    ? (settingsQuery.data ?? {
+        webhookUrl: "",
+        hmacSecret: "",
+        defaultUtmSource: "phonara-promo",
+      })
+    : mockSettings;
 
   const invalidateAll = async () => {
     await Promise.all([
@@ -209,14 +234,22 @@ export function usePromoAdmin() {
     promoMockStore.addAsset(a);
   };
 
-  const analytics = persisting && analyticsQuery.data
-    ? {
-        impressions: analyticsQuery.data.sent * 100,
-        clicks: analyticsQuery.data.clicks,
-        dispatches: analyticsQuery.data.sent,
-        campaigns: analyticsQuery.data.campaigns,
-        topChannel: analyticsQuery.data.top_channel,
-      }
+  const analytics = persisting
+    ? queriesPending || !analyticsQuery.data
+      ? {
+          impressions: 0,
+          clicks: 0,
+          dispatches: 0,
+          campaigns: 0,
+          topChannel: null as string | null,
+        }
+      : {
+          impressions: analyticsQuery.data.sent * 100,
+          clicks: analyticsQuery.data.clicks,
+          dispatches: analyticsQuery.data.sent,
+          campaigns: analyticsQuery.data.campaigns,
+          topChannel: analyticsQuery.data.top_channel ?? null,
+        }
     : {
         impressions: mockDispatches.length * 100,
         clicks: mockClicks.length,
@@ -225,12 +258,7 @@ export function usePromoAdmin() {
         topChannel: null as string | null,
       };
 
-  const loading =
-    persisting &&
-    (campaignsQuery.isLoading ||
-      dispatchesQuery.isLoading ||
-      assetsQuery.isLoading ||
-      settingsQuery.isLoading);
+  const loading = queriesPending;
 
   return {
     configured,
