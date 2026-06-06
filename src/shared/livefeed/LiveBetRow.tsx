@@ -10,26 +10,15 @@ import type { LiveBet } from "./LiveBetsStore";
 export const ROW_GRID =
   "grid grid-cols-[0.375rem_minmax(0,1fr)_5rem_3.25rem_5.5rem] items-center gap-x-2";
 
-const GAME_LABEL: Record<LiveBet["game"], string> = {
-  crash: "Crash",
-  dice: "Dice",
-  plinko: "Plinko",
-  slots: "Slots",
-  mines: "Mines",
-  roulette: "Roulette",
-  limbo: "Limbo",
-  wheel: "Wheel",
-};
-
-const GAME_ACCENT: Record<LiveBet["game"], string> = {
-  crash: "var(--color-cyan)",
-  dice: "var(--color-emerald)",
-  plinko: "var(--color-gold)",
-  slots: "var(--color-pink)",
-  mines: "var(--color-warning)",
-  roulette: "var(--color-purple)",
-  limbo: "var(--color-purple)",
-  wheel: "var(--color-gold)",
+const GAME_META: Record<LiveBet["game"], { label: string; accent: string }> = {
+  crash: { label: "Crash", accent: "var(--color-cyan)" },
+  dice: { label: "Dice", accent: "var(--color-emerald)" },
+  plinko: { label: "Plinko", accent: "var(--color-gold)" },
+  slots: { label: "Slots", accent: "var(--color-pink)" },
+  mines: { label: "Mines", accent: "var(--color-warning)" },
+  roulette: { label: "Roulette", accent: "var(--color-purple)" },
+  limbo: { label: "Limbo", accent: "var(--color-purple)" },
+  wheel: { label: "Wheel", accent: "var(--color-gold)" },
 };
 
 interface Props {
