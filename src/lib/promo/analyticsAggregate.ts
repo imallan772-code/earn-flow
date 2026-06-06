@@ -2,11 +2,7 @@
  * Promo analytics aggregation — pure functions.
  * SSOT: dispatches[] (+ campaigns[] join). clicks row-level은 Cursor RPC 후.
  */
-import type {
-  PromoCampaign,
-  PromoChannelId,
-  PromoDispatch,
-} from "@/features/admin/promo/types";
+import type { PromoCampaign, PromoChannelId, PromoDispatch } from "@/features/admin/promo/types";
 import { ymdKey } from "./calendarGrid";
 
 export type PeriodKey = "7d" | "30d" | "all";
@@ -113,9 +109,6 @@ export function topCampaignByDispatches(
   return campaigns.find((c) => c.id === bestId) ?? null;
 }
 
-export function resolveCampaignTitle(
-  campaigns: PromoCampaign[],
-  id: string,
-): string {
+export function resolveCampaignTitle(campaigns: PromoCampaign[], id: string): string {
   return campaigns.find((c) => c.id === id)?.title ?? id;
 }

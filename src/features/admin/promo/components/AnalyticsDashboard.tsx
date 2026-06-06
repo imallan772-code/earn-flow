@@ -47,8 +47,7 @@ export function AnalyticsDashboard() {
   const isEmpty = analytics.dispatches === 0 && analytics.clicks === 0;
   const filteredCount = filteredDispatches.length;
   const filteredImpressions = filteredCount * 100;
-  const ctr =
-    analytics.impressions > 0 ? (analytics.clicks / analytics.impressions) * 100 : 0;
+  const ctr = analytics.impressions > 0 ? (analytics.clicks / analytics.impressions) * 100 : 0;
 
   return (
     <section className="flex flex-col gap-4">
@@ -87,13 +86,7 @@ export function AnalyticsDashboard() {
   );
 }
 
-function PeriodFilter({
-  value,
-  onChange,
-}: {
-  value: PeriodKey;
-  onChange: (v: PeriodKey) => void;
-}) {
+function PeriodFilter({ value, onChange }: { value: PeriodKey; onChange: (v: PeriodKey) => void }) {
   const ko = ADMIN_KO.promo.analytics;
   const options: Array<{ key: PeriodKey; label: string }> = [
     { key: "7d", label: ko.period7d },
@@ -198,28 +191,20 @@ function TopCampaignCard({
       <div className="mt-2 text-[11px] text-(--color-muted)">
         {ko.topChannelLabel}:{" "}
         <span className="font-semibold text-(--color-foreground)">
-          {topChannel
-            ? (PROMO_CHANNEL_LABELS_KO[topChannel] ?? topChannel)
-            : ko.noTop}
+          {topChannel ? (PROMO_CHANNEL_LABELS_KO[topChannel] ?? topChannel) : ko.noTop}
         </span>
       </div>
     </div>
   );
 }
 
-function DispatchSparkline({
-  buckets,
-}: {
-  buckets: Array<{ ymd: string; count: number }>;
-}) {
+function DispatchSparkline({ buckets }: { buckets: Array<{ ymd: string; count: number }> }) {
   const ko = ADMIN_KO.promo.analytics;
   const max = Math.max(1, ...buckets.map((b) => b.count));
   const w = 320;
   const h = 60;
   const stepX = buckets.length > 1 ? w / (buckets.length - 1) : 0;
-  const points = buckets
-    .map((b, i) => `${i * stepX},${h - (b.count / max) * h}`)
-    .join(" ");
+  const points = buckets.map((b, i) => `${i * stepX},${h - (b.count / max) * h}`).join(" ");
   return (
     <div className="glass-2 rounded-3xl p-5">
       <h3 className="mb-3 text-sm font-bold">{ko.ctrTrend}</h3>

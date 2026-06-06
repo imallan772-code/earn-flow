@@ -21,9 +21,7 @@ export function ymdKey(iso: string | Date): string {
   return `${y}-${m}-${day}`;
 }
 
-export function groupCampaignsByDay(
-  campaigns: PromoCampaign[],
-): Map<string, PromoCampaign[]> {
+export function groupCampaignsByDay(campaigns: PromoCampaign[]): Map<string, PromoCampaign[]> {
   const map = new Map<string, PromoCampaign[]>();
   for (const c of campaigns) {
     if (!c.scheduledAt) continue;
@@ -35,9 +33,7 @@ export function groupCampaignsByDay(
   }
   // sort within day by scheduledAt asc
   for (const [, arr] of map) {
-    arr.sort(
-      (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
-    );
+    arr.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
   }
   return map;
 }

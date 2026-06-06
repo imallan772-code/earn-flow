@@ -12,9 +12,7 @@ export function CalendarDayDetail({ ymd, campaigns, onSchedule }: Props) {
   const ko = ADMIN_KO.promo.calendar;
   return (
     <aside className="glass-1 flex flex-col gap-2 rounded-2xl p-3">
-      <div className="text-[11px] font-semibold text-(--color-muted)">
-        {ko.dayDetail(ymd)}
-      </div>
+      <div className="text-[11px] font-semibold text-(--color-muted)">{ko.dayDetail(ymd)}</div>
       {campaigns.length === 0 ? (
         <p className="text-xs text-(--color-muted)">{ko.dayEmpty}</p>
       ) : (
@@ -34,9 +32,7 @@ export function CalendarDayDetail({ ymd, campaigns, onSchedule }: Props) {
               <input
                 type="datetime-local"
                 value={c.scheduledAt.slice(0, 16)}
-                onChange={(e) =>
-                  onSchedule(c.id, new Date(e.target.value).toISOString())
-                }
+                onChange={(e) => onSchedule(c.id, new Date(e.target.value).toISOString())}
                 className="glass-1 rounded-lg px-2 py-1 text-xs"
               />
             </li>

@@ -120,11 +120,7 @@ export function CalendarBoard() {
       >
         {view === "grid" ? (
           <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
-            <CalendarMonthGrid
-              grid={grid}
-              selectedYmd={selectedYmd}
-              onSelect={setSelectedYmd}
-            />
+            <CalendarMonthGrid grid={grid} selectedYmd={selectedYmd} onSelect={setSelectedYmd} />
             <CalendarDayDetail
               ymd={selectedYmd}
               campaigns={dayCampaigns}
@@ -157,22 +153,17 @@ function ListView({
   onSchedule: (id: string, iso: string) => void;
 }) {
   const ko = ADMIN_KO.promo.calendar;
-  if (campaigns.length === 0)
-    return <p className="text-xs text-(--color-muted)">{ko.empty}</p>;
+  if (campaigns.length === 0) return <p className="text-xs text-(--color-muted)">{ko.empty}</p>;
   return (
     <div className="grid gap-2">
       {campaigns.map((c) => (
         <div key={c.id} className="glass-1 flex items-center gap-3 rounded-2xl p-3">
           <span className="flex-1 truncate text-sm font-semibold">{c.title}</span>
-          <span className="text-[10px] text-(--color-muted)">
-            {promoStatusLabel(c.status)}
-          </span>
+          <span className="text-[10px] text-(--color-muted)">{promoStatusLabel(c.status)}</span>
           <input
             type="datetime-local"
             value={c.scheduledAt.slice(0, 16)}
-            onChange={(e) =>
-              onSchedule(c.id, new Date(e.target.value).toISOString())
-            }
+            onChange={(e) => onSchedule(c.id, new Date(e.target.value).toISOString())}
             className="glass-1 rounded-lg px-2 py-1 text-xs"
           />
         </div>
