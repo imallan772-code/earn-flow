@@ -40,6 +40,7 @@ import {
 } from "@/shared/games/mines/MinesEngine";
 import { type ActiveMinesRound, minesStore } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
+import { useUnmountRefund } from "@/shared/wallet/useUnmountRefund";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { cn } from "@/lib/utils";
 import { appToast } from "@/shared/ui/toast";
@@ -67,7 +68,7 @@ function vibrate(ms: number) {
 
 export function MinesScreen() {
   useRegisterMainMode("game");
-  const { mode, balance, tryDebit, credit } = useGameWallet();
+  const { mode, balance, tryDebit, credit, refund } = useGameWallet();
   const nonce = minesStore.use((s) => s.nonce);
   const history = minesStore.use((s) => s.history);
   const lastOutcome = minesStore.use((s) => s.lastOutcome);
@@ -345,6 +346,15 @@ export function MinesScreen() {
       setShowFair(false);
       return;
     }
+    const ar = minesStore.get().activeRound;
+    if (ar) {
+      void refund(ar.amount, { game: "mines", roundId: `n${ar.nonce}` }).catch(() => undefined);
+      liveBetsStore.update(ar.liveBetId, {
+        multiplier: null,
+        profit: 0,
+        status: "bust",
+      });
+    }
     minesStore.set((s) => ({
       ...s,
       clientSeed: next,
@@ -358,7 +368,7 @@ export function MinesScreen() {
     settledRef.current = false;
     appToast.game.bet({ amount: "시드 변경됨 · nonce 0 리셋" });
     setShowFair(false);
-  }, [seedDraft, clientSeed]);
+  }, [seedDraft, clientSeed, refund]);
   const copyToClipboard = useCallback((text: string, label: string) => {
     if (typeof navigator === "undefined" || !navigator.clipboard) return;
     void navigator.clipboard.writeText(text).then(() => {
