@@ -35,6 +35,7 @@ Lovable: **매 라운드 시작 시 본 문서를 읽고 `blocking = Yes` 행을
 5. ~~L-3 + L1-E (Lovable)~~ **done** — `458b008` · Cursor sanitation GREEN
 6. ~~ROUND N Mines (Lovable)~~ **done** — `8dd2ec6` · Cursor sanitation GREEN
 7. ~~ROUND O Lobby (Lovable)~~ **done** — `8013697` · Cursor sanitation GREEN
+8. ~~ROUND P-PR2 Feed dock (Lovable)~~ **done** — `9769da3` · Cursor sanitation GREEN
 
 ## PR1–PR2 gap
 
@@ -42,7 +43,8 @@ Lovable: **매 라운드 시작 시 본 문서를 읽고 `blocking = Yes` 행을
 
 ## Next (non-blocking)
 
-- **ROUND P:** Realtime live feed (v2.2)
+- **ROUND P-PR1:** Supabase Realtime + `lib/api/liveFeed.ts` + Store adapter (Cursor)
+- **ROUND Q:** PF verify page (v2.2)
 - Orphan debit reconciliation job (deferred)
 
 ## 차례 SSOT
