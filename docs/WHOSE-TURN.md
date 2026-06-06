@@ -8,34 +8,36 @@
 
 | | |
 |---|---|
-| **지금** | 🔧 **Cursor** — Supabase hardening Part 1–4 완료 · Lovable 대기 |
-| **당신** | Part 5 (dashboard leaked-password) 또는 ROUND Q 지시 |
-| **Cursor** | **Hardening Part 1–4** ✅ · check GREEN 확인 중 |
+| **지금** | 🤖 **Lovable AI** — Q-c polish (Fair modal → `/fair/verify` 링크) 또는 R Cashier UI |
+| **당신** | Part 5 dashboard (leaked password) · Q-c/Lovable 지시 |
+| **Cursor** | **Supabase Hardening 1–4** ✅ · **Q-PR1a/b** ✅ pushed |
+
+### Supabase Hardening 완료 (Cursor)
+
+- Part 1–4 migrations + `docs/SUPABASE_HARDENING_ROADMAP.md`
+- RPC anon surface closed · money v1 deprecated · live_bets column privacy
+- Commit `9cc3775` on `main`
+
+### ROUND Q-PR1 완료 (Cursor)
+
+- `/fair/verify` public route — SHA256 commit + 5-game outcome re-derive
+- `src/lib/pf/verifyPublic.ts` + vitest
+- SSOT: `docs/ROUND-Q-PR1.md`
 
 ### ROUND P-PR1 완료 (Cursor)
 
 - `live_bets` table + game_rounds trigger + Realtime publication
 - `lib/api/liveFeed.ts` + `liveBetsRealtimeAdapter` (additive merge, bot 0-diff)
-- `VITE_LIVE_FEED_REALTIME` flag (default ON, `false`로 dev disable)
-
-### ROUND P-PR2 완료 (Cursor sanitation ✅)
-
-- Lovable `9769da3`: 5× RightRail dock, `feedFilter.ts`, ME glow/pulse, filter chips (global feed only)
-- Cursor: lint:strict 0 · check **152/152** GREEN · Red Lines 0-diff 확인
-
-### ROUND O 완료 (Cursor sanitation ✅)
-
-- Lovable `8013697`: GameLobby + LiveBetsVirtualList (react-window)
-- Cursor: game session stake-resume · walletErrors · `761c27f`
 
 ---
 
 ## 전체 큐
 
 ```text
-[완료] … · P-PR2 (Feed dock) · P-PR1 (Realtime additive merge)
-[지금] Lovable → Q polish 또는 v2.2 후속 · Cursor 대기
-[다음] Q-PR1 (/fair/verify + SHA256)
+[완료] P-PR1 · P-PR2 · Supabase Hardening 1–4 · Q-PR1a/b
+[지금] Lovable → Q-c polish 또는 R Cashier shell
+[다음] R-PR1 Cashier (Lovable UI + Cursor money wiring 별도)
+[수동] Supabase Part 5 — leaked password protection
 ```
 
 ---
@@ -44,7 +46,6 @@
 
 | 날짜 | 현재 차례 |
 |------|-----------|
-| 2026-06-06 | **P-PR1 완료** → Lovable Q 또는 후속 |
+| 2026-06-06 | **Q-PR1 + Hardening** → Lovable Q-c / R |
+| 2026-06-06 | **P-PR1 완료** → Cursor hardening |
 | 2026-06-06 | **P-PR2 완료** → Cursor P-PR1 |
-| 2026-06-06 | **O 완료** → Lovable P · Cursor game session hardening |
-| 2026-06-06 | **N 완료** → Lovable O · Cursor P 병렬 가능 |

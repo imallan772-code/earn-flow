@@ -14,7 +14,7 @@
 | **2** | `20260606221000_money_v1_deprecate.sql` | Revoke v1 money RPCs (client uses v2 only) | ✅ applied |
 | **3** | `20260606222000_live_bets_column_privacy.sql` | anon: no `user_id` column; authenticated: full row | ✅ applied |
 | **4** | `20260606223000_function_search_path_hardening.sql` | `SET search_path = public` on remaining helpers | ✅ applied |
-| **5** | (dashboard) | Enable leaked-password protection | manual |
+| **5** | (dashboard) | Enable leaked-password protection | manual — see below |
 | **6** | (Phase 3) | `audit_logs`, full server-side outcomes | deferred |
 
 ---
@@ -74,3 +74,11 @@
 | Live feed privacy | B | A- |
 | Migration cleanliness | B- | A |
 | Exchange-grade ledger | N/A | Phase 3 |
+
+---
+
+## Part 5 — Dashboard (manual, 2 min)
+
+1. [Supabase Dashboard](https://supabase.com/dashboard/project/kanftnqenuzverroodev/auth/providers) → **Authentication** → **Providers** → **Email**
+2. Enable **Leaked password protection** (HaveIBeenPwned check)
+3. Re-run `get_advisors` security — `auth_leaked_password_protection` WARN should clear
