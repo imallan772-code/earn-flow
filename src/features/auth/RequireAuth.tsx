@@ -58,16 +58,20 @@ export function RequireOnboarding({ children }: { children: ReactNode }) {
 }
 
 export function GuestOnly({ children }: { children: ReactNode }) {
-  const { status, profile, isConfigured } = useAuth();
+  const { status, profile, isConfigured, passwordRecovery } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!isConfigured || status !== "authenticated") return;
+    if (passwordRecovery) {
+      navigate({ to: "/reset-password", replace: true });
+      return;
+    }
     navigate({
       to: profile?.onboarding_completed ? "/feed" : "/onboarding",
       replace: true,
     });
-  }, [isConfigured, status, profile, navigate]);
+  }, [isConfigured, status, profile, passwordRecovery, navigate]);
 
   if (isConfigured && status === "loading") return <AuthSpinner />;
   if (isConfigured && status === "authenticated") return null;

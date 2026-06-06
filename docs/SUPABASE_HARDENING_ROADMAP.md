@@ -14,7 +14,8 @@
 | **2** | `20260606221000_money_v1_deprecate.sql` | Revoke v1 money RPCs (client uses v2 only) | ✅ applied |
 | **3** | `20260606222000_live_bets_column_privacy.sql` | anon: no `user_id` column; authenticated: full row | ✅ applied |
 | **4** | `20260606223000_function_search_path_hardening.sql` | `SET search_path = public` on remaining helpers | ✅ applied |
-| **5** | (dashboard) | Enable leaked-password protection | manual — see below |
+| **5** | `bun run supabase:auth:part5` | HIBP + 7 security notifications + subjects | script ready — needs token |
+| **5b** | `bun run supabase:auth:smtp` | Custom SMTP + PHONARA HTML templates | needs `SMTP_*` in `.env` |
 | **6** | (Phase 3) | `audit_logs`, full server-side outcomes | deferred |
 
 ---
@@ -77,8 +78,19 @@
 
 ---
 
-## Part 5 — Dashboard (manual, 2 min)
+## Part 5 — Auth security (automated)
 
-1. [Supabase Dashboard](https://supabase.com/dashboard/project/kanftnqenuzverroodev/auth/providers) → **Authentication** → **Providers** → **Email**
-2. Enable **Leaked password protection** (HaveIBeenPwned check)
-3. Re-run `get_advisors` security — `auth_leaked_password_protection` WARN should clear
+**Cursor prepared:** `bun run supabase:auth:part5` (Management API)
+
+```powershell
+# 1. Token: https://supabase.com/dashboard/account/tokens
+# 2. .env에 SUPABASE_ACCESS_TOKEN=sbp_xxx 추가 (gitignore — 커밋 금지)
+bun run supabase:auth:part5
+```
+
+Sets: `password_hibp_enabled`, 7× `mailer_notifications_*_enabled`, PHONARA subjects.
+
+- Free plan HIBP fail → `AUTH_SKIP_HIBP=1 bun run supabase:auth:part5`
+- Custom SMTP → `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` / `SMTP_ADMIN_EMAIL` in `.env` then re-run
+
+Manual fallback: Dashboard → Authentication → Providers → Email (HIBP) + Emails → Security (7 toggles)

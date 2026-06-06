@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Smartphone, Mail, KeyRound, ArrowLeft } from "lucide-react";
+import { GoogleIcon } from "@/shared/ui/GoogleIcon";
 import { AuthPageShell } from "@/shared/layout/AuthPageShell";
 import { appToast } from "@/shared/ui/toast";
 import { OnlineCounterChip } from "@/shared/layout/OnlineCounterChip";
 import { m } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/AuthContext";
+import { friendlyAuthError } from "@/lib/auth/errors";
 import { GuestOnly } from "@/features/auth/RequireAuth";
 import { isPasskeySupported } from "@/lib/auth/webauthn";
 
@@ -17,11 +19,11 @@ interface Props {
   mode: Mode;
 }
 
-const TABS: { id: Tab; label: string; Icon: typeof Smartphone }[] = [
+const TABS: { id: Tab; label: string; Icon: typeof Smartphone | "google" }[] = [
   { id: "phone", label: "휴대폰", Icon: Smartphone },
   { id: "email", label: "이메일", Icon: Mail },
   { id: "passkey", label: "패스키", Icon: KeyRound },
-  { id: "google", label: "구글", Icon: KeyRound },
+  { id: "google", label: "구글", Icon: "google" },
 ];
 
 export function AuthShell({ mode }: Props) {
@@ -81,7 +83,7 @@ function AuthShellForm({ mode }: Props) {
         await signInWithGoogle();
       } catch (err) {
         const message = err instanceof Error ? err.message : "구글 로그인에 실패했습니다";
-        appToast.raw.error(message);
+        appToast.raw.error(friendlyAuthError(message));
       } finally {
         setSubmitting(false);
       }
@@ -227,7 +229,11 @@ function AuthShellForm({ mode }: Props) {
                 style={{ background: "color-mix(in oklab, var(--color-cyan) 14%, transparent)" }}
               />
             )}
-            <t.Icon size={14} className="relative z-10" />
+            {t.Icon === "google" ? (
+              <GoogleIcon className="relative z-10 h-3.5 w-3.5" />
+            ) : (
+              <t.Icon size={14} className="relative z-10" />
+            )}
             <span className="relative z-10">{t.label}</span>
           </button>
         ))}
@@ -322,11 +328,18 @@ function AuthShellForm({ mode }: Props) {
           </div>
         )}
         {tab === "google" && (
-          <div className="glass-2 rounded-2xl p-5 text-center text-sm text-muted">
-            <div className="font-semibold text-foreground">구글 계정으로 계속하기</div>
-            <div className="mt-1 text-xs">
-              Supabase에서 Google Provider를 켜고 OAuth 클라이언트를 설정하면 바로 연결됩니다.
+          <div className="glass-2 rounded-2xl p-5 text-center text-sm">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/95">
+              <GoogleIcon className="h-6 w-6" />
             </div>
+            <div className="font-semibold text-foreground">구글 계정으로 계속하기</div>
+            <div className="mt-1 text-xs text-muted">
+              Google 계정 하나로 바로 시작
+              {isSignup && " · 가입 시 10,000 PHON"}
+            </div>
+            <p className="mt-3 text-[11px] text-muted">
+              아래 버튼을 누르면 Google 로그인 창으로 이동합니다.
+            </p>
           </div>
         )}
       </div>

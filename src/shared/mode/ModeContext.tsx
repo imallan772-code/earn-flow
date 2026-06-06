@@ -1,12 +1,9 @@
 /**
  * Global Demo / Real mode context.
  *
- * - One toggle at the home top governs every game and trade screen.
+ * - Per-account mode preference (guest vs userId).
  * - Demo: 1회성 체험 크레딧 (₩10,000), 리얼과 동일 RTP 97%.
- * - Real: 실제 입금/출금. RTP 97% (3% house edge applied to payout multiplier).
- *
- * RTP는 데모/리얼 동일 — 데모가 잘 터지면 리얼 전환 후 이탈 위험이 커지므로
- * 결과 편향은 도입하지 않는다(Stake/Roobet과 동일 방침).
+ * - Real: Supabase PHON via RPC.
  */
 import {
   createContext,
@@ -17,6 +14,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useAuth } from "@/features/auth/AuthContext";
 
 export type GameMode = "demo" | "real";
 
@@ -29,30 +27,40 @@ interface ModeContextValue {
   mode: GameMode;
   setMode: (m: GameMode) => void;
   toggle: () => void;
-  /** Display label */
   rtpLabel: string;
-  /** Apply current mode's RTP to a raw multiplier */
   applyEdge: (rawMultiplier: number) => number;
 }
 
 const ModeContext = createContext<ModeContextValue | null>(null);
-const STORAGE_KEY = "phonara.mode";
+
+function modeStorageKey(userId: string | null | undefined): string {
+  return userId ? `phonara.mode.${userId}` : "phonara.mode.guest";
+}
 
 export function ModeProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
   const [mode, setModeState] = useState<GameMode>("demo");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === "demo" || stored === "real") setModeState(stored);
-  }, []);
-
-  const setMode = useCallback((m: GameMode) => {
-    setModeState(m);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, m);
+    const stored = window.localStorage.getItem(modeStorageKey(userId));
+    if (stored === "demo" || stored === "real") {
+      setModeState(stored);
+    } else {
+      setModeState("demo");
     }
-  }, []);
+  }, [userId]);
+
+  const setMode = useCallback(
+    (m: GameMode) => {
+      setModeState(m);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(modeStorageKey(userId), m);
+      }
+    },
+    [userId],
+  );
 
   const toggle = useCallback(() => {
     setMode(mode === "demo" ? "real" : "demo");

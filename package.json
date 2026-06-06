@@ -26,7 +26,10 @@
     "format": "prettier --write .",
     "admin:dev": "pnpm --filter @phonara/admin dev",
     "admin:build": "pnpm --filter @phonara/admin build",
-    "supabase:config:push": "bun scripts/push-supabase-auth-config.ts"
+    "supabase:config:push": "bun scripts/push-supabase-auth-config.ts",
+    "supabase:auth:part5": "bun scripts/push-supabase-auth-part5.ts",
+    "supabase:auth:smtp": "bun scripts/push-supabase-auth-smtp.ts",
+    "supabase:auth:google": "bun scripts/push-supabase-auth-google.ts"
   },
   "packageManager": "pnpm@9.15.4",
   "dependencies": {

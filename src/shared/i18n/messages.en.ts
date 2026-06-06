@@ -22,6 +22,11 @@ export const messages_en: Record<keyof typeof messages_ko, string> = {
   // Auth (friendly)
   "auth.signupDone": "🎉 Welcome! Claim your first reward",
   "auth.welcomeBack": "👋 Welcome back!",
+  "auth.passwordSameAsOld": "🔄 Pick a password different from your old one!",
+  "auth.passwordChanged": "🔐 Password updated! You're good to go",
+  "auth.googleNotConfigured": "🚧 Google sign-in isn't ready yet — please try again soon",
+  "auth.oauthStateExpired": "🔁 Login link expired — please try Google sign-in again",
+  "auth.oauthPkceMissing": "🔁 Start sign-in again from /login (same tab, localhost:8080)",
 
   // Missions / Box / Referral (friendly)
   "mission.claimed": "✨ +{amount} PHON claimed!",

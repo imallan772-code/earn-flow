@@ -24,6 +24,11 @@ export const messages_ko = {
   // === 인증 / 온보딩 (귀여운 톤) ===
   "auth.signupDone": "🎉 가입 완료! 첫 보상 받으러 가요",
   "auth.welcomeBack": "👋 다시 오셨네요!",
+  "auth.passwordSameAsOld": "🔄 기존 비밀번호와 달라야 해요! 다른 비밀번호를 입력해 주세요",
+  "auth.passwordChanged": "🔐 비밀번호가 변경되었어요! 바로 이용하실 수 있어요",
+  "auth.googleNotConfigured": "🚧 구글 로그인 준비 중이에요. 잠시 후 다시 시도해 주세요",
+  "auth.oauthStateExpired": "🔁 로그인 연결이 끊겼어요. 구글 탭에서 다시 시도해 주세요",
+  "auth.oauthPkceMissing": "🔁 로그인을 처음부터 다시 해 주세요 (같은 탭·localhost:8080)",
 
   // === 미션 / 박스 / 추천 ===
   "mission.claimed": "✨ +{amount} PHON 받았어요!",

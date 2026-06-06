@@ -12,6 +12,7 @@ import { getSupabaseClient } from "@/integrations/supabase/client";
 import type { Profile } from "@/integrations/supabase/types";
 import { isSupabaseConfigured } from "@/integrations/supabase/env";
 import { getAuthRedirectUrl } from "@/lib/auth/redirect";
+import { setWalletScope } from "@/shared/wallet/walletStore";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -20,6 +21,8 @@ interface AuthContextValue {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
+  /** True while the user must set a new password (recovery email link). */
+  passwordRecovery: boolean;
   isConfigured: boolean;
   refreshProfile: () => Promise<Profile | null>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
@@ -28,6 +31,7 @@ interface AuthContextValue {
   registerPasskey: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   resetPasswordForEmail: (email: string) => Promise<void>;
+  clearPasswordRecovery: () => void;
   signOut: () => Promise<void>;
 }
 
@@ -49,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>(isConfigured ? "loading" : "unauthenticated");
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
 
   const refreshProfile = useCallback(async () => {
     if (!session?.user) {
@@ -68,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function hydrate(currentSession: Session | null) {
       if (!active) return;
+      setWalletScope(currentSession?.user?.id ?? null);
       setSession(currentSession);
       if (!currentSession?.user) {
         setProfile(null);
@@ -86,13 +92,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    supabase.auth.getSession().then(({ data }) => hydrate(data.session));
-
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setPasswordRecovery(true);
+      }
+      if (event === "SIGNED_OUT") {
+        setPasswordRecovery(false);
+      }
+      if (event === "USER_UPDATED") {
+        setPasswordRecovery(false);
+      }
       hydrate(nextSession);
     });
+
+    async function initSession() {
+      // /auth/callback owns PKCE exchange — avoid racing getSession here.
+      if (typeof window !== "undefined" && window.location.pathname === "/auth/callback") {
+        return;
+      }
+
+      const { data } = await supabase.auth.getSession();
+      if (!active) return;
+      await hydrate(data.session);
+    }
+
+    void initSession();
 
     return () => {
       active = false;
@@ -132,7 +158,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = getSupabaseClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: getAuthRedirectUrl("/feed") },
+      options: {
+        redirectTo: getAuthRedirectUrl("/auth/callback"),
+        queryParams: { prompt: "select_account" },
+      },
     });
     if (error) throw error;
   }, []);
@@ -140,9 +169,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetPasswordForEmail = useCallback(async (email: string) => {
     const supabase = getSupabaseClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: getAuthRedirectUrl("/login"),
+      redirectTo: getAuthRedirectUrl("/reset-password"),
     });
     if (error) throw error;
+  }, []);
+
+  const clearPasswordRecovery = useCallback(() => {
+    setPasswordRecovery(false);
   }, []);
 
   const signOut = useCallback(async () => {
@@ -151,6 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
     setProfile(null);
     setSession(null);
+    setPasswordRecovery(false);
     setStatus("unauthenticated");
   }, []);
 
@@ -160,6 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       user: session?.user ?? null,
       profile,
+      passwordRecovery,
       isConfigured,
       refreshProfile,
       signInWithEmail,
@@ -168,12 +203,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       registerPasskey,
       signInWithGoogle,
       resetPasswordForEmail,
+      clearPasswordRecovery,
       signOut,
     }),
     [
       status,
       session,
       profile,
+      passwordRecovery,
       isConfigured,
       refreshProfile,
       signInWithEmail,
@@ -182,6 +219,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       registerPasskey,
       signInWithGoogle,
       resetPasswordForEmail,
+      clearPasswordRecovery,
       signOut,
     ],
   );

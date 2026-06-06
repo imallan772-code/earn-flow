@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TransferRouteImport } from './routes/transfer'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
@@ -25,6 +26,7 @@ import { Route as FairVerifyRouteImport } from './routes/fair.verify'
 import { Route as DepositGiftRouteImport } from './routes/deposit/gift'
 import { Route as DepositCryptoRouteImport } from './routes/deposit/crypto'
 import { Route as DepositBankRouteImport } from './routes/deposit/bank'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AdminNoticeRouteImport } from './routes/admin/notice'
 import { Route as AdminEventRouteImport } from './routes/admin/event'
 import { Route as AppNoticeRouteImport } from './routes/_app/notice'
@@ -50,6 +52,11 @@ const TransferRoute = TransferRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -119,6 +126,11 @@ const DepositCryptoRoute = DepositCryptoRouteImport.update({
 const DepositBankRoute = DepositBankRouteImport.update({
   id: '/deposit/bank',
   path: '/deposit/bank',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminNoticeRoute = AdminNoticeRouteImport.update({
@@ -207,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/transfer': typeof TransferRoute
   '/earn': typeof AppEarnRoute
@@ -216,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/notice': typeof AppNoticeRouteWithChildren
   '/admin/event': typeof AdminEventRoute
   '/admin/notice': typeof AdminNoticeRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/deposit/bank': typeof DepositBankRoute
   '/deposit/crypto': typeof DepositCryptoRoute
   '/deposit/gift': typeof DepositGiftRoute
@@ -239,6 +253,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/transfer': typeof TransferRoute
   '/earn': typeof AppEarnRoute
@@ -248,6 +263,7 @@ export interface FileRoutesByTo {
   '/notice': typeof AppNoticeRouteWithChildren
   '/admin/event': typeof AdminEventRoute
   '/admin/notice': typeof AdminNoticeRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/deposit/bank': typeof DepositBankRoute
   '/deposit/crypto': typeof DepositCryptoRoute
   '/deposit/gift': typeof DepositGiftRoute
@@ -274,6 +290,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/transfer': typeof TransferRoute
   '/_app/earn': typeof AppEarnRoute
@@ -283,6 +300,7 @@ export interface FileRoutesById {
   '/_app/notice': typeof AppNoticeRouteWithChildren
   '/admin/event': typeof AdminEventRoute
   '/admin/notice': typeof AdminNoticeRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/deposit/bank': typeof DepositBankRoute
   '/deposit/crypto': typeof DepositCryptoRoute
   '/deposit/gift': typeof DepositGiftRoute
@@ -309,6 +327,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/onboarding'
+    | '/reset-password'
     | '/signup'
     | '/transfer'
     | '/earn'
@@ -318,6 +337,7 @@ export interface FileRouteTypes {
     | '/notice'
     | '/admin/event'
     | '/admin/notice'
+    | '/auth/callback'
     | '/deposit/bank'
     | '/deposit/crypto'
     | '/deposit/gift'
@@ -341,6 +361,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/onboarding'
+    | '/reset-password'
     | '/signup'
     | '/transfer'
     | '/earn'
@@ -350,6 +371,7 @@ export interface FileRouteTypes {
     | '/notice'
     | '/admin/event'
     | '/admin/notice'
+    | '/auth/callback'
     | '/deposit/bank'
     | '/deposit/crypto'
     | '/deposit/gift'
@@ -375,6 +397,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/onboarding'
+    | '/reset-password'
     | '/signup'
     | '/transfer'
     | '/_app/earn'
@@ -384,6 +407,7 @@ export interface FileRouteTypes {
     | '/_app/notice'
     | '/admin/event'
     | '/admin/notice'
+    | '/auth/callback'
     | '/deposit/bank'
     | '/deposit/crypto'
     | '/deposit/gift'
@@ -410,8 +434,10 @@ export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   TransferRoute: typeof TransferRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   DepositBankRoute: typeof DepositBankRoute
   DepositCryptoRoute: typeof DepositCryptoRoute
   DepositGiftRoute: typeof DepositGiftRoute
@@ -436,6 +462,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -534,6 +567,13 @@ declare module '@tanstack/react-router' {
       path: '/deposit/bank'
       fullPath: '/deposit/bank'
       preLoaderRoute: typeof DepositBankRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/notice': {
@@ -731,8 +771,10 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRouteRoute: AdminRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   TransferRoute: TransferRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   DepositBankRoute: DepositBankRoute,
   DepositCryptoRoute: DepositCryptoRoute,
   DepositGiftRoute: DepositGiftRoute,

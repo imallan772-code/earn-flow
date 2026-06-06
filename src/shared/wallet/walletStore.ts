@@ -1,19 +1,15 @@
 /**
- * walletStore — unified demo + real wallet shared across Dice/Crash/Plinko.
+ * walletStore — demo (local per account) + real (RPC cache) game wallet.
  *
- * Demo wallet:
- *   - 1회성 체험 크레딧 (`INITIAL_DEMO_GRANT`).
- *   - 잔액 소진 시 리필 없음. `openOutOfDemoModal()` 트리거.
- *   - `granted` 플래그로 새로고침/재방문 시 재지급 차단.
+ * Demo (Stake-tier):
+ *   - Scope: guest (`__guest__`) vs authenticated user (`userId`).
+ *   - Each scope gets its own ₩10,000 one-time grant on first visit.
+ *   - No cross-account bleed from shared browser storage.
+ *   - Not real money — localStorage FOMO/UX only.
  *
- * Real wallet:
- *   - 초기 0. 입금 화면으로 유도(이 라운드에선 mock).
- *
- * Stats:
- *   - 데모 통계(`totalBets`, `totalWagered`, `netResult`, `maxMultiplier`)는
- *     OutOfDemoModal에서 노출.
- *
- * SSR-safe: 모든 storage 접근은 `typeof window` 가드 + try/catch.
+ * Real:
+ *   - `realBalance` mirrors Supabase PHON via `syncRealBalance` (display/cache only).
+ *   - Mutations = RPC only (`useGameWallet`).
  */
 import { useSyncExternalStore } from "react";
 import type { GameMode } from "@/shared/mode/ModeContext";
@@ -21,9 +17,11 @@ import type { GameMode } from "@/shared/mode/ModeContext";
 export const INITIAL_DEMO_GRANT = 10_000;
 export const DEMO_LOW_RATIO = 0.3;
 
-const STORAGE_KEY = "phonara.wallet.v1";
+const LEGACY_STORAGE_KEY = "phonara.wallet.v1";
+const VAULT_STORAGE_KEY = "phonara.wallet.v2";
+const GUEST_SCOPE = "__guest__";
 
-interface WalletState {
+export interface WalletState {
   demoBalance: number;
   demoGranted: boolean;
   realBalance: number;
@@ -33,39 +31,122 @@ interface WalletState {
   maxMultiplier: number;
 }
 
-const DEFAULT_STATE: WalletState = {
-  demoBalance: INITIAL_DEMO_GRANT,
-  demoGranted: true,
-  realBalance: 0,
-  totalBets: 0,
-  totalWagered: 0,
-  netResult: 0,
-  maxMultiplier: 0,
-};
+interface WalletVault {
+  version: 2;
+  scopes: Record<string, WalletState>;
+}
 
-// ───── Storage ─────
-function hydrate(): WalletState {
-  if (typeof window === "undefined") return DEFAULT_STATE;
+function freshWalletState(): WalletState {
+  return {
+    demoBalance: INITIAL_DEMO_GRANT,
+    demoGranted: true,
+    realBalance: 0,
+    totalBets: 0,
+    totalWagered: 0,
+    netResult: 0,
+    maxMultiplier: 0,
+  };
+}
+
+function normalizeScope(raw: Partial<WalletState> | undefined): WalletState {
+  const base = freshWalletState();
+  if (!raw) return base;
+  const demoBalance =
+    typeof raw.demoBalance === "number" && Number.isFinite(raw.demoBalance)
+      ? Math.max(0, raw.demoBalance)
+      : base.demoBalance;
+  return {
+    ...base,
+    ...raw,
+    demoBalance,
+    demoGranted: raw.demoGranted ?? base.demoGranted,
+    realBalance:
+      typeof raw.realBalance === "number" && Number.isFinite(raw.realBalance)
+        ? Math.max(0, raw.realBalance)
+        : 0,
+    totalBets: typeof raw.totalBets === "number" ? Math.max(0, raw.totalBets) : 0,
+    totalWagered:
+      typeof raw.totalWagered === "number" ? Math.max(0, raw.totalWagered) : 0,
+    netResult: typeof raw.netResult === "number" ? raw.netResult : 0,
+    maxMultiplier:
+      typeof raw.maxMultiplier === "number" ? Math.max(0, raw.maxMultiplier) : 0,
+  };
+}
+
+function readVault(): WalletVault {
+  if (typeof window === "undefined") {
+    return { version: 2, scopes: {} };
+  }
   try {
-    // ?reset_demo=1 → wipe demo state for dev
-    if (window.location.search.includes("reset_demo=1")) {
-      window.localStorage.removeItem(STORAGE_KEY);
-      // strip the param so it doesn't keep resetting
-      const url = new URL(window.location.href);
-      url.searchParams.delete("reset_demo");
-      window.history.replaceState({}, "", url.toString());
-      return DEFAULT_STATE;
+    const raw = window.localStorage.getItem(VAULT_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<WalletVault>;
+      if (parsed.version === 2 && parsed.scopes && typeof parsed.scopes === "object") {
+        return { version: 2, scopes: parsed.scopes as Record<string, WalletState> };
+      }
     }
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_STATE;
-    const parsed = JSON.parse(raw) as Partial<WalletState>;
-    return { ...DEFAULT_STATE, ...parsed };
   } catch {
-    return DEFAULT_STATE;
+    /* fall through to migration */
+  }
+  return migrateLegacyVault();
+}
+
+function migrateLegacyVault(): WalletVault {
+  const vault: WalletVault = { version: 2, scopes: {} };
+  if (typeof window === "undefined") return vault;
+  try {
+    const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy) {
+      vault.scopes[GUEST_SCOPE] = normalizeScope(JSON.parse(legacy) as Partial<WalletState>);
+    }
+  } catch {
+    /* ignore corrupt legacy */
+  }
+  return vault;
+}
+
+function writeVault(vault: WalletVault) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(VAULT_STORAGE_KEY, JSON.stringify(vault));
+  } catch {
+    /* quota */
   }
 }
 
-let state: WalletState = hydrate();
+function scopeKey(userId: string | null | undefined): string {
+  return userId ?? GUEST_SCOPE;
+}
+
+function loadScopeFromVault(key: string): WalletState {
+  const vault = readVault();
+  const saved = vault.scopes[key];
+  if (saved) return normalizeScope(saved);
+  return freshWalletState();
+}
+
+function saveScopeToVault(key: string, snapshot: WalletState) {
+  const vault = readVault();
+  vault.scopes[key] = snapshot;
+  writeVault(vault);
+}
+
+function handleDevReset(): WalletState {
+  if (typeof window === "undefined") return freshWalletState();
+  if (!window.location.search.includes("reset_demo=1")) {
+    return loadScopeFromVault(GUEST_SCOPE);
+  }
+  window.localStorage.removeItem(VAULT_STORAGE_KEY);
+  window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+  const url = new URL(window.location.href);
+  url.searchParams.delete("reset_demo");
+  window.history.replaceState({}, "", url.toString());
+  return freshWalletState();
+}
+
+let activeScopeKey = GUEST_SCOPE;
+let state: WalletState = typeof window === "undefined" ? freshWalletState() : handleDevReset();
+
 const listeners = new Set<() => void>();
 let flushHandle: ReturnType<typeof setTimeout> | null = null;
 
@@ -73,11 +154,7 @@ function persist() {
   if (typeof window === "undefined" || flushHandle) return;
   flushHandle = setTimeout(() => {
     flushHandle = null;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      /* quota — ignore */
-    }
+    saveScopeToVault(activeScopeKey, state);
   }, 80);
 }
 
@@ -91,7 +168,19 @@ function set(next: Partial<WalletState>) {
   emit();
 }
 
-/** Sync Supabase real-mode PHON balance into the local game wallet. */
+/** Switch demo/real cache to the signed-in user (or guest). Call from AuthProvider. */
+export function setWalletScope(userId: string | null | undefined) {
+  const nextKey = scopeKey(userId);
+  if (nextKey === activeScopeKey) return;
+
+  saveScopeToVault(activeScopeKey, state);
+  activeScopeKey = nextKey;
+  state = loadScopeFromVault(nextKey);
+  persist();
+  emit();
+}
+
+/** Sync Supabase real-mode PHON balance into the local game wallet cache. */
 export function syncRealBalance(amount: number) {
   if (amount < 0 || state.realBalance === amount) return;
   set({ realBalance: amount });
@@ -141,8 +230,6 @@ export const wallet = {
   getBalance(mode: GameMode): number {
     return mode === "demo" ? state.demoBalance : state.realBalance;
   },
-  /** Try to debit; returns true on success, false on insufficient funds.
-   *  On false in demo mode, also opens the OutOfDemo modal. */
   tryDebit(mode: GameMode, amount: number): boolean {
     if (amount <= 0) return false;
     const current = mode === "demo" ? state.demoBalance : state.realBalance;
@@ -162,7 +249,6 @@ export const wallet = {
     }
     return true;
   },
-  /** Credit a payout (gross — includes returned stake on win). */
   credit(mode: GameMode, amount: number, multiplier?: number) {
     if (amount <= 0) return;
     if (mode === "demo") {
@@ -177,7 +263,6 @@ export const wallet = {
       set({ realBalance: state.realBalance + amount });
     }
   },
-  /** Refund an unsettled stake (mid-round leave). No stat changes. */
   refund(mode: GameMode, amount: number) {
     if (amount <= 0) return;
     if (mode === "demo") {
@@ -191,7 +276,6 @@ export const wallet = {
       set({ realBalance: state.realBalance + amount });
     }
   },
-  /** Dev-only: reset demo wallet to initial grant. */
   resetDemo() {
     set({
       demoBalance: INITIAL_DEMO_GRANT,
@@ -202,13 +286,15 @@ export const wallet = {
       maxMultiplier: 0,
     });
   },
-  /** Snapshot for read-only consumers (modal stats). */
   snapshot(): WalletState {
     return state;
   },
+  /** Test / dev introspection */
+  activeScope(): string {
+    return activeScopeKey;
+  },
 };
 
-// ───── React hooks ─────
 export function useBalance(mode: GameMode): number {
   return useSyncExternalStore(
     subscribe,
@@ -218,15 +304,20 @@ export function useBalance(mode: GameMode): number {
 }
 
 export function useWalletStats(): WalletState {
-  return useSyncExternalStore(
-    subscribe,
-    () => state,
-    () => state,
-  );
+  return useSyncExternalStore(subscribe, () => state, () => state);
 }
 
-/** True when demo balance ≤ 30% of initial grant. */
 export function useIsDemoLow(): boolean {
   const bal = useBalance("demo");
   return bal > 0 && bal <= INITIAL_DEMO_GRANT * DEMO_LOW_RATIO;
+}
+
+/** For tests — reset module state without localStorage. */
+export function __resetWalletStoreForTests(
+  scope: string = GUEST_SCOPE,
+  next: WalletState = freshWalletState(),
+) {
+  activeScopeKey = scope;
+  state = next;
+  emit();
 }

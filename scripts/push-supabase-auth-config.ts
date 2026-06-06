@@ -4,23 +4,17 @@
  * Usage:
  *   SUPABASE_ACCESS_TOKEN=sbp_xxx bun run supabase:config:push
  *
+ * Part 5 security only:
+ *   SUPABASE_ACCESS_TOKEN=sbp_xxx bun run supabase:auth:part5
+ *
  * Token: https://supabase.com/dashboard/account/tokens
  * Falls back to `supabase config push` when the CLI is logged in.
  */
+import { AUTH_DEV_BASE } from "./auth-config/part5-security";
+
 const PROJECT_REF = "kanftnqenuzverroodev";
 
-const AUTH_PATCH = {
-  site_url: "http://localhost:8080",
-  uri_allow_list:
-    "http://localhost:8080/**,http://localhost:8080,http://127.0.0.1:8080/**,http://127.0.0.1:8080,http://localhost:5174/**,http://localhost:5174",
-  passkey_enabled: true,
-  webauthn_rp_display_name: "PHONARA",
-  webauthn_rp_id: "localhost",
-  webauthn_rp_origins: "http://localhost:8080,http://localhost:5174,http://127.0.0.1:8080",
-  mailer_autoconfirm: true,
-  external_email_enabled: true,
-  disable_signup: false,
-} as const;
+const AUTH_PATCH = { ...AUTH_DEV_BASE } as const;
 
 async function pushViaManagementApi(token: string) {
   const res = await fetch(`https://api.supabase.com/v1/projects/${PROJECT_REF}/config/auth`, {

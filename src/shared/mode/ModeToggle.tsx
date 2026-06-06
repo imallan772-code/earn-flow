@@ -1,12 +1,11 @@
 /**
  * ModeToggle — global Demo/Real switch shown at the top of Home.
- *
- * - Real 전환: confirm 모달(실 잔액 사용 안내)
- * - Demo 전환: confirm 모달(체험 크레딧 1회성 안내)
  */
 import { Gamepad2, Gem } from "lucide-react";
 import { useMode, type GameMode } from "./ModeContext";
-import { useBalance } from "@/shared/wallet/walletStore";
+import { INITIAL_DEMO_GRANT, useBalance } from "@/shared/wallet/walletStore";
+import { useAuth } from "@/features/auth/AuthContext";
+import { useProfile } from "@/features/profile/useProfile";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -16,18 +15,24 @@ interface Props {
 
 export function ModeToggle({ className, size = "md" }: Props) {
   const { mode, setMode } = useMode();
+  const { status } = useAuth();
+  const { balance, isLoading: profileLoading } = useProfile();
   const demoBalance = useBalance("demo");
 
   function pick(m: GameMode) {
     if (m === mode) return;
     if (m === "real") {
+      if (status !== "authenticated") {
+        window.alert("리얼 모드는 로그인이 필요합니다.");
+        return;
+      }
       const ok = window.confirm(
-        "리얼 모드로 전환합니다. 실제 잔액으로 베팅이 진행됩니다. 계속하시겠습니까?",
+        "리얼 모드로 전환합니다. 실제 PHON 잔액으로 베팅이 진행됩니다. 계속하시겠습니까?",
       );
       if (!ok) return;
     } else {
       const ok = window.confirm(
-        "데모는 체험용입니다. 체험 크레딧은 1회만 지급되며 추가 리필되지 않습니다. 계속하시겠습니까?",
+        `데모는 체험용입니다. 계정당 ₩${INITIAL_DEMO_GRANT.toLocaleString()} 체험 크레딧 1회 지급 · 추가 리필 없음. 계속하시겠습니까?`,
       );
       if (!ok) return;
     }
@@ -38,10 +43,19 @@ export function ModeToggle({ className, size = "md" }: Props) {
   const padX = size === "sm" ? "px-3" : "px-4";
   const txt = size === "sm" ? "text-xs" : "text-sm";
 
+  const demoLabel = `₩${demoBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  const realLabel =
+    status === "authenticated" && balance != null && !profileLoading
+      ? `${balance.phon.toLocaleString()} PHON`
+      : status === "authenticated"
+        ? "…"
+        : "로그인";
+
   return (
     <div className={cn("glass-2 grid grid-cols-2 gap-1 rounded-2xl p-1 shadow-depth-2", className)}>
       <button
         onClick={() => pick("demo")}
+        title="계정별 체험 크레딧 · 실제 돈 아님"
         className={cn(
           "flex items-center justify-center gap-2 rounded-xl font-bold transition-all",
           padX,
@@ -57,12 +71,13 @@ export function ModeToggle({ className, size = "md" }: Props) {
         <span>데모</span>
         {mode === "demo" && (
           <span className="font-numeric ml-1 rounded-full bg-(--color-bg-0)/20 px-1.5 py-0.5 text-[9px] font-bold">
-            ₩{demoBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            {demoLabel}
           </span>
         )}
       </button>
       <button
         onClick={() => pick("real")}
+        title="Supabase PHON · RPC 정산"
         className={cn(
           "flex items-center justify-center gap-2 rounded-xl font-bold transition-all",
           padX,
@@ -77,8 +92,8 @@ export function ModeToggle({ className, size = "md" }: Props) {
         <Gem size={size === "sm" ? 14 : 16} />
         <span>리얼</span>
         {mode === "real" && (
-          <span className="ml-1 rounded-full bg-(--color-bg-0)/20 px-1.5 py-0.5 text-[9px] font-bold">
-            RTP 97%
+          <span className="font-numeric ml-1 max-w-22 truncate rounded-full bg-(--color-bg-0)/20 px-1.5 py-0.5 text-[9px] font-bold">
+            {realLabel}
           </span>
         )}
       </button>

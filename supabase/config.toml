@@ -26,8 +26,37 @@ enable_signup = true
 double_confirm_changes = true
 # Dev-friendly: sign up → immediate session. Set true in production.
 enable_confirmations = false
-secure_password_change = false
+secure_password_change = true
 max_frequency = "1s"
+
+# Part 5 — security notification emails (push via bun run supabase:auth:part5)
+[auth.email.notification.password_changed]
+enabled = true
+subject = "PHONARA · 비밀번호가 변경되었습니다"
+
+[auth.email.notification.email_changed]
+enabled = true
+subject = "PHONARA · 이메일 주소가 변경되었습니다"
+
+[auth.email.notification.phone_changed]
+enabled = true
+subject = "PHONARA · 전화번호가 변경되었습니다"
+
+[auth.email.notification.identity_linked]
+enabled = true
+subject = "PHONARA · 새 로그인 수단이 연결되었습니다"
+
+[auth.email.notification.identity_unlinked]
+enabled = true
+subject = "PHONARA · 로그인 수단 연결이 해제되었습니다"
+
+[auth.email.notification.mfa_factor_enrolled]
+enabled = true
+subject = "PHONARA · MFA가 추가되었습니다"
+
+[auth.email.notification.mfa_factor_unenrolled]
+enabled = true
+subject = "PHONARA · MFA가 제거되었습니다"
 
 [auth.passkey]
 enabled = true
@@ -37,9 +66,9 @@ rp_display_name = "PHONARA"
 rp_id = "localhost"
 rp_origins = ["http://localhost:8080", "http://localhost:5174", "http://127.0.0.1:8080"]
 
-# Enable in Dashboard + set GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET env for config push.
+# Enable after GOOGLE_* env set — push: bun run supabase:auth:google (see docs/GOOGLE_OAUTH_SETUP.md)
 [auth.external.google]
-enabled = false
+enabled = true
 client_id = "env(GOOGLE_CLIENT_ID)"
 secret = "env(GOOGLE_CLIENT_SECRET)"
 skip_nonce_check = false

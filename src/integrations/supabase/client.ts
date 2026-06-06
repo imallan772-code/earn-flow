@@ -11,7 +11,8 @@ export function getSupabaseClient() {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true,
+        // OAuth/recovery code exchange — explicit in AuthCallbackScreen + ResetPasswordScreen only.
+        detectSessionInUrl: false,
         storage: typeof window !== "undefined" ? window.localStorage : undefined,
         flowType: "pkce",
         experimental: { passkey: true },

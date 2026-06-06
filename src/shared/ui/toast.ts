@@ -76,6 +76,7 @@ export const appToast = {
   auth: {
     signupDone: () => sonner.success(t("auth.signupDone")),
     welcomeBack: () => sonner(t("auth.welcomeBack")),
+    passwordChanged: () => sonner.success(t("auth.passwordChanged")),
   },
 
   // ----- 전환 (귀여운 톤) -----

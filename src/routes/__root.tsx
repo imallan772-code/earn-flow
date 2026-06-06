@@ -11,6 +11,8 @@ import { useEffect, type ReactNode } from "react";
 import { LazyMotion, domAnimation } from "framer-motion";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/features/auth/AuthContext";
+import { AuthRecoveryRedirect } from "@/features/auth/AuthRecoveryRedirect";
+import { AuthOAuthErrorHandler } from "@/features/auth/AuthOAuthErrorHandler";
 import { ModeProvider } from "@/shared/mode/ModeContext";
 import { OutOfDemoModal } from "@/shared/wallet/OutOfDemoModal";
 
@@ -131,6 +133,8 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <AuthRecoveryRedirect />
+        <AuthOAuthErrorHandler />
         <ModeProvider>
           <LazyMotion features={domAnimation}>
             <Outlet />
