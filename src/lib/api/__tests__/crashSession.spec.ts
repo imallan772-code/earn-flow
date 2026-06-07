@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { crashPlaceResultSchema, multFromE6, multToE6 } from "../crashSession";
+import { crashPlaceResultSchema, crashSyncResultSchema, multFromE6, multToE6 } from "../crashSession";
 
 describe("crashSession e6 helpers", () => {
   it("round-trips multipliers", () => {
@@ -37,5 +37,17 @@ describe("crashPlaceResultSchema", () => {
         debit: null,
       }),
     ).toMatchObject({ server_seed_hash: null });
+  });
+});
+
+describe("crashSyncResultSchema", () => {
+  it("coerces string bigint e6 from Postgres JSON", () => {
+    const parsed = crashSyncResultSchema.parse({
+      status: "busted",
+      crash_point_e6: "2450000",
+      current_multiplier_e6: "2500000",
+    });
+    expect(parsed.crash_point_e6).toBe(2_450_000);
+    expect(parsed.current_multiplier_e6).toBe(2_500_000);
   });
 });

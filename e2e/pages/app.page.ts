@@ -36,4 +36,10 @@ export class AppShell {
       localStorage.setItem("phonara.mode", "demo");
     });
   }
+
+  async ensureRealMode() {
+    await this.page.addInitScript(() => {
+      localStorage.setItem("phonara.mode", "real");
+    });
+  }
 }

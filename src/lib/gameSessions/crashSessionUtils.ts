@@ -1,5 +1,6 @@
 import type { GameSessionRow } from "@/lib/gameSessions/schemas";
-import { multFromE6 } from "@/lib/api/crashSession";
+import { multFromE6, type CrashSyncResult } from "@/lib/api/crashSession";
+import { liveFeedBetIdForRound } from "@/lib/api/liveFeedMap";
 import { nonceFromRoundId } from "@/shared/games/gameSessionHelpers";
 import type { ActiveCrashRound } from "@/shared/games/state/persistedGameState";
 
@@ -47,7 +48,7 @@ export function activeCrashRoundFromSession(
     amount: stake,
     autoTarget: autoTargetE6 != null ? multFromE6(autoTargetE6) : fallback.autoTarget,
     cashedAt: cashedAtE6 != null ? multFromE6(cashedAtE6) : null,
-    liveBetId: fallback.liveBetId ?? `lb_crash_${row.round_id}`,
+    liveBetId: fallback.liveBetId ?? liveFeedBetIdForRound("crash", row.round_id),
     placedAt: typeof cs.placed_at === "number" ? cs.placed_at : Date.now(),
     crashPoint: CRASH_POINT_UNKNOWN,
     startedAt: startedAtMs,
@@ -135,4 +136,36 @@ export function serverCrashRoundId(
 ): string | null {
   if (!activeRound?.serverSide || !hasOpenBet) return null;
   return `n${activeRound.nonce}`;
+}
+
+export type CrashSyncTerminal =
+  | { kind: "continue" }
+  | { kind: "terminal"; crashPoint: number; cashedOut: boolean };
+
+/**
+ * Map crash_sync_v1 → client phase transition.
+ * Handles idle after server settle (missed bust frame) so rounds never hang.
+ */
+export function crashSyncTerminal(
+  sync: CrashSyncResult,
+  ctx: { hasServerBet: boolean; cashedAt: number | null; displayMult: number },
+): CrashSyncTerminal {
+  if (sync.status === "busted" && sync.crash_point_e6 != null) {
+    return { kind: "terminal", crashPoint: multFromE6(sync.crash_point_e6), cashedOut: false };
+  }
+  if (sync.status === "cashed") {
+    const cp =
+      ctx.cashedAt ??
+      (sync.current_multiplier_e6 != null
+        ? multFromE6(sync.current_multiplier_e6)
+        : ctx.displayMult);
+    return { kind: "terminal", crashPoint: cp, cashedOut: true };
+  }
+  if (sync.status === "idle" && ctx.hasServerBet) {
+    if (ctx.cashedAt != null) {
+      return { kind: "terminal", crashPoint: ctx.cashedAt, cashedOut: true };
+    }
+    return { kind: "terminal", crashPoint: Math.max(1, ctx.displayMult), cashedOut: false };
+  }
+  return { kind: "continue" };
 }

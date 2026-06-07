@@ -95,6 +95,7 @@ import { toIntegerPhonAmount } from "@/lib/api/walletSchemas";
 import {
   activeCrashRoundFromSession,
   crashPlaceErrorMessage,
+  crashSyncTerminal,
   formatCrashMultiplier,
   isCrashPermanentCashoutError,
   isCrashSessionConflict,
@@ -217,8 +218,24 @@ export function CrashScreen() {
       setCrashPoint(normalizeCrashPoint(ar.crashPoint, ar.serverSide));
       bettingStartedAtRef.current = ar.bettingStartedAt || performance.now();
       if (ar.serverSide) {
-        setBettingMsLeft(BETTING_MS);
-        setPhase("betting");
+        if (ar.startedAt > 0) {
+          startedAtRef.current = ar.startedAt;
+          setStartedAt(ar.startedAt);
+          setBettingMsLeft(0);
+          setPhase("running");
+        } else if (ar.bettingStartedAt > 0) {
+          const left = BETTING_MS - (performance.now() - ar.bettingStartedAt);
+          if (left <= 0) {
+            setBettingMsLeft(0);
+          } else {
+            setBettingMsLeft(left);
+          }
+          setPhase("betting");
+        } else {
+          bettingStartedAtRef.current = performance.now();
+          setBettingMsLeft(BETTING_MS);
+          setPhase("betting");
+        }
         return;
       }
       if (ar.startedAt > 0) {
@@ -316,6 +333,8 @@ export function CrashScreen() {
         if (res.mode === "real") serverCreditDoneRef.current = true;
         if (res.balance?.phon != null) syncRealBalance(res.balance.phon);
         settleCashoutUi(prev, at);
+        setCrashPoint(at);
+        setPhase("crashed");
       } catch (err) {
         if (isCrashPermanentCashoutError(err)) {
           cashoutPermanentFailRef.current = true;
@@ -392,13 +411,13 @@ export function CrashScreen() {
   useEffect(() => {
     if (phase !== "betting") return;
     setCrashPoint(Number.POSITIVE_INFINITY);
-    if (bettingStartedAtRef.current === 0 || !crashStore.get().activeRound) {
+    // Arm once per round window (cooldown sets ref → 0). Never reset on activeRound null —
+    // spectators / pre-bet phase share the same clock; pf.serverSeed dep must not restart 5s.
+    if (bettingStartedAtRef.current === 0) {
       bettingStartedAtRef.current = performance.now();
     }
 
-    const startTs =
-      bettingStartedAtRef.current > 0 ? bettingStartedAtRef.current : performance.now();
-    if (bettingStartedAtRef.current === 0) bettingStartedAtRef.current = startTs;
+    const startTs = bettingStartedAtRef.current;
 
     const enterRunning = (t: number) => {
       startedAtRef.current = t;
@@ -423,8 +442,6 @@ export function CrashScreen() {
         const serverRound =
           hasOpenBet && active?.serverSide && active.nonce === nonce ? `n${active.nonce}` : null;
         if (serverRound) {
-          const localStart = performance.now();
-          enterRunning(localStart);
           void crashEnsureRunning(serverRound)
             .then((startedMs) => {
               if (startedMs == null) {
@@ -432,13 +449,7 @@ export function CrashScreen() {
                 setBet(null);
                 return;
               }
-              startedAtRef.current = startedMs;
-              setStartedAt(startedMs);
-              crashStore.set((s) =>
-                s.activeRound
-                  ? { ...s, activeRound: { ...s.activeRound, startedAt: startedMs } }
-                  : s,
-              );
+              enterRunning(startedMs);
             })
             .catch((err) => {
               if (!isCrashSessionNotFound(err)) return;
@@ -462,6 +473,21 @@ export function CrashScreen() {
   }, [phase, nonce, pf.serverSeed]);
 
   // ─── server bust poll (GA-E) ──────────────────────────────────────
+  const applyServerSync = useCallback(
+    (sync: Awaited<ReturnType<typeof crashSync>>) => {
+      const ar = crashStore.get().activeRound;
+      const hasServerBet = Boolean(ar?.serverSide && betRef.current);
+      if (!hasServerBet) return;
+      const cashed = betRef.current?.cashedAt ?? ar?.cashedAt ?? null;
+      const displayMult = multiplierAt(crashElapsedMs(startedAtRef.current));
+      const terminal = crashSyncTerminal(sync, { hasServerBet, cashedAt: cashed, displayMult });
+      if (terminal.kind === "continue") return;
+      setCrashPoint(terminal.crashPoint);
+      setPhase("crashed");
+    },
+    [],
+  );
+
   useEffect(() => {
     if (phase !== "running") return;
     const roundId = serverCrashRoundId(crashStore.get().activeRound, betRef.current != null);
@@ -469,10 +495,7 @@ export function CrashScreen() {
     const poll = async () => {
       try {
         const sync = await crashSync(roundId);
-        if (sync.status === "busted" && sync.crash_point_e6 != null) {
-          setCrashPoint(multFromE6(sync.crash_point_e6));
-          setPhase("crashed");
-        }
+        applyServerSync(sync);
       } catch {
         /* network — retry next tick */
       }
@@ -480,7 +503,7 @@ export function CrashScreen() {
     void poll();
     const id = window.setInterval(() => void poll(), 200);
     return () => window.clearInterval(id);
-  }, [phase, nonce]);
+  }, [phase, nonce, applyServerSync]);
 
   // ─── running phase 머신 (sharedTickLoop) ──────────────────────────
   useEffect(() => {
@@ -655,20 +678,31 @@ export function CrashScreen() {
         try {
           const existing = await getGameActiveSession("crash");
           if (existing) {
-            const sync = await crashSync(existing.round_id);
-            if (sync.status === "idle") {
-              await clearGameActiveSession("crash", existing.round_id);
-              crashStore.set((s) => ({ ...s, activeRound: null }));
+            if (existing.round_id !== roundId) {
+              const staleSync = await crashSync(existing.round_id);
+              if (staleSync.status === "idle") {
+                await clearGameActiveSession("crash", existing.round_id);
+                crashStore.set((s) => ({ ...s, activeRound: null }));
+              } else {
+                appToast.raw.error("이전 Crash 라운드가 진행 중입니다 — 잠시 후 다시 시도해 주세요");
+                return false;
+              }
             } else {
-              const local = crashStore.get().activeRound;
-              const ar = activeCrashRoundFromSession(existing, {
-                autoTarget,
-                liveBetId: local?.liveBetId,
-              });
-              crashStore.set((s) => ({ ...s, activeRound: ar, nonce: ar.nonce }));
-              hydrateCrashActiveRound(ar);
-              await applyServerResume(ar);
-              return true;
+              const sync = await crashSync(existing.round_id);
+              if (sync.status === "idle") {
+                await clearGameActiveSession("crash", existing.round_id);
+                crashStore.set((s) => ({ ...s, activeRound: null }));
+              } else {
+                const local = crashStore.get().activeRound;
+                const ar = activeCrashRoundFromSession(existing, {
+                  autoTarget,
+                  liveBetId: local?.liveBetId,
+                });
+                crashStore.set((s) => ({ ...s, activeRound: ar, nonce: ar.nonce }));
+                hydrateCrashActiveRound(ar);
+                await applyServerResume(ar);
+                return true;
+              }
             }
           }
 
@@ -725,6 +759,34 @@ export function CrashScreen() {
             cashedAt: null,
             liveBetId,
           });
+          setBettingMsLeft(
+            Math.max(0, BETTING_MS - (performance.now() - bettingStartedAtRef.current)),
+          );
+          const bettingLeft = BETTING_MS - (performance.now() - bettingStartedAtRef.current);
+          if (bettingLeft <= 0) {
+            void crashEnsureRunning(roundId)
+              .then((startedMs) => {
+                if (startedMs == null) {
+                  crashStore.set((s) => ({ ...s, activeRound: null }));
+                  setBet(null);
+                  return;
+                }
+                startedAtRef.current = startedMs;
+                setStartedAt(startedMs);
+                crashStore.set((s) =>
+                  s.activeRound
+                    ? { ...s, activeRound: { ...s.activeRound, startedAt: startedMs } }
+                    : s,
+                );
+                setBettingMsLeft(0);
+                setPhase("running");
+              })
+              .catch((err) => {
+                if (!isCrashSessionNotFound(err)) return;
+                crashStore.set((s) => ({ ...s, activeRound: null }));
+                setBet(null);
+              });
+          }
           cashoutPermanentFailRef.current = false;
           sfx.play("bet");
           return true;
@@ -818,7 +880,18 @@ export function CrashScreen() {
     if (serverRound) {
       if (cashoutPermanentFailRef.current || cashoutInFlightRef.current) return;
       cashoutInFlightRef.current = true;
-      void performServerCashout(serverRound, multToE6(m), prev, true).finally(() => {
+      void (async () => {
+        let multE6 = multToE6(m);
+        try {
+          const sync = await crashSync(serverRound);
+          if (sync.status === "running" && sync.current_multiplier_e6 != null) {
+            multE6 = sync.current_multiplier_e6;
+          }
+        } catch {
+          /* fall back to client clock */
+        }
+        await performServerCashout(serverRound, multE6, prev, true);
+      })().finally(() => {
         cashoutInFlightRef.current = false;
       });
       return;
@@ -842,7 +915,9 @@ export function CrashScreen() {
   }, [phase, mode, performServerCashout]);
 
   const getCurrentMultiplier = useCallback(() => {
-    if (phase !== "running") return bet?.cashedAt ?? 1.0;
+    const cashed = betRef.current?.cashedAt;
+    if (phase !== "running") return cashed ?? bet?.cashedAt ?? 1.0;
+    if (cashed != null) return cashed;
     return multiplierAt(crashElapsedMs(startedAtRef.current));
   }, [phase, bet?.cashedAt]);
 

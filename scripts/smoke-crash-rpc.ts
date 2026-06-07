@@ -18,6 +18,7 @@
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getCrashCronSecret, getE2eCredentials, getEnv, getServiceRoleKey, requireEnv, warnIfProcessEnvMangled } from "../e2e/utils/env";
+import { resetE2eBettingState } from "./smoke-utils";
 
 warnIfProcessEnvMangled();
 
@@ -425,6 +426,8 @@ async function main() {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token;
   if (!accessToken) fail("auth", "no access_token");
+
+  await resetE2eBettingState(supabase);
 
   await assertRpcExists(supabase);
   await runFeatureFlagCheck(supabase);

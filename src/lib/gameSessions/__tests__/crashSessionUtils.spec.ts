@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   activeCrashRoundFromSession,
   crashPlaceErrorMessage,
+  crashSyncTerminal,
   formatCrashMultiplier,
   isCrashPermanentCashoutError,
   isCrashSessionNotFound,
@@ -66,6 +67,33 @@ describe("activeCrashRoundFromSession", () => {
     expect(ar.startedAt).toBe(1_700_000_000_000);
     expect(ar.crashPoint).toBe(Number.POSITIVE_INFINITY);
     expect(ar.betMode).toBe("demo");
+    expect(ar.liveBetId).toBe("live:crash:n42");
+  });
+});
+
+describe("crashSyncTerminal", () => {
+  it("maps busted sync to terminal crash point", () => {
+    const t = crashSyncTerminal(
+      { status: "busted", crash_point_e6: 2_500_000 },
+      { hasServerBet: true, cashedAt: null, displayMult: 2.6 },
+    );
+    expect(t).toEqual({ kind: "terminal", crashPoint: 2.5, cashedOut: false });
+  });
+
+  it("maps idle after server settle to terminal (missed bust frame)", () => {
+    const t = crashSyncTerminal(
+      { status: "idle" },
+      { hasServerBet: true, cashedAt: null, displayMult: 3.12 },
+    );
+    expect(t).toEqual({ kind: "terminal", crashPoint: 3.12, cashedOut: false });
+  });
+
+  it("maps idle with cashedAt to win terminal", () => {
+    const t = crashSyncTerminal(
+      { status: "idle" },
+      { hasServerBet: true, cashedAt: 2.0, displayMult: 5 },
+    );
+    expect(t).toEqual({ kind: "terminal", crashPoint: 2, cashedOut: true });
   });
 });
 

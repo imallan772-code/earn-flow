@@ -6,6 +6,7 @@
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getE2eCredentials, getEnv, getServiceRoleKey, requireEnv, warnIfProcessEnvMangled } from "../e2e/utils/env";
+import { resetE2eBettingState } from "./smoke-utils";
 
 warnIfProcessEnvMangled();
 
@@ -154,33 +155,36 @@ async function runEdgeSmoke(supabase: SupabaseClient, accessToken: string) {
 
 async function runRealMode(supabase: SupabaseClient, serviceKey?: string) {
   await clearDiceSession(supabase, serviceKey);
-  const { error: modeErr } = await supabase.rpc("user_set_preferred_mode_v1", { p_mode: "real" });
-  if (modeErr) fail("real_mode", modeErr.message);
+  try {
+    const { error: modeErr } = await supabase.rpc("user_set_preferred_mode_v1", { p_mode: "real" });
+    if (modeErr) fail("real_mode", modeErr.message);
 
-  const roundId = `smoke_real_dice_${Date.now()}`;
-  const { data, error } = await supabase.rpc("dice_place_v1", {
-    p_amount: 1,
-    p_round_id: roundId,
-    p_target: 50,
-    p_dice_mode: "under",
-    p_client_seed: "smoke-real",
-  });
+    const roundId = `smoke_real_dice_${Date.now()}`;
+    const { data, error } = await supabase.rpc("dice_place_v1", {
+      p_amount: 1,
+      p_round_id: roundId,
+      p_target: 50,
+      p_dice_mode: "under",
+      p_client_seed: "smoke-real",
+    });
 
-  if (error) {
-    const msg = error.message ?? "";
-    if (msg.includes("MONEY") || msg.includes("balance") || msg.includes("INSUFFICIENT")) {
-      await supabase.rpc("user_set_preferred_mode_v1", { p_mode: "demo" });
-      pass("real_mode_smoke", "skipped (insufficient PHON)");
-      return;
+    if (error) {
+      const msg = error.message ?? "";
+      if (msg.includes("MONEY") || msg.includes("balance") || msg.includes("INSUFFICIENT")) {
+        pass("real_mode_smoke", "skipped (insufficient PHON)");
+        return;
+      }
+      fail("real_place", error.message);
     }
-    fail("real_place", error.message);
-  }
 
-  const row = data as { mode: string };
-  if (row.mode !== "real") fail("real_place", `expected real, got ${row.mode}`);
-  await supabase.rpc("dice_complete_v1", { p_round_id: roundId });
-  await supabase.rpc("user_set_preferred_mode_v1", { p_mode: "demo" });
-  pass("real_mode_smoke", "real place → complete");
+    const row = data as { mode: string };
+    if (row.mode !== "real") fail("real_place", `expected real, got ${row.mode}`);
+    await supabase.rpc("dice_complete_v1", { p_round_id: roundId });
+    pass("real_mode_smoke", "real place → complete");
+  } finally {
+    await clearDiceSession(supabase, serviceKey);
+    await supabase.rpc("user_set_preferred_mode_v1", { p_mode: "demo" });
+  }
 }
 
 async function main() {
@@ -195,7 +199,8 @@ async function main() {
   pass("auth", creds.email);
 
   const serviceKey = getServiceRoleKey();
-  await supabase.rpc("user_set_preferred_mode_v1", { p_mode: "demo" });
+  const reset = await resetE2eBettingState(supabase);
+  if (reset.cleared > 0) pass("preflight_reset", `cleared ${reset.cleared} active session(s)`);
 
   await assertRpcExists(supabase);
   await runFeatureFlag(supabase);

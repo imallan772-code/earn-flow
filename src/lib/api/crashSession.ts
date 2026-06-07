@@ -19,7 +19,7 @@ export const crashPlaceResultSchema = z.object({
 
 const crashStartRunningResultSchema = z.object({
   round_id: z.string(),
-  started_at_ms: z.number().int(),
+  started_at_ms: z.coerce.number().int(),
 });
 
 const crashCashoutResultSchema = z.object({
@@ -31,10 +31,11 @@ const crashCashoutResultSchema = z.object({
   mode: z.enum(["demo", "real"]),
 });
 
-const crashSyncResultSchema = z.object({
+/** Postgres bigint often arrives as JSON string — coerce for Supabase client. */
+export const crashSyncResultSchema = z.object({
   status: z.enum(["idle", "betting", "running", "busted", "cashed"]),
-  current_multiplier_e6: z.number().int().optional(),
-  crash_point_e6: z.number().int().optional(),
+  current_multiplier_e6: z.coerce.number().int().optional(),
+  crash_point_e6: z.coerce.number().int().optional(),
 });
 
 export type CrashPlaceResult = z.infer<typeof crashPlaceResultSchema>;

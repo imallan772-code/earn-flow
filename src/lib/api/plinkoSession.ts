@@ -140,3 +140,19 @@ export function isPlinkoEnqueueConflict(error: unknown): boolean {
     msg.includes("duplicate key")
   );
 }
+
+/** Skip local nonces whose round_id already exists as completed on server. */
+export async function resolvePlinkoEnqueueNonce(localNonce: number): Promise<number> {
+  let n = Math.max(0, localNonce);
+  for (let guard = 0; guard < 64; guard++) {
+    const roundId = `plinko-n${n}`;
+    const sync = await plinkoSync(roundId);
+    if (sync.status === "idle") return n;
+    if (sync.status === "completed") {
+      n += 1;
+      continue;
+    }
+    return n;
+  }
+  return n;
+}

@@ -29,7 +29,30 @@ if (hasAuthCreds) {
   projects.push({
     name: "authenticated",
     testMatch: /.*\.auth-ed\.spec\.ts/,
+    testIgnore: /betting-(demo|real)\.auth-ed\.spec\.ts/,
     dependencies: ["setup"],
+    use: {
+      ...devices["iPhone 14"],
+      storageState: authFile,
+    },
+  });
+
+  projects.push({
+    name: "betting-matrix-demo",
+    testMatch: /betting-demo\.auth-ed\.spec\.ts/,
+    dependencies: ["setup"],
+    timeout: 90_000,
+    use: {
+      ...devices["iPhone 14"],
+      storageState: authFile,
+    },
+  });
+
+  projects.push({
+    name: "betting-matrix-real",
+    testMatch: /betting-real\.auth-ed\.spec\.ts/,
+    dependencies: ["setup", "betting-matrix-demo"],
+    timeout: 90_000,
     use: {
       ...devices["iPhone 14"],
       storageState: authFile,

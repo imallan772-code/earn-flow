@@ -6,6 +6,7 @@
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getE2eCredentials, getEnv, getServiceRoleKey, requireEnv, warnIfProcessEnvMangled } from "../e2e/utils/env";
+import { resetE2eBettingState } from "./smoke-utils";
 
 warnIfProcessEnvMangled();
 
@@ -196,7 +197,7 @@ async function main() {
   pass("auth", creds.email);
 
   const serviceKey = getServiceRoleKey();
-  await supabase.rpc("user_set_preferred_mode_v1", { p_mode: "demo" });
+  await resetE2eBettingState(supabase);
 
   await assertRpcExists(supabase);
   await runFeatureFlag(supabase);

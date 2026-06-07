@@ -192,7 +192,7 @@ export function WheelScreen() {
             multiplier: mult,
             win: won,
           },
-          ...s.history,
+          ...s.history.filter((h) => h.id !== `n${ar.nonce}`),
         ].slice(0, 30),
         lastOutcome: outcome,
       }));
@@ -225,6 +225,7 @@ export function WheelScreen() {
     if (round.phase !== "rolling") return;
     const ar = wheelStore.get().activeRound;
     if (!ar) return;
+    if (settledRef.current) return;
     let alive = true;
 
     if (tickIntervalRef.current == null) {

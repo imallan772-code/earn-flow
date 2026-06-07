@@ -202,7 +202,7 @@ export function LimboScreen() {
         ...s,
         history: [
           { id: `n${ar.nonce}`, crashPoint: crash, target: ar.target, win: won },
-          ...s.history,
+          ...s.history.filter((h) => h.id !== `n${ar.nonce}`),
         ].slice(0, 30),
         lastOutcome: outcome,
       }));
@@ -233,6 +233,7 @@ export function LimboScreen() {
     if (round.phase !== "rolling") return;
     const ar = limboStore.get().activeRound;
     if (!ar) return;
+    if (settledRef.current) return;
     sfx.play("tick");
 
     if (ar.crashPoint != null && ar.won != null) {

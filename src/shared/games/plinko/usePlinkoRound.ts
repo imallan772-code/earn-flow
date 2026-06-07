@@ -32,6 +32,7 @@ import {
   plinkoComplete,
   plinkoEnqueue,
   plinkoListPending,
+  resolvePlinkoEnqueueNonce,
 } from "@/lib/api/plinkoSession";
 import { toIntegerPhonAmount } from "@/lib/api/walletSchemas";
 import { syncRealBalance } from "@/shared/wallet/walletStore";
@@ -315,7 +316,14 @@ export function usePlinkoRound(
       if (queueRef.current.length + (inFlightRef.current ? 1 : 0) >= cap) return false;
       if (!engineRef.current) return false;
 
-      const enqueueNonce = plinkoStore.get().nonce;
+      const syncedNonce = canUseServerRef.current
+        ? await resolvePlinkoEnqueueNonce(plinkoStore.get().nonce)
+        : plinkoStore.get().nonce;
+      if (syncedNonce !== plinkoStore.get().nonce) {
+        plinkoStore.set((s) => ({ ...s, nonce: syncedNonce }));
+      }
+
+      const enqueueNonce = syncedNonce;
       const roundId = `plinko-n${enqueueNonce}`;
       const curRows = rowsRef.current;
       const curRisk = riskRef.current;
@@ -371,6 +379,15 @@ export function usePlinkoRound(
           return true;
         } catch (err) {
           if (isPlinkoEnqueueConflict(err)) {
+            const msg =
+              err && typeof err === "object"
+                ? `${(err as { message?: string }).message ?? ""}`
+                : "";
+            if (msg.includes("PLINKO_ROUND_ALREADY_COMPLETED")) {
+              plinkoStore.set((s) => ({ ...s, nonce: enqueueNonce + 1 }));
+              placeInFlightRef.current = false;
+              return true;
+            }
             try {
               const pending = await plinkoListPending();
               const row = pending.find((p) => p.round_id === roundId);
