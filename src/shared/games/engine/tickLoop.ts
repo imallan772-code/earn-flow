@@ -49,8 +49,8 @@ export function createTickLoop(opts: CreateOpts = {}): TickLoop {
       }
     }
 
-    // Dev-only: log severe jank (not every 20–40ms gap — canvas games rarely hit 60fps).
-    if (IS_DEV && dt > 100 && dt < 1000 && ts - lastWarnAt > 5000) {
+    // Dev-only: log severe jank (threshold 250ms avoids React StrictMode remount noise).
+    if (IS_DEV && dt > 250 && dt < 1000 && ts - lastWarnAt > 5000) {
       lastWarnAt = ts;
       console.warn(`[tickLoop:${label}] severe frame drop: ${dt.toFixed(0)}ms`);
     }

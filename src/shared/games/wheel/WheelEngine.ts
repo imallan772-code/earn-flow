@@ -15,7 +15,7 @@
  *
  *  segments=20/30은 10패턴을 단순 반복(평균 동일하게 보존).
  *
- * TODO(real-money): `spin`은 Edge Function 위임. 테이블·계산은 그대로 재사용.
+ * GA-complete: real `spin`은 서버 RPC. 테이블·계산은 검증/데모 fallback용.
  */
 import { bytesGenerator, floatFromBytes, type ProvablyFairInput } from "../engine/provablyFair";
 

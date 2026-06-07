@@ -16,7 +16,7 @@
  *  - 엔진 RTP 99% 내장 + 모드 RTP 0.97 이중 구조 → Crash/Dice/Mines와 동일.
  *  - (1 - u)는 1e-12로 클램프하여 div-by-zero 방지.
  *
- * TODO(real-money): `computeCrashPoint`는 Edge Function 위임. 본 엔진은 검증용으로 재사용.
+ * GA-complete: real outcome은 서버 RPC. 본 엔진은 검증/데모 fallback용.
  */
 import { bytesGenerator, floatFromBytes, type ProvablyFairInput } from "../engine/provablyFair";
 

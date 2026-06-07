@@ -107,4 +107,12 @@ CREATE TRIGGER trg_sync_live_bet_from_game_round
   FOR EACH ROW
   EXECUTE FUNCTION public.sync_live_bet_from_game_round();
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.live_bets;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'live_bets'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.live_bets;
+  END IF;
+END $$;

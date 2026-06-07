@@ -7,7 +7,7 @@
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "framer-motion";
 import { sharedTickLoop } from "@/shared/games/engine/tickLoop";
-import { multiplierAt, type Phase, BETTING_MS } from "./CrashEngine";
+import { crashElapsedMs, multiplierAt, type Phase, BETTING_MS } from "./CrashEngine";
 
 interface Props {
   phase: Phase;
@@ -52,7 +52,7 @@ export function CrashCanvas({ phase, startedAt, crashPoint, bettingMsLeft }: Pro
     ctx.clearRect(0, 0, cssW, cssH);
 
     const { phase: ph, startedAt: sa, crashPoint: cp, bettingMsLeft: bml } = stateRef.current;
-    const elapsed = ph === "running" || ph === "crashed" ? performance.now() - sa : 0;
+    const elapsed = ph === "running" || ph === "crashed" ? crashElapsedMs(sa) : 0;
     const liveM = ph === "crashed" ? cp : multiplierAt(elapsed);
 
     // background radial wash

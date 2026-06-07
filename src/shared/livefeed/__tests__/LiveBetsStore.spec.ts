@@ -114,4 +114,44 @@ describe("orderLiveBetsForView", () => {
     );
     expect(ordered[0]?.id).toBe("2");
   });
+
+  it("interleaves settled ME rows with bot bets by recency", () => {
+    const ordered = orderLiveBetsForView([
+      {
+        id: "old-me",
+        user: "나의_베팅",
+        game: "dice",
+        amount: 1,
+        multiplier: 2,
+        profit: 1,
+        status: "win",
+        mode: "real",
+        isMe: true,
+        ts: 1,
+      },
+      {
+        id: "fresh-bot",
+        user: "Toro***",
+        game: "crash",
+        amount: 50,
+        multiplier: 3,
+        profit: 100,
+        status: "cashout",
+        mode: "real",
+        ts: 100,
+      },
+      {
+        id: "stale-bot",
+        user: "Kai***",
+        game: "plinko",
+        amount: 20,
+        multiplier: 1.5,
+        profit: 10,
+        status: "win",
+        mode: "demo",
+        ts: 50,
+      },
+    ]);
+    expect(ordered.map((b) => b.id)).toEqual(["fresh-bot", "stale-bot", "old-me"]);
+  });
 });

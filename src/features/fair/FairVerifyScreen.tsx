@@ -16,9 +16,10 @@ const GAME_LABEL_KEYS = {
   limbo: "fair.verify.game.limbo",
   wheel: "fair.verify.game.wheel",
   mines: "fair.verify.game.mines",
+  plinko: "fair.verify.game.plinko",
 } as const satisfies Record<VerifyGame, Parameters<typeof t>[0]>;
 
-const GAME_IDS: VerifyGame[] = ["crash", "dice", "limbo", "wheel", "mines"];
+const GAME_IDS: VerifyGame[] = ["crash", "dice", "limbo", "wheel", "mines", "plinko"];
 
 interface Props {
   initial: VerifySearch;
@@ -33,12 +34,16 @@ export function FairVerifyScreen({ initial }: Props) {
   const [mineCount, setMineCount] = useState(initial.mineCount ? String(initial.mineCount) : "3");
   const [segments, setSegments] = useState(initial.segments ? String(initial.segments) : "10");
   const [risk, setRisk] = useState<"low" | "medium" | "high">(initial.risk ?? "low");
+  const [plinkoRows, setPlinkoRows] = useState(
+    initial.rows === 8 || initial.rows === 12 || initial.rows === 16 ? String(initial.rows) : "12",
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<VerifyOutcome | null>(null);
 
   const showMines = game === "mines";
   const showWheel = game === "wheel";
+  const showPlinko = game === "plinko";
 
   const formReady = serverSeed.trim() && clientSeed.trim() && nonce.trim().length > 0;
 
@@ -54,7 +59,8 @@ export function FairVerifyScreen({ initial }: Props) {
         nonce: Number(nonce),
         mineCount: showMines ? Number(mineCount) : undefined,
         segments: showWheel ? (Number(segments) as 10 | 20 | 30) : undefined,
-        risk: showWheel ? risk : undefined,
+        risk: showWheel || showPlinko ? risk : undefined,
+        rows: showPlinko ? (Number(plinkoRows) as 8 | 12 | 16) : undefined,
       });
       setOutcome(result);
     } catch (e) {
@@ -74,6 +80,8 @@ export function FairVerifyScreen({ initial }: Props) {
     risk,
     showMines,
     showWheel,
+    showPlinko,
+    plinkoRows,
   ]);
 
   const shareUrl = useMemo(() => {
@@ -87,7 +95,8 @@ export function FairVerifyScreen({ initial }: Props) {
         nonce: Number(nonce),
         mineCount: showMines ? Number(mineCount) : undefined,
         segments: showWheel ? (Number(segments) as 10 | 20 | 30) : undefined,
-        risk: showWheel ? risk : undefined,
+        risk: showWheel || showPlinko ? risk : undefined,
+        rows: showPlinko ? (Number(plinkoRows) as 8 | 12 | 16) : undefined,
       });
     } catch {
       return "";
@@ -104,6 +113,8 @@ export function FairVerifyScreen({ initial }: Props) {
     risk,
     showMines,
     showWheel,
+    showPlinko,
+    plinkoRows,
   ]);
 
   async function copyText(text: string) {
@@ -233,6 +244,35 @@ export function FairVerifyScreen({ initial }: Props) {
                     <option value="10">10</option>
                     <option value="20">20</option>
                     <option value="30">30</option>
+                  </select>
+                </label>
+              </>
+            )}
+
+            {showPlinko && (
+              <>
+                <label className="flex flex-col gap-1.5 text-sm">
+                  <span className="font-medium">{t("fair.verify.field.risk")}</span>
+                  <select
+                    value={risk}
+                    onChange={(e) => setRisk(e.target.value as "low" | "medium" | "high")}
+                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 outline-none focus:border-(--color-accent)"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1.5 text-sm">
+                  <span className="font-medium">{t("fair.verify.field.rows")}</span>
+                  <select
+                    value={plinkoRows}
+                    onChange={(e) => setPlinkoRows(e.target.value)}
+                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 outline-none focus:border-(--color-accent)"
+                  >
+                    <option value="8">8</option>
+                    <option value="12">12</option>
+                    <option value="16">16</option>
                   </select>
                 </label>
               </>

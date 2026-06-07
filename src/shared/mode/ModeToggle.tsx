@@ -3,6 +3,7 @@
  */
 import { Gamepad2, Gem } from "lucide-react";
 import { useMode, type GameMode } from "./ModeContext";
+import { isAnonymousUser } from "./resolveMode";
 import { INITIAL_DEMO_GRANT, useBalance } from "@/shared/wallet/walletStore";
 import { useAuth } from "@/features/auth/AuthContext";
 import { useProfile } from "@/features/profile/useProfile";
@@ -15,7 +16,7 @@ interface Props {
 
 export function ModeToggle({ className, size = "md" }: Props) {
   const { mode, setMode } = useMode();
-  const { status } = useAuth();
+  const { status, user } = useAuth();
   const { balance, isLoading: profileLoading } = useProfile();
   const demoBalance = useBalance("demo");
 
@@ -24,6 +25,10 @@ export function ModeToggle({ className, size = "md" }: Props) {
     if (m === "real") {
       if (status !== "authenticated") {
         window.alert("리얼 모드는 로그인이 필요합니다.");
+        return;
+      }
+      if (isAnonymousUser(user)) {
+        window.alert("익명 계정은 리얼 모드를 사용할 수 없습니다. 이메일로 가입·로그인해 주세요.");
         return;
       }
       const ok = window.confirm(

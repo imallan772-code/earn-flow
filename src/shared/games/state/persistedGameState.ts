@@ -11,7 +11,7 @@
  *    store 선언만 유지. 외부 시그니처·localStorage key·머지 규칙·디바운스 100% 보존.
  *  - 기존 dice(v2)·crash(v2) 저장본은 그대로 로드된다. 신규 게임은 v1로 시작.
  *
- * TODO(real-money): 잔액/베팅 신뢰 데이터는 Supabase 권한 모델로 이전. 본 스토어는
+ * GA-complete: real 잔액은 Supabase RPC (`lib/api/`). 본 스토어는
  *  UI 임시 캐시(nonce·history·사용자 선호 입력값) 용도로 격하 예정.
  */
 import { createGameStore } from "@/shared/games/shell/createGameStore";
@@ -28,6 +28,21 @@ export interface DiceOutcome {
   nonce: number;
   roll: number;
 }
+/** 진행 중 라운드 — rolling 애니 resume (GA-F). */
+export interface ActiveDiceRound {
+  nonce: number;
+  amount: number;
+  target: number;
+  diceMode: "over" | "under";
+  liveBetId: string;
+  placedAt: number;
+  betMode?: "demo" | "real";
+  serverSide?: boolean;
+  roll?: number;
+  won?: boolean;
+  payoutMultiplier?: number;
+  nextNonce?: number;
+}
 export interface DicePersisted {
   nonce: number;
   history: DiceRoll[];
@@ -38,6 +53,8 @@ export interface DicePersisted {
   pendingAmount: number;
   /** PF 클라이언트 시드. PF 모달에서 변경 가능. ROUND K 추가 — version=2 유지(머지). */
   clientSeed: string;
+  /** Rolling 중 resume SSOT (GA-F). */
+  activeRound: ActiveDiceRound | null;
 }
 export const diceStore = createGameStore<DicePersisted>(
   "dice",
@@ -50,6 +67,7 @@ export const diceStore = createGameStore<DicePersisted>(
     diceMode: "over",
     pendingAmount: 10,
     clientSeed: "phonara-player-001",
+    activeRound: null,
   },
   2,
 );
@@ -88,6 +106,8 @@ export interface ActiveCrashRound {
   startedAt: number;
   bettingStartedAt: number;
   betMode?: "demo" | "real";
+  /** Server-authoritative round (GA-E). Outcome from RPC, not client PF. */
+  serverSide?: boolean;
 }
 export interface CrashPersisted {
   nonce: number;
@@ -246,6 +266,11 @@ export interface ActiveLimboRound {
   liveBetId: string;
   placedAt: number;
   betMode?: "demo" | "real";
+  serverSide?: boolean;
+  crashPoint?: number;
+  won?: boolean;
+  payoutMultiplier?: number;
+  nextNonce?: number;
 }
 /** Legacy v1 → v2 fold 시점에 채워지는 mid-round refund 대기 항목. */
 export interface PendingLegacyRefund {
@@ -377,6 +402,11 @@ export interface ActiveWheelRound {
   liveBetId: string;
   placedAt: number;
   betMode?: "demo" | "real";
+  serverSide?: boolean;
+  spinIndex?: number;
+  multiplier?: number;
+  won?: boolean;
+  nextNonce?: number;
 }
 export interface WheelPersisted {
   nonce: number;

@@ -37,6 +37,7 @@ bun run cleanup:workspace # dist/.vite/Cursor cache — after test/check/build
 ```
 
 **Agent:** 테스트·빌드 후 자동 청소 필수 → `.cursor/rules/test-cleanup-agent.mdc`  
+**Agent:** 작업 완료 보고 전 2차 점검 필수 (오류0·오차0) → `.cursor/rules/post-work-audit.mdc`  
 E2E 작성·실행 SSOT → `.cursor/rules/e2e-standards.mdc`  
 E2E 후 아티팩트 정리: `.cursor/rules/e2e-cleanup.mdc`. 디버그만 `E2E_KEEP_ARTIFACTS=1`.
 

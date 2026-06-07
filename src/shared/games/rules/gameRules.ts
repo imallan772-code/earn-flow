@@ -102,7 +102,7 @@ export const PLINKO_RULES: GameRules = {
     },
     {
       title: "공정성 (Provably Fair)",
-      body: "서버 시드 + 라운드 번호로 HMAC-SHA256 해시를 만들고, 각 줄에서의 좌/우 튕김 방향을 비트 단위로 결정합니다. 결과 슬롯은 사전에 고정되어 있어 조작 불가능합니다.",
+      body: "현재 Plinko는 클라이언트 결정론 엔진(mulberry32)으로 경로를 계산합니다. Stake 동형 HMAC-SHA256 + 서버 path 권위(PF v2)는 GA-I에서 제공 예정이며, 전환 전까지 외부 HMAC 검증을 지원하지 않습니다.",
     },
   ],
 };

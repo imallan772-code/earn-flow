@@ -1,16 +1,9 @@
 /**
- * DiceScreen — ROUND K. Wheel(ROUND J) SSOT 정렬.
+ * DiceScreen — GA-F server authority + legacy PF fallback.
  *
- * 불변
- *  - DiceEngine.ts 0 diff
- *  - StakeBetPanel props/onPlace/lastOutcome 계약 0 diff
- *  - diceStore version=2 / localStorage key 불변
+ * Server path (GA-F): dice_place_v1 instant settle → client animation only.
  *
- * nonce 정책 (Wheel과 다름 — 현행 유지)
- *  - place 시점에 store.nonce 스냅샷만 사용. **idle 복귀 시 nonce++.**
- *
- * 토스트 정책
- *  - 일반 bet/win/loss toast 제거 (Wheel/Limbo 정렬). 시드 변경 토스트만 유지.
+ * nonce: server path uses next_nonce from RPC; legacy idle → nonce++.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -37,14 +30,28 @@ import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { profitOf } from "@/shared/games/engine/houseEdge";
 import {
   type DiceMode,
-  computeRoll,
   isWin,
   payoutMultiplier,
   winChance,
 } from "@/shared/games/dice/DiceEngine";
-import { commitServerSeed } from "@/shared/games/engine/provablyFair";
-import { diceStore } from "@/shared/games/state/persistedGameState";
+import { usePfSession } from "@/shared/games/hooks/usePfSession";
+import { useGameAuthorityFlag } from "@/shared/games/hooks/useGameAuthorityFlag";
+import {
+  type ActiveDiceRound,
+  diceStore,
+} from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
+import { isSupabaseConfigured } from "@/integrations/supabase/env";
+import { useAuth } from "@/features/auth/AuthContext";
+import { diceComplete, dicePlace } from "@/lib/api/diceSession";
+import { getGameActiveSession } from "@/lib/api/gameSessions";
+import { toIntegerPhonAmount } from "@/lib/api/walletSchemas";
+import {
+  activeDiceRoundFromSession,
+  isDiceSessionConflict,
+} from "@/lib/gameSessions/diceSessionUtils";
+import { fetchRealSession } from "@/shared/games/gameSessionHelpers";
+import { syncRealBalance } from "@/shared/wallet/walletStore";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { useHotkeys, type HotkeyMap } from "@/shared/hooks/useHotkeys";
 import { useRegisterMainMode, useRegisterRightRail } from "@/shared/layout/useGameLayout";
@@ -54,13 +61,28 @@ import { notifyPfSeedChanged } from "@/shared/games/ui/gameOutcomePolicy";
 import { appToast } from "@/shared/ui/toast";
 import { DiceRightRail } from "./DiceRightRail";
 
-const SERVER_SEED = "phonara-dice-demo-server-seed-v1";
+const LEGACY_PF_SEED = "phonara-dice-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
 const ROLLING_MS = 800;
 const SETTLED_MS = 800;
 
+type ActiveBet = {
+  amount: number;
+  target: number;
+  mode: DiceMode;
+  liveBetId: string;
+  nonce: number;
+  serverSide?: boolean;
+  roll?: number;
+  won?: boolean;
+  payoutMultiplier?: number;
+  nextNonce?: number;
+  betMode?: "demo" | "real";
+};
+
 export function DiceScreen() {
   useRegisterMainMode("game");
+  const { status: authStatus } = useAuth();
   const { mode, balance, tryDebit, credit } = useGameWallet();
   const nonce = diceStore.use((s) => s.nonce);
   const history = diceStore.use((s) => s.history);
@@ -69,77 +91,154 @@ export function DiceScreen() {
   const target = diceStore.use((s) => s.target);
   const diceMode = diceStore.use((s) => s.diceMode);
   const pendingAmount = diceStore.use((s) => s.pendingAmount);
+  const storeClientSeed = diceStore.use((s) => s.clientSeed);
 
   const round = useGameRound({ rollingMs: ROLLING_MS, settledMs: SETTLED_MS });
-  const [activeBet, setActiveBet] = useState<{
-    amount: number;
-    target: number;
-    mode: DiceMode;
-    liveBetId: string;
-    nonce: number;
-  } | null>(null);
-  const [commit, setCommit] = useState("");
+  const [activeBet, setActiveBet] = useState<ActiveBet | null>(null);
+  const pf = usePfSession("dice", LEGACY_PF_SEED, DEFAULT_CLIENT_SEED, {
+    clientSeed: storeClientSeed || DEFAULT_CLIENT_SEED,
+  });
+  const diceServerFlag = useGameAuthorityFlag("dice_server_settle");
+  const canUseServerAuthority =
+    isSupabaseConfigured() &&
+    authStatus === "authenticated" &&
+    pf.ready &&
+    !pf.legacyFallback &&
+    diceServerFlag;
   const [showFair, setShowFair] = useState(false);
   const [seedDraft, setSeedDraft] = useState("");
   const sfx = useSfx();
   const tickIntervalRef = useRef<number | null>(null);
   const settledRef = useRef(false);
+  const restoredRef = useRef(false);
+  const serverCreditDoneRef = useRef(false);
+  const placeInFlightRef = useRef(false);
   const isDesktop = useDesktopLayout();
   const rightRailNode = useMemo(() => <DiceRightRail />, []);
   useRegisterRightRail(rightRailNode);
 
   useEffect(() => {
-    commitServerSeed(SERVER_SEED).then(setCommit);
-  }, []);
-
-  useEffect(() => {
     if (showFair) setSeedDraft(diceStore.get().clientSeed);
   }, [showFair]);
 
-  // rolling → compute & settle (single fetch)
+  const hydrateDiceActiveRound = useCallback((ar: ActiveDiceRound) => {
+    setActiveBet({
+      amount: ar.amount,
+      target: ar.target,
+      mode: ar.diceMode,
+      liveBetId: ar.liveBetId,
+      nonce: ar.nonce,
+      serverSide: ar.serverSide,
+      roll: ar.roll,
+      won: ar.won,
+      payoutMultiplier: ar.payoutMultiplier,
+      nextNonce: ar.nextNonce,
+      betMode: ar.betMode,
+    });
+    liveBetsStore.ensureUserPending({
+      id: ar.liveBetId,
+      user: "나의_베팅",
+      game: "dice",
+      amount: ar.amount,
+      multiplier: null,
+      profit: null,
+      status: "pending",
+      mode,
+      isMe: true,
+    });
+    round.place();
+  }, [round, mode]);
+
+  // Resume-First: server SSOT on remount (GA-F §5.2).
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+
+    const applyLocal = () => {
+      const ar = diceStore.get().activeRound;
+      if (ar) hydrateDiceActiveRound(ar);
+    };
+
+    if (!isSupabaseConfigured() || authStatus !== "authenticated") {
+      applyLocal();
+      return;
+    }
+
+    void fetchRealSession("dice").then((row) => {
+      if (row) {
+        const local = diceStore.get().activeRound;
+        const ar = activeDiceRoundFromSession(row, { liveBetId: local?.liveBetId });
+        diceStore.set((s) => ({ ...s, activeRound: ar, nonce: ar.nextNonce ?? ar.nonce }));
+        hydrateDiceActiveRound(ar);
+        return;
+      }
+      applyLocal();
+    }).catch(applyLocal);
+  }, [authStatus, hydrateDiceActiveRound]);
+
+  const settleFromOutcome = useCallback(
+    (
+      bet: ActiveBet,
+      roll: number,
+      won: boolean,
+      pm: number,
+      skipRealCredit: boolean,
+    ) => {
+      const profit = won ? profitOf(bet.amount, pm, mode) : -bet.amount;
+      if (won && !skipRealCredit) {
+        void credit(bet.amount + profit, pm, {
+          game: "dice",
+          roundId: `n${bet.nonce}`,
+        });
+      }
+      diceStore.set((s) => ({
+        ...s,
+        lastRoll: roll,
+        history: [{ id: `n${bet.nonce}`, roll, win: won }, ...s.history].slice(0, 30),
+        lastOutcome: { outcome: won ? "win" : "loss", profit, nonce: bet.nonce, roll },
+      }));
+      liveBetsStore.settle(
+        bet.liveBetId,
+        {
+          multiplier: won ? pm : null,
+          profit: won ? +profit.toFixed(2) : -bet.amount,
+          status: won ? "win" : "loss",
+        },
+        userLiveBetFallback("dice", bet.amount, mode),
+      );
+      recordSessionOutcome({
+        outcome: won ? "win" : "loss",
+        profit,
+        multiplier: won ? pm : undefined,
+      });
+      sfx.play(won ? "win" : "loss");
+      settledRef.current = true;
+    },
+    [mode, credit, sfx],
+  );
+
+  // rolling → server outcome
   useEffect(() => {
     if (round.phase !== "rolling" || !activeBet) return;
     let alive = true;
     if (tickIntervalRef.current == null) {
       tickIntervalRef.current = window.setInterval(() => sfx.play("tick"), 200);
     }
-    const seed = diceStore.get().clientSeed || DEFAULT_CLIENT_SEED;
-    void computeRoll({ serverSeed: SERVER_SEED, clientSeed: seed, nonce: activeBet.nonce }).then(
-      (roll) => {
-        if (!alive) return;
-        const won = isWin(roll, activeBet.target, activeBet.mode);
-        const pm = payoutMultiplier(winChance(activeBet.target, activeBet.mode));
-        const profit = won ? profitOf(activeBet.amount, pm, mode) : -activeBet.amount;
-        if (won) {
-          void credit(activeBet.amount + profit, pm, {
-            game: "dice",
-            roundId: `n${activeBet.nonce}`,
-          });
+
+    if (activeBet.roll != null && activeBet.won != null) {
+      const pm =
+        activeBet.payoutMultiplier ??
+        payoutMultiplier(winChance(activeBet.target, activeBet.mode));
+      const skipRealCredit =
+        activeBet.betMode === "real" && !!activeBet.serverSide && serverCreditDoneRef.current;
+      settleFromOutcome(activeBet, activeBet.roll, activeBet.won, pm, skipRealCredit);
+      return () => {
+        if (tickIntervalRef.current != null) {
+          window.clearInterval(tickIntervalRef.current);
+          tickIntervalRef.current = null;
         }
-        diceStore.set((s) => ({
-          ...s,
-          lastRoll: roll,
-          history: [{ id: `n${activeBet.nonce}`, roll, win: won }, ...s.history].slice(0, 30),
-          lastOutcome: { outcome: won ? "win" : "loss", profit, nonce: activeBet.nonce, roll },
-        }));
-        liveBetsStore.settle(
-          activeBet.liveBetId,
-          {
-            multiplier: won ? pm : null,
-            profit: won ? +profit.toFixed(2) : -activeBet.amount,
-            status: won ? "win" : "loss",
-          },
-          userLiveBetFallback("dice", activeBet.amount, mode),
-        );
-        recordSessionOutcome({
-          outcome: won ? "win" : "loss",
-          profit,
-          multiplier: won ? pm : undefined,
-        });
-        sfx.play(won ? "win" : "loss");
-        settledRef.current = true;
-      },
-    );
+      };
+    }
     return () => {
       alive = false;
       if (tickIntervalRef.current != null) {
@@ -147,21 +246,138 @@ export function DiceScreen() {
         tickIntervalRef.current = null;
       }
     };
-  }, [round.phase, activeBet, mode, credit, sfx]);
+  }, [round.phase, activeBet, pf.serverSeed, settleFromOutcome]);
 
-  // idle 복귀 → activeBet 클리어 + nonce++ (Dice 현행 유지)
+  // idle → clear session + nonce from server or ++
   useEffect(() => {
     if (round.phase !== "idle" || !settledRef.current) return;
+    const bet = activeBet;
+    const roundId = bet ? `n${bet.nonce}` : null;
+    if (bet?.serverSide && roundId) {
+      void diceComplete(roundId);
+    }
     settledRef.current = false;
+    serverCreditDoneRef.current = false;
     setActiveBet(null);
-    diceStore.set((s) => ({ ...s, nonce: s.nonce + 1 }));
-  }, [round.phase]);
+    diceStore.set((s) => ({
+      ...s,
+      activeRound: null,
+      nonce: bet?.nextNonce ?? s.nonce + 1,
+    }));
+  }, [round.phase, activeBet]);
 
   const handlePlace = useCallback(
     async (amount: number): Promise<boolean> => {
-      if (!round.isIdle || activeBet || amount <= 0) return false;
+      if (!round.isIdle || activeBet || amount <= 0 || !pf.ready) return false;
       const currentNonce = diceStore.get().nonce;
       const roundId = `n${currentNonce}`;
+      const target = diceStore.get().target;
+      const diceMode = diceStore.get().diceMode;
+
+      if (canUseServerAuthority) {
+        if (placeInFlightRef.current) return false;
+        placeInFlightRef.current = true;
+        const betAmount =
+          mode === "real" ? toIntegerPhonAmount(amount) : Math.max(1, Math.round(amount));
+        if (mode === "real" && betAmount == null) {
+          placeInFlightRef.current = false;
+          return false;
+        }
+
+        try {
+          const existing = await getGameActiveSession("dice");
+          if (existing) {
+            const local = diceStore.get().activeRound;
+            const ar = activeDiceRoundFromSession(existing, { liveBetId: local?.liveBetId });
+            diceStore.set((s) => ({ ...s, activeRound: ar, nonce: ar.nextNonce ?? ar.nonce }));
+            hydrateDiceActiveRound(ar);
+            return true;
+          }
+
+          if (mode === "demo") {
+            const ok = await tryDebit(amount, { game: "dice", roundId });
+            if (!ok) return false;
+          }
+
+          const seed = diceStore.get().clientSeed || DEFAULT_CLIENT_SEED;
+          const res = await dicePlace({
+            amount: betAmount ?? Math.max(1, Math.round(amount)),
+            roundId,
+            target,
+            diceMode,
+            clientSeed: seed,
+          });
+          if (res.mode === "real") {
+            serverCreditDoneRef.current = res.won;
+            if (res.balance?.phon != null) syncRealBalance(res.balance.phon);
+          }
+
+          diceStore.set((s) => ({ ...s, pendingAmount: amount }));
+          const liveBetId = liveBetsStore.push({
+            id: liveFeedBetIdForRound("dice", roundId),
+            user: "나의_베팅",
+            game: "dice",
+            amount: mode === "demo" ? amount : (betAmount ?? amount),
+            multiplier: null,
+            profit: null,
+            status: "pending",
+            mode,
+            isMe: true,
+          });
+
+          const ar: ActiveDiceRound = {
+            nonce: currentNonce,
+            amount: mode === "demo" ? amount : (betAmount ?? amount),
+            target,
+            diceMode,
+            liveBetId,
+            placedAt: Date.now(),
+            betMode: mode,
+            serverSide: true,
+            roll: res.roll,
+            won: res.won,
+            payoutMultiplier: res.payout_multiplier,
+            nextNonce: currentNonce + 1,
+          };
+          diceStore.set((s) => ({ ...s, activeRound: ar }));
+          setActiveBet({
+            amount: ar.amount,
+            target,
+            mode: diceMode,
+            liveBetId,
+            nonce: currentNonce,
+            serverSide: true,
+            roll: res.roll,
+            won: res.won,
+            payoutMultiplier: res.payout_multiplier,
+            nextNonce: currentNonce + 1,
+            betMode: mode,
+          });
+          sfx.play("bet");
+          round.place();
+          return true;
+        } catch (err) {
+          if (isDiceSessionConflict(err)) {
+            try {
+              const row = await getGameActiveSession("dice");
+              if (row) {
+                const local = diceStore.get().activeRound;
+                const ar = activeDiceRoundFromSession(row, { liveBetId: local?.liveBetId });
+                diceStore.set((s) => ({ ...s, activeRound: ar, nonce: ar.nextNonce ?? ar.nonce }));
+                hydrateDiceActiveRound(ar);
+                return true;
+              }
+            } catch {
+              /* fall through */
+            }
+          }
+          appToast.raw.error("베팅에 실패했습니다 (진행 중 라운드가 있거나 네트워크 오류)");
+          return false;
+        } finally {
+          placeInFlightRef.current = false;
+        }
+      }
+
       const ok = await tryDebit(amount, { game: "dice", roundId });
       if (!ok) return false;
       diceStore.set((s) => ({ ...s, pendingAmount: amount }));
@@ -178,8 +394,8 @@ export function DiceScreen() {
       });
       setActiveBet({
         amount,
-        target: diceStore.get().target,
-        mode: diceStore.get().diceMode,
+        target,
+        mode: diceMode,
         liveBetId,
         nonce: currentNonce,
       });
@@ -187,7 +403,7 @@ export function DiceScreen() {
       round.place();
       return true;
     },
-    [round, activeBet, mode, tryDebit, sfx],
+    [round, activeBet, mode, tryDebit, sfx, pf.ready, canUseServerAuthority, hydrateDiceActiveRound],
   );
 
   const setTarget = useCallback((t: number) => diceStore.set((s) => ({ ...s, target: t })), []);
@@ -213,18 +429,23 @@ export function DiceScreen() {
       setShowFair(false);
       return;
     }
-    diceStore.set((s) => ({
-      ...s,
-      clientSeed: next,
-      nonce: 0,
-      lastOutcome: null,
-      lastRoll: null,
-    }));
-    setActiveBet(null);
-    settledRef.current = false;
-    notifyPfSeedChanged();
-    setShowFair(false);
-  }, [seedDraft, round.isIdle, activeBet]);
+    void pf.setClientSeed(next).then(() => {
+      diceStore.set((s) => ({
+        ...s,
+        clientSeed: next,
+        nonce: 0,
+        lastOutcome: null,
+        lastRoll: null,
+      }));
+      setActiveBet(null);
+      settledRef.current = false;
+      diceStore.set((s) => ({ ...s, activeRound: null }));
+      notifyPfSeedChanged();
+      setShowFair(false);
+    }).catch(() => {
+      appToast.raw.error("시드 변경에 실패했습니다");
+    });
+  }, [seedDraft, round.isIdle, activeBet, pf]);
 
   const hotkeys = useMemo<HotkeyMap>(
     () => ({
@@ -265,9 +486,9 @@ export function DiceScreen() {
     {
       label: "서버 시드 (해시)",
       content: (
-        <code className="break-all text-[10px] text-(--color-cyan)">{commit || "로딩 중..."}</code>
+        <code className="break-all text-[10px] text-(--color-cyan)">{pf.commitHash || "로딩 중..."}</code>
       ),
-      copyText: commit || undefined,
+      copyText: pf.commitHash || undefined,
     },
     {
       label: "클라이언트 시드",
@@ -366,15 +587,23 @@ export function DiceScreen() {
         banner={<DemoLowBanner />}
         betPanel={
           <StakeBetPanel
-            canPlace={round.isIdle && !activeBet}
+            canPlace={round.isIdle && !activeBet && pf.ready}
             hasActiveBet={false}
             balance={balance}
             lastOutcome={lastOutcome}
             showAutoTarget={false}
+            bettingRoundKey={nonce}
             defaultAmount={pendingAmount}
             onAmountChange={(amount) => diceStore.set((s) => ({ ...s, pendingAmount: amount }))}
             onPlace={(amount) => handlePlace(amount)}
             onCashout={() => {}}
+            serverAutoBet={{
+              game: "dice",
+              getBetParams: () => ({
+                target: diceStore.get().target,
+                dice_mode: diceStore.get().diceMode,
+              }),
+            }}
           />
         }
       />
@@ -391,8 +620,8 @@ export function DiceScreen() {
             <p>시드 변경 시 nonce 0 리셋. 동일 시드/라운드는 항상 같은 결과를 만듭니다.</p>
             <PfVerifyPageLink
               game="dice"
-              serverSeed={SERVER_SEED}
-              serverSeedHash={commit}
+              serverSeed={pf.serverSeed}
+              serverSeedHash={pf.commitHash}
               clientSeed={seedDraft.trim() || DEFAULT_CLIENT_SEED}
               nonce={nonce}
             />

@@ -31,7 +31,21 @@
     "supabase:config:push": "bun scripts/push-supabase-auth-config.ts",
     "supabase:auth:part5": "bun scripts/push-supabase-auth-part5.ts",
     "supabase:auth:smtp": "bun scripts/push-supabase-auth-smtp.ts",
-    "supabase:auth:google": "bun scripts/push-supabase-auth-google.ts"
+    "supabase:auth:google": "bun scripts/push-supabase-auth-google.ts",
+    "supabase:db:push": "bun scripts/push-supabase-db.ts",
+    "smoke:crash-rpc": "bun scripts/smoke-crash-rpc.ts",
+    "smoke:dice-rpc": "bun scripts/smoke-dice-rpc.ts",
+    "smoke:limbo-rpc": "bun scripts/smoke-limbo-rpc.ts",
+    "smoke:wheel-rpc": "bun scripts/smoke-wheel-rpc.ts",
+    "smoke:plinko-rpc": "bun scripts/smoke-plinko-rpc.ts",
+    "smoke:auto-bet-rpc": "bun scripts/smoke-auto-bet-rpc.ts",
+    "smoke:reconciliation-rpc": "bun scripts/smoke-reconciliation-rpc.ts",
+    "smoke:money-rpc": "bun scripts/smoke-money-rpc.ts",
+    "smoke:pf-degrade": "bun scripts/smoke-pf-degrade.ts",
+    "benchmark:crash-latency": "bun scripts/benchmark-crash-latency.ts",
+    "accept:a": "bun scripts/accept-a-rtp-parity.ts",
+    "accept:b": "bun scripts/accept-b-tampering.ts",
+    "accept:d": "bun scripts/accept-d-load-test.ts"
   },
   "packageManager": "pnpm@9.15.4",
   "dependencies": {

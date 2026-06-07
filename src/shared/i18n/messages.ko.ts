@@ -103,6 +103,8 @@ export const messages_ko = {
   "fair.verify.game.limbo": "Limbo",
   "fair.verify.game.wheel": "Wheel",
   "fair.verify.game.mines": "Mines",
+  "fair.verify.game.plinko": "Plinko",
+  "fair.verify.field.rows": "행 (rows)",
   "fair.verify.result.legend": "검증 결과",
   "fair.verify.result.commitHash": "SHA256(server seed)",
   "fair.verify.result.commitMatch": "커밋 일치",

@@ -14,7 +14,7 @@
  *  - unmount refund 없음 — mid-round 이탈 시 라운드 유지
  *  - MinesEngine·StakeBetPanel·useGameWallet·useGameRound·minesStore 스키마 0-diff
  *
- * TODO(real-money): 지뢰 배치/정산은 Edge Function — 클라이언트는 결과 표시만.
+ * GA-complete: 지뢰 배치/정산은 서버 RPC — 클라이언트는 결과 표시만.
  */
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -34,7 +34,7 @@ import { MINES_RULES } from "@/shared/games/rules/gameRules";
 import { LiveBetsFeed } from "@/shared/livefeed/LiveBetsFeed";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { PF_BLOCK_ACTIVE_ROUND_MSG } from "@/shared/games/ui/pfPolicy";
-import { commitServerSeed } from "@/shared/games/engine/provablyFair";
+import { usePfSession } from "@/shared/games/hooks/usePfSession";
 import { TOTAL_TILES, clampMines, nextMultiplier } from "@/shared/games/mines/MinesEngine";
 import { minesStore } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
@@ -54,7 +54,7 @@ import { MinesControls } from "./MinesControls";
 import { useMinesLifecycle, type RecentResult } from "./useMinesLifecycle";
 import { MinesRightRail } from "./MinesRightRail";
 
-const SERVER_SEED = "phonara-mines-demo-server-seed-v1";
+const LEGACY_PF_SEED = "phonara-mines-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
 
 function paintResultCanvas(
@@ -94,7 +94,9 @@ export function MinesScreen() {
   const clientSeed = minesStore.use((s) => s.clientSeed);
 
   const round = useGameRound({ isMultiStep: true, settledMs: 1000 });
-  const [commit, setCommit] = useState("");
+  const pf = usePfSession("mines", LEGACY_PF_SEED, DEFAULT_CLIENT_SEED, {
+    clientSeed: clientSeed || DEFAULT_CLIENT_SEED,
+  });
   const [showFair, setShowFair] = useState(false);
   const [seedDraft, setSeedDraft] = useState("");
   const liveRegionId = useId();
@@ -104,7 +106,8 @@ export function MinesScreen() {
     wallet,
     nonce,
     mineCount,
-    serverSeed: SERVER_SEED,
+    serverSeed: pf.serverSeed,
+    pfReady: pf.ready,
     defaultClientSeed: DEFAULT_CLIENT_SEED,
   });
   const {
@@ -126,10 +129,6 @@ export function MinesScreen() {
     resetForSeedChange,
   } = life;
   const flashRecent = useRoundResultFlash(recent, MINES_RESULT_FLASH_DELAY_MS);
-
-  useEffect(() => {
-    commitServerSeed(SERVER_SEED).then(setCommit);
-  }, []);
 
   const setMineCount = useCallback((n: number) => {
     minesStore.set((s) => ({ ...s, mineCount: clampMines(n) }));
@@ -180,16 +179,20 @@ export function MinesScreen() {
       setShowFair(false);
       return;
     }
-    minesStore.set((s) => ({
-      ...s,
-      clientSeed: next,
-      nonce: 0,
-      lastOutcome: null,
-    }));
-    resetForSeedChange();
-    notifyPfSeedChanged();
-    setShowFair(false);
-  }, [seedDraft, clientSeed, resetForSeedChange, round.isIdle]);
+    void pf.setClientSeed(next).then(() => {
+      minesStore.set((s) => ({
+        ...s,
+        clientSeed: next,
+        nonce: 0,
+        lastOutcome: null,
+      }));
+      resetForSeedChange();
+      notifyPfSeedChanged();
+      setShowFair(false);
+    }).catch(() => {
+      appToast.raw.error("시드 변경에 실패했습니다");
+    });
+  }, [seedDraft, clientSeed, resetForSeedChange, round.isIdle, pf]);
 
   const fairRows: ProvablyFairRow[] = useMemo(
     () => [
@@ -197,10 +200,10 @@ export function MinesScreen() {
         label: "서버 시드 (해시)",
         content: (
           <code className="break-all text-[10px] text-(--color-cyan)">
-            {commit || "로딩 중..."}
+            {pf.commitHash || "로딩 중..."}
           </code>
         ),
-        copyText: commit || undefined,
+        copyText: pf.commitHash || undefined,
       },
       {
         label: "클라이언트 시드",
@@ -220,7 +223,7 @@ export function MinesScreen() {
         content: <code className="font-numeric text-(--color-rose)">{mineCount}</code>,
       },
     ],
-    [commit, seedDraft, nonce, mineCount],
+    [pf.commitHash, seedDraft, nonce, mineCount],
   );
 
   const announce = useMemo(() => {
@@ -331,7 +334,7 @@ export function MinesScreen() {
         banner={<DemoLowBanner />}
         betPanel={
           <StakeBetPanel
-            canPlace={round.isIdle}
+            canPlace={round.isIdle && pf.ready}
             hasActiveBet={round.phase === "playing"}
             balance={balance}
             lastOutcome={
@@ -351,6 +354,13 @@ export function MinesScreen() {
             onAmountChange={(amount) => minesStore.set((s) => ({ ...s, pendingAmount: amount }))}
             onPlace={(amount) => handlePlace(amount)}
             onCashout={handleCashout}
+            serverAutoBet={{
+              game: "mines",
+              getBetParams: () => ({
+                mine_count: minesStore.get().mineCount,
+                reveal_count: 1,
+              }),
+            }}
           />
         }
       />
@@ -388,8 +398,8 @@ export function MinesScreen() {
             </span>
             <PfVerifyPageLink
               game="mines"
-              serverSeed={SERVER_SEED}
-              serverSeedHash={commit}
+              serverSeed={pf.serverSeed}
+              serverSeedHash={pf.commitHash}
               clientSeed={seedDraft.trim() || clientSeed || DEFAULT_CLIENT_SEED}
               nonce={nonce}
               mineCount={mineCount}

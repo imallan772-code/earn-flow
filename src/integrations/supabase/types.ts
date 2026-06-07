@@ -183,47 +183,148 @@ export type Database = {
       game_rounds: {
         Row: {
           bet_amount: number
+          bet_mode: string | null
+          bet_params: Json | null
           created_at: string
           game: string
           id: string
+          multiplier_e6: number | null
           payout_amount: number
+          pf_session_id: string | null
           refunded_at: string | null
           round_id: string
           user_id: string
         }
         Insert: {
           bet_amount?: number
+          bet_mode?: string | null
+          bet_params?: Json | null
           created_at?: string
           game: string
           id?: string
+          multiplier_e6?: number | null
           payout_amount?: number
+          pf_session_id?: string | null
           refunded_at?: string | null
           round_id: string
           user_id: string
         }
         Update: {
           bet_amount?: number
+          bet_mode?: string | null
+          bet_params?: Json | null
           created_at?: string
           game?: string
           id?: string
+          multiplier_e6?: number | null
           payout_amount?: number
+          pf_session_id?: string | null
           refunded_at?: string | null
           round_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_rounds_pf_session_id_fkey"
+            columns: ["pf_session_id"]
+            isOneToOne: false
+            referencedRelation: "pf_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pf_sessions: {
+        Row: {
+          client_seed: string
+          created_at: string
+          game: string
+          id: string
+          nonce: number
+          rotated_at: string | null
+          server_seed: string
+          server_seed_hash: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          client_seed?: string
+          created_at?: string
+          game: string
+          id?: string
+          nonce?: number
+          rotated_at?: string | null
+          server_seed: string
+          server_seed_hash: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          client_seed?: string
+          created_at?: string
+          game?: string
+          id?: string
+          nonce?: number
+          rotated_at?: string | null
+          server_seed?: string
+          server_seed_hash?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          auto_bet_consent_at: string | null
+          daily_loss_limit_pct: number | null
+          daily_loss_limit_phon: number | null
+          daily_round_limit: number
+          max_consecutive_losses: number | null
+          preferred_mode: string
+          region: string
+          safety_tier: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_bet_consent_at?: string | null
+          daily_loss_limit_pct?: number | null
+          daily_loss_limit_phon?: number | null
+          daily_round_limit?: number
+          max_consecutive_losses?: number | null
+          preferred_mode?: string
+          region?: string
+          safety_tier?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_bet_consent_at?: string | null
+          daily_loss_limit_pct?: number | null
+          daily_loss_limit_phon?: number | null
+          daily_round_limit?: number
+          max_consecutive_losses?: number | null
+          preferred_mode?: string
+          region?: string
+          safety_tier?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
       }
       game_session_secrets: {
         Row: {
-          mines: number[]
+          crash_point_e6: number | null
+          mines: number[] | null
           session_id: string
         }
         Insert: {
-          mines: number[]
+          crash_point_e6?: number | null
+          mines?: number[] | null
           session_id: string
         }
         Update: {
-          mines?: number[]
+          crash_point_e6?: number | null
+          mines?: number[] | null
           session_id?: string
         }
         Relationships: [
@@ -936,6 +1037,102 @@ export type Database = {
         Args: { p_game: string; p_round_id: string }
         Returns: boolean
       }
+      crash_cashout_v1: {
+        Args: { p_at_multiplier_e6: number; p_round_id: string }
+        Returns: Json
+      }
+      crash_place_v1: {
+        Args: {
+          p_amount: number
+          p_auto_target_e6?: number
+          p_client_seed?: string
+          p_round_id: string
+        }
+        Returns: Json
+      }
+      crash_start_running_v1: { Args: { p_round_id: string }; Returns: Json }
+      crash_sync_v1: { Args: { p_round_id: string }; Returns: Json }
+      crash_force_settle_stale_v1: {
+        Args: { p_max_age_ms?: number }
+        Returns: number
+      }
+      dice_complete_v1: { Args: { p_round_id: string }; Returns: boolean }
+      dice_place_v1: {
+        Args: {
+          p_amount: number
+          p_client_seed?: string
+          p_dice_mode: string
+          p_round_id: string
+          p_target: number
+        }
+        Returns: Json
+      }
+      dice_sync_v1: { Args: { p_round_id: string }; Returns: Json }
+      limbo_complete_v1: { Args: { p_round_id: string }; Returns: boolean }
+      limbo_place_v1: {
+        Args: {
+          p_amount: number
+          p_client_seed?: string
+          p_round_id: string
+          p_target: number
+        }
+        Returns: Json
+      }
+      limbo_sync_v1: { Args: { p_round_id: string }; Returns: Json }
+      wheel_complete_v1: { Args: { p_round_id: string }; Returns: boolean }
+      wheel_place_v1: {
+        Args: {
+          p_amount: number
+          p_client_seed?: string
+          p_risk: string
+          p_round_id: string
+          p_segments: number
+        }
+        Returns: Json
+      }
+      wheel_sync_v1: { Args: { p_round_id: string }; Returns: Json }
+      plinko_complete_v1: { Args: { p_round_id: string }; Returns: Json }
+      plinko_enqueue_v1: {
+        Args: {
+          p_amount: number
+          p_client_seed?: string
+          p_risk: string
+          p_round_id: string
+          p_rows: number
+        }
+        Returns: Json
+      }
+      plinko_force_settle_stale_v1: { Args: { p_max_age_ms?: number }; Returns: number }
+      plinko_list_pending_v1: { Args: Record<string, never>; Returns: Json }
+      plinko_sync_v1: { Args: { p_round_id: string }; Returns: Json }
+      auto_bet_create_v1: {
+        Args: { p_bet_params?: Json; p_config: Json; p_game: string }
+        Returns: Json
+      }
+      auto_bet_grant_consent_v1: { Args: Record<string, never>; Returns: Json }
+      auto_bet_list_v1: { Args: Record<string, never>; Returns: Json }
+      auto_bet_pause_v1: { Args: { p_session_id: string }; Returns: Json }
+      auto_bet_resume_v1: { Args: { p_session_id: string }; Returns: Json }
+      auto_bet_stop_v1: { Args: { p_session_id: string }; Returns: Json }
+      auto_bet_sync_v1: { Args: { p_session_id: string }; Returns: Json }
+      auto_bet_worker_tick_v1: { Args: { p_batch_limit?: number }; Returns: number }
+      audit_export_month_v1: { Args: { p_yyyy_mm: string }; Returns: Json }
+      debit_phon_for_bet_v3: { Args: { p_amount: number; p_game: string; p_round_id: string }; Returns: Json }
+      credit_phon_for_payout_v3: {
+        Args: { p_amount: number; p_game: string; p_round_id: string }
+        Returns: Json
+      }
+      money_wallet_invariant_v1: { Args: Record<string, never>; Returns: Json }
+      kill_switch_status_v1: { Args: Record<string, never>; Returns: Json }
+      admin_enter_l2_v1: { Args: { p_reason: string }; Returns: Json }
+      admin_enter_l3_v1: { Args: { p_reason: string }; Returns: Json }
+      admin_exit_degrade_v1: { Args: { p_reason: string }; Returns: Json }
+      reconciliation_probe_v1: {
+        Args: { p_bet: number; p_multiplier: number; p_multiplier_e6?: number }
+        Returns: Json
+      }
+      reconciliation_run_daily_v1: { Args: Record<string, never>; Returns: Json }
+      game_authority_flag_v1: { Args: { p_key: string }; Returns: boolean }
       complete_onboarding_step: {
         Args: { p_nickname?: string; p_step_index: number }
         Returns: Json
@@ -990,6 +1187,10 @@ export type Database = {
         Args: { p_gross_payout: number; p_round_id: string }
         Returns: Json
       }
+      mines_cashout_v2: {
+        Args: { p_round_id: string }
+        Returns: Json
+      }
       mines_clamp_count: { Args: { p_mine_count: number }; Returns: number }
       mines_generate_layout: {
         Args: {
@@ -1023,6 +1224,15 @@ export type Database = {
       money_validate_bet_input: {
         Args: { p_amount: number; p_game: string; p_round_id: string }
         Returns: undefined
+      }
+      pf_session_create_or_get_v1: {
+        Args: { p_client_seed?: string; p_game: string }
+        Returns: Json
+      }
+      pf_session_rotate_v1: { Args: { p_game: string }; Returns: Json }
+      pf_session_set_client_seed_v1: {
+        Args: { p_client_seed: string; p_game: string }
+        Returns: Json
       }
       pf_draw_float: {
         Args: {
@@ -1065,6 +1275,9 @@ export type Database = {
         }
         Returns: string
       }
+      user_get_settings_v1: { Args: never; Returns: Json }
+      user_set_preferred_mode_v1: { Args: { p_mode: string }; Returns: Json }
+      resolve_user_mode_v1: { Args: never; Returns: string }
       refund_phon_for_bet_v2: {
         Args: { p_amount: number; p_game: string; p_round_id: string }
         Returns: Json

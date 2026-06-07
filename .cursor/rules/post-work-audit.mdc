@@ -1,0 +1,108 @@
+---
+description: 작업 완료 후 필수 2차 점검 — Stake/Rollbit 수준 오류0·오차0 검증 (에이전트 mandatory)
+alwaysApply: true
+---
+
+# Post-Work Audit — 작업 완료 후 필수 2차 점검
+
+**에이전트는 구현·테스트를 마쳤다고 사용자에게 보고하기 전에, 반드시 아래 2차 점검을 수행하고 결과를 보고에 포함한다.** 1차 게이트(`bun run check`)만으로 완료 선언 금지.
+
+## 언제 적용
+
+- 기능 구현, Supabase migration, Game Authority PR, money path, 리팩터 완료 시
+- 사용자가 "완료" / "보고" / "점검"을 요청하지 않아도 **모든 작업 종료 시 자동 적용**
+
+## 1차 게이트 (필수)
+
+```bash
+bun run check
+```
+
+Supabase 변경 시 추가:
+
+```bash
+bun run supabase:db:push   # 또는 migration 이미 push됨 확인
+bun run smoke:<game>-rpc     # 해당 게임 authority 작업 시
+```
+
+청소: `.cursor/rules/test-cleanup-agent.mdc` 매트릭스 준수 후 보고에 `청소: ...` 한 줄.
+
+## 2차 점검 체크리스트 (보고 필수)
+
+### A. Money Safety (오류 0)
+
+- [ ] real debit/credit/refund = RPC only (`lib/api/` wrapper)
+- [ ] 클라이언트 balance 발행·수정 없음
+- [ ] `serverCreditDoneRef` 또는 동등 패턴으로 real 이중 credit 방지
+- [ ] idempotency: 동일 `round_id` 재호출 안전
+- [ ] demo: `tryDebit` + 서버 `bet_amount=0` (server authority 게임)
+
+### B. PF / 수식 동형성 (오차 0)
+
+- [ ] TS Engine ↔ SQL helper 수식 대조 (주석·테스트·smoke)
+- [ ] `pf_draw_float` / HMAC cursor 일치
+- [ ] 경계값 (win 조건, clamp, index 범위) TS·SQL 동일
+- [ ] 게임별 parity spec 존재 또는 smoke가 outcome 검증
+
+### C. Server Authority (Stake 4축)
+
+| 축 | 확인 |
+|----|------|
+| 정확도 | 서버 outcome = 클라 표시 (애니만) |
+| PF | nonce++, server_seed_hash, helper REVOKE |
+| 서버 권위 | real 모드 클라 RNG 0회 |
+| UX | Resume-First, refund 금지, conflict hydrate |
+
+- [ ] `useGameAuthorityFlag` + `canUseServerAuthority` 게이트
+- [ ] `*_place_v1` / `*_sync_v1` / `*_complete_v1` (또는 multi-phase 동등)
+- [ ] feature flag 100% (migration INSERT)
+- [ ] Edge thin wrapper + smoke step
+
+### D. 금지 영역 (위반 0)
+
+- [ ] `botGenerator` / autobot 미수정
+- [ ] `LiveBetsFeed`, `liveTickScheduler`, `live_bets` 트리거 미수정 (import만 허용)
+- [ ] git commit/push/PR — 사용자 명시 요청 전 금지
+
+### E. 문서·산출물
+
+- [ ] `docs/PHONARA-GAME-AUTHORITY-COMPLETION-REPORT.md` 해당 PR 섹션 갱신 (GA 작업 시)
+- [ ] `types.ts` RPC entries (migration 시)
+
+## 보고 형식 (사용자-facing)
+
+작업 완료 보고 말미에 **반드시** 포함:
+
+```text
+## 2차 점검 (Post-Work Audit)
+판정: PERFECT | PASS with notes | BLOCKED
+- Money: ...
+- PF/수식: ...
+- Smoke/테스트: ...
+- 금지영역: ...
+- 정보성(블로커 아님): ...
+청소: cleanup:workspace ✓
+```
+
+**PERFECT** 조건: check GREEN + 해당 smoke ALL PASS + Money/PF/금지영역 이슈 0. 정보성만 남으면 PASS with notes.
+
+## Game Authority smoke SSOT
+
+| PR | Script |
+|----|--------|
+| GA-E Crash | `bun run smoke:crash-rpc` |
+| GA-F Dice | `bun run smoke:dice-rpc` |
+| GA-G Limbo | `bun run smoke:limbo-rpc` |
+| GA-H Wheel | `bun run smoke:wheel-rpc` |
+| GA-I Plinko | `bun run smoke:plinko-rpc` |
+| GA-J Auto-bet | `bun run smoke:auto-bet-rpc` |
+| GA-K Reconciliation | `bun run smoke:reconciliation-rpc` |
+| GA-L Money micro v3 | `bun run smoke:money-rpc` |
+| GA-M PF Degrade L2/L3 | `bun run smoke:pf-degrade` |
+
+## 참조 SSOT
+
+- 플랜: `docs/PHONARA-GAME-AUTHORITY-PLAN-v3-FINAL.md`
+- 완료 보고: `docs/PHONARA-GAME-AUTHORITY-COMPLETION-REPORT.md`
+- Resume: `src/shared/games/resumePolicy.ts`
+- Money: `.cursor/rules/money-safety.mdc`

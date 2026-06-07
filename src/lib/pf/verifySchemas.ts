@@ -3,7 +3,7 @@
  */
 import { z } from "zod";
 
-export const verifyGameSchema = z.enum(["crash", "dice", "limbo", "wheel", "mines"]);
+export const verifyGameSchema = z.enum(["crash", "dice", "limbo", "wheel", "mines", "plinko"]);
 
 export type VerifyGame = z.infer<typeof verifyGameSchema>;
 
@@ -19,6 +19,10 @@ export const verifyInputSchema = z.object({
     .refine((v) => v === 10 || v === 20 || v === 30, "segments must be 10, 20, or 30")
     .optional(),
   risk: z.enum(["low", "medium", "high"]).optional(),
+  rows: z.coerce
+    .number()
+    .refine((v) => v === 8 || v === 12 || v === 16, "rows must be 8, 12, or 16")
+    .optional(),
 });
 
 export type VerifyInput = z.infer<typeof verifyInputSchema>;
@@ -34,6 +38,7 @@ export const verifySearchSchema = z
     mineCount: z.coerce.number().optional(),
     segments: z.coerce.number().optional(),
     risk: z.enum(["low", "medium", "high"]).optional(),
+    rows: z.coerce.number().optional(),
   })
   .transform((raw) => ({
     game: raw.game ?? "crash",
@@ -44,6 +49,7 @@ export const verifySearchSchema = z
     mineCount: raw.mineCount,
     segments: raw.segments,
     risk: raw.risk,
+    rows: raw.rows,
   }));
 
 export type VerifySearch = z.infer<typeof verifySearchSchema>;

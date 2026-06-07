@@ -16,6 +16,7 @@ import {
   type WheelRisk,
   type WheelSegments,
 } from "@/shared/games/wheel/WheelEngine";
+import { dropPathPf, type RowCount, type RiskLevel } from "@/shared/games/plinko/PlinkoEngine";
 import { verifyInputSchema, type VerifyGame, type VerifyInput } from "./verifySchemas";
 
 const WHEEL_SEGMENTS = [10, 20, 30] as const;
@@ -49,6 +50,21 @@ function requireWheel(input: VerifyInput): { risk: WheelRisk; segments: WheelSeg
   return { risk: input.risk, segments };
 }
 
+const PLINKO_ROWS = [8, 12, 16] as const;
+
+function parsePlinkoRows(value: number | undefined): RowCount | undefined {
+  if (value === undefined) return undefined;
+  return PLINKO_ROWS.includes(value as RowCount) ? (value as RowCount) : undefined;
+}
+
+function requirePlinko(input: VerifyInput): { risk: RiskLevel; rows: RowCount } {
+  const rows = parsePlinkoRows(input.rows);
+  if (!input.risk || rows === undefined) {
+    throw new Error("plinko verify requires risk and rows");
+  }
+  return { risk: input.risk, rows };
+}
+
 function requireMines(input: VerifyInput): number {
   if (input.mineCount === undefined) {
     throw new Error("mines verify requires mineCount");
@@ -70,6 +86,8 @@ export function buildVerifyShareUrl(origin: string, input: VerifyInput): string 
   const wheelSegments = parseWheelSegments(parsed.segments);
   if (wheelSegments !== undefined) params.set("segments", String(wheelSegments));
   if (parsed.risk) params.set("risk", parsed.risk);
+  const plinkoRows = parsePlinkoRows(parsed.rows);
+  if (plinkoRows !== undefined) params.set("rows", String(plinkoRows));
   return `${origin}/fair/verify?${params.toString()}`;
 }
 
@@ -136,6 +154,23 @@ export async function verifyProvablyFair(input: VerifyInput): Promise<VerifyOutc
         label: "Mine tiles",
         detail: mines.join(", "),
         raw: { mines, mineCount },
+      };
+    }
+    case "plinko": {
+      const { risk, rows } = requirePlinko(parsed);
+      const result = await dropPathPf(seeds, rows, risk);
+      return {
+        commitHash,
+        commitValid,
+        label: "Plinko slot",
+        detail: `${result.multiplier}× (slot ${result.finalSlot}, path ${result.path.join("")})`,
+        raw: {
+          path: result.path,
+          finalSlot: result.finalSlot,
+          multiplier: result.multiplier,
+          rows,
+          risk,
+        },
       };
     }
     default: {

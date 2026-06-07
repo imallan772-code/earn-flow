@@ -2,10 +2,11 @@
  * House edge / RTP helper — pure.
  *
  * Used by display + settlement code in all games. Engine determinism
- * (computeRoll, computeCrashPoint) is never touched.
+ * functions are used by PF verification only (not game screens).
  *
- *   demo → 1.00 (no edge, friendly)
- *   real → 0.97 (3% house edge)
+ * Mode-level RTP = 1.00 for both demo and real (GA-B: 데모=리얼 동형).
+ * Effective 99% house edge is applied inside each game engine only
+ * (DiceEngine: 99/winChance, LimboEngine: LIMBO_RTP=0.99, etc.).
  */
 import { RTP, type GameMode } from "@/shared/mode/ModeContext";
 

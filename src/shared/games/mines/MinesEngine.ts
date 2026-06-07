@@ -13,8 +13,7 @@
  *
  * 순수 함수만 export. React/DOM 의존 0. spec은 환경 무관.
  *
- * TODO(real-money): 지뢰 배치는 서버 시드 공개 시점까지 클라이언트가 모르도록
- *  Edge Function이 결정해야 함. 본 엔진은 그대로 검증용으로 재사용 가능.
+ * GA-complete: 지뢰 배치는 서버 RPC (`mines_start_round_v1`). 본 엔진은 검증/데모 fallback용.
  */
 import { drawFloats, type ProvablyFairInput } from "../engine/provablyFair";
 

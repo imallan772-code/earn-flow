@@ -70,6 +70,7 @@ interface Args {
   nonce: number;
   mineCount: number;
   serverSeed: string;
+  pfReady: boolean;
   defaultClientSeed: string;
 }
 
@@ -84,6 +85,7 @@ export function useMinesLifecycle({
   nonce,
   mineCount,
   serverSeed,
+  pfReady,
   defaultClientSeed,
 }: Args) {
   const sfx = useSfx();
@@ -190,7 +192,7 @@ export function useMinesLifecycle({
 
   const handlePlace = useCallback(
     async (amount: number): Promise<boolean> => {
-      if (!round.isIdle || amount <= 0) return false;
+      if (!round.isIdle || amount <= 0 || !pfReady || !serverSeed.trim()) return false;
 
       if (wallet.mode === "real") {
         if (!restoreReadyRef.current || placeInFlightRef.current) return false;
@@ -235,7 +237,7 @@ export function useMinesLifecycle({
           if (res.balance?.phon != null) syncRealBalance(res.balance.phon);
 
           const activeRound: ActiveMinesRound = {
-            nonce: res.nonce,
+            nonce,
             amount: res.bet_amount,
             mineCount: res.mine_count,
             mines: [],
@@ -312,6 +314,7 @@ export function useMinesLifecycle({
       mineCount,
       nonce,
       serverSeed,
+      pfReady,
       defaultClientSeed,
       sfx,
       commitActiveRound,
@@ -465,7 +468,7 @@ export function useMinesLifecycle({
     };
 
     if (active.serverSide) {
-      void cashoutMinesRound(`n${active.nonce}`, gross)
+      void cashoutMinesRound(`n${active.nonce}`)
         .then((res) => {
           if (res.balance?.phon != null) syncRealBalance(res.balance.phon);
           finishWin();

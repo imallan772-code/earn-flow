@@ -1,6 +1,9 @@
 /**
  * Real-mode active session helpers — Stake-like resume SSOT (cross-device).
+ *
+ * Resume-First anti-abuse policy: @see resumePolicy.ts (GA-0 — no unmount refund).
  */
+export { RESUME_FIRST_POLICY, GA0_PR_CHECKLIST } from "./resumePolicy";
 import {
   clearGameActiveSession,
   getGameActiveSession,

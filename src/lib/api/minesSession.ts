@@ -24,8 +24,12 @@ export async function startMinesRound(input: {
   mineCount: number;
   clientSeed: string;
   nonce: number;
-  serverSeed?: string;
+  serverSeed: string;
 }) {
+  const seed = input.serverSeed?.trim();
+  if (!seed) {
+    throw new Error("MINES_PF_SEED_REQUIRED");
+  }
   const supabase = getSupabaseClient();
   const { data, error } = await supabase.rpc("mines_start_round_v1", {
     p_amount: input.amount,
@@ -33,7 +37,7 @@ export async function startMinesRound(input: {
     p_mine_count: input.mineCount,
     p_client_seed: input.clientSeed,
     p_nonce: input.nonce,
-    p_server_seed: input.serverSeed ?? "phonara-mines-demo-server-seed-v1",
+    p_server_seed: seed,
   });
   if (error) throw error;
   const result = minesStartResultSchema.parse(data);
@@ -51,11 +55,10 @@ export async function revealMinesTile(roundId: string, tile: number) {
   return minesRevealResultSchema.parse(data);
 }
 
-export async function cashoutMinesRound(roundId: string, grossPayout: number) {
+export async function cashoutMinesRound(roundId: string) {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase.rpc("mines_cashout_v1", {
+  const { data, error } = await supabase.rpc("mines_cashout_v2", {
     p_round_id: roundId,
-    p_gross_payout: grossPayout,
   });
   if (error) throw error;
   const result = minesCashoutResultSchema.parse(data);

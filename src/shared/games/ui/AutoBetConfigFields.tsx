@@ -24,6 +24,15 @@ export function AutoBetConfigFields({ cfg, onChange }: Props) {
           ))}
         </select>
       </Field>
+      <Field label="베팅 횟수 (0=무한)">
+        <input
+          type="number"
+          min={0}
+          value={cfg.numberOfBets}
+          onChange={(e) => onChange({ ...cfg, numberOfBets: Number(e.target.value) || 0 })}
+          className="font-numeric w-full rounded-lg bg-(--color-bg-0) px-2 py-1.5 text-sm outline-none"
+        />
+      </Field>
       <div className="grid grid-cols-2 gap-2">
         <Field label="패배 시 증가 %">
           <input

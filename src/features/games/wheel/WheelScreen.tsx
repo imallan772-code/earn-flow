@@ -1,24 +1,10 @@
 /**
- * WheelScreen — ROUND J v1.2 끝판왕. Single-slot + Design B (WheelDisplay/WheelControls 분리).
+ * WheelScreen — GA-H server authority + legacy PF fallback.
  *
- * 불변
- *  - WheelEngine.ts 0 diff
- *  - StakeBetPanel / useAutoBetController 0 diff
- *  - localStorage key = phonara.gamestate.wheel.v1 (version 유지)
+ * Server path (GA-H): wheel_place_v1 instant settle → 3200ms animation only.
+ * Legacy path: offline / flag off → WheelEngine spin (unchanged).
  *
- * nonce 정책
- *  - place() 성공 시 global nonce++. ActiveWheelRound.nonce 에 스냅샷.
- *  - idle 복귀 nonce++ effect 삭제 (audit patch).
- *
- * 복원 (이중 차감 절대 금지)
- *  - 마운트 시 activeRound != null → round.place() (state hydrate만).
- *    tryDebit / liveBetsStore.push 0회.
- *
- * 토스트 정책
- *  - 일반 win/loss/bet toast 제거 (Limbo 정렬).
- *  - jackpot (mult ≥ 9.0) → SFX `jackpot` + RewardBurst (Display 내부)만.
- *
- * TODO(real-money): spin은 Edge Function 위임. 테이블/계산은 그대로 재사용.
+ * nonce: server path uses next_nonce from RPC; legacy place → nonce++.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -41,7 +27,8 @@ import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
 import { liveFeedBetIdForRound } from "@/lib/api/liveFeedMap";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { profitOf } from "@/shared/games/engine/houseEdge";
-import { commitServerSeed } from "@/shared/games/engine/provablyFair";
+import { usePfSession } from "@/shared/games/hooks/usePfSession";
+import { useGameAuthorityFlag } from "@/shared/games/hooks/useGameAuthorityFlag";
 import {
   expectedMultiplier,
   multiplierAt,
@@ -55,13 +42,18 @@ import {
   wheelStore,
 } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
-import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
+import { isSupabaseConfigured } from "@/integrations/supabase/env";
+import { useAuth } from "@/features/auth/AuthContext";
+import { wheelComplete, wheelPlace } from "@/lib/api/wheelSession";
+import { getGameActiveSession } from "@/lib/api/gameSessions";
+import { toIntegerPhonAmount } from "@/lib/api/walletSchemas";
 import {
-  clearRealSession,
-  fetchRealSession,
-  nonceFromRoundId,
-  syncRealSession,
-} from "@/shared/games/gameSessionHelpers";
+  activeWheelRoundFromSession,
+  isWheelSessionConflict,
+} from "@/lib/gameSessions/wheelSessionUtils";
+import { fetchRealSession, syncRealSession } from "@/shared/games/gameSessionHelpers";
+import { syncRealBalance } from "@/shared/wallet/walletStore";
+import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { useHotkeys, type HotkeyMap } from "@/shared/hooks/useHotkeys";
 import { useRegisterMainMode } from "@/shared/layout/useGameLayout";
 import { useSfx } from "@/shared/sfx/useSfx";
@@ -74,12 +66,13 @@ import { WheelRightRail } from "./WheelRightRail";
 import { useDesktopLayout } from "@/shared/hooks/useDesktopLayout";
 import { useRegisterRightRail } from "@/shared/layout/useGameLayout";
 
-const SERVER_SEED = "phonara-wheel-demo-server-seed-v1";
+const LEGACY_PF_SEED = "phonara-wheel-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
 const RISK_ORDER: readonly WheelRisk[] = ["low", "medium", "high"];
 
 export function WheelScreen() {
   useRegisterMainMode("game");
+  const { status: authStatus } = useAuth();
   const { mode, balance, tryDebit, credit } = useGameWallet();
   const nonce = wheelStore.use((s) => s.nonce);
   const history = wheelStore.use((s) => s.history);
@@ -87,6 +80,7 @@ export function WheelScreen() {
   const risk = wheelStore.use((s) => s.risk);
   const segments = wheelStore.use((s) => s.segments);
   const pendingAmount = wheelStore.use((s) => s.pendingAmount);
+  const storeClientSeed = wheelStore.use((s) => s.clientSeed);
   const activeRound = wheelStore.use((s) => s.activeRound);
 
   const round = useGameRound({ rollingMs: 3200, settledMs: 1200 });
@@ -95,21 +89,26 @@ export function WheelScreen() {
   const [jackpotTrigger, setJackpotTrigger] = useState(0);
   const settledRef = useRef(false);
   const restoredRef = useRef(false);
-  const [commit, setCommit] = useState("");
+  const serverCreditDoneRef = useRef(false);
+  const placeInFlightRef = useRef(false);
   const [showFair, setShowFair] = useState(false);
   const [seedDraft, setSeedDraft] = useState("");
+  const pf = usePfSession("wheel", LEGACY_PF_SEED, DEFAULT_CLIENT_SEED, {
+    clientSeed: storeClientSeed || DEFAULT_CLIENT_SEED,
+  });
+  const wheelServerFlag = useGameAuthorityFlag("wheel_server_settle");
+  const canUseServerAuthority =
+    isSupabaseConfigured() &&
+    authStatus === "authenticated" &&
+    pf.ready &&
+    !pf.legacyFallback &&
+    wheelServerFlag;
   const sfx = useSfx();
   const tickIntervalRef = useRef<number | null>(null);
   const isDesktop = useDesktopLayout();
   const rightRailNode = useMemo(() => <WheelRightRail />, []);
   useRegisterRightRail(rightRailNode);
 
-  // PF commit hash
-  useEffect(() => {
-    commitServerSeed(SERVER_SEED).then(setCommit);
-  }, []);
-
-  // Seed draft sync
   useEffect(() => {
     if (showFair) setSeedDraft(wheelStore.get().clientSeed);
   }, [showFair]);
@@ -132,7 +131,7 @@ export function WheelScreen() {
     [round, mode],
   );
 
-  // Restore activeRound (once) — real: server SSOT, demo: localStorage
+  // Resume-First: server SSOT on remount (GA-H §5.2).
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
@@ -142,109 +141,120 @@ export function WheelScreen() {
       if (ar) hydrateActiveRound(ar);
     };
 
-    if (mode !== "real") {
+    if (!isSupabaseConfigured() || authStatus !== "authenticated") {
       applyLocal();
       return;
     }
 
     void fetchRealSession("wheel").then((row) => {
       if (row) {
-        const cs = row.client_state as {
-          nonce?: number;
-          risk?: WheelRisk;
-          segments?: WheelSegments;
-          live_bet_id?: string;
-          placed_at?: number;
-        };
         const local = wheelStore.get().activeRound;
-        const ar: ActiveWheelRound = {
-          nonce: cs.nonce ?? nonceFromRoundId(row.round_id),
-          amount: row.bet_amount,
-          risk: cs.risk ?? wheelStore.get().risk,
-          segments: cs.segments ?? wheelStore.get().segments,
-          liveBetId: local?.liveBetId ?? cs.live_bet_id ?? `lb_wheel_${row.round_id}`,
-          placedAt: cs.placed_at ?? Date.now(),
-          betMode: "real",
-        };
-        wheelStore.set((s) => ({ ...s, activeRound: ar }));
+        const ar = activeWheelRoundFromSession(row, { liveBetId: local?.liveBetId });
+        wheelStore.set((s) => ({ ...s, activeRound: ar, nonce: ar.nextNonce ?? ar.nonce }));
         hydrateActiveRound(ar);
         return;
       }
       applyLocal();
-    });
-  }, [mode, hydrateActiveRound]);
+    }).catch(applyLocal);
+  }, [authStatus, hydrateActiveRound]);
 
-  // Settle: rolling phase → spin & resolve.
+  const settleFromOutcome = useCallback(
+    (
+      ar: ActiveWheelRound,
+      idx: number,
+      mult: number,
+      won: boolean,
+      skipRealCredit: boolean,
+    ) => {
+      const profit = won ? profitOf(ar.amount, mult, mode) : -ar.amount;
+      setResultIndex(idx);
+      setResultMult(mult);
+      if (won && !skipRealCredit) {
+        void credit(ar.amount + profit, mult, { game: "wheel", roundId: `n${ar.nonce}` });
+      }
+      const outcome: WheelOutcome = {
+        outcome: won ? "win" : "loss",
+        profit,
+        nonce: ar.nonce,
+        risk: ar.risk,
+        segments: ar.segments,
+        index: idx,
+        multiplier: mult,
+      };
+      wheelStore.set((s) => ({
+        ...s,
+        history: [
+          {
+            id: `n${ar.nonce}`,
+            risk: ar.risk,
+            segments: ar.segments,
+            index: idx,
+            multiplier: mult,
+            win: won,
+          },
+          ...s.history,
+        ].slice(0, 30),
+        lastOutcome: outcome,
+      }));
+      liveBetsStore.settle(
+        ar.liveBetId,
+        {
+          multiplier: won ? mult : null,
+          profit: won ? +profit.toFixed(2) : -ar.amount,
+          status: won ? "win" : "loss",
+        },
+        userLiveBetFallback("wheel", ar.amount, mode),
+      );
+      recordSessionOutcome({
+        outcome: won ? "win" : "loss",
+        profit,
+        multiplier: won ? mult : undefined,
+      });
+      sfx.play(won ? "win" : "loss");
+      if (won && mult >= 9.0) {
+        sfx.play("jackpot");
+        setJackpotTrigger((n) => n + 1);
+      }
+      settledRef.current = true;
+    },
+    [mode, credit, sfx],
+  );
+
+  // rolling → server outcome or legacy spin
   useEffect(() => {
     if (round.phase !== "rolling") return;
     const ar = wheelStore.get().activeRound;
     if (!ar) return;
     let alive = true;
 
-    // tick SFX every 200ms during spin (reduced-motion handled inside useSfx)
     if (tickIntervalRef.current == null) {
       tickIntervalRef.current = window.setInterval(() => sfx.play("tick"), 200);
     }
 
+    if (
+      ar.serverSide &&
+      ar.spinIndex != null &&
+      ar.multiplier != null &&
+      ar.won != null
+    ) {
+      const skipRealCredit =
+        ar.betMode === "real" && ar.serverSide && serverCreditDoneRef.current;
+      settleFromOutcome(ar, ar.spinIndex, ar.multiplier, ar.won, skipRealCredit);
+      return () => {
+        if (tickIntervalRef.current != null) {
+          window.clearInterval(tickIntervalRef.current);
+          tickIntervalRef.current = null;
+        }
+      };
+    }
+
     const seed = wheelStore.get().clientSeed || DEFAULT_CLIENT_SEED;
-    void spin({ serverSeed: SERVER_SEED, clientSeed: seed, nonce: ar.nonce }, ar.segments).then(
+    void spin({ serverSeed: pf.serverSeed, clientSeed: seed, nonce: ar.nonce }, ar.segments).then(
       (idx) => {
         if (!alive) return;
         const mult = multiplierAt(ar.risk, ar.segments, idx);
         const won = mult > 0;
-        const profit = won ? profitOf(ar.amount, mult, mode) : -ar.amount;
-        setResultIndex(idx);
-        setResultMult(mult);
-        if (won) {
-          void credit(ar.amount + profit, mult, { game: "wheel", roundId: `n${ar.nonce}` });
-        }
-        const outcome: WheelOutcome = {
-          outcome: won ? "win" : "loss",
-          profit,
-          nonce: ar.nonce,
-          risk: ar.risk,
-          segments: ar.segments,
-          index: idx,
-          multiplier: mult,
-        };
-        wheelStore.set((s) => ({
-          ...s,
-          activeRound: null,
-          history: [
-            {
-              id: `n${ar.nonce}`,
-              risk: ar.risk,
-              segments: ar.segments,
-              index: idx,
-              multiplier: mult,
-              win: won,
-            },
-            ...s.history,
-          ].slice(0, 30),
-          lastOutcome: outcome,
-        }));
-        liveBetsStore.settle(
-          ar.liveBetId,
-          {
-            multiplier: won ? mult : null,
-            profit: won ? +profit.toFixed(2) : -ar.amount,
-            status: won ? "win" : "loss",
-          },
-          userLiveBetFallback("wheel", ar.amount, mode),
-        );
-        recordSessionOutcome({
-          outcome: won ? "win" : "loss",
-          profit,
-          multiplier: won ? mult : undefined,
-        });
-        sfx.play(won ? "win" : "loss");
-        if (won && mult >= 9.0) {
-          sfx.play("jackpot");
-          setJackpotTrigger((n) => n + 1);
-        }
-        // 일반 win/loss 토스트 제거 (Limbo 정렬).
-        settledRef.current = true;
-        if (ar.betMode === "real") clearRealSession("wheel", `n${ar.nonce}`);
+        settleFromOutcome(ar, idx, mult, won, false);
       },
     );
     return () => {
@@ -254,15 +264,26 @@ export function WheelScreen() {
         tickIntervalRef.current = null;
       }
     };
-  }, [round.phase, mode, credit, sfx]);
+  }, [round.phase, pf.serverSeed, settleFromOutcome, sfx]);
 
-  // idle 복귀 → 결과 클리어. **nonce++ 없음 (audit patch).**
+  // idle → clear session + nonce from server
   useEffect(() => {
     if (round.phase !== "idle" || !settledRef.current) return;
+    const ar = wheelStore.get().activeRound;
+    const roundId = ar ? `n${ar.nonce}` : null;
+    if (ar?.serverSide && roundId) {
+      void wheelComplete(roundId);
+    }
     settledRef.current = false;
+    serverCreditDoneRef.current = false;
     setResultIndex(null);
     setResultMult(null);
-  }, [round.phase]);
+    wheelStore.set((s) => ({
+      ...s,
+      activeRound: null,
+      nonce: ar?.nextNonce ?? s.nonce,
+    }));
+  }, [round.phase, activeRound]);
 
   const setRisk = useCallback((r: WheelRisk) => {
     wheelStore.set((s) => ({ ...s, risk: r }));
@@ -279,12 +300,109 @@ export function WheelScreen() {
 
   const handlePlace = useCallback(
     async (amount: number): Promise<boolean> => {
-      if (!round.isIdle || amount <= 0) return false;
+      if (!round.isIdle || amount <= 0 || !pf.ready || wheelStore.get().activeRound) return false;
       const currentNonce = wheelStore.get().nonce;
       const roundId = `n${currentNonce}`;
+      const s0 = wheelStore.get();
+
+      if (canUseServerAuthority) {
+        if (placeInFlightRef.current) return false;
+        placeInFlightRef.current = true;
+        const betAmount =
+          mode === "real" ? toIntegerPhonAmount(amount) : Math.max(1, Math.round(amount));
+        if (mode === "real" && betAmount == null) {
+          placeInFlightRef.current = false;
+          return false;
+        }
+
+        try {
+          const existing = await getGameActiveSession("wheel");
+          if (existing) {
+            const local = wheelStore.get().activeRound;
+            const ar = activeWheelRoundFromSession(existing, { liveBetId: local?.liveBetId });
+            wheelStore.set((s) => ({ ...s, activeRound: ar, nonce: ar.nextNonce ?? ar.nonce }));
+            hydrateActiveRound(ar);
+            return true;
+          }
+
+          if (mode === "demo") {
+            const ok = await tryDebit(amount, { game: "wheel", roundId });
+            if (!ok) return false;
+          }
+
+          const seed = wheelStore.get().clientSeed || DEFAULT_CLIENT_SEED;
+          const res = await wheelPlace({
+            amount: betAmount ?? Math.max(1, Math.round(amount)),
+            roundId,
+            risk: s0.risk,
+            segments: s0.segments,
+            clientSeed: seed,
+          });
+          if (res.mode === "real") {
+            serverCreditDoneRef.current = res.won;
+            if (res.balance?.phon != null) syncRealBalance(res.balance.phon);
+          }
+
+          const liveBetId = liveBetsStore.push({
+            id: liveFeedBetIdForRound("wheel", roundId),
+            user: "나의_베팅",
+            game: "wheel",
+            amount: mode === "demo" ? amount : (betAmount ?? amount),
+            multiplier: null,
+            profit: null,
+            status: "pending",
+            mode,
+            isMe: true,
+          });
+
+          const ar: ActiveWheelRound = {
+            nonce: currentNonce,
+            amount: mode === "demo" ? amount : (betAmount ?? amount),
+            risk: res.risk,
+            segments: res.segments,
+            liveBetId,
+            placedAt: Date.now(),
+            betMode: mode,
+            serverSide: true,
+            spinIndex: res.spin_index,
+            multiplier: res.multiplier,
+            won: res.won,
+            nextNonce: currentNonce + 1,
+          };
+          wheelStore.set((s) => ({
+            ...s,
+            pendingAmount: amount,
+            activeRound: ar,
+          }));
+          setResultIndex(null);
+          setResultMult(null);
+          sfx.play("bet");
+          round.place();
+          return true;
+        } catch (err) {
+          if (isWheelSessionConflict(err)) {
+            try {
+              const row = await getGameActiveSession("wheel");
+              if (row) {
+                const local = wheelStore.get().activeRound;
+                const ar = activeWheelRoundFromSession(row, { liveBetId: local?.liveBetId });
+                wheelStore.set((s) => ({ ...s, activeRound: ar, nonce: ar.nextNonce ?? ar.nonce }));
+                hydrateActiveRound(ar);
+                return true;
+              }
+            } catch {
+              /* fall through */
+            }
+          }
+          appToast.raw.error("베팅에 실패했습니다 (진행 중 라운드가 있거나 네트워크 오류)");
+          return false;
+        } finally {
+          placeInFlightRef.current = false;
+        }
+      }
+
       const ok = await tryDebit(amount, { game: "wheel", roundId });
       if (!ok) return false;
-      const s0 = wheelStore.get();
       const liveBetId = liveBetsStore.push({
         id: liveFeedBetIdForRound("wheel", roundId),
         user: "나의_베팅",
@@ -303,7 +421,7 @@ export function WheelScreen() {
         segments: s0.segments,
         liveBetId,
         placedAt: Date.now(),
-        betMode: mode as "demo" | "real",
+        betMode: mode,
       };
       wheelStore.set((s) => ({
         ...s,
@@ -326,10 +444,9 @@ export function WheelScreen() {
       sfx.play("bet");
       return true;
     },
-    [round, tryDebit, mode, sfx],
+    [round, tryDebit, mode, sfx, pf.ready, canUseServerAuthority, hydrateActiveRound],
   );
 
-  // PF seed 적용 — 진행 중 라운드 있으면 차단 (Dice/Wheel: refund RPC 없음, round 2~5s)
   const applySeed = useCallback(() => {
     if (!round.isIdle || wheelStore.get().activeRound) {
       appToast.raw.error(PF_BLOCK_ACTIVE_ROUND_MSG);
@@ -341,20 +458,24 @@ export function WheelScreen() {
       setShowFair(false);
       return;
     }
-    wheelStore.set((s) => ({
-      ...s,
-      clientSeed: next,
-      nonce: 0,
-      lastOutcome: null,
-    }));
-    setResultIndex(null);
-    setResultMult(null);
-    settledRef.current = false;
-    notifyPfSeedChanged();
-    setShowFair(false);
-  }, [seedDraft, round.isIdle]);
+    void pf.setClientSeed(next).then(() => {
+      wheelStore.set((s) => ({
+        ...s,
+        clientSeed: next,
+        nonce: 0,
+        lastOutcome: null,
+        activeRound: null,
+      }));
+      setResultIndex(null);
+      setResultMult(null);
+      settledRef.current = false;
+      notifyPfSeedChanged();
+      setShowFair(false);
+    }).catch(() => {
+      appToast.raw.error("시드 변경에 실패했습니다");
+    });
+  }, [seedDraft, round.isIdle, pf]);
 
-  // Hotkeys
   const hotkeys = useMemo<HotkeyMap>(
     () => ({
       " ": (e) => {
@@ -381,14 +502,13 @@ export function WheelScreen() {
 
   const avgMult = useMemo(() => expectedMultiplier(risk, segments), [risk, segments]);
 
-  // PF rows
   const fairRows: ProvablyFairRow[] = [
     {
       label: "서버 시드 (해시)",
       content: (
-        <code className="break-all text-[10px] text-(--color-cyan)">{commit || "로딩 중..."}</code>
+        <code className="break-all text-[10px] text-(--color-cyan)">{pf.commitHash || "로딩 중..."}</code>
       ),
-      copyText: commit || undefined,
+      copyText: pf.commitHash || undefined,
     },
     {
       label: "클라이언트 시드",
@@ -475,7 +595,7 @@ export function WheelScreen() {
           <WheelControls
             risk={risk}
             segments={segments}
-            disabled={!round.isIdle}
+            disabled={!round.isIdle || !!activeRound}
             onRisk={setRisk}
             onSegments={setSegmentsValue}
           />
@@ -492,7 +612,7 @@ export function WheelScreen() {
           <StakeBetPanel
             variant="full"
             showAutoTarget={false}
-            canPlace={round.isIdle}
+            canPlace={round.isIdle && !activeRound && pf.ready}
             hasActiveBet={!round.isIdle}
             bettingRoundKey={activeRound?.nonce ?? nonce}
             balance={balance}
@@ -509,6 +629,13 @@ export function WheelScreen() {
             onAmountChange={(amount) => wheelStore.set((s) => ({ ...s, pendingAmount: amount }))}
             onPlace={(amount) => handlePlace(amount)}
             onCashout={() => {}}
+            serverAutoBet={{
+              game: "wheel",
+              getBetParams: () => ({
+                risk: wheelStore.get().risk,
+                segments: wheelStore.get().segments,
+              }),
+            }}
           />
         }
       />
@@ -523,13 +650,13 @@ export function WheelScreen() {
         footer={
           <>
             <p>
-              시드 변경 시 nonce 0 리셋 + 진행 중 라운드 폐기. 동일 시드/라운드는 항상 같은 결과를
-              만듭니다.
+              시드 변경 시 nonce 0 리셋. 진행 중 라운드가 있으면 시드 변경 불가. 이탈 시 라운드는
+              저장되어 복귀 시 이어집니다.
             </p>
             <PfVerifyPageLink
               game="wheel"
-              serverSeed={SERVER_SEED}
-              serverSeedHash={commit}
+              serverSeed={pf.serverSeed}
+              serverSeedHash={pf.commitHash}
               clientSeed={seedDraft.trim() || DEFAULT_CLIENT_SEED}
               nonce={nonce}
               risk={risk}

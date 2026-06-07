@@ -182,6 +182,60 @@ SUPABASE_SERVICE_ROLE_KEY=...
 
 ---
 
+---
+
+## 10. Game Authority 운영 인프라 (GA-M plan §15)
+
+### 10.1 월간 시드 공개 (PF 신뢰)
+
+- [ ] `audit_export_month_v1` RPC → `/audit/{yyyy-mm}.json` 엔드포인트 운영 스케줄 설정
+- [ ] 외부 검증자용 문서 공개 (PF 검증 방법 + seed 해석 가이드)
+- 트랙: **코드** (GA-K RPC 완료, 운영 스케줄만)
+
+### 10.2 KYC/AML 인프라
+
+- [ ] real mode 대규모 활성화 전 KYC 프로바이더 연동
+- [ ] 출금 한도별 KYC 레벨 정책 확정
+- [ ] AML 스크리닝 워크플로우
+- 트랙: **별도 PR / 외부 연동**
+
+### 10.3 출금 SLA
+
+- [ ] 출금 처리 SLA 24시간 이내 정책 확정
+- [ ] 출금 큐 모니터링 대시보드
+- [ ] SLA 위반 시 자동 알림
+- 트랙: **정책 + 모니터링**
+
+### 10.4 CS/신고 티켓 시스템
+
+- [ ] 사용자 신고/CS 티켓 도구 도입 (Zendesk / 자체 등)
+- [ ] refund 시도 패턴 모니터링 (abuse 탐지)
+- 트랙: **운영 도구**
+
+### 10.5 Daily Metric Slack Alarms
+
+- [ ] `reconciliation_alerts` (24h): 0건 아니면 즉시 freeze
+- [ ] `pf_degrade_audit` L2/L3 events: 0건 아니면 즉시 검토
+- [ ] auto-bet active sessions 추세 모니터링
+- [ ] Edge Function p95/p99 latency 대시보드
+- [ ] Crash force-settle count 비정상 spike 감시
+- 트랙: **GA-M-ops 연계**
+
+### 10.6 Insurance Fund (대형 페이아웃 대비)
+
+- [ ] 보험 기금 규모 결정 (월 예상 매출 대비 %)
+- [ ] 대형 페이아웃 (예: 10,000+ PHON) 발생 시 알림 + 수동 검토 트리거
+- 트랙: **재무/정책**
+
+### 10.7 로그 보관 정책
+
+- [ ] `game_rounds`, `pf_sessions`, `reconciliation_alerts` 보관 기간 확정
+- [ ] `pf_degrade_audit` 감사 로그 무기한 보관
+- [ ] GDPR/개인정보 규정 대응 (해당 시)
+- 트랙: **인프라**
+
+---
+
 ## 메모
 
 - **로컬 dev:** 항상 `http://localhost:8080` 하나만 (`bun run dev` 중복 실행 금지)

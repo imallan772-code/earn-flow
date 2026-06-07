@@ -12,6 +12,12 @@
  *       Multiplier 테이블도 서버에서 검증.
  */
 
+import {
+  bytesGenerator,
+  floatFromBytes,
+  type ProvablyFairInput,
+} from "../engine/provablyFair";
+
 export type RiskLevel = "low" | "medium" | "high";
 export type RowCount = 8 | 12 | 16;
 
@@ -178,4 +184,40 @@ function mulberry32(seed: number): () => number {
  */
 export function getMaxMultiplier(risk: RiskLevel, rows: RowCount): number {
   return Math.max(...MULTIPLIERS[risk][rows]);
+}
+
+/** GA-I: HMAC PF path — server parity (cursor = row index). Legacy uses mulberry32 dropPath. */
+export async function dropPathPf(
+  input: ProvablyFairInput,
+  rows: RowCount,
+  risk: RiskLevel = "medium",
+): Promise<PlinkoDropResult> {
+  if (!ALLOWED_ROWS.includes(rows)) {
+    throw new Error(`Plinko: rows must be 8, 12 or 16 (got ${rows})`);
+  }
+  const path: number[] = [];
+  let finalSlot = 0;
+  for (let i = 0; i < rows; i++) {
+    const bytes = await bytesGenerator(input, i);
+    const u = floatFromBytes(bytes, 0);
+    const dir = u < 0.5 ? 0 : 1;
+    path.push(dir);
+    finalSlot += dir;
+  }
+  const table = MULTIPLIERS[risk][rows];
+  const multiplier = table[finalSlot];
+  if (multiplier === undefined) {
+    throw new Error(`Missing multiplier for rows=${rows} slot=${finalSlot}`);
+  }
+  return {
+    path,
+    finalSlot,
+    multiplier,
+    totalRows: rows,
+    risk,
+    seed: `${input.clientSeed}:${input.nonce}`,
+    clientSeed: input.clientSeed,
+    nonce: input.nonce,
+    serverSeed: input.serverSeed,
+  };
 }

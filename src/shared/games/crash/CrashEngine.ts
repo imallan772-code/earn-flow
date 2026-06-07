@@ -32,6 +32,14 @@ export interface RoundState {
   crashPoint: number;
 }
 
+/** Elapsed ms for curve — startedAt may be performance.now() or epoch ms (server authority). */
+export function crashElapsedMs(startedAt: number, now?: number): number {
+  if (startedAt <= 0) return 0;
+  const useEpoch = startedAt > 1e12;
+  const t = now ?? (useEpoch ? Date.now() : performance.now());
+  return Math.max(0, t - startedAt);
+}
+
 /** Instantaneous multiplier curve. Display precision = 2 decimals. */
 export function multiplierAt(elapsedMs: number): number {
   if (elapsedMs <= 0) return 1.0;

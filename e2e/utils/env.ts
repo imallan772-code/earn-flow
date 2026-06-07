@@ -13,8 +13,15 @@ let fileEnv: Record<string, string> | null = null;
  */
 function envFromFile(): Record<string, string> {
   if (fileEnv) return fileEnv;
-  const envPath = path.resolve(rootDir, ".env");
-  fileEnv = fs.existsSync(envPath) ? dotenv.parse(fs.readFileSync(envPath, "utf8")) : {};
+  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+  const merged: Record<string, string> = {};
+  for (const name of [".env", ".env.local"]) {
+    const envPath = path.resolve(root, name);
+    if (fs.existsSync(envPath)) {
+      Object.assign(merged, dotenv.parse(fs.readFileSync(envPath, "utf8")));
+    }
+  }
+  fileEnv = merged;
   return fileEnv;
 }
 
@@ -36,6 +43,9 @@ const FILE_ENV_SECRET_KEYS = [
   "E2E_USER_PASSWORD",
   "VITE_SUPABASE_URL",
   "VITE_SUPABASE_ANON_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "VITE_SUPABASE_SERVICE_ROLE_KEY",
+  "CRASH_CRON_SECRET",
 ] as const;
 
 /** Warn when Bun's process.env differs from .env file (common with `$` in passwords). */
@@ -62,6 +72,20 @@ export function getE2eCredentials(): { email: string; password: string } | null 
 
 export function hasE2eCredentials(): boolean {
   return getE2eCredentials() != null;
+}
+
+/** Server-only secret — never import in client bundles. */
+export function getServiceRoleKey(): string | undefined {
+  const key =
+    getEnv("SUPABASE_SERVICE_ROLE_KEY")?.trim() ||
+    getEnv("VITE_SUPABASE_SERVICE_ROLE_KEY")?.trim() ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+    process.env.VITE_SUPABASE_SERVICE_ROLE_KEY?.trim();
+  return key || undefined;
+}
+
+export function getCrashCronSecret(): string | undefined {
+  return getEnv("CRASH_CRON_SECRET")?.trim() || process.env.CRASH_CRON_SECRET?.trim();
 }
 
 export function getE2eBaseUrl(): string {

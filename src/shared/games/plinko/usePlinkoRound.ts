@@ -1,19 +1,19 @@
 /**
- * usePlinkoRound — Plinko 라운드 + Wallet + LiveFeed 통합 훅 (ROUND M).
+ * usePlinkoRound — Plinko 라운드 + Wallet + LiveFeed (GA-I server queue).
  *
- * 변경: 단일 라운드 → 5공 큐 (연타). Export 시그니처는 **git diff 0** 으로 동결.
+ * Server path (GA-I): plinko_enqueue_v1 → physics anim → plinko_complete_v1 credit.
+ * Legacy path: mulberry32 dropPath (flag off / offline).
  *
- * Money 정책 (Plinko-specific, L-2 inheritance):
- *  - PF block: 큐 가득 (5공 / reduced-motion 시 1공) → enqueue 무시
- *  - Real unmount: in-flight 정산만 drain — refund RPC 0 (Stake resume policy).
- *
- * 동시성:
- *  - 렌더러는 한 번에 한 공만 표시. 큐는 sequential drain.
- *  - nonce++ 는 **enqueue 시점** — debit roundId (`plinko-n${nonce}`) 와 1:1.
- *  - reducedMotion ON → 큐 cap=1 (단일 공만 낙하).
+ * Export 시그니처 동결. Resume-First: plinko_list_pending_v1 on mount.
  */
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
-import { PlinkoEngine, MULTIPLIERS, type RiskLevel, type RowCount } from "./PlinkoEngine";
+import {
+  PlinkoEngine,
+  MULTIPLIERS,
+  type PlinkoDropResult,
+  type RiskLevel,
+  type RowCount,
+} from "./PlinkoEngine";
 import { getPlinkoSFX } from "./PlinkoSFX";
 import { liveBetsStore } from "@/shared/livefeed/LiveBetsStore";
 import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
@@ -23,17 +23,38 @@ import { plinkoStore, type PlinkoOutcome } from "@/shared/games/state/persistedG
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
 import type { GameMode } from "@/shared/mode/ModeContext";
 import { clearRealSession, syncRealSession } from "@/shared/games/gameSessionHelpers";
+import { useAuth } from "@/features/auth/AuthContext";
+import { isSupabaseConfigured } from "@/integrations/supabase/env";
+import { usePfSession } from "@/shared/games/hooks/usePfSession";
+import { useGameAuthorityFlag } from "@/shared/games/hooks/useGameAuthorityFlag";
+import {
+  isPlinkoEnqueueConflict,
+  plinkoComplete,
+  plinkoEnqueue,
+  plinkoListPending,
+} from "@/lib/api/plinkoSession";
+import { toIntegerPhonAmount } from "@/lib/api/walletSchemas";
+import { syncRealBalance } from "@/shared/wallet/walletStore";
+import { appToast } from "@/shared/ui/toast";
 
 export type PlinkoPhase = "idle" | "rolling" | "settled";
 
 const QUEUE_MAX = 5;
 const SETTLE_MS = 800;
 const JACKPOT_HOLD_MS = 2200;
+const LEGACY_PF_SEED = "phonara-plinko-demo-server-seed-v1";
+const DEFAULT_CLIENT_SEED = "phonara-player-001";
 
 interface QueueItem {
   nonce: number;
   amount: number;
   roundId: string;
+  serverSide?: boolean;
+  path?: number[];
+  finalSlot?: number;
+  multiplier?: number;
+  rows?: RowCount;
+  risk?: RiskLevel;
 }
 
 function usePrefersReducedMotion(): boolean {
@@ -53,12 +74,22 @@ export function usePlinkoRound(
   mode: GameMode,
   engineRef: RefObject<PlinkoEngine | null>,
   playDrop: (
-    result: ReturnType<PlinkoEngine["dropPath"]>,
+    result: PlinkoDropResult,
     onLand: (slot: number, multiplier: number) => void,
   ) => void,
   onOutcome?: (o: { outcome: "win" | "loss"; profit: number; nonce: number }) => void,
 ) {
+  const { status: authStatus } = useAuth();
   const { balance, tryDebit, credit } = useGameWallet();
+  const pf = usePfSession("plinko", LEGACY_PF_SEED, DEFAULT_CLIENT_SEED);
+  const plinkoServerFlag = useGameAuthorityFlag("plinko_server_settle");
+  const canUseServerAuthority =
+    isSupabaseConfigured() &&
+    authStatus === "authenticated" &&
+    pf.ready &&
+    !pf.legacyFallback &&
+    plinkoServerFlag;
+
   const [phase, setPhase] = useState<PlinkoPhase>("idle");
   const [jackpot, setJackpot] = useState<PlinkoOutcome | null>(null);
   const [queueSize, setQueueSize] = useState(0);
@@ -67,6 +98,8 @@ export function usePlinkoRound(
   const queueRef = useRef<QueueItem[]>([]);
   const inFlightRef = useRef(false);
   const unmountedRef = useRef(false);
+  const restoredRef = useRef(false);
+  const placeInFlightRef = useRef(false);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const jackpotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -75,11 +108,11 @@ export function usePlinkoRound(
   const risk = plinkoStore.use((s) => s.risk);
   const lastOutcome = plinkoStore.use((s) => s.lastOutcome);
 
-  // Snapshot refs so in-flight callbacks use the values at enqueue/drain time.
   const modeRef = useRef(mode);
   const rowsRef = useRef(rows);
   const riskRef = useRef(risk);
   const onOutcomeRef = useRef(onOutcome);
+  const canUseServerRef = useRef(canUseServerAuthority);
   useEffect(() => {
     modeRef.current = mode;
   }, [mode]);
@@ -92,6 +125,9 @@ export function usePlinkoRound(
   useEffect(() => {
     onOutcomeRef.current = onOutcome;
   }, [onOutcome]);
+  useEffect(() => {
+    canUseServerRef.current = canUseServerAuthority;
+  }, [canUseServerAuthority]);
 
   const refreshQueueSize = useCallback(() => {
     setQueueSize(queueRef.current.length + (inFlightRef.current ? 1 : 0));
@@ -106,8 +142,6 @@ export function usePlinkoRound(
       return;
     }
     if (!engineRef.current) {
-      // Engine vanished mid-drain (e.g. unmount race). Best-effort: discard.
-      // No refund per Plinko money policy.
       inFlightRef.current = false;
       refreshQueueSize();
       return;
@@ -121,10 +155,23 @@ export function usePlinkoRound(
     sfx.ballRelease();
 
     const curMode = modeRef.current;
-    const curRows = rowsRef.current;
-    const curRisk = riskRef.current;
-    const seed = `phonara-plinko-${next.nonce}`;
-    const result = engineRef.current.dropPath(seed, curRows, curRisk);
+    const curRows = (next.rows ?? rowsRef.current) as RowCount;
+    const curRisk = (next.risk ?? riskRef.current) as RiskLevel;
+
+    let result: PlinkoDropResult;
+    if (next.serverSide && next.path && next.finalSlot != null && next.multiplier != null) {
+      result = {
+        path: next.path,
+        finalSlot: next.finalSlot,
+        multiplier: next.multiplier,
+        totalRows: curRows,
+        risk: curRisk,
+        seed: `pf-n${next.nonce}`,
+      };
+    } else {
+      const seed = `phonara-plinko-${next.nonce}`;
+      result = engineRef.current.dropPath(seed, curRows, curRisk);
+    }
 
     const liveBetId = liveBetsStore.push({
       id: liveFeedBetIdForRound("plinko", next.roundId),
@@ -144,7 +191,6 @@ export function usePlinkoRound(
       settled = true;
       clearTimeout(fallbackTimer);
 
-      // SSOT: engine table must match landed slot (zero drift vs renderer).
       const table = MULTIPLIERS[curRisk][curRows];
       const engineMult = table[slot];
       if (engineMult === undefined || engineMult !== multiplier) {
@@ -154,12 +200,17 @@ export function usePlinkoRound(
       const payout = settlementPayout(next.amount, multiplier, curMode);
       const profit = settlementProfit(next.amount, multiplier, curMode);
       const won = profit >= 0;
+      const skipClientCredit = next.serverSide && curMode === "real";
 
-      if (payout > 0) {
+      if (payout > 0 && !skipClientCredit) {
         void credit(payout, multiplier, { game: "plinko", roundId: next.roundId });
       }
 
-      if (curMode === "real") {
+      if (next.serverSide) {
+        void plinkoComplete(next.roundId).then((res) => {
+          if (res.balance?.phon != null) syncRealBalance(res.balance.phon);
+        });
+      } else if (curMode === "real") {
         clearRealSession("plinko", next.roundId);
       }
 
@@ -221,13 +272,40 @@ export function usePlinkoRound(
       }, SETTLE_MS);
     };
 
-    // Safety: if canvas/renderer never calls onLand (HMR, zero-size canvas), still settle.
     const fallbackTimer = setTimeout(() => {
       finishDrop(result.finalSlot, result.multiplier);
     }, SETTLE_MS + 700);
 
     playDrop(result, finishDrop);
   }, [engineRef, playDrop, credit, refreshQueueSize]);
+
+  // Resume-First: hydrate pending server queue (GA-I §5.4).
+  useEffect(() => {
+    if (restoredRef.current || !canUseServerAuthority) return;
+    restoredRef.current = true;
+    void plinkoListPending()
+      .then((items) => {
+        if (items.length === 0) return;
+        for (const item of items) {
+          queueRef.current.push({
+            nonce: item.nonce,
+            amount: item.stake_amount > 0 ? item.stake_amount : plinkoStore.get().pendingAmount,
+            roundId: item.round_id,
+            serverSide: true,
+            path: item.path,
+            finalSlot: item.final_slot,
+            multiplier: item.multiplier,
+            rows: item.rows,
+            risk: item.risk,
+          });
+        }
+        refreshQueueSize();
+        drain();
+      })
+      .catch(() => {
+        /* local-only fallback */
+      });
+  }, [canUseServerAuthority, drain, refreshQueueSize]);
 
   const handlePlace = useCallback(
     async (amount: number): Promise<boolean> => {
@@ -237,20 +315,102 @@ export function usePlinkoRound(
       if (queueRef.current.length + (inFlightRef.current ? 1 : 0) >= cap) return false;
       if (!engineRef.current) return false;
 
-      // Enqueue-time nonce: 1:1 with debit roundId.
       const enqueueNonce = plinkoStore.get().nonce;
       const roundId = `plinko-n${enqueueNonce}`;
+      const curRows = rowsRef.current;
+      const curRisk = riskRef.current;
+
+      if (canUseServerRef.current) {
+        if (placeInFlightRef.current) return false;
+        placeInFlightRef.current = true;
+        const betAmount =
+          modeRef.current === "real"
+            ? toIntegerPhonAmount(amount)
+            : Math.max(1, Math.round(amount));
+        if (modeRef.current === "real" && betAmount == null) {
+          placeInFlightRef.current = false;
+          return false;
+        }
+
+        try {
+          if (modeRef.current === "demo") {
+            const ok = await tryDebit(amount, { game: "plinko", roundId });
+            if (!ok) return false;
+          }
+          if (unmountedRef.current) return false;
+
+          const res = await plinkoEnqueue({
+            amount: betAmount ?? Math.max(1, Math.round(amount)),
+            roundId,
+            rows: curRows,
+            risk: curRisk,
+            clientSeed: DEFAULT_CLIENT_SEED,
+          });
+          if (res.mode === "real" && res.balance?.phon != null) {
+            syncRealBalance(res.balance.phon);
+          }
+
+          queueRef.current.push({
+            nonce: enqueueNonce,
+            amount: modeRef.current === "demo" ? amount : (betAmount ?? amount),
+            roundId,
+            serverSide: true,
+            path: res.path,
+            finalSlot: res.final_slot,
+            multiplier: res.multiplier,
+            rows: res.rows,
+            risk: res.risk,
+          });
+          plinkoStore.set((s) => ({
+            ...s,
+            nonce: enqueueNonce + 1,
+            pendingAmount: amount,
+          }));
+          refreshQueueSize();
+          drain();
+          return true;
+        } catch (err) {
+          if (isPlinkoEnqueueConflict(err)) {
+            try {
+              const pending = await plinkoListPending();
+              const row = pending.find((p) => p.round_id === roundId);
+              if (row) {
+                queueRef.current.push({
+                  nonce: row.nonce,
+                  amount: row.stake_amount > 0 ? row.stake_amount : amount,
+                  roundId: row.round_id,
+                  serverSide: true,
+                  path: row.path,
+                  finalSlot: row.final_slot,
+                  multiplier: row.multiplier,
+                  rows: row.rows,
+                  risk: row.risk,
+                });
+                refreshQueueSize();
+                drain();
+                return true;
+              }
+            } catch {
+              /* fall through */
+            }
+          }
+          appToast.raw.error("베팅에 실패했습니다 (네트워크 오류)");
+          return false;
+        } finally {
+          placeInFlightRef.current = false;
+        }
+      }
+
       const ok = await tryDebit(amount, { game: "plinko", roundId });
       if (!ok) return false;
-      // Real unmount mid-debit: money is gone (matches policy — no refund RPC on Plinko).
       if (unmountedRef.current) return false;
 
       if (modeRef.current === "real") {
         syncRealSession("plinko", roundId, amount, {
           nonce: enqueueNonce,
           amount,
-          rows: rowsRef.current,
-          risk: riskRef.current,
+          rows: curRows,
+          risk: curRisk,
         });
       }
 
@@ -263,8 +423,6 @@ export function usePlinkoRound(
     [reducedMotion, tryDebit, engineRef, refreshQueueSize, drain],
   );
 
-  // AC-M-4: real unmount → block new enqueue, let in-flight drain naturally, no refund RPC.
-  // demo unmount → same (no balance impact since demo wallet is local cache).
   useEffect(() => {
     unmountedRef.current = false;
     return () => {
@@ -273,12 +431,11 @@ export function usePlinkoRound(
         clearTimeout(jackpotTimerRef.current);
         jackpotTimerRef.current = null;
       }
-      // Do NOT clear queueRef / settleTimerRef — in-flight callbacks must complete.
     };
   }, []);
 
   const cap = reducedMotion ? 1 : QUEUE_MAX;
-  const canPlace = queueSize < cap;
+  const canPlace = queueSize < cap && pf.ready;
   const autoCanPlace = phase === "idle" && queueSize === 0;
 
   return {

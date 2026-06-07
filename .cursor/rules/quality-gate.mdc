@@ -13,6 +13,8 @@ bun run check
 
 = `typecheck` + `test` + `build`
 
+**2차 점검 필수:** `bun run check`만으로 완료 선언 금지. 보고 전 Stake/Rollbit 수준 재검증 → `.cursor/rules/post-work-audit.mdc`
+
 Strict lint (when auditing):
 
 ```bash

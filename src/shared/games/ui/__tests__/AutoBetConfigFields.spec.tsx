@@ -26,7 +26,15 @@ describe("AutoBetConfigFields", () => {
     const onChange = vi.fn();
     render(<AutoBetConfigFields cfg={base} onChange={onChange} />);
     const inputs = screen.getAllByRole("spinbutton");
-    fireEvent.change(inputs[0], { target: { value: "50" } });
+    fireEvent.change(inputs[1], { target: { value: "50" } });
     expect(onChange).toHaveBeenCalledWith({ ...base, onLossIncreasePct: 50 });
+  });
+
+  it("updates numberOfBets", () => {
+    const onChange = vi.fn();
+    render(<AutoBetConfigFields cfg={base} onChange={onChange} />);
+    const inputs = screen.getAllByRole("spinbutton");
+    fireEvent.change(inputs[0], { target: { value: "10" } });
+    expect(onChange).toHaveBeenCalledWith({ ...base, numberOfBets: 10 });
   });
 });

@@ -34,6 +34,7 @@ import { Route as AppMyRouteImport } from './routes/_app/my'
 import { Route as AppFeedRouteImport } from './routes/_app/feed'
 import { Route as AppEventRouteImport } from './routes/_app/event'
 import { Route as AppEarnRouteImport } from './routes/_app/earn'
+import { Route as AppAutoBetRouteImport } from './routes/_app/auto-bet'
 import { Route as AdminPromoRouteRouteImport } from './routes/admin/promo/route'
 import { Route as AdminPromoIndexRouteImport } from './routes/admin/promo/index'
 import { Route as AdminPromoStudioRouteImport } from './routes/admin/promo/studio'
@@ -54,6 +55,7 @@ import { Route as AppExchangeSymbolRouteImport } from './routes/_app/exchange.$s
 import { Route as AppEventIdRouteImport } from './routes/_app/event.$id'
 import { Route as ApiPublicRSlugRouteImport } from './routes/api/public/r.$slug'
 import { Route as ApiPublicCronPromoTickRouteImport } from './routes/api/public/cron/promo-tick'
+import { Route as ApiPublicAuditYyyymmRouteImport } from './routes/api/public/audit.$yyyymm'
 import { Route as ApiAdminPromoImageStreamRouteImport } from './routes/api/admin/promo/image-stream'
 import { Route as ApiAdminPromoOauthChannelStartRouteImport } from './routes/api/admin/promo/oauth.$channel.start'
 import { Route as ApiAdminPromoOauthChannelCallbackRouteImport } from './routes/api/admin/promo/oauth.$channel.callback'
@@ -182,6 +184,11 @@ const AppEarnRoute = AppEarnRouteImport.update({
   path: '/earn',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppAutoBetRoute = AppAutoBetRouteImport.update({
+  id: '/auto-bet',
+  path: '/auto-bet',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AdminPromoRouteRoute = AdminPromoRouteRouteImport.update({
   id: '/promo',
   path: '/promo',
@@ -282,6 +289,11 @@ const ApiPublicCronPromoTickRoute = ApiPublicCronPromoTickRouteImport.update({
   path: '/api/public/cron/promo-tick',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAuditYyyymmRoute = ApiPublicAuditYyyymmRouteImport.update({
+  id: '/api/public/audit/$yyyymm',
+  path: '/api/public/audit/$yyyymm',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminPromoImageStreamRoute =
   ApiAdminPromoImageStreamRouteImport.update({
     id: '/api/admin/promo/image-stream',
@@ -310,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/transfer': typeof TransferRoute
   '/admin/promo': typeof AdminPromoRouteRouteWithChildren
+  '/auto-bet': typeof AppAutoBetRoute
   '/earn': typeof AppEarnRoute
   '/event': typeof AppEventRouteWithChildren
   '/feed': typeof AppFeedRoute
@@ -345,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/admin/promo/studio': typeof AdminPromoStudioRoute
   '/admin/promo/': typeof AdminPromoIndexRoute
   '/api/admin/promo/image-stream': typeof ApiAdminPromoImageStreamRoute
+  '/api/public/audit/$yyyymm': typeof ApiPublicAuditYyyymmRoute
   '/api/public/cron/promo-tick': typeof ApiPublicCronPromoTickRoute
   '/api/public/r/$slug': typeof ApiPublicRSlugRoute
   '/api/admin/promo/oauth/$channel/callback': typeof ApiAdminPromoOauthChannelCallbackRoute
@@ -357,6 +371,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/transfer': typeof TransferRoute
+  '/auto-bet': typeof AppAutoBetRoute
   '/earn': typeof AppEarnRoute
   '/event': typeof AppEventRouteWithChildren
   '/feed': typeof AppFeedRoute
@@ -392,6 +407,7 @@ export interface FileRoutesByTo {
   '/admin/promo/studio': typeof AdminPromoStudioRoute
   '/admin/promo': typeof AdminPromoIndexRoute
   '/api/admin/promo/image-stream': typeof ApiAdminPromoImageStreamRoute
+  '/api/public/audit/$yyyymm': typeof ApiPublicAuditYyyymmRoute
   '/api/public/cron/promo-tick': typeof ApiPublicCronPromoTickRoute
   '/api/public/r/$slug': typeof ApiPublicRSlugRoute
   '/api/admin/promo/oauth/$channel/callback': typeof ApiAdminPromoOauthChannelCallbackRoute
@@ -408,6 +424,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/transfer': typeof TransferRoute
   '/admin/promo': typeof AdminPromoRouteRouteWithChildren
+  '/_app/auto-bet': typeof AppAutoBetRoute
   '/_app/earn': typeof AppEarnRoute
   '/_app/event': typeof AppEventRouteWithChildren
   '/_app/feed': typeof AppFeedRoute
@@ -443,6 +460,7 @@ export interface FileRoutesById {
   '/admin/promo/studio': typeof AdminPromoStudioRoute
   '/admin/promo/': typeof AdminPromoIndexRoute
   '/api/admin/promo/image-stream': typeof ApiAdminPromoImageStreamRoute
+  '/api/public/audit/$yyyymm': typeof ApiPublicAuditYyyymmRoute
   '/api/public/cron/promo-tick': typeof ApiPublicCronPromoTickRoute
   '/api/public/r/$slug': typeof ApiPublicRSlugRoute
   '/api/admin/promo/oauth/$channel/callback': typeof ApiAdminPromoOauthChannelCallbackRoute
@@ -459,6 +477,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/transfer'
     | '/admin/promo'
+    | '/auto-bet'
     | '/earn'
     | '/event'
     | '/feed'
@@ -494,6 +513,7 @@ export interface FileRouteTypes {
     | '/admin/promo/studio'
     | '/admin/promo/'
     | '/api/admin/promo/image-stream'
+    | '/api/public/audit/$yyyymm'
     | '/api/public/cron/promo-tick'
     | '/api/public/r/$slug'
     | '/api/admin/promo/oauth/$channel/callback'
@@ -506,6 +526,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/transfer'
+    | '/auto-bet'
     | '/earn'
     | '/event'
     | '/feed'
@@ -541,6 +562,7 @@ export interface FileRouteTypes {
     | '/admin/promo/studio'
     | '/admin/promo'
     | '/api/admin/promo/image-stream'
+    | '/api/public/audit/$yyyymm'
     | '/api/public/cron/promo-tick'
     | '/api/public/r/$slug'
     | '/api/admin/promo/oauth/$channel/callback'
@@ -556,6 +578,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/transfer'
     | '/admin/promo'
+    | '/_app/auto-bet'
     | '/_app/earn'
     | '/_app/event'
     | '/_app/feed'
@@ -591,6 +614,7 @@ export interface FileRouteTypes {
     | '/admin/promo/studio'
     | '/admin/promo/'
     | '/api/admin/promo/image-stream'
+    | '/api/public/audit/$yyyymm'
     | '/api/public/cron/promo-tick'
     | '/api/public/r/$slug'
     | '/api/admin/promo/oauth/$channel/callback'
@@ -616,6 +640,7 @@ export interface RootRouteChildren {
   DepositIndexRoute: typeof DepositIndexRoute
   WithdrawalIndexRoute: typeof WithdrawalIndexRoute
   ApiAdminPromoImageStreamRoute: typeof ApiAdminPromoImageStreamRoute
+  ApiPublicAuditYyyymmRoute: typeof ApiPublicAuditYyyymmRoute
   ApiPublicCronPromoTickRoute: typeof ApiPublicCronPromoTickRoute
   ApiPublicRSlugRoute: typeof ApiPublicRSlugRoute
   ApiAdminPromoOauthChannelCallbackRoute: typeof ApiAdminPromoOauthChannelCallbackRoute
@@ -799,6 +824,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEarnRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/_app/auto-bet': {
+      id: '/_app/auto-bet'
+      path: '/auto-bet'
+      fullPath: '/auto-bet'
+      preLoaderRoute: typeof AppAutoBetRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/admin/promo': {
       id: '/admin/promo'
       path: '/promo'
@@ -939,6 +971,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronPromoTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/audit/$yyyymm': {
+      id: '/api/public/audit/$yyyymm'
+      path: '/api/public/audit/$yyyymm'
+      fullPath: '/api/public/audit/$yyyymm'
+      preLoaderRoute: typeof ApiPublicAuditYyyymmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/promo/image-stream': {
       id: '/api/admin/promo/image-stream'
       path: '/api/admin/promo/image-stream'
@@ -988,6 +1027,7 @@ const AppNoticeRouteWithChildren = AppNoticeRoute._addFileChildren(
 )
 
 interface AppRouteRouteChildren {
+  AppAutoBetRoute: typeof AppAutoBetRoute
   AppEarnRoute: typeof AppEarnRoute
   AppEventRoute: typeof AppEventRouteWithChildren
   AppFeedRoute: typeof AppFeedRoute
@@ -1003,6 +1043,7 @@ interface AppRouteRouteChildren {
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
+  AppAutoBetRoute: AppAutoBetRoute,
   AppEarnRoute: AppEarnRoute,
   AppEventRoute: AppEventRouteWithChildren,
   AppFeedRoute: AppFeedRoute,
@@ -1084,6 +1125,7 @@ const rootRouteChildren: RootRouteChildren = {
   DepositIndexRoute: DepositIndexRoute,
   WithdrawalIndexRoute: WithdrawalIndexRoute,
   ApiAdminPromoImageStreamRoute: ApiAdminPromoImageStreamRoute,
+  ApiPublicAuditYyyymmRoute: ApiPublicAuditYyyymmRoute,
   ApiPublicCronPromoTickRoute: ApiPublicCronPromoTickRoute,
   ApiPublicRSlugRoute: ApiPublicRSlugRoute,
   ApiAdminPromoOauthChannelCallbackRoute:

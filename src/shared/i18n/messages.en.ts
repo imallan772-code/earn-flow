@@ -101,6 +101,8 @@ export const messages_en: Record<keyof typeof messages_ko, string> = {
   "fair.verify.game.limbo": "Limbo",
   "fair.verify.game.wheel": "Wheel",
   "fair.verify.game.mines": "Mines",
+  "fair.verify.game.plinko": "Plinko",
+  "fair.verify.field.rows": "Rows",
   "fair.verify.result.legend": "Verification result",
   "fair.verify.result.commitHash": "SHA256(server seed)",
   "fair.verify.result.commitMatch": "Commit match",

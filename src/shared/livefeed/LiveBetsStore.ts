@@ -198,12 +198,12 @@ function lognormalAmount(): number {
   return 2_000 + Math.random() * 18_000;
 }
 
-/** Feed ordering: pin ME bets (pending first) so updates stay visible. */
+/** Feed ordering: pin in-flight ME bets only; settled ME rows mix with bots by recency. */
 export function orderLiveBetsForView(bets: LiveBet[], game?: LiveGame): LiveBet[] {
   const filtered = game ? bets.filter((b) => b.game === game) : bets;
-  const me = filtered.filter((b) => b.isMe);
-  const rest = filtered.filter((b) => !b.isMe);
-  const mePending = me.filter((b) => b.status === "pending");
-  const meDone = me.filter((b) => b.status !== "pending");
-  return [...mePending, ...meDone, ...rest];
+  const mePending = filtered.filter((b) => b.isMe && b.status === "pending");
+  const stream = filtered
+    .filter((b) => !b.isMe || b.status !== "pending")
+    .sort((a, b) => b.ts - a.ts);
+  return [...mePending, ...stream];
 }

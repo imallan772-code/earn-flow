@@ -264,6 +264,13 @@ export function PlinkoBoard({ mode, onOutcome }: PlinkoBoardProps) {
         onAmountChange={(amount) => plinkoStore.set((s) => ({ ...s, pendingAmount: amount }))}
         onPlace={(amount) => handlePlace(amount)}
         onCashout={() => {}}
+        serverAutoBet={{
+          game: "plinko",
+          getBetParams: () => ({
+            rows: plinkoStore.get().rows,
+            risk: plinkoStore.get().risk,
+          }),
+        }}
       />
 
       <div className="text-center text-[11px] text-muted-2 font-numeric">

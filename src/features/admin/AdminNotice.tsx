@@ -1,6 +1,6 @@
 /**
  * AdminNotice — Supabase admin_list_notices / admin_upsert_notice / admin_delete_notice.
- * TODO(real-money): 푸시 연동은 Edge Function + admin RPC 후속.
+ * Post-GA: 푸시 연동은 Edge Function + admin RPC 후속.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";

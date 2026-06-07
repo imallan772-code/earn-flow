@@ -11,6 +11,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/integrations/supabase/client";
 import type { Profile } from "@/integrations/supabase/types";
 import { isSupabaseConfigured } from "@/integrations/supabase/env";
+import { ensureAnonymousSession } from "@/lib/auth/ensureAnonymousSession";
 import { getAuthRedirectUrl } from "@/lib/auth/redirect";
 import { setWalletScope } from "@/shared/wallet/walletStore";
 
@@ -113,9 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const { data } = await supabase.auth.getSession();
+      const session = await ensureAnonymousSession(supabase);
       if (!active) return;
-      await hydrate(data.session);
+      await hydrate(session);
     }
 
     void initSession();

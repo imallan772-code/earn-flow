@@ -7,6 +7,9 @@ import { useMode } from "@/shared/mode/ModeContext";
 import { canAffordBet, getMinBetForMode } from "@/shared/wallet/walletStore";
 import { AutoBetConfigFields } from "./AutoBetConfigFields";
 import { useAutoBetController } from "./useAutoBetController";
+import { useServerAutoBet } from "@/shared/games/hooks/useServerAutoBet";
+import type { ServerAutoBetGame } from "@/lib/api/autoBetSession";
+import { appToast } from "@/shared/ui/toast";
 
 export interface BetCallbacks {
   /** Return false when the bet did not land (e.g. debit failed) so auto-bet can retry. */
@@ -31,6 +34,11 @@ interface Props extends BetCallbacks {
   defaultTarget?: number;
   onAmountChange?: (amount: number) => void;
   onTargetChange?: (target: number) => void;
+  /** GA-J: server worker auto-bet when auto_bet_server flag on. */
+  serverAutoBet?: {
+    game: ServerAutoBetGame;
+    getBetParams: () => Record<string, unknown>;
+  };
 }
 
 export function StakeBetPanel({
@@ -50,6 +58,7 @@ export function StakeBetPanel({
   defaultTarget,
   onAmountChange,
   onTargetChange,
+  serverAutoBet,
 }: Props) {
   const { mode } = useMode();
   const isReal = mode === "real";
@@ -65,6 +74,7 @@ export function StakeBetPanel({
 
   const compact = variant === "compact";
   const [tab, setTab] = useState<"manual" | "auto">("manual");
+  const [consentChecked, setConsentChecked] = useState(false);
   const effectiveTab: "manual" | "auto" = compact ? "manual" : tab;
   const [amount, setAmount] = useState(defaultAmount ?? 10);
   const [target, setTarget] = useState(defaultTarget ?? 2.0);
@@ -95,6 +105,9 @@ export function StakeBetPanel({
   const canAfford = canAffordBet(mode, balance, amount);
   const canSubmitBet = canPlace && amount >= minBet && canAfford;
 
+  const server = useServerAutoBet(serverAutoBet?.game);
+  const useServerPath = Boolean(serverAutoBet && server.serverAutoBetEnabled);
+
   const { cfg, setCfg, autoRunning, autoState, startAuto, stopAuto } = useAutoBetController({
     canPlace,
     autoCanPlace,
@@ -119,6 +132,51 @@ export function StakeBetPanel({
   }, [canPlace]);
 
   const progressPct = Math.max(0, Math.min(1, bettingProgress ?? 0)) * 100;
+  const serverRunning = useServerPath && server.serverRunning;
+  const autoActive = autoRunning || serverRunning;
+  const displayBets = serverRunning
+    ? (server.session?.bets_placed ?? 0)
+    : (autoState?.betsPlaced ?? 0);
+  const displayPnl = serverRunning ? (server.session?.pnl ?? 0) : (autoState?.pnl ?? 0);
+
+  async function handleStartAuto() {
+    if (useServerPath && serverAutoBet) {
+      if (!consentChecked) {
+        appToast.raw.error("자동 베팅 동의가 필요합니다");
+        return;
+      }
+      try {
+        await server.startServer(
+          {
+            strategy: cfg.strategy,
+            baseBet: amount,
+            numberOfBets: cfg.numberOfBets,
+            onWinIncreasePct: cfg.onWinIncreasePct,
+            onLossIncreasePct: cfg.onLossIncreasePct,
+            stopOnProfit: cfg.stopOnProfit,
+            stopOnLoss: cfg.stopOnLoss,
+          },
+          serverAutoBet.getBetParams(),
+        );
+      } catch {
+        appToast.raw.error("서버 자동 베팅 시작에 실패했습니다");
+      }
+      return;
+    }
+    startAuto();
+  }
+
+  async function handleStopAuto() {
+    if (serverRunning) {
+      try {
+        await server.stopServer();
+      } catch {
+        appToast.raw.error("서버 자동 베팅 정지에 실패했습니다");
+      }
+      return;
+    }
+    stopAuto();
+  }
 
   return (
     <div className="glass-2 flex flex-col gap-3 rounded-2xl p-3">
@@ -140,22 +198,24 @@ export function StakeBetPanel({
         </div>
       )}
 
-      {effectiveTab === "auto" && autoRunning && autoState && (
+      {effectiveTab === "auto" && autoActive && (
         <div className="glass-1 flex items-center justify-between rounded-xl px-3 py-2 text-[11px]">
-          <span className="font-bold uppercase tracking-wider text-(--color-cyan)">● AUTO</span>
+          <span className="font-bold uppercase tracking-wider text-(--color-cyan)">
+            ● {serverRunning ? "SERVER AUTO" : "AUTO"}
+          </span>
           <span className="text-(--color-muted)">
             라운드{" "}
-            <span className="font-numeric text-(--color-foreground)">{autoState.betsPlaced}</span>
+            <span className="font-numeric text-(--color-foreground)">{displayBets}</span>
             {cfg.numberOfBets > 0 ? ` / ${cfg.numberOfBets}` : " / ∞"}
           </span>
           <span
             className={cn(
               "font-numeric font-bold",
-              autoState.pnl >= 0 ? "text-emerald" : "text-(--color-rose)",
+              displayPnl >= 0 ? "text-emerald" : "text-(--color-rose)",
             )}
           >
-            {autoState.pnl >= 0 ? "+" : ""}
-            {autoState.pnl.toFixed(2)}
+            {displayPnl >= 0 ? "+" : ""}
+            {displayPnl.toFixed(2)}
           </span>
         </div>
       )}
@@ -223,6 +283,21 @@ export function StakeBetPanel({
 
       {!compact && tab === "auto" && <AutoBetConfigFields cfg={cfg} onChange={setCfg} />}
 
+      {!compact && tab === "auto" && useServerPath && !serverRunning && (
+        <label className="flex items-start gap-2 text-[11px] leading-relaxed text-(--color-muted)">
+          <input
+            type="checkbox"
+            checked={consentChecked}
+            onChange={(e) => setConsentChecked(e.target.checked)}
+            className="mt-0.5"
+          />
+          <span>
+            서버 자동 베팅에 동의합니다. 탭을 닫아도 서버에서 베팅이 계속되며, 손실 한도는 설정에서
+            opt-in 시에만 적용됩니다.
+          </span>
+        </label>
+      )}
+
       {effectiveTab === "manual" ? (
         hasActiveBet ? (
           suppressCashoutButton ? (
@@ -280,10 +355,10 @@ export function StakeBetPanel({
             </span>
           </button>
         )
-      ) : autoRunning ? (
+      ) : autoActive ? (
         <button
           type="button"
-          onClick={stopAuto}
+          onClick={() => void handleStopAuto()}
           className="rounded-xl bg-(--color-rose) py-3 text-sm font-extrabold text-(--color-bg-0)"
         >
           자동 정지
@@ -291,8 +366,8 @@ export function StakeBetPanel({
       ) : (
         <button
           type="button"
-          disabled={!canPlace || balance < minBet}
-          onClick={startAuto}
+          disabled={!canPlace || balance < minBet || (useServerPath && !consentChecked)}
+          onClick={() => void handleStartAuto()}
           className={cn(
             "rounded-xl py-3 text-sm font-extrabold text-(--color-bg-0) shadow-glow-cyan",
             canPlace && balance >= minBet

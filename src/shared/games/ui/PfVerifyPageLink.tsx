@@ -18,6 +18,7 @@ export interface PfVerifyPageLinkProps {
   mineCount?: number;
   risk?: "low" | "medium" | "high";
   segments?: number;
+  rows?: 8 | 12 | 16;
 }
 
 export function PfVerifyPageLink({
@@ -29,6 +30,7 @@ export function PfVerifyPageLink({
   mineCount,
   risk,
   segments,
+  rows,
 }: PfVerifyPageLinkProps) {
   const label = t("fair.verify.openFromModal");
   const ready = Boolean(serverSeedHash);
@@ -57,6 +59,7 @@ export function PfVerifyPageLink({
         mineCount,
         risk,
         segments,
+        rows,
       }}
       className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-(--color-accent)/40 bg-(--color-accent)/10 px-2.5 py-1.5 text-[11px] font-semibold text-(--color-accent) hover:bg-(--color-accent)/20"
     >

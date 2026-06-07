@@ -1,23 +1,9 @@
 /**
- * LimboScreen — ROUND L-2-pre. 단일 슬롯 환원. Crash/Mines와 동형의 single-slot 패턴.
+ * LimboScreen — GA-G server authority + legacy PF fallback.
  *
- * 변경 (vs ROUND I)
- *  - 멀티 슬롯(activeRounds[2] / activeSlot / lastOutcomeBySlot) 전면 제거.
- *  - 단일 `useGameRound` + 단일 LimboDisplay + 단일 StakeBetPanel.
- *  - 마운트 시 1회: legacy `pendingLegacyRefunds` → demo 지갑만 로컬 정리 (RPC refund 없음)
+ * Server path (GA-G): limbo_place_v1 instant settle → client animation only.
  *
- * 불변
- *  - LimboEngine.ts 0 diff
- *  - StakeBetPanel props 계약 0 diff
- *  - localStorage key = phonara.gamestate.limbo.v2 (v1 → v2 마이그레이트는 store에서 처리)
- *
- * nonce
- *  - place 성공 시 global nonce++. ActiveLimboRound.nonce 가 그 스냅샷.
- *
- * 복원 (새로고침 시)
- *  - activeRound != null → round.place() 호출 (state hydrate만, tryDebit / liveBetsStore.push 0회).
- *
- * TODO(real-money): computeCrashPoint를 Edge Function으로 이전.
+ * nonce: server path uses next_nonce from RPC; legacy place → nonce++.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -41,9 +27,9 @@ import { userLiveBetFallback } from "@/shared/livefeed/userLiveBet";
 import { liveFeedBetIdForRound } from "@/lib/api/liveFeedMap";
 import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { profitOf } from "@/shared/games/engine/houseEdge";
-import { commitServerSeed } from "@/shared/games/engine/provablyFair";
+import { usePfSession } from "@/shared/games/hooks/usePfSession";
+import { useGameAuthorityFlag } from "@/shared/games/hooks/useGameAuthorityFlag";
 import {
-  computeCrashPoint,
   isWin,
   payoutMultiplier,
   winChance,
@@ -54,19 +40,24 @@ import {
   limboStore,
 } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
-import { wallet } from "@/shared/wallet/walletStore";
-import { PF_BLOCK_ACTIVE_ROUND_MSG } from "@/shared/games/ui/pfPolicy";
+import { isSupabaseConfigured } from "@/integrations/supabase/env";
+import { useAuth } from "@/features/auth/AuthContext";
+import { limboComplete, limboPlace } from "@/lib/api/limboSession";
+import { getGameActiveSession } from "@/lib/api/gameSessions";
+import { toIntegerPhonAmount } from "@/lib/api/walletSchemas";
 import {
-  clearRealSession,
-  fetchRealSession,
-  nonceFromRoundId,
-  syncRealSession,
-} from "@/shared/games/gameSessionHelpers";
+  activeLimboRoundFromSession,
+  isLimboSessionConflict,
+} from "@/lib/gameSessions/limboSessionUtils";
+import { fetchRealSession, syncRealSession } from "@/shared/games/gameSessionHelpers";
+import { syncRealBalance } from "@/shared/wallet/walletStore";
+import { wallet } from "@/shared/wallet/walletStore";
 import {
   notifyPfSeedChanged,
   LIMBO_RESULT_FLASH_DELAY_MS,
   useRoundResultFlash,
 } from "@/shared/games/ui/gameOutcomePolicy";
+import { PF_BLOCK_ACTIVE_ROUND_MSG } from "@/shared/games/ui/pfPolicy";
 import { DemoLowBanner } from "@/shared/wallet/DemoLowBanner";
 import { useHotkeys, type HotkeyMap } from "@/shared/hooks/useHotkeys";
 import { useRegisterMainMode, useRegisterRightRail } from "@/shared/layout/useGameLayout";
@@ -77,7 +68,7 @@ import { LimboDisplay } from "./LimboDisplay";
 import { LimboTargetStepper } from "./LimboTargetStepper";
 import { LimboRightRail } from "./LimboRightRail";
 
-const SERVER_SEED = "phonara-limbo-demo-server-seed-v1";
+const LEGACY_PF_SEED = "phonara-limbo-demo-server-seed-v1";
 const DEFAULT_CLIENT_SEED = "phonara-player-001";
 
 interface Result {
@@ -89,6 +80,7 @@ interface Result {
 
 export function LimboScreen() {
   useRegisterMainMode("game");
+  const { status: authStatus } = useAuth();
   const { mode, balance, tryDebit, credit } = useGameWallet();
   const isDesktop = useDesktopLayout();
   const rightRailNode = useMemo(() => <LimboRightRail />, []);
@@ -109,17 +101,22 @@ export function LimboScreen() {
   const settledRef = useRef(false);
   const restoredRef = useRef(false);
   const drainedRef = useRef(false);
-  const [commit, setCommit] = useState("");
+  const serverCreditDoneRef = useRef(false);
+  const placeInFlightRef = useRef(false);
   const [showFair, setShowFair] = useState(false);
   const [seedDraft, setSeedDraft] = useState("");
+  const pf = usePfSession("limbo", LEGACY_PF_SEED, DEFAULT_CLIENT_SEED, {
+    clientSeed: clientSeed || DEFAULT_CLIENT_SEED,
+  });
+  const limboServerFlag = useGameAuthorityFlag("limbo_server_settle");
+  const canUseServerAuthority =
+    isSupabaseConfigured() &&
+    authStatus === "authenticated" &&
+    pf.ready &&
+    !pf.legacyFallback &&
+    limboServerFlag;
   const sfx = useSfx();
 
-  // PF commit hash
-  useEffect(() => {
-    commitServerSeed(SERVER_SEED).then(setCommit);
-  }, []);
-
-  // Seed draft sync when modal opens
   useEffect(() => {
     if (showFair) setSeedDraft(clientSeed);
   }, [showFair, clientSeed]);
@@ -142,7 +139,7 @@ export function LimboScreen() {
     [round, mode],
   );
 
-  // 마운트 복원 (1회) — real: server SSOT, demo: localStorage
+  // Resume-First: server SSOT on remount (GA-G §5.2).
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
@@ -152,35 +149,22 @@ export function LimboScreen() {
       if (ar) hydrateActiveRound(ar);
     };
 
-    if (mode !== "real") {
+    if (!isSupabaseConfigured() || authStatus !== "authenticated") {
       applyLocal();
       return;
     }
 
     void fetchRealSession("limbo").then((row) => {
       if (row) {
-        const cs = row.client_state as {
-          nonce?: number;
-          target?: number;
-          live_bet_id?: string;
-          placed_at?: number;
-        };
         const local = limboStore.get().activeRound;
-        const ar: ActiveLimboRound = {
-          nonce: cs.nonce ?? nonceFromRoundId(row.round_id),
-          amount: row.bet_amount,
-          target: cs.target ?? limboStore.get().target,
-          liveBetId: local?.liveBetId ?? cs.live_bet_id ?? `lb_limbo_${row.round_id}`,
-          placedAt: cs.placed_at ?? Date.now(),
-          betMode: "real",
-        };
-        limboStore.set((s) => ({ ...s, activeRound: ar }));
+        const ar = activeLimboRoundFromSession(row, { liveBetId: local?.liveBetId });
+        limboStore.set((s) => ({ ...s, activeRound: ar, nonce: ar.nextNonce ?? ar.nonce }));
         hydrateActiveRound(ar);
         return;
       }
       applyLocal();
-    });
-  }, [mode, hydrateActiveRound]);
+    }).catch(applyLocal);
+  }, [authStatus, hydrateActiveRound]);
 
   // Legacy v1 multi-slot → demo 지갑만 로컬 정리 (1회). Stake-like: no RPC refund.
   useEffect(() => {
@@ -194,83 +178,192 @@ export function LimboScreen() {
     limboStore.set((s) => ({ ...s, pendingLegacyRefunds: [] }));
   }, []);
 
-  const settle = useCallback(async () => {
+  const settleFromOutcome = useCallback(
+    (
+      ar: ActiveLimboRound,
+      crash: number,
+      won: boolean,
+      mult: number,
+      skipRealCredit: boolean,
+    ) => {
+      const profit = won ? profitOf(ar.amount, mult, mode) : -ar.amount;
+      setResultCrash(crash);
+      if (won && !skipRealCredit) {
+        void credit(ar.amount + profit, mult, { game: "limbo", roundId: `n${ar.nonce}` });
+      }
+      const outcome: LimboOutcome = {
+        outcome: won ? "win" : "loss",
+        profit,
+        nonce: ar.nonce,
+        crashPoint: crash,
+        target: ar.target,
+      };
+      limboStore.set((s) => ({
+        ...s,
+        history: [
+          { id: `n${ar.nonce}`, crashPoint: crash, target: ar.target, win: won },
+          ...s.history,
+        ].slice(0, 30),
+        lastOutcome: outcome,
+      }));
+      liveBetsStore.settle(
+        ar.liveBetId,
+        {
+          multiplier: won ? mult : null,
+          profit: won ? +profit.toFixed(2) : -ar.amount,
+          status: won ? "win" : "loss",
+        },
+        userLiveBetFallback("limbo", ar.amount, mode),
+      );
+      recordSessionOutcome({
+        outcome: won ? "win" : "loss",
+        profit,
+        multiplier: won ? mult : undefined,
+      });
+      sfx.play(won ? "win" : "loss");
+      if (won && mult >= 50) sfx.play("jackpot");
+      settledRef.current = true;
+      setPendingResult({ won, profit, mult, nonce: ar.nonce });
+    },
+    [mode, credit, sfx],
+  );
+
+  // rolling → server outcome
+  useEffect(() => {
+    if (round.phase !== "rolling") return;
     const ar = limboStore.get().activeRound;
     if (!ar) return;
-    const seed = limboStore.get().clientSeed || DEFAULT_CLIENT_SEED;
-    const crash = await computeCrashPoint({
-      serverSeed: SERVER_SEED,
-      clientSeed: seed,
-      nonce: ar.nonce,
-    });
-    const won = isWin(crash, ar.target);
-    const mult = payoutMultiplier(ar.target);
-    const profit = won ? profitOf(ar.amount, mult, mode) : -ar.amount;
-    setResultCrash(crash);
-    if (won) {
-      void credit(ar.amount + profit, mult, { game: "limbo", roundId: `n${ar.nonce}` });
+    sfx.play("tick");
+
+    if (ar.crashPoint != null && ar.won != null) {
+      const mult = ar.payoutMultiplier ?? payoutMultiplier(ar.target);
+      const skipRealCredit =
+        ar.betMode === "real" && !!ar.serverSide && serverCreditDoneRef.current;
+      settleFromOutcome(ar, ar.crashPoint, ar.won, mult, skipRealCredit);
     }
-    const outcome: LimboOutcome = {
-      outcome: won ? "win" : "loss",
-      profit,
-      nonce: ar.nonce,
-      crashPoint: crash,
-      target: ar.target,
-    };
+  }, [round.phase, pf.serverSeed, settleFromOutcome, sfx]);
+
+  // idle → clear session + nonce from server or ++
+  useEffect(() => {
+    if (round.phase !== "idle" || !settledRef.current) return;
+    const ar = limboStore.get().activeRound;
+    const roundId = ar ? `n${ar.nonce}` : null;
+    if (ar?.serverSide && roundId) {
+      void limboComplete(roundId);
+    }
+    settledRef.current = false;
+    serverCreditDoneRef.current = false;
+    setResultCrash(null);
+    setPendingResult(null);
     limboStore.set((s) => ({
       ...s,
       activeRound: null,
-      history: [
-        { id: `n${ar.nonce}`, crashPoint: crash, target: ar.target, win: won },
-        ...s.history,
-      ].slice(0, 30),
-      lastOutcome: outcome,
+      nonce: ar?.nextNonce ?? (ar?.serverSide ? s.nonce : s.nonce),
     }));
-    liveBetsStore.settle(
-      ar.liveBetId,
-      {
-        multiplier: won ? mult : null,
-        profit: won ? +profit.toFixed(2) : -ar.amount,
-        status: won ? "win" : "loss",
-      },
-      userLiveBetFallback("limbo", ar.amount, mode),
-    );
-    recordSessionOutcome({
-      outcome: won ? "win" : "loss",
-      profit,
-      multiplier: won ? mult : undefined,
-    });
-    sfx.play(won ? "win" : "loss");
-    if (won && mult >= 50) sfx.play("jackpot");
-    settledRef.current = true;
-    setPendingResult({ won, profit, mult, nonce: ar.nonce });
-    if (ar.betMode === "real") clearRealSession("limbo", `n${ar.nonce}`);
-  }, [mode, credit, sfx]);
+  }, [round.phase, activeRound]);
 
-  // rolling → compute & settle
-  useEffect(() => {
-    if (round.phase !== "rolling") return;
-    sfx.play("tick");
-    void settle();
-  }, [round.phase, settle, sfx]);
-
-  // back to idle → clear resultCrash
-  useEffect(() => {
-    if (round.phase !== "idle" || !settledRef.current) return;
-    settledRef.current = false;
-    setResultCrash(null);
-    setPendingResult(null);
-  }, [round.phase]);
-
-  // Place
   const place = useCallback(
     async (amount: number): Promise<boolean> => {
-      if (!round.isIdle || amount <= 0) return false;
+      if (!round.isIdle || amount <= 0 || !pf.ready || limboStore.get().activeRound) return false;
       const currentNonce = limboStore.get().nonce;
       const roundId = `n${currentNonce}`;
+      const t = limboStore.get().target;
+
+      if (canUseServerAuthority) {
+        if (placeInFlightRef.current) return false;
+        placeInFlightRef.current = true;
+        const betAmount =
+          mode === "real" ? toIntegerPhonAmount(amount) : Math.max(1, Math.round(amount));
+        if (mode === "real" && betAmount == null) {
+          placeInFlightRef.current = false;
+          return false;
+        }
+
+        try {
+          const existing = await getGameActiveSession("limbo");
+          if (existing) {
+            const local = limboStore.get().activeRound;
+            const ar = activeLimboRoundFromSession(existing, { liveBetId: local?.liveBetId });
+            limboStore.set((s) => ({ ...s, activeRound: ar, nonce: ar.nextNonce ?? ar.nonce }));
+            hydrateActiveRound(ar);
+            return true;
+          }
+
+          if (mode === "demo") {
+            const ok = await tryDebit(amount, { game: "limbo", roundId });
+            if (!ok) return false;
+          }
+
+          const seed = limboStore.get().clientSeed || DEFAULT_CLIENT_SEED;
+          const res = await limboPlace({
+            amount: betAmount ?? Math.max(1, Math.round(amount)),
+            roundId,
+            target: t,
+            clientSeed: seed,
+          });
+          if (res.mode === "real") {
+            serverCreditDoneRef.current = res.won;
+            if (res.balance?.phon != null) syncRealBalance(res.balance.phon);
+          }
+
+          const liveBetId = liveBetsStore.push({
+            id: liveFeedBetIdForRound("limbo", roundId),
+            user: "나의_베팅",
+            game: "limbo",
+            amount: mode === "demo" ? amount : (betAmount ?? amount),
+            multiplier: null,
+            profit: null,
+            status: "pending",
+            mode,
+            isMe: true,
+          });
+
+          const ar: ActiveLimboRound = {
+            nonce: currentNonce,
+            amount: mode === "demo" ? amount : (betAmount ?? amount),
+            target: t,
+            liveBetId,
+            placedAt: Date.now(),
+            betMode: mode,
+            serverSide: true,
+            crashPoint: res.crash_point,
+            won: res.won,
+            payoutMultiplier: res.payout_multiplier,
+            nextNonce: currentNonce + 1,
+          };
+          limboStore.set((s) => ({
+            ...s,
+            pendingAmount: amount,
+            activeRound: ar,
+          }));
+          setResultCrash(null);
+          sfx.play("bet");
+          round.place();
+          return true;
+        } catch (err) {
+          if (isLimboSessionConflict(err)) {
+            try {
+              const row = await getGameActiveSession("limbo");
+              if (row) {
+                const local = limboStore.get().activeRound;
+                const ar = activeLimboRoundFromSession(row, { liveBetId: local?.liveBetId });
+                limboStore.set((s) => ({ ...s, activeRound: ar, nonce: ar.nextNonce ?? ar.nonce }));
+                hydrateActiveRound(ar);
+                return true;
+              }
+            } catch {
+              /* fall through */
+            }
+          }
+          appToast.raw.error("베팅에 실패했습니다 (진행 중 라운드가 있거나 네트워크 오류)");
+          return false;
+        } finally {
+          placeInFlightRef.current = false;
+        }
+      }
+
       const ok = await tryDebit(amount, { game: "limbo", roundId });
       if (!ok) return false;
-      const t = limboStore.get().target;
       const liveBetId = liveBetsStore.push({
         id: liveFeedBetIdForRound("limbo", roundId),
         user: "나의_베팅",
@@ -309,7 +402,7 @@ export function LimboScreen() {
       sfx.play("bet");
       return true;
     },
-    [round, tryDebit, mode, sfx],
+    [round, tryDebit, mode, sfx, pf.ready, canUseServerAuthority, hydrateActiveRound],
   );
 
   const setTarget = useCallback(
@@ -321,7 +414,6 @@ export function LimboScreen() {
     [],
   );
 
-  // PF: apply new seed — 진행 중 라운드 있으면 차단 (Dice/Wheel 동형)
   const applySeed = useCallback(() => {
     if (limboStore.get().activeRound || !round.isIdle) {
       appToast.raw.error(PF_BLOCK_ACTIVE_ROUND_MSG);
@@ -332,19 +424,23 @@ export function LimboScreen() {
       setShowFair(false);
       return;
     }
-    limboStore.set((s) => ({
-      ...s,
-      clientSeed: next,
-      nonce: 0,
-      lastOutcome: null,
-    }));
-    setResultCrash(null);
-    settledRef.current = false;
-    notifyPfSeedChanged();
-    setShowFair(false);
-  }, [seedDraft, clientSeed, round.isIdle]);
+    void pf.setClientSeed(next).then(() => {
+      limboStore.set((s) => ({
+        ...s,
+        clientSeed: next,
+        nonce: 0,
+        lastOutcome: null,
+        activeRound: null,
+      }));
+      setResultCrash(null);
+      settledRef.current = false;
+      notifyPfSeedChanged();
+      setShowFair(false);
+    }).catch(() => {
+      appToast.raw.error("시드 변경에 실패했습니다");
+    });
+  }, [seedDraft, clientSeed, round.isIdle, pf]);
 
-  // Hotkeys (slot 전환 키 제거)
   const hotkeys = useMemo<HotkeyMap>(
     () => ({
       " ": () => {
@@ -390,9 +486,9 @@ export function LimboScreen() {
     {
       label: "서버 시드 (해시)",
       content: (
-        <code className="break-all text-[10px] text-(--color-cyan)">{commit || "로딩 중..."}</code>
+        <code className="break-all text-[10px] text-(--color-cyan)">{pf.commitHash || "로딩 중..."}</code>
       ),
-      copyText: commit || undefined,
+      copyText: pf.commitHash || undefined,
     },
     {
       label: "클라이언트 시드",
@@ -483,7 +579,7 @@ export function LimboScreen() {
           <StakeBetPanel
             variant="full"
             showAutoTarget={false}
-            canPlace={round.isIdle}
+            canPlace={round.isIdle && !activeRound && pf.ready}
             hasActiveBet={!round.isIdle}
             balance={balance}
             lastOutcome={
@@ -501,6 +597,10 @@ export function LimboScreen() {
             onPlace={(amount) => place(amount)}
             onCashout={() => {
               /* single-step: cashout not used */
+            }}
+            serverAutoBet={{
+              game: "limbo",
+              getBetParams: () => ({ target: limboStore.get().target }),
             }}
           />
         }
@@ -553,8 +653,8 @@ export function LimboScreen() {
             </p>
             <PfVerifyPageLink
               game="limbo"
-              serverSeed={SERVER_SEED}
-              serverSeedHash={commit}
+              serverSeed={pf.serverSeed}
+              serverSeedHash={pf.commitHash}
               clientSeed={seedDraft.trim() || DEFAULT_CLIENT_SEED}
               nonce={nonce}
             />

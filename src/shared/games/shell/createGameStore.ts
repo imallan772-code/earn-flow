@@ -11,7 +11,7 @@
  *  - 80ms debounce로 연속 set() 시 localStorage write를 합쳐 비용 절감.
  *  - 머지 규칙은 `{ ...initial, ...parsed }` 고정 — 신규 필드 추가에도 기존 저장본 호환.
  *
- * TODO(real-money): 진짜 잔액/베팅 영속화는 서버 권한 모델로 이전. 본 스토어는
+ * GA-complete: real 잔액/베팅은 서버 RPC. 본 스토어는
  *  UI 임시 캐시/사용자 선호 영속화 용도로만 유지.
  */
 import { useSyncExternalStore } from "react";
