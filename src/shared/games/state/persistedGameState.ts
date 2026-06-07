@@ -15,6 +15,7 @@
  *  UI 임시 캐시(nonce·history·사용자 선호 입력값) 용도로 격하 예정.
  */
 import { createGameStore } from "@/shared/games/shell/createGameStore";
+import { normalizeCrashPoint } from "@/lib/gameSessions/crashSessionUtils";
 
 // ───────── DICE ─────────
 export interface DiceRoll {
@@ -120,6 +121,19 @@ export interface CrashPersisted {
   /** PF 클라이언트 시드. PF 모달에서 변경 가능. */
   clientSeed: string;
 }
+function migrateCrashPersisted(parsed: unknown, initial: CrashPersisted): CrashPersisted {
+  if (parsed == null || typeof parsed !== "object") return initial;
+  const merged = { ...initial, ...(parsed as object) } as CrashPersisted;
+  const ar = merged.activeRound;
+  if (ar) {
+    merged.activeRound = {
+      ...ar,
+      crashPoint: normalizeCrashPoint(ar.crashPoint, ar.serverSide),
+    };
+  }
+  return merged;
+}
+
 export const crashStore = createGameStore<CrashPersisted>(
   "crash",
   {
@@ -132,6 +146,7 @@ export const crashStore = createGameStore<CrashPersisted>(
     clientSeed: "phonara-player-001",
   },
   2,
+  migrateCrashPersisted,
 );
 
 // ───────── MINES ─────────

@@ -81,4 +81,31 @@ describe("crashStore — v2 hydrate merges ROUND L-1 fields", () => {
     expect(s.activeRound?.crashPoint).toBeCloseTo(3.14, 2);
     expect(s.activeRound?.bettingStartedAt).toBe(12345);
   });
+
+  it("JSON null crashPoint from Infinity round-trip restores server unknown sentinel", async () => {
+    const stored = {
+      nonce: 5,
+      history: [],
+      lastOutcome: null,
+      pendingAmount: 10,
+      pendingTarget: 2.0,
+      clientSeed: "phonara-player-001",
+      activeRound: {
+        nonce: 5,
+        amount: 10,
+        autoTarget: 2.0,
+        cashedAt: null,
+        liveBetId: "lb_test",
+        placedAt: 1700000000000,
+        crashPoint: null,
+        startedAt: 0,
+        bettingStartedAt: 12345,
+        serverSide: true,
+      },
+    };
+    window.localStorage.setItem(KEY, JSON.stringify(stored));
+
+    const { crashStore } = await import("../persistedGameState");
+    expect(crashStore.get().activeRound?.crashPoint).toBe(Number.POSITIVE_INFINITY);
+  });
 });

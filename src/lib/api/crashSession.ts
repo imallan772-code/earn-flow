@@ -6,14 +6,15 @@ import type { WalletBalance } from "@/integrations/supabase/types";
 import { z } from "zod";
 import { walletRpcResultSchema } from "./walletSchemas";
 
-const crashPlaceResultSchema = z.object({
+/** Postgres json_build_object emits SQL NULL as JSON null — use nullish, not optional-only. */
+export const crashPlaceResultSchema = z.object({
   round_id: z.string(),
   mode: z.enum(["demo", "real"]),
-  server_seed_hash: z.string(),
-  nonce: z.number().int().nonnegative(),
-  started_at_ms: z.number().int().nullable().optional(),
+  server_seed_hash: z.string().nullish(),
+  nonce: z.coerce.number().int().nonnegative(),
+  started_at_ms: z.coerce.number().int().nullable().optional(),
   session_id: z.string().uuid(),
-  debit: z.record(z.unknown()).optional(),
+  debit: z.record(z.unknown()).nullish(),
 });
 
 const crashStartRunningResultSchema = z.object({
@@ -23,10 +24,10 @@ const crashStartRunningResultSchema = z.object({
 
 const crashCashoutResultSchema = z.object({
   round_id: z.string(),
-  at_multiplier_e6: z.number().int(),
-  crash_point_e6: z.number().int(),
-  gross_payout: z.number().int(),
-  credit: z.record(z.unknown()).optional(),
+  at_multiplier_e6: z.coerce.number().int(),
+  crash_point_e6: z.coerce.number().int(),
+  gross_payout: z.coerce.number().int(),
+  credit: z.record(z.unknown()).nullish(),
   mode: z.enum(["demo", "real"]),
 });
 
@@ -72,7 +73,10 @@ export async function crashCashout(
   atMultiplierE6: number,
 ): Promise<CrashCashoutResult & { balance: WalletBalance | null }> {
   const supabase = getSupabaseClient();
-  await supabase.rpc("crash_start_running_v1", { p_round_id: roundId }).then(() => undefined);
+  const { error: startErr } = await supabase.rpc("crash_start_running_v1", {
+    p_round_id: roundId,
+  });
+  if (startErr) throw startErr;
   const { data, error } = await supabase.rpc("crash_cashout_v1", {
     p_round_id: roundId,
     p_at_multiplier_e6: atMultiplierE6,
@@ -97,6 +101,14 @@ export async function crashStartRunning(
   const { data, error } = await supabase.rpc("crash_start_running_v1", { p_round_id: roundId });
   if (error) throw error;
   return crashStartRunningResultSchema.parse(data);
+}
+
+/** Sync-first: skip when session idle; arm multiplier clock when betting ends. */
+export async function crashEnsureRunning(roundId: string): Promise<number | null> {
+  const sync = await crashSync(roundId);
+  if (sync.status === "idle") return null;
+  const start = await crashStartRunning(roundId);
+  return start.started_at_ms;
 }
 
 /** e6 ↔ float helpers — match SQL bigint micro-multiplier storage. */

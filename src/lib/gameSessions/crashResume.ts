@@ -1,4 +1,9 @@
-import { crashStartRunning, crashSync, multFromE6 } from "@/lib/api/crashSession";
+import { crashEnsureRunning, crashSync, multFromE6 } from "@/lib/api/crashSession";
+import {
+  CRASH_POINT_UNKNOWN,
+  isCrashSessionNotFound,
+  normalizeCrashPoint,
+} from "@/lib/gameSessions/crashSessionUtils";
 import type { ActiveCrashRound } from "@/shared/games/state/persistedGameState";
 
 export type CrashResumePhase = "betting" | "running" | "crashed" | "idle";
@@ -19,14 +24,14 @@ export async function resolveServerCrashResume(ar: ActiveCrashRound): Promise<Cr
   const sync = await crashSync(roundId);
 
   if (sync.status === "idle") {
-    return { phase: "idle", startedAtMs: 0, crashPoint: ar.crashPoint };
+    return { phase: "idle", startedAtMs: 0, crashPoint: normalizeCrashPoint(ar.crashPoint, ar.serverSide) };
   }
 
   if (sync.status === "cashed") {
     return {
       phase: "idle",
       startedAtMs: ar.startedAt,
-      crashPoint: ar.crashPoint,
+      crashPoint: normalizeCrashPoint(ar.crashPoint, ar.serverSide),
     };
   }
 
@@ -41,13 +46,31 @@ export async function resolveServerCrashResume(ar: ActiveCrashRound): Promise<Cr
   if (sync.status === "running") {
     let startedAtMs = ar.startedAt;
     if (startedAtMs <= 0) {
-      const start = await crashStartRunning(roundId);
-      startedAtMs = start.started_at_ms;
+      try {
+        const armed = await crashEnsureRunning(roundId);
+        if (armed == null) {
+          return {
+            phase: "idle",
+            startedAtMs: 0,
+            crashPoint: normalizeCrashPoint(ar.crashPoint, ar.serverSide),
+          };
+        }
+        startedAtMs = armed;
+      } catch (err) {
+        if (isCrashSessionNotFound(err)) {
+          return {
+            phase: "idle",
+            startedAtMs: 0,
+            crashPoint: normalizeCrashPoint(ar.crashPoint, ar.serverSide),
+          };
+        }
+        throw err;
+      }
     }
     return {
       phase: "running",
       startedAtMs,
-      crashPoint: Number.POSITIVE_INFINITY,
+      crashPoint: CRASH_POINT_UNKNOWN,
     };
   }
 
@@ -55,6 +78,6 @@ export async function resolveServerCrashResume(ar: ActiveCrashRound): Promise<Cr
   return {
     phase: "betting",
     startedAtMs: 0,
-    crashPoint: Number.POSITIVE_INFINITY,
+    crashPoint: CRASH_POINT_UNKNOWN,
   };
 }

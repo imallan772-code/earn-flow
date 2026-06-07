@@ -51,7 +51,7 @@ export const CrashMultiplierBadge = memo(function CrashMultiplierBadge({
   if (phase === "betting") return null;
 
   const isBusted = phase === "crashed" || phase === "cooldown";
-  const value = isBusted ? crashPoint : m;
+  const value = isBusted ? (Number.isFinite(crashPoint) ? crashPoint : 1) : m;
   const color = tierColor(value, isBusted);
 
   return (

@@ -140,6 +140,21 @@ place → betting → start_running → running → cashout → idle → **resum
 - Warm `crash_sync_v1` p95 ≈ 219ms (region RTT; plan target 150ms is aspirational)
 - Playwright E2E for crash server path — future GA-E+ optional
 
+### Wave 1 Re-verified (dev vertical closure — 2026-06-07)
+
+**Remote migrations:** through `20260608440000_fix_crash_cashout_not_running` (phonara-gb). **kill_switch:** L0 (`enabled=false`).
+
+**Client fixes (Crash Wave 1):**
+- Spectator rounds never call `crash_start_running_v1` / bust poll (open bet gate on `serverCrashRoundId`)
+- `crashEnsureRunning` = sync-first then start_running (`crashSession.ts`)
+- `normalizeCrashPoint` / persist sentinel for `JSON.stringify(Infinity)→null`
+- `canPlace` gates: kill switch + restore ready + no open bet
+- `crashPlaceErrorMessage` for RPC errors (KILL_SWITCH, ACTIVE_SESSION, NOT_FOUND)
+
+**Dev recovery:** `docs/CRASH_PRODUCTION_CHECKLIST.md` §7
+
+**Manual matrix:** pending operator sign-off (demo cashout/bust, real cashout, refresh resume, stale recovery, kill switch L2)
+
 ---
 
 ## PR-GA-F : Dice 서버 권위화

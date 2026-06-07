@@ -61,6 +61,7 @@ import { ModeBadge } from "@/shared/mode/ModeToggle";
 import { profitOf, payoutOf } from "@/shared/games/engine/houseEdge";
 import { usePfSession } from "@/shared/games/hooks/usePfSession";
 import { useGameAuthorityFlag } from "@/shared/games/hooks/useGameAuthorityFlag";
+import { useKillSwitch } from "@/shared/games/hooks/useKillSwitch";
 import { reachedTarget } from "@/shared/games/engine/clamp";
 import { type ActiveCrashRound, crashStore } from "@/shared/games/state/persistedGameState";
 import { useGameWallet } from "@/shared/wallet/useGameWallet";
@@ -83,8 +84,8 @@ import { isSupabaseConfigured } from "@/integrations/supabase/env";
 import { useAuth } from "@/features/auth/AuthContext";
 import {
   crashCashout,
+  crashEnsureRunning,
   crashPlace,
-  crashStartRunning,
   crashSync,
   multFromE6,
   multToE6,
@@ -93,7 +94,14 @@ import { clearGameActiveSession, getGameActiveSession } from "@/lib/api/gameSess
 import { toIntegerPhonAmount } from "@/lib/api/walletSchemas";
 import {
   activeCrashRoundFromSession,
+  crashPlaceErrorMessage,
+  formatCrashMultiplier,
+  isCrashPermanentCashoutError,
   isCrashSessionConflict,
+  isCrashSessionNotFound,
+  normalizeCrashPoint,
+  persistCrashPoint,
+  serverCrashRoundId,
 } from "@/lib/gameSessions/crashSessionUtils";
 import { resolveServerCrashResume } from "@/lib/gameSessions/crashResume";
 import { syncRealBalance } from "@/shared/wallet/walletStore";
@@ -118,7 +126,7 @@ function syncCrashSessionFromStore() {
     auto_target: ar.autoTarget,
     cashed_at: ar.cashedAt,
     live_bet_id: ar.liveBetId,
-    crash_point: ar.crashPoint,
+    crash_point: persistCrashPoint(ar.crashPoint, ar.serverSide),
     started_at: ar.startedAt,
     betting_started_at: ar.bettingStartedAt,
     placed_at: ar.placedAt,
@@ -127,7 +135,7 @@ function syncCrashSessionFromStore() {
 
 export function CrashScreen() {
   useRegisterMainMode("game");
-  const { mode, balance, tryDebit, credit } = useGameWallet();
+  const { mode, balance, tryDebit, credit, refund } = useGameWallet();
   const { status: authStatus } = useAuth();
 
   // Persisted store reads
@@ -150,6 +158,7 @@ export function CrashScreen() {
     clientSeed: storeClientSeed || DEFAULT_CLIENT_SEED,
   });
   const crashServerFlag = useGameAuthorityFlag("crash_server_settle");
+  const killSwitch = useKillSwitch();
   const canUseServerAuthority =
     isSupabaseConfigured() &&
     authStatus === "authenticated" &&
@@ -157,6 +166,9 @@ export function CrashScreen() {
     !pf.legacyFallback &&
     crashServerFlag;
   const [flashKey, setFlashKey] = useState(0);
+  const [restoreReady, setRestoreReady] = useState(
+    !(isSupabaseConfigured() && authStatus === "authenticated"),
+  );
 
   // Refs
   const startedAtRef = useRef(0);
@@ -169,6 +181,7 @@ export function CrashScreen() {
   const tickIntervalRef = useRef<number | null>(null);
   const serverCreditDoneRef = useRef(false);
   const cashoutInFlightRef = useRef(false);
+  const cashoutPermanentFailRef = useRef(false);
   const placeInFlightRef = useRef(false);
   const restoreReadyRef = useRef(!(isSupabaseConfigured() && authStatus === "authenticated"));
   const sfx = useSfx();
@@ -201,7 +214,7 @@ export function CrashScreen() {
         mode,
         isMe: true,
       });
-      setCrashPoint(ar.crashPoint);
+      setCrashPoint(normalizeCrashPoint(ar.crashPoint, ar.serverSide));
       bettingStartedAtRef.current = ar.bettingStartedAt || performance.now();
       if (ar.serverSide) {
         setBettingMsLeft(BETTING_MS);
@@ -240,7 +253,7 @@ export function CrashScreen() {
       try {
         const resume = await resolveServerCrashResume(ar);
         if (resume.phase === "crashed") {
-          setCrashPoint(resume.crashPoint);
+          setCrashPoint(normalizeCrashPoint(resume.crashPoint, ar.serverSide));
           setPhase("crashed");
           return;
         }
@@ -257,17 +270,81 @@ export function CrashScreen() {
           return;
         }
         if (resume.phase === "betting") {
-          setCrashPoint(Number.POSITIVE_INFINITY);
+          setCrashPoint(normalizeCrashPoint(Number.POSITIVE_INFINITY, ar.serverSide));
           if (bettingStartedAtRef.current === 0) {
             bettingStartedAtRef.current = performance.now();
           }
           setPhase("betting");
+          return;
+        }
+        if (resume.phase === "idle") {
+          crashStore.set((s) => ({ ...s, activeRound: null }));
+          setBet(null);
         }
       } catch {
         /* offline — local hydrate snapshot remains */
       }
     },
     [],
+  );
+
+  const settleCashoutUi = useCallback(
+    (prev: ActiveBet, at: number) => {
+      crashStore.set((s) =>
+        s.activeRound ? { ...s, activeRound: { ...s.activeRound, cashedAt: at } } : s,
+      );
+      setBet({ ...prev, cashedAt: at });
+      const profit = profitOf(prev.amount, at, mode);
+      liveBetsStore.settle(
+        prev.liveBetId,
+        {
+          multiplier: at,
+          profit: +profit.toFixed(2),
+          status: "cashout",
+        },
+        userLiveBetFallback("crash", prev.amount, mode),
+      );
+    },
+    [mode],
+  );
+
+  const performServerCashout = useCallback(
+    async (roundId: string, multE6: number, prev: ActiveBet, showErrorToast: boolean) => {
+      try {
+        const res = await crashCashout(roundId, multE6);
+        const at = multFromE6(res.at_multiplier_e6);
+        if (res.mode === "real") serverCreditDoneRef.current = true;
+        if (res.balance?.phon != null) syncRealBalance(res.balance.phon);
+        settleCashoutUi(prev, at);
+      } catch (err) {
+        if (isCrashPermanentCashoutError(err)) {
+          cashoutPermanentFailRef.current = true;
+          try {
+            const sync = await crashSync(roundId);
+            if (sync.status === "busted" && sync.crash_point_e6 != null) {
+              setCrashPoint(multFromE6(sync.crash_point_e6));
+              setPhase("crashed");
+              return;
+            }
+            if (sync.status === "idle" || sync.status === "cashed") {
+              crashStore.set((s) => ({ ...s, activeRound: null }));
+            }
+          } catch {
+            /* offline */
+          }
+          if (mode === "demo") {
+            const at = multFromE6(multE6);
+            settleCashoutUi(prev, at);
+            crashStore.set((s) => ({ ...s, activeRound: null }));
+            return;
+          }
+        }
+        if (showErrorToast) {
+          appToast.raw.error("캐시아웃에 실패했습니다");
+        }
+      }
+    },
+    [mode, settleCashoutUi],
   );
 
   // activeRound persists on navigation — resume on remount (Stake-like; no unmount refund).
@@ -278,6 +355,7 @@ export function CrashScreen() {
 
     const finishRestore = () => {
       restoreReadyRef.current = true;
+      setRestoreReady(true);
     };
 
     const applyLocal = () => {
@@ -338,16 +416,40 @@ export function CrashScreen() {
         window.clearInterval(id);
         setBettingMsLeft(0);
         const active = crashStore.get().activeRound;
-        if (active?.serverSide) {
-          void crashStartRunning(`n${nonce}`)
-            .then((res) => enterRunning(res.started_at_ms))
-            .catch(() => {
-              appToast.raw.error("라운드를 시작할 수 없습니다. 새로고침 후 다시 시도해 주세요.");
-              setPhase("betting");
-              setBettingMsLeft(BETTING_MS);
-              bettingStartedAtRef.current = performance.now();
+        const hasOpenBet = betRef.current != null;
+        if (!hasOpenBet && active?.serverSide) {
+          crashStore.set((s) => ({ ...s, activeRound: null }));
+        }
+        const serverRound =
+          hasOpenBet && active?.serverSide && active.nonce === nonce ? `n${active.nonce}` : null;
+        if (serverRound) {
+          const localStart = performance.now();
+          enterRunning(localStart);
+          void crashEnsureRunning(serverRound)
+            .then((startedMs) => {
+              if (startedMs == null) {
+                crashStore.set((s) => ({ ...s, activeRound: null }));
+                setBet(null);
+                return;
+              }
+              startedAtRef.current = startedMs;
+              setStartedAt(startedMs);
+              crashStore.set((s) =>
+                s.activeRound
+                  ? { ...s, activeRound: { ...s.activeRound, startedAt: startedMs } }
+                  : s,
+              );
+            })
+            .catch((err) => {
+              if (!isCrashSessionNotFound(err)) return;
+              crashStore.set((s) => ({ ...s, activeRound: null }));
+              setBet(null);
             });
         } else {
+          if (active?.serverSide && active.nonce !== nonce) {
+            crashStore.set((s) => ({ ...s, activeRound: null }));
+            setBet(null);
+          }
           enterRunning(performance.now());
         }
       } else {
@@ -362,8 +464,8 @@ export function CrashScreen() {
   // ─── server bust poll (GA-E) ──────────────────────────────────────
   useEffect(() => {
     if (phase !== "running") return;
-    if (!crashStore.get().activeRound?.serverSide) return;
-    const roundId = `n${nonce}`;
+    const roundId = serverCrashRoundId(crashStore.get().activeRound, betRef.current != null);
+    if (!roundId) return;
     const poll = async () => {
       try {
         const sync = await crashSync(roundId);
@@ -391,37 +493,21 @@ export function CrashScreen() {
       const elapsed = crashElapsedMs(startedAtRef.current);
       const m = multiplierAt6(elapsed);
       const prev = betRef.current;
-      const serverSide = crashStore.get().activeRound?.serverSide === true;
+      const serverRound = serverCrashRoundId(
+        crashStore.get().activeRound,
+        betRef.current != null,
+      );
 
       if (prev && prev.cashedAt === null) {
         if (reachedTarget(m, prev.autoTarget)) {
-          if (serverSide) {
-            if (!cashoutInFlightRef.current) {
+          if (serverRound) {
+            if (!cashoutPermanentFailRef.current && !cashoutInFlightRef.current) {
               cashoutInFlightRef.current = true;
-              void crashCashout(`n${nonce}`, multToE6(prev.autoTarget))
-                .then((res) => {
-                  const at = multFromE6(res.at_multiplier_e6);
-                  if (res.mode === "real") serverCreditDoneRef.current = true;
-                  if (res.balance?.phon != null) syncRealBalance(res.balance.phon);
-                  crashStore.set((s) =>
-                    s.activeRound ? { ...s, activeRound: { ...s.activeRound, cashedAt: at } } : s,
-                  );
-                  setBet({ ...prev, cashedAt: at });
-                  const profit = profitOf(prev.amount, at, mode);
-                  liveBetsStore.settle(
-                    prev.liveBetId,
-                    {
-                      multiplier: at,
-                      profit: +profit.toFixed(2),
-                      status: "cashout",
-                    },
-                    userLiveBetFallback("crash", prev.amount, mode),
-                  );
-                })
-                .catch(() => undefined)
-                .finally(() => {
+              void performServerCashout(serverRound, multToE6(prev.autoTarget), prev, false).finally(
+                () => {
                   cashoutInFlightRef.current = false;
-                });
+                },
+              );
             }
           } else if (prev.autoTarget < crashPoint) {
             crashStore.set((s) =>
@@ -444,7 +530,7 @@ export function CrashScreen() {
           }
         }
       }
-      if (!serverSide && m >= crashPoint) setPhase("crashed");
+      if (!serverRound && m >= crashPoint) setPhase("crashed");
     });
     return () => {
       unsub();
@@ -453,7 +539,7 @@ export function CrashScreen() {
         tickIntervalRef.current = null;
       }
     };
-  }, [phase, crashPoint, sfx, mode, nonce]);
+  }, [phase, crashPoint, sfx, mode, nonce, performServerCashout]);
 
   // ─── crashed → settle once (deps에 bet 금지) ──────────────────────
   useEffect(() => {
@@ -565,6 +651,7 @@ export function CrashScreen() {
           return false;
         }
 
+        let debitedDemo = false;
         try {
           const existing = await getGameActiveSession("crash");
           if (existing) {
@@ -588,6 +675,7 @@ export function CrashScreen() {
           if (mode === "demo") {
             const ok = await tryDebit(amount, { game: "crash", roundId });
             if (!ok) return false;
+            debitedDemo = true;
           }
 
           const seed = crashStore.get().clientSeed || DEFAULT_CLIENT_SEED;
@@ -618,7 +706,7 @@ export function CrashScreen() {
             cashedAt: null,
             liveBetId,
             placedAt: Date.now(),
-            crashPoint: Number.POSITIVE_INFINITY,
+            crashPoint: persistCrashPoint(Number.POSITIVE_INFINITY, true),
             startedAt: 0,
             bettingStartedAt:
               bettingStartedAtRef.current > 0 ? bettingStartedAtRef.current : performance.now(),
@@ -637,6 +725,7 @@ export function CrashScreen() {
             cashedAt: null,
             liveBetId,
           });
+          cashoutPermanentFailRef.current = false;
           sfx.play("bet");
           return true;
         } catch (err) {
@@ -657,7 +746,10 @@ export function CrashScreen() {
               /* fall through */
             }
           }
-          appToast.raw.error("베팅에 실패했습니다 (진행 중 라운드가 있거나 네트워크 오류)");
+          if (debitedDemo) {
+            void refund(amount, { game: "crash", roundId, betMode: "demo" });
+          }
+          appToast.raw.error(crashPlaceErrorMessage(err));
           return false;
         } finally {
           placeInFlightRef.current = false;
@@ -684,7 +776,7 @@ export function CrashScreen() {
         cashedAt: null,
         liveBetId,
         placedAt: Date.now(),
-        crashPoint,
+        crashPoint: persistCrashPoint(crashPoint, false),
         startedAt: 0,
         bettingStartedAt:
           bettingStartedAtRef.current > 0 ? bettingStartedAtRef.current : performance.now(),
@@ -697,11 +789,12 @@ export function CrashScreen() {
         activeRound: ar,
       }));
       setBet({ amount, autoTarget, cashedAt: null, liveBetId });
+      cashoutPermanentFailRef.current = false;
       syncCrashSessionFromStore();
       sfx.play("bet");
       return true;
     },
-    [phase, mode, tryDebit, nonce, crashPoint, sfx, pf.ready, canUseServerAuthority, hydrateCrashActiveRound, applyServerResume],
+    [phase, mode, tryDebit, refund, nonce, crashPoint, sfx, pf.ready, canUseServerAuthority, hydrateCrashActiveRound, applyServerResume],
   );
 
   const onStakePlace = useCallback(
@@ -717,38 +810,17 @@ export function CrashScreen() {
     const elapsed = crashElapsedMs(startedAtRef.current);
     const m = multiplierAt6(elapsed);
     const prev = betRef.current;
-    const roundId = `n${nonce}`;
-    const serverSide = crashStore.get().activeRound?.serverSide === true;
+    const serverRound = serverCrashRoundId(
+      crashStore.get().activeRound,
+      betRef.current != null,
+    );
 
-    if (serverSide) {
-      if (cashoutInFlightRef.current) return;
+    if (serverRound) {
+      if (cashoutPermanentFailRef.current || cashoutInFlightRef.current) return;
       cashoutInFlightRef.current = true;
-      void crashCashout(roundId, multToE6(m))
-        .then((res) => {
-          const at = multFromE6(res.at_multiplier_e6);
-          if (res.mode === "real") serverCreditDoneRef.current = true;
-          if (res.balance?.phon != null) syncRealBalance(res.balance.phon);
-          crashStore.set((s) =>
-            s.activeRound ? { ...s, activeRound: { ...s.activeRound, cashedAt: at } } : s,
-          );
-          setBet((b) => (b ? { ...b, cashedAt: at } : b));
-          const profit = profitOf(prev.amount, at, mode);
-          liveBetsStore.settle(
-            prev.liveBetId,
-            {
-              multiplier: at,
-              profit: +profit.toFixed(2),
-              status: "cashout",
-            },
-            userLiveBetFallback("crash", prev.amount, mode),
-          );
-        })
-        .catch(() => {
-          appToast.raw.error("캐시아웃에 실패했습니다");
-        })
-        .finally(() => {
-          cashoutInFlightRef.current = false;
-        });
+      void performServerCashout(serverRound, multToE6(m), prev, true).finally(() => {
+        cashoutInFlightRef.current = false;
+      });
       return;
     }
 
@@ -767,7 +839,7 @@ export function CrashScreen() {
       },
       userLiveBetFallback("crash", prev.amount, mode),
     );
-  }, [phase, mode, nonce]);
+  }, [phase, mode, performServerCashout]);
 
   const getCurrentMultiplier = useCallback(() => {
     if (phase !== "running") return bet?.cashedAt ?? 1.0;
@@ -856,11 +928,24 @@ export function CrashScreen() {
       label: "현재 라운드 결과",
       content: (
         <code className="font-numeric text-gold">
-          {phase === "crashed" || phase === "cooldown" ? `${crashPoint.toFixed(2)}x` : "진행 중"}
+          {phase === "crashed" || phase === "cooldown"
+            ? formatCrashMultiplier(
+                crashPoint,
+                crashStore.get().activeRound?.serverSide,
+              )
+            : "진행 중"}
         </code>
       ),
     },
   ];
+
+  const canPlaceBet =
+    phase === "betting" &&
+    !bet &&
+    pf.ready &&
+    restoreReady &&
+    !killSwitch.killSwitch &&
+    !killSwitch.loading;
 
   return (
     <div className="mx-auto flex w-full flex-col gap-2 lg:max-w-md">
@@ -949,7 +1034,7 @@ export function CrashScreen() {
         banner={<DemoLowBanner />}
         betPanel={
           <StakeBetPanel
-            canPlace={phase === "betting" && pf.ready}
+            canPlace={canPlaceBet}
             hasActiveBet={!!bet && bet.cashedAt === null && phase === "running"}
             balance={balance}
             lastOutcome={lastOutcome}
