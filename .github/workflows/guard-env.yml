@@ -1,0 +1,14 @@
+name: Guard env secrets
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+jobs:
+  guard-env:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun scripts/guard-env-git.ts --tracked

@@ -21,9 +21,14 @@ test-results
 e2e/.auth
 blob-report
 *.local
+
+# Secrets — never commit (only .env.example is tracked as a template)
 .env
 .env.*
+**/.env
+**/.env.*
 !.env.example
+!**/.env.example
 
 # Wrangler / Cloudflare
 .wrangler/
