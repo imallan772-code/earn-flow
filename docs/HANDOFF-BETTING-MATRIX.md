@@ -1,8 +1,10 @@
 # earn-flow 게임 베팅 품질 — 세션 인계문 (SSOT)
 
 > **작성:** 2026-06-08  
+> **최종 갱신:** 2026-06-08 (hardening + push 완료)  
 > **목적:** 새 Cursor 채팅에서 Stake/Rollbit 수준 betting 검증 작업을 이어가기 위한 전체 컨텍스트  
-> **이전 대화:** agent transcript `1c28e7f7-6b56-4475-93ee-16ad93319e06`
+> **Git HEAD:** `238b08b` on `main` (= `origin/main`, working tree clean)  
+> **이전 대화:** agent transcript `ddd01022-563c-44e6-8252-e59019fe0a8d`
 
 ---
 
@@ -120,14 +122,22 @@ bun run test:e2e:cleanup
 
 ---
 
-## 5. 이번 세션에서 적용한 수정 (미커밋)
+## 5. hardening 세션에서 적용·커밋된 수정 (`49d94ec` + `238b08b`)
+
+### Auth / Mode / PF
+
+| 파일 | 변경 |
+|------|------|
+| `src/lib/auth/ensureAnonymousSession.ts` | `signInAnonymously()` 제거 — 기존 세션 restore만 |
+| `src/shared/mode/ModeContext.tsx` | 비로그인 → demo 고정, real 토글 차단 |
+| `src/shared/games/hooks/usePfSession.ts` | `auth.status === "loading"` 동안 legacy fallback 대기 |
 
 ### E2E 인프라
 
 | 파일 | 변경 |
 |------|------|
 | `e2e/pages/game.page.ts` | `data-testid` bet button, crash/wheel/mines wait logic, timeout tuning |
-| `e2e/utils/betting-init.ts` | **NEW** — per-game/mode nonce base (real 811k–861k) |
+| `e2e/utils/betting-init.ts` | per-game/mode nonce base + **run-unique offset** (반복 matrix idempotency 방지) |
 | `e2e/utils/betting-matrix.ts` | resume idle wait, session prep |
 | `e2e/utils/reset-betting-state.ts` | per-game prep |
 | `e2e/utils/rpc-monitor.ts` | WebSocket Realtime console benign filter |
@@ -139,7 +149,8 @@ bun run test:e2e:cleanup
 | 파일 | 변경 |
 |------|------|
 | `src/shared/games/ui/StakeBetPanel.tsx` | `data-testid="stake-bet-submit"`, idle 시 「준비 중」 표시 |
-| `src/features/games/mines/useMinesLifecycle.ts` | `restoreReady` gate (real mode server restore 완료 전 bet 차단) |
+| `src/features/games/crash/CrashScreen.tsx` | `applyServerSync` cashout terminal race fix |
+| `src/features/games/mines/useMinesLifecycle.ts` | `restoreReady` gate |
 | `src/features/games/mines/MinesScreen.tsx` | `canPlace`에 `restoreReady` 연동 |
 | `src/shared/games/plinko/usePlinkoRound.ts` | duplicate complete `.catch()` |
 
@@ -176,10 +187,10 @@ mines: { demo: 61_000, real: 861_000 }
 - spin 중 `hasActiveBet={!round.isIdle}` → submit 버튼 **DOM에서 제거**
 - `/라운드 진행 중/` regex poll + goto 후 idle 대기
 
-### Mines E2E (partial)
+### Mines E2E
 
-- real: `waitForResponse(mines_start_round_v1)` before click (race fix 시도)
-- prod: `restoreReady` — **여전히 real E2E FAIL**
+- real: `waitForResponse(mines_start_round_v1)` before click
+- prod: `restoreReady` — **matrix 13/13 PASS (hardening 후)**
 
 ---
 
@@ -416,6 +427,42 @@ bun run forensic:betting   # E2E UI 12칸 포함 (fast는 --skip-e2e)
 2. vitest + matrix 13/13 1회 + bun run check
 3. P1 수동 브라우저 6게임 체크리스트
 4. (선택) bun run forensic:betting full
+```
+
+---
+
+## 16. 세션 종료 스냅샷 (2026-06-08)
+
+```text
+Repo:     main @ 238b08b — pushed, working tree clean
+Cleanup:  test:e2e:cleanup ✓ (nothing) | cleanup:workspace ✓ (lean)
+Artifacts: playwright-report / test-results / blob-report / dist — 없음
+
+커밋 체인 (origin/main):
+  749c596 fix(crash): GA-E Wave 1
+  6179f84 chore(security): block .env
+  1b56b39 feat(betting): P0 forensic suite + E2E matrix
+  49d94ec fix(betting): auth/mode + crash cashout + E2E
+  238b08b docs(betting): forensic JSON + GA dump
+
+증거 아카이브 (docs/):
+  HANDOFF-BETTING-MATRIX.md          ← 이 문서 (SSOT)
+  BETTING-UX-FORENSIC-20260608.md
+  PHONARA-GAME-AUTHORITY-COMPLETION-REPORT.md
+  forensic-betting-results.json
+  crash-latency-before.json / after.json
+  rtp-truth-1m-results.json
+  PHONARA-GA-FORENSIC-DUMP-20260607-1625.md
+
+다음 P0 코드 위치 (아직 미구현):
+  useGameWallet.isRealReady  ← src/shared/wallet/useGameWallet.ts:34
+  Dice canPlace              ← DiceScreen.tsx:590 (pf only)
+  Limbo                      ← LimboScreen.tsx:583
+  Wheel                      ← WheelScreen.tsx:616
+  Crash                      ← CrashScreen.tsx:1022 canPlaceBet
+  Mines                      ← MinesScreen.tsx:338 (restoreReady only)
+  Plinko                     ← usePlinkoRound.ts
+  StakeBetPanel              ← "준비 중" vs "로그인 필요" 미구분
 ```
 
 ---
