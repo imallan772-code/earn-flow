@@ -354,7 +354,9 @@ export function CrashScreen() {
           if (mode === "demo") {
             const at = multFromE6(multE6);
             settleCashoutUi(prev, at);
+            setCrashPoint(at);
             crashStore.set((s) => ({ ...s, activeRound: null }));
+            setPhase("crashed");
             return;
           }
         }
@@ -482,10 +484,13 @@ export function CrashScreen() {
       const displayMult = multiplierAt(crashElapsedMs(startedAtRef.current));
       const terminal = crashSyncTerminal(sync, { hasServerBet, cashedAt: cashed, displayMult });
       if (terminal.kind === "continue") return;
+      if (terminal.cashedOut && betRef.current) {
+        settleCashoutUi(betRef.current, terminal.crashPoint);
+      }
       setCrashPoint(terminal.crashPoint);
       setPhase("crashed");
     },
-    [],
+    [settleCashoutUi],
   );
 
   useEffect(() => {

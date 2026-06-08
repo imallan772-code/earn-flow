@@ -99,6 +99,13 @@
 ### Known Residual (다음 플랜)
 - Outcome 서버 권위 (GA-E~I), `/provably-fair` 검증 페이지
 
+### Hardening Re-verified (2026-06-08)
+
+- Live grant audit: `pf_session_create_or_get_v1`, `pf_session_set_client_seed_v1`, `pf_session_rotate_v1` are `authenticated` EXECUTE only; `anon` is denied by design.
+- Auth logs confirmed `anonymous_provider_disabled` 422. Client now restores existing sessions only and does not call `signInAnonymously()` on boot.
+- `ModeProvider` now forces unauthenticated Supabase users to `demo`, ignoring stale guest `real` localStorage. Guest demo is local-only; server PF/session RPCs are authenticated-only.
+- Regression: `ensureAnonymousSession.spec.ts` and `ModeContext.spec.tsx` PASS.
+
 ---
 
 ## PR-GA-E : Crash 서버 권위화
@@ -154,6 +161,12 @@ place → betting → start_running → running → cashout → idle → **resum
 **Dev recovery:** `docs/CRASH_PRODUCTION_CHECKLIST.md` §7
 
 **Manual matrix:** pending operator sign-off (demo cashout/bust, real cashout, refresh resume, stale recovery, kill switch L2)
+
+### Cashout terminal hardening (2026-06-08)
+
+- `CrashScreen.applyServerSync` now applies `settleCashoutUi()` before entering `crashed` phase when `crashSyncTerminal()` returns `cashedOut`.
+- This prevents a successful manual/server cashout from being settled or displayed through the bust branch if the sync poll wins the timing race.
+- Regression: `crashSessionUtils.spec.ts` covers `cashed` sync terminal mapping.
 
 ---
 

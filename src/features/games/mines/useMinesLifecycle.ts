@@ -98,6 +98,7 @@ export function useMinesLifecycle({
   const settledRef = useRef(false);
   const restoredRef = useRef(false);
   const restoreReadyRef = useRef(wallet.mode !== "real");
+  const [restoreReady, setRestoreReady] = useState(wallet.mode !== "real");
   const placeInFlightRef = useRef(false);
 
   const commitActiveRound = useCallback(
@@ -169,11 +170,13 @@ export function useMinesLifecycle({
         })
         .finally(() => {
           restoreReadyRef.current = true;
+          setRestoreReady(true);
         });
       return;
     }
 
     restoreReadyRef.current = true;
+    setRestoreReady(true);
 
     const ar = minesStore.get().activeRound;
     if (ar) hydrateActiveRound(ar);
@@ -541,5 +544,6 @@ export function useMinesLifecycle({
     handleCashout,
     handleRandomPick,
     resetForSeedChange,
+    restoreReady,
   };
 }

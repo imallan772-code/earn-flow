@@ -95,6 +95,14 @@ describe("crashSyncTerminal", () => {
     );
     expect(t).toEqual({ kind: "terminal", crashPoint: 2, cashedOut: true });
   });
+
+  it("maps cashed sync to win terminal using server multiplier", () => {
+    const t = crashSyncTerminal(
+      { status: "cashed", current_multiplier_e6: 1_420_000 },
+      { hasServerBet: true, cashedAt: null, displayMult: 3 },
+    );
+    expect(t).toEqual({ kind: "terminal", crashPoint: 1.42, cashedOut: true });
+  });
 });
 
 describe("isCrashSessionNotFound", () => {

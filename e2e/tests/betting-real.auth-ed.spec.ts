@@ -15,8 +15,8 @@ test.beforeAll(async () => {
 });
 
 for (const { route, name } of GAMES) {
-  test(`${name}: real UI bet`, async ({ page }) => {
-    await runBettingCase(page, route, name, "real");
+  test(`${name}: real UI bet`, async ({ page }, testInfo) => {
+    await runBettingCase(page, route, name, "real", testInfo.retry + 1);
   });
 }
 

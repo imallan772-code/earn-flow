@@ -131,6 +131,9 @@ function parseUiMatrixFromPlaywright(output: string): Partial<MatrixCell>[] {
     const demoFail = new RegExp(`${game}: demo UI bet[\\s\\S]*?\\bx\\b`, "i").test(output);
     const realOk = new RegExp(`${game}: real UI bet[\\s\\S]*?\\bok\\b`, "i").test(output);
     const realFail = new RegExp(`${game}: real UI bet[\\s\\S]*?\\bx\\b`, "i").test(output);
+    const realSkip = new RegExp(`${game}: real UI bet[\\s\\S]*?\\b(skip|skipped)\\b`, "i").test(
+      output,
+    );
     cells.push({
       game,
       uiDemo: demoOk ? "pass" : demoFail ? "fail" : "n/a",

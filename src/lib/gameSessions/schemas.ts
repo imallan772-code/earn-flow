@@ -20,9 +20,10 @@ export const minesStartResultSchema = z.object({
   bet_amount: z.number(),
   mine_count: z.number(),
   nonce: z.coerce.number(),
-  revealed: revealedTilesSchema,
-  multiplier: z.number(),
+  revealed: revealedTilesSchema.default([]),
+  multiplier: z.number().default(1),
   debit: z.record(z.unknown()).optional(),
+  idempotent: z.boolean().optional(),
   resumed: z.boolean().optional(),
 });
 

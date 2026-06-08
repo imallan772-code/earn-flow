@@ -85,6 +85,15 @@ export function usePfSession(
 
   const refresh = useCallback(async () => {
     const seed = resolvedClientSeed(storeClientSeed, defaultClientSeed);
+    if (isSupabaseConfigured() && status === "loading") {
+      setState((s) => ({
+        ...s,
+        clientSeed: seed,
+        loading: true,
+        ready: false,
+      }));
+      return;
+    }
     if (!isSupabaseConfigured() || status !== "authenticated" || !user) {
       setState(await legacyState(legacySeed, seed));
       return;

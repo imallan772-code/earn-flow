@@ -1,5 +1,6 @@
 import {
   clearActiveSessionsForGame,
+  clearPendingPlinkoQueue,
   ensureDemoMode,
   ensureRealMode,
   resetE2eBettingState,
@@ -17,6 +18,11 @@ export async function prepareGameBettingMode(
 ): Promise<void> {
   const client = await getE2eSupabase();
   await clearActiveSessionsForGame(client, game);
+  if (game === "plinko") {
+    const { data: userData } = await client.auth.getUser();
+    const uid = userData.user?.id;
+    if (uid) await clearPendingPlinkoQueue(uid);
+  }
   if (mode === "real") {
     await ensureRealMode(client);
   } else {
@@ -33,7 +39,7 @@ export async function prepareServerBettingMode(mode: BettingMode): Promise<{ cle
   return resetE2eBettingState(supabase);
 }
 
-/** Browser init: mode + wipe persisted game state. */
+/** Browser init: mode + wipe all game localStorage (prefer buildBettingInitPayload for matrix). */
 export function browserBettingInitScript(mode: BettingMode): void {
   localStorage.setItem("phonara.mode", mode);
   for (const key of Object.keys(localStorage)) {
@@ -41,6 +47,14 @@ export function browserBettingInitScript(mode: BettingMode): void {
       localStorage.removeItem(key);
     }
   }
+}
+
+/** Per-game server prep before a single matrix cell (serial E2E). */
+export async function prepareGameForMatrixTest(
+  game: SmokeGame,
+  mode: BettingMode,
+): Promise<void> {
+  await prepareGameBettingMode(game, mode);
 }
 
 /** @deprecated */

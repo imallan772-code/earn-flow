@@ -63,7 +63,10 @@ export function ModeProvider({ children }: { children: ReactNode }) {
       return;
     }
     if (status !== "authenticated" || !user) {
-      setModeState(readStoredMode(userId));
+      setModeState("demo");
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(modeStorageKey(userId), "demo");
+      }
       setModeReady(true);
       return;
     }
@@ -107,7 +110,19 @@ export function ModeProvider({ children }: { children: ReactNode }) {
           window.localStorage.setItem(modeStorageKey(userId), m);
         }
       };
-      if (!isConfigured || status !== "authenticated" || !user || user.is_anonymous) {
+      if (!isConfigured) {
+        applyLocal();
+        return;
+      }
+      if (status !== "authenticated" || !user) {
+        if (m === "real") {
+          appToast.raw.error("리얼 모드는 로그인이 필요합니다");
+          return;
+        }
+        applyLocal();
+        return;
+      }
+      if (user.is_anonymous) {
         applyLocal();
         return;
       }
@@ -121,7 +136,7 @@ export function ModeProvider({ children }: { children: ReactNode }) {
           appToast.raw.error(message);
         });
     },
-    [status, user, userId],
+    [isConfigured, status, user, userId],
   );
 
   const toggle = useCallback(() => {

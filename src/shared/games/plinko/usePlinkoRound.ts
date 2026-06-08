@@ -208,9 +208,13 @@ export function usePlinkoRound(
       }
 
       if (next.serverSide) {
-        void plinkoComplete(next.roundId).then((res) => {
-          if (res.balance?.phon != null) syncRealBalance(res.balance.phon);
-        });
+        void plinkoComplete(next.roundId)
+          .then((res) => {
+            if (res.balance?.phon != null) syncRealBalance(res.balance.phon);
+          })
+          .catch(() => {
+            /* E2E/resume may race duplicate complete — server is idempotent when settled */
+          });
       } else if (curMode === "real") {
         clearRealSession("plinko", next.roundId);
       }

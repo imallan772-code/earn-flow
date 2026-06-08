@@ -127,6 +127,7 @@ export function MinesScreen() {
     handleCashout,
     handleRandomPick,
     resetForSeedChange,
+    restoreReady,
   } = life;
   const flashRecent = useRoundResultFlash(recent, MINES_RESULT_FLASH_DELAY_MS);
 
@@ -334,7 +335,7 @@ export function MinesScreen() {
         banner={<DemoLowBanner />}
         betPanel={
           <StakeBetPanel
-            canPlace={round.isIdle && pf.ready}
+            canPlace={round.isIdle && pf.ready && (wallet.mode !== "real" || restoreReady)}
             hasActiveBet={round.phase === "playing"}
             balance={balance}
             lastOutcome={

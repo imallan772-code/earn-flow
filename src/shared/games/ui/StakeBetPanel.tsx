@@ -320,6 +320,7 @@ export function StakeBetPanel({
         ) : (
           <button
             type="button"
+            data-testid="stake-bet-submit"
             disabled={!canSubmitBet}
             onClick={() => {
               if (placingRef.current) return;
@@ -345,13 +346,15 @@ export function StakeBetPanel({
               />
             )}
             <span className="relative">
-              {!canPlace
+              {hasActiveBet
                 ? "라운드 진행 중"
-                : !canAfford
-                  ? balance < minBet
-                    ? "체험 크레딧 부족"
-                    : "잔액 부족"
-                  : "베팅"}
+                : !canPlace
+                  ? "준비 중"
+                  : !canAfford
+                    ? balance < minBet
+                      ? "체험 크레딧 부족"
+                      : "잔액 부족"
+                    : "베팅"}
             </span>
           </button>
         )

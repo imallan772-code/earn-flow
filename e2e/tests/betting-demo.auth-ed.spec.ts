@@ -12,7 +12,7 @@ test.beforeAll(async () => {
 });
 
 for (const { route, name } of GAMES) {
-  test(`${name}: demo UI bet`, async ({ page }) => {
-    await runBettingCase(page, route, name, "demo");
+  test(`${name}: demo UI bet`, async ({ page }, testInfo) => {
+    await runBettingCase(page, route, name, "demo", testInfo.retry + 1);
   });
 }

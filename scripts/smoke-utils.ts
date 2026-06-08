@@ -21,11 +21,31 @@ export async function clearAllActiveSessions(uid: string): Promise<number> {
 const GAME_IDS = ["crash", "dice", "limbo", "wheel", "plinko", "mines"] as const;
 export type SmokeGame = (typeof GAME_IDS)[number];
 
+/** Service-role settle for one game (E2E / smoke hygiene). */
+export async function forceClearGameSession(uid: string, game: SmokeGame): Promise<number> {
+  const serviceKey = getServiceRoleKey();
+  if (!serviceKey) return 0;
+  const url = requireEnv("VITE_SUPABASE_URL");
+  const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
+  const { data } = await admin
+    .from("game_active_sessions")
+    .update({ status: "settled", updated_at: new Date().toISOString() })
+    .eq("user_id", uid)
+    .eq("game", game)
+    .eq("status", "active")
+    .select("id");
+  return data?.length ?? 0;
+}
+
 /** Fast per-game session clear (E2E parallel-safe). */
 export async function clearActiveSessionsForGame(
   supabase: SupabaseClient,
   game: SmokeGame,
 ): Promise<void> {
+  const { data: userData } = await supabase.auth.getUser();
+  const uid = userData.user?.id;
+  if (uid) await forceClearGameSession(uid, game);
+
   const { data, error } = await supabase.rpc("get_game_active_session_v1", { p_game: game });
   if (error || !data) return;
   const row = data as { round_id?: string };
@@ -59,13 +79,42 @@ export async function ensureRealMode(supabase: SupabaseClient): Promise<void> {
   if (error) throw new Error(`user_set_preferred_mode_v1 real: ${error.message}`);
 }
 
-/** Reset E2E user: settle all active sessions + demo mode. */
-export async function resetE2eBettingState(supabase: SupabaseClient): Promise<{ cleared: number }> {
+export async function clearPendingPlinkoQueue(uid: string): Promise<number> {
+  const serviceKey = getServiceRoleKey();
+  if (!serviceKey) return 0;
+  const url = requireEnv("VITE_SUPABASE_URL");
+  const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
+  const { data } = await admin
+    .from("plinko_queue")
+    .update({ status: "completed", completed_at: new Date().toISOString() })
+    .eq("user_id", uid)
+    .eq("status", "pending")
+    .select("id");
+  return data?.length ?? 0;
+}
+
+/** Hard reset: service-role settle + per-game RPC clear + preferred mode. */
+export async function hardResetE2eBettingState(
+  supabase: SupabaseClient,
+  mode: "demo" | "real",
+): Promise<{ cleared: number; rpcCleared: number; plinkoCleared: number }> {
   const { data: userData } = await supabase.auth.getUser();
   const uid = userData.user?.id;
   if (!uid) throw new Error("AUTH_REQUIRED for reset");
   const cleared = await clearAllActiveSessions(uid);
-  await ensureDemoMode(supabase);
+  const plinkoCleared = await clearPendingPlinkoQueue(uid);
+  const rpcCleared = await clearAllGameSessionsViaRpc(supabase);
+  if (mode === "real") {
+    await ensureRealMode(supabase);
+  } else {
+    await ensureDemoMode(supabase);
+  }
+  return { cleared, rpcCleared, plinkoCleared };
+}
+
+/** Reset E2E user: settle all active sessions + demo mode. */
+export async function resetE2eBettingState(supabase: SupabaseClient): Promise<{ cleared: number }> {
+  const { cleared } = await hardResetE2eBettingState(supabase, "demo");
   return { cleared };
 }
 
@@ -73,11 +122,7 @@ export async function resetE2eBettingState(supabase: SupabaseClient): Promise<{ 
 export async function resetE2eRealBettingState(
   supabase: SupabaseClient,
 ): Promise<{ cleared: number }> {
-  const { data: userData } = await supabase.auth.getUser();
-  const uid = userData.user?.id;
-  if (!uid) throw new Error("AUTH_REQUIRED for reset");
-  const cleared = await clearAllActiveSessions(uid);
-  await ensureRealMode(supabase);
+  const { cleared } = await hardResetE2eBettingState(supabase, "real");
   return { cleared };
 }
 

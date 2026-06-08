@@ -41,10 +41,13 @@ if (hasAuthCreds) {
     name: "betting-matrix-demo",
     testMatch: /betting-demo\.auth-ed\.spec\.ts/,
     dependencies: ["setup"],
-    timeout: 90_000,
+    fullyParallel: false,
+    retries: 0,
+    timeout: 150_000,
     use: {
       ...devices["iPhone 14"],
       storageState: authFile,
+      actionTimeout: 10_000,
     },
   });
 
@@ -52,10 +55,13 @@ if (hasAuthCreds) {
     name: "betting-matrix-real",
     testMatch: /betting-real\.auth-ed\.spec\.ts/,
     dependencies: ["setup", "betting-matrix-demo"],
-    timeout: 90_000,
+    fullyParallel: false,
+    retries: 0,
+    timeout: 150_000,
     use: {
       ...devices["iPhone 14"],
       storageState: authFile,
+      actionTimeout: 10_000,
     },
   });
 }

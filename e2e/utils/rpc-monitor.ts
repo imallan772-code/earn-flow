@@ -45,6 +45,10 @@ function isBenignConsoleError(text: string): boolean {
   if (text.includes("Can't perform a React state update on a component that hasn't mounted yet")) {
     return true;
   }
+  // Supabase Realtime reconnect noise during rapid game navigation — not a product bug.
+  if (text.includes("WebSocket connection to") && text.includes("supabase.co/realtime")) {
+    return true;
+  }
   return false;
 }
 
