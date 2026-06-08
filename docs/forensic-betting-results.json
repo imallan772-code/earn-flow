@@ -1,0 +1,170 @@
+{
+  "generatedAt": "2026-06-08T01:03:44.461Z",
+  "projectId": "kanftnqenuzverroodev",
+  "allOk": true,
+  "suiteDurationMs": 72780.3875,
+  "matrix": [
+    {
+      "game": "crash",
+      "rpc": {
+        "ok": true,
+        "ms": 11283.7384
+      },
+      "uiDemo": "n/a",
+      "uiReal": "n/a"
+    },
+    {
+      "game": "dice",
+      "rpc": {
+        "ok": true,
+        "ms": 6502.1533
+      },
+      "uiDemo": "n/a",
+      "uiReal": "n/a"
+    },
+    {
+      "game": "limbo",
+      "rpc": {
+        "ok": true,
+        "ms": 6174.5430000000015
+      },
+      "uiDemo": "n/a",
+      "uiReal": "n/a"
+    },
+    {
+      "game": "wheel",
+      "rpc": {
+        "ok": true,
+        "ms": 6097.336300000003
+      },
+      "uiDemo": "n/a",
+      "uiReal": "n/a"
+    },
+    {
+      "game": "plinko",
+      "rpc": {
+        "ok": true,
+        "ms": 5906.739800000003
+      },
+      "uiDemo": "n/a",
+      "uiReal": "n/a"
+    },
+    {
+      "game": "mines",
+      "rpc": {
+        "ok": true,
+        "ms": 5079.908799999997
+      },
+      "uiDemo": "n/a",
+      "uiReal": "n/a"
+    }
+  ],
+  "layerResults": [
+    {
+      "layer": "layer0_creds",
+      "ok": true,
+      "detail": "OK",
+      "durationMs": 1949.2285000000002
+    },
+    {
+      "layer": "layer0b_reset",
+      "ok": true,
+      "detail": "cleared=0",
+      "durationMs": 0
+    },
+    {
+      "layer": "layer1_smoke:crash-rpc",
+      "ok": true,
+      "detail": "PASS demo+real",
+      "durationMs": 11283.7384
+    },
+    {
+      "layer": "layer1_smoke:dice-rpc",
+      "ok": true,
+      "detail": "PASS demo+real",
+      "durationMs": 6502.1533
+    },
+    {
+      "layer": "layer1_smoke:limbo-rpc",
+      "ok": true,
+      "detail": "PASS demo+real",
+      "durationMs": 6174.5430000000015
+    },
+    {
+      "layer": "layer1_smoke:wheel-rpc",
+      "ok": true,
+      "detail": "PASS demo+real",
+      "durationMs": 6097.336300000003
+    },
+    {
+      "layer": "layer1_smoke:plinko-rpc",
+      "ok": true,
+      "detail": "PASS demo+real",
+      "durationMs": 5906.739800000003
+    },
+    {
+      "layer": "layer1_smoke:mines-rpc",
+      "ok": true,
+      "detail": "PASS demo+real",
+      "durationMs": 5079.908799999997
+    },
+    {
+      "layer": "layer3_game_authority_flags",
+      "ok": true,
+      "detail": "core 5/5 present; optional missing: mines_v2_cashout, plinko_hmac, mines_server_settle",
+      "durationMs": 0
+    },
+    {
+      "layer": "layer3_pf_degrade_audit",
+      "ok": true,
+      "detail": "historical L2_enter ok (exited)",
+      "durationMs": 0
+    },
+    {
+      "layer": "layer3_kill_switch_status_v1",
+      "ok": true,
+      "detail": "kill_switch=false read_only=true level=L0",
+      "durationMs": 0
+    },
+    {
+      "layer": "layer3_stuck_active_sessions",
+      "ok": true,
+      "detail": "count=0",
+      "durationMs": 0
+    },
+    {
+      "layer": "layer2_playwright_betting",
+      "ok": true,
+      "detail": "SKIPPED",
+      "durationMs": 0
+    },
+    {
+      "layer": "layer4_accept_b",
+      "ok": true,
+      "detail": "100 scenarios PASS",
+      "durationMs": 25956.980000000003
+    }
+  ],
+  "preflight": [
+    {
+      "check": "game_authority_flags",
+      "ok": true,
+      "detail": "core 5/5 present; optional missing: mines_v2_cashout, plinko_hmac, mines_server_settle"
+    },
+    {
+      "check": "pf_degrade_audit",
+      "ok": true,
+      "detail": "historical L2_enter ok (exited)"
+    },
+    {
+      "check": "kill_switch_status_v1",
+      "ok": true,
+      "detail": "kill_switch=false read_only=true level=L0"
+    },
+    {
+      "check": "stuck_active_sessions",
+      "ok": true,
+      "detail": "count=0"
+    }
+  ]
+}

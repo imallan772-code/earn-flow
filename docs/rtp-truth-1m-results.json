@@ -1,0 +1,66 @@
+{
+  "generatedAt": "2026-06-07T17:16:51.745Z",
+  "roundCount": 1000000,
+  "results": [
+    {
+      "game": "dice",
+      "rounds": 1000000,
+      "rtpPct": 98.906148,
+      "totalWagered": 100000000,
+      "totalReturned": 98906148,
+      "elapsedMs": 47411.6399,
+      "strategy": "rollOver 50, mult=1.9800",
+      "pass": true
+    },
+    {
+      "game": "limbo",
+      "rounds": 1000000,
+      "rtpPct": 98.53291800000001,
+      "totalWagered": 100000000,
+      "totalReturned": 98532918,
+      "elapsedMs": 98890.1815,
+      "strategy": "target 2x, payoutMult=1.98",
+      "pass": false
+    },
+    {
+      "game": "crash",
+      "rounds": 1000000,
+      "rtpPct": 98.4894,
+      "totalWagered": 100000000,
+      "totalReturned": 98489400,
+      "elapsedMs": 101566.3504,
+      "strategy": "autoCashout 2x",
+      "pass": false
+    },
+    {
+      "game": "wheel",
+      "rounds": 1000000,
+      "rtpPct": 98.92830000000001,
+      "totalWagered": 100000000,
+      "totalReturned": 98928300,
+      "elapsedMs": 99928.6917,
+      "strategy": "risk=medium, segments=10",
+      "pass": true
+    },
+    {
+      "game": "mines",
+      "rounds": 1000000,
+      "rtpPct": 98.9751978954239,
+      "totalWagered": 100000000,
+      "totalReturned": 98975197.8954239,
+      "elapsedMs": 213225.52740000002,
+      "strategy": "3 mines, reveal 5 tiles [0..4] then cashout",
+      "pass": true
+    },
+    {
+      "game": "plinko",
+      "rounds": 1000000,
+      "rtpPct": 99.01942,
+      "totalWagered": 100000000,
+      "totalReturned": 99019420,
+      "elapsedMs": 546087.9354,
+      "strategy": "risk=medium, rows=16",
+      "pass": true
+    }
+  ]
+}
